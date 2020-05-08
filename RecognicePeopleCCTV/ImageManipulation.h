@@ -77,8 +77,7 @@ class ImageManipulation {
         static cv::Mat StackImages(cv::Mat* images, uint8_t arraySize, uint8_t maxHStack = 2) {
             std::vector<cv::Mat> hstacked;
             cv::Mat vstacked;
-            uint8_t count = arraySize;
-            uint8_t i = 0;
+            uint8_t count = 0;
 
             if (maxHStack > arraySize) {
                 throw "H stack number is bigger than the size of the array.";
@@ -86,16 +85,16 @@ class ImageManipulation {
                 return HStackWithPad(&images[0], maxHStack);
             }
 
-            while (count >= maxHStack) {
-                hstacked.push_back(HStackWithPad(&images[i], maxHStack));
-                count -= maxHStack;
-                i += maxHStack;
+            while (count <= (arraySize - maxHStack)) {
+                hstacked.push_back(HStackWithPad(&images[count], maxHStack));
+                count += maxHStack;
             }
 
-            if (count == 1) {
-                hstacked.push_back(images[i]);
-            } else if (count > 1) {
-                hstacked.push_back(StackImages(&images[i], count, count));
+            // (arraySize - count) = images left
+            if ((arraySize - count) == 1) {
+                hstacked.push_back(images[count]);
+            } else if ((arraySize - count) > 1) {
+                hstacked.push_back(StackImages(&images[count], (arraySize - count), (arraySize - count)));
             }
 
             return VStackWithPad(&hstacked[0], hstacked.size());
