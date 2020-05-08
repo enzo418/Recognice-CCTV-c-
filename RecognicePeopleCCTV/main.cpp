@@ -181,8 +181,56 @@ void Process(CameraConfig* config, bool& stop) {
     capture.release();
 }
 
+// reduces cpu usage from between 1 and 3 %
+int TestRead2Fps(std::string url) {
+    cv::VideoCapture capture(url);
+    cv::Mat frame;
+    cv::Mat invalid;
+
+    auto last2frames = high_resolution_clock::now();
+    int count = 0;
+    while (capture.isOpened()) {
+        if (!frame.data) {
+            // error
+        }
+                
+        auto now = high_resolution_clock::now();
+
+        auto asd = now - last2frames;
+        auto time = asd / std::chrono::milliseconds(1);
+        //cout << "time: " << time << " s" << " cout: " << count << endl;
+        if (count < 2 && (time >= 150 && time <= 400) || (time >= 550 && time <= 800)) {
+            //cout << " count = " << count << endl;
+            capture.read(frame);
+            cv::resize(frame, frame, RESIZERESOLUTION);
+            count++;
+        } else if (time > 1000) {
+            last2frames = high_resolution_clock::now();
+        } else {
+            capture.read(invalid);
+        }
+
+        if (count > 0) {
+            if (count == 2) {
+                last2frames = high_resolution_clock::now();
+                count = 0;
+            }
+
+            cv::imshow("test", frame);
+            if (cv::waitKey(1) >= 0) {
+                break;
+            }
+        }
+    }
+
+    return -1;
+}
+
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(){
+
+    return TestRead2Fps("rtsp://192.168.1.18:554/user=admin&password=d12&channel=4&stream=0.sdp");
+
     bool stop = false;
     CameraConfig configs[2];
 
