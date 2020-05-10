@@ -10,6 +10,7 @@
 
 #define RESIZERESOLUTION cv::Size(640, 360)
 #define RECOGNICEALWAYS false
+#define SHOWFRAMEINSCREEN true
 
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std;
@@ -45,18 +46,22 @@ void RecordSampleOfCamera(CameraConfig& config) {
     capture.release();
 }
 
-void ShowFrames(CameraConfig* configs, int amountCameras, bool& stop) {
+void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& detectedSomething, bool& stop) {
     std::vector<cv::Mat> frames;
-    bool ready[2];
+    std::vector<bool> ready;
     uint8_t size = 0;
-    uint8_t stackHSize = 2;
+    uint8_t stackHSize = amountCameras > 1 ? 2 : 1;
     cv::Mat res;
 
     frames.resize(amountCameras);
     
     for (size_t i = 0; i < amountCameras; i++)
-        ready[i] = false;    
-    
+        ready.push_back(false);    
+
+    ready.shrink_to_fit();
+
+    //auto timeLastframe = high_resolution_clock::now();
+
     while (!stop) {
         for (size_t i = 0; i < amountCameras; i++) {
             if (configs[i].frames.size() > 0) {
@@ -75,8 +80,10 @@ void ShowFrames(CameraConfig* configs, int amountCameras, bool& stop) {
         }
         
         if (size == amountCameras) {
+            //auto now = high_resolution_clock::now();
+            //auto time = (now - timeLastframe) / std::chrono::milliseconds(1);
+            //cout << "time between frames " << time << endl;
             res = ImageManipulation::StackImages(&frames[0], size, stackHSize);
-            //frames.erase(frames.begin(), frames.end());
             size = 0;
 
             for (size_t i = 0; i < amountCameras; i++) {
@@ -87,22 +94,29 @@ void ShowFrames(CameraConfig* configs, int amountCameras, bool& stop) {
             if (cv::waitKey(1) >= 0) {
                 stop = true;
             }
+            //timeLastframe = high_resolution_clock::now();
         }
         
-        Sleep(0.5);
+        Sleep(interval);
     }
 }
 
-void Process(CameraConfig* config, bool& stop) {
-    int framesLeft = 50; // amount of frames left to search a person.
+// reduces cpu usage from between 1 and 3 %
+///<param name='fps'>How many frames should take per second</param>
+///<param name='interval'>Minimum distance (in ms) between frame</param>
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushort interval, bool& detectedSomething) {
+    #pragma region SetupVideoCapture
+
+    ushort framesLeft = 0; // amount of frames left to search a person.
+    const ushort maxFramesLeft = fps * 50;
 
     const int x = config->roi[0].x;
     const int h = abs(config->roi[1].y - config->roi[0].y);
     const int w = abs(config->roi[1].x - config->roi[0].x);
 #if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
-    const uint8_t framesToRecognice = 150; // amount of frame that recognition will be active before going to idle state
-    const int maxNonZeroPixels = round((w * h) * ((config->sensibility + 0.0)/ 100)); // Max non zero to leave idle state
+    const uint8_t framesToRecognice = fps * 10; // amount of frame that recognition will be active before going to idle state
+    const int maxNonZeroPixels = round((w * h) * ((config->sensibility + 0.0) / 100)); // Max non zero to leave idle state
 
     cv::Mat lastFrame;
     cv::Mat diff;
@@ -119,119 +133,106 @@ void Process(CameraConfig* config, bool& stop) {
     }
 
     cv::Mat frame;
+    cv::Mat invalid;
     cv::Mat frameToShow;
 
+    #pragma endregion
+
+    //auto timeLast2frames = high_resolution_clock::now();
+    auto timeLastframe = high_resolution_clock::now();
+    int framesCount = 0;
+    bool newFrame = false;
     while (!stop && capture.isOpened()) {
-        if (!capture.read(frame)) {
-            //Error
-        }
-
-        cv::resize(frame, frame, RESIZERESOLUTION);
-
-        frameToShow = frame.clone();
-
-        if (config->rotation > 0) ImageManipulation::RotateImage(frame, config->rotation);
-
-        // Take the region of interes
-        cv::Point r = config->roi[0] + config->roi[1];
-        if ((r).x != 0 || r.y != 0) {
-            cv::Rect roi(config->roi[0], config->roi[1]);
-            frame = frame(roi);
-        }
-
-        cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-
-#if !RECOGNICEALWAYS
-        if (lastFrame.data) {
-            cv::absdiff(lastFrame, frame, diff);
-            totalNonZeroPixels = cv::countNonZero(diff);
-        }
-
-        lastFrame = frame;
-
-        //cout << maxNonZeroPixels - totalNonZeroPixels << endl;
-        if (totalNonZeroPixels > maxNonZeroPixels) {
-            if (framesLeft < 500)
-                framesLeft += framesToRecognice;
-        } else if (framesLeft == 0) {
-
-        }
-#endif
-
-        std::vector<cv::Rect> detections;
-        vector< double > foundWeights;
-        if (RECOGNICEALWAYS || framesLeft > 0) {
-            hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-            for (size_t i = 0; i < detections.size(); i++) {
-                detections[i].x += x;
-                cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
-                cv::rectangle(frameToShow, detections[i], color);
-            }
-            /*if (detections.size() > 0)
-                cout << "Detections " << detections.size() << endl;*/
-            cout << config->cameraName << " -- Frames "<< framesLeft << endl;
-#if !RECOGNICEALWAYS
-            framesLeft--;
-#endif
-        }
-
-        config->frames.push_back(frameToShow);
-    }
-
-    capture.release();
-}
-
-// reduces cpu usage from between 1 and 3 %
-int TestRead2Fps(std::string url) {
-    cv::VideoCapture capture(url);
-    cv::Mat frame;
-    cv::Mat invalid;
-
-    auto last2frames = high_resolution_clock::now();
-    int count = 0;
-    while (capture.isOpened()) {
         if (!frame.data) {
             // error
         }
                 
         auto now = high_resolution_clock::now();
 
-        auto asd = now - last2frames;
-        auto time = asd / std::chrono::milliseconds(1);
-        //cout << "time: " << time << " s" << " cout: " << count << endl;
-        if (count < 2 && (time >= 150 && time <= 400) || (time >= 550 && time <= 800)) {
-            //cout << " count = " << count << endl;
+        //auto time = (now - timeLast2frames) / std::chrono::milliseconds(1);
+        auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
+        if (framesCount < fps && intervalFrames >= interval) {
             capture.read(frame);
-            cv::resize(frame, frame, RESIZERESOLUTION);
-            count++;
-        } else if (time > 1000) {
-            last2frames = high_resolution_clock::now();
+            timeLastframe = high_resolution_clock::now();
+            framesCount++;
+            newFrame = true;
         } else {
             capture.read(invalid);
         }
 
-        if (count > 0) {
-            if (count == 2) {
-                last2frames = high_resolution_clock::now();
-                count = 0;
+        if (framesCount > 0 && framesCount <= fps && newFrame) {
+            if (framesCount == fps) {
+                //timeLast2frames = high_resolution_clock::now();
+                framesCount = 0;
             }
 
-            cv::imshow("test", frame);
-            if (cv::waitKey(1) >= 0) {
-                break;
+            #pragma region AnalizeFrame
+
+
+            cv::resize(frame, frame, RESIZERESOLUTION);
+
+            frameToShow = frame.clone();
+
+            if (config->rotation > 0) ImageManipulation::RotateImage(frame, config->rotation);
+
+            // Take the region of interes
+            cv::Point r = config->roi[0] + config->roi[1];
+            if ((r).x != 0 || r.y != 0) {
+                cv::Rect roi(config->roi[0], config->roi[1]);
+                frame = frame(roi);
             }
+
+            cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
+
+#if !RECOGNICEALWAYS
+            if (lastFrame.rows == RESIZERESOLUTION.height) {
+                cv::absdiff(lastFrame, frame, diff);
+                totalNonZeroPixels = cv::countNonZero(diff);
+            }
+
+            lastFrame = frame;
+
+            //cout << maxNonZeroPixels - totalNonZeroPixels << endl;
+            if (totalNonZeroPixels > maxNonZeroPixels) {
+                if (framesLeft < maxFramesLeft)
+                    framesLeft += framesToRecognice;
+            } else if (framesLeft == 0) {
+
+            }
+#endif
+
+            std::vector<cv::Rect> detections;
+            vector< double > foundWeights;
+            if (RECOGNICEALWAYS || framesLeft > 0) {
+                hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+                for (size_t i = 0; i < detections.size(); i++) {
+                    detections[i].x += x;
+                    cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
+                    cv::rectangle(frameToShow, detections[i], color);
+                }
+                if (detections.size() > 0)
+                    detectedSomething = true;
+                cout << config->cameraName << " -- Frames " << framesLeft << endl;
+#if !RECOGNICEALWAYS
+                framesLeft--;
+#endif
+            }
+            #pragma endregion
+
+            newFrame = false;
+#if SHOWFRAMEINSCREEN
+            config->frames.push_back(frameToShow);
+#endif
         }
     }
 
-    return -1;
+    capture.release();
 }
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(){
-
-    return TestRead2Fps("rtsp://192.168.1.18:554/user=admin&password=d12&channel=4&stream=0.sdp");
-
     bool stop = false;
+    bool detectedSomething = false;
     CameraConfig configs[2];
 
     configs[0].cameraName = "camera1";
@@ -256,20 +257,27 @@ int main(){
     //configs[1].sensibility = 90; // video
     configs[1].sensibility = 86;  //rtsp
         
+    ushort fps = 3;
+    ushort interval = 100;
     //configs.shrink_to_fit(); // Requests the removal of unused capacity
 
-    std::thread t1(Process, &configs[0], std::ref(stop));
-    std::thread t2(Process, &configs[1], std::ref(stop));
+    //std::thread t1(Process, &configs[0], std::ref(stop));
+    //std::thread t2(Process, &configs[1], std::ref(stop));*/
+    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), fps, interval, &detectedSomething);
+    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), fps, interval, &detectedSomething);
 
-    ShowFrames(&configs[0], 2, stop);
-
+#if SHOWFRAMEINSCREEN
+    ShowFrames(&configs[0], 2, interval, detectedSomething, stop);
+#else
+    std::getchar();
+#endif
     //Sleep(500);
 
     //CameraConfig d = configs[1];
 
     stop = true;
     t1.join();
-    t2.join();
+    //t2.join();
 
 
     //Process(config1, stop);
