@@ -46,7 +46,20 @@ void RecordSampleOfCamera(CameraConfig& config) {
     capture.release();
 }
 
-void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& detectedSomething, bool& stop) {
+std::string GetTimeFormated() {
+    time_t rawtime;
+    struct tm timeinfo;
+    char buffer[80];
+
+    time(&rawtime);
+    localtime_s(&timeinfo, &rawtime);
+
+    strftime(buffer, 80, "%d_%m_%Y_%H_%M_%S", &timeinfo);
+    return buffer;
+};
+
+void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& somethingDetected, bool& stop) {
+    /* variables */
     std::vector<cv::Mat> frames;
     std::vector<bool> ready;
     uint8_t size = 0;
@@ -54,13 +67,23 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     cv::Mat res;
 
     frames.resize(amountCameras);
-    
+
     for (size_t i = 0; i < amountCameras; i++)
-        ready.push_back(false);    
+        ready.push_back(false);
 
     ready.shrink_to_fit();
+    
+    /* Video writer */
+    /* Uncomment to use video recorder
+    cv::VideoWriter out;
+    ushort videosSaved = 0;
+    auto timeLastCheck = high_resolution_clock::now();
+    cv::Size frameSize;
+    */
 
-    //auto timeLastframe = high_resolution_clock::now();
+    /* Image saver */
+    auto timeLastSavedImage = high_resolution_clock::now();
+    ushort secondsBetweenImage = 2;
 
     while (!stop) {
         for (size_t i = 0; i < amountCameras; i++) {
@@ -80,31 +103,73 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
         }
         
         if (size == amountCameras) {
-            //auto now = high_resolution_clock::now();
-            //auto time = (now - timeLastframe) / std::chrono::milliseconds(1);
-            //cout << "time between frames " << time << endl;
             res = ImageManipulation::StackImages(&frames[0], size, stackHSize);
             size = 0;
+                        
+            /* Uncomment if want to record video
+            if (frameSize.width != res.cols) {
+                frameSize.width = res.cols;
+                frameSize.height = res.rows;
+            }
+            */
 
             for (size_t i = 0; i < amountCameras; i++) {
                 ready[i] = false;
             }
 
+
+            if (somethingDetected) {
+                auto now = high_resolution_clock::now();;
+                auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
+                if (time >= secondsBetweenImage * 1000) {
+                    std::string date = GetTimeFormated();
+                    cv::imwrite("saved_imgs/img_" + date + ".jpg", res);
+                    timeLastSavedImage = high_resolution_clock::now();
+                    somethingDetected = false;
+                }
+            }
+
             cv::imshow("TEST", res);
             if (cv::waitKey(1) >= 0) {
                 stop = true;
+                /* Uncomment to use video recorder
+                out.release();
+                */
             }
-            //timeLastframe = high_resolution_clock::now();
         }
-        
-        Sleep(interval);
+
+        /* Start video recorder support */                
+        /*auto now = high_resolution_clock::now();
+        auto time = (now - timeLastCheck) / std::chrono::milliseconds(1);
+        if (time > 60 * 1000) {
+            if (somethingDetected) {
+                videosSaved += 1;
+                somethingDetected = false;
+            } else {
+                out.release();
+                
+                // create a new video
+                out.open(GetTimeFormated()+"__"+std::to_string(videosSaved)+".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., frameSize, true);
+                if (!out.isOpened()) {
+                    cerr << "Could not open the output video file for write\n";
+                }
+            }
+        } else if (videosSaved == 0) {
+            out.open(GetTimeFormated() + "__0.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., frameSize, true);
+            if (!out.isOpened()) {
+                cerr << "Could not open the output video file for write\n";
+            }
+        } */       
+        /* End video recorder support */
+
+        Sleep(interval * 0.7);
     }
 }
 
 // reduces cpu usage from between 1 and 3 %
 ///<param name='fps'>How many frames should take per second</param>
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushort interval, bool& detectedSomething) {
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushort interval, bool& somethingDetected) {
     #pragma region SetupVideoCapture
 
     ushort framesLeft = 0; // amount of frames left to search a person.
@@ -157,7 +222,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
             framesCount++;
             newFrame = true;
         } else {
-            capture.read(invalid);
+            capture.read(invalid); // keep reading to avoid error on VC.
         }
 
         if (framesCount > 0 && framesCount <= fps && newFrame) {
@@ -211,7 +276,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
                     cv::rectangle(frameToShow, detections[i], color);
                 }
                 if (detections.size() > 0)
-                    detectedSomething = true;
+                    somethingDetected = true;
                 cout << config->cameraName << " -- Frames " << framesLeft << endl;
 #if !RECOGNICEALWAYS
                 framesLeft--;
@@ -232,7 +297,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(){
     bool stop = false;
-    bool detectedSomething = false;
+    bool somethingDetected = false;
     CameraConfig configs[2];
 
     configs[0].cameraName = "camera1";
@@ -263,11 +328,11 @@ int main(){
 
     //std::thread t1(Process, &configs[0], std::ref(stop));
     //std::thread t2(Process, &configs[1], std::ref(stop));*/
-    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), fps, interval, &detectedSomething);
-    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), fps, interval, &detectedSomething);
+    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), fps, interval, std::ref(somethingDetected));
+    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), fps, interval, std::ref(somethingDetected));
 
 #if SHOWFRAMEINSCREEN
-    ShowFrames(&configs[0], 2, interval, detectedSomething, stop);
+    ShowFrames(&configs[0], 2, interval, std::ref(somethingDetected), stop);
 #else
     std::getchar();
 #endif
