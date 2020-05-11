@@ -8,7 +8,7 @@
 #include <map>
 #include <chrono>
 
-#define RESIZERESOLUTION cv::Size(640, 360)
+#define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true
 
@@ -61,6 +61,7 @@ std::string GetTimeFormated() {
 void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& somethingDetected, bool& stop) {
     /* variables */
     std::vector<cv::Mat> frames;
+    double avgBufferSize = 0;
     std::vector<bool> ready;
     uint8_t size = 0;
     uint8_t stackHSize = amountCameras > 1 ? 2 : 1;
@@ -68,8 +69,9 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
 
     frames.resize(amountCameras);
 
-    for (size_t i = 0; i < amountCameras; i++)
+    for (size_t i = 0; i < amountCameras; i++) {
         ready.push_back(false);
+    }
 
     ready.shrink_to_fit();
     
@@ -85,11 +87,32 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     auto timeLastSavedImage = high_resolution_clock::now();
     ushort secondsBetweenImage = 2;
 
+    /* DEBUG */
+    auto timeLastPrint = high_resolution_clock::now();
+    ushort debugged = amountCameras;
+
     while (!stop) {
+        avgBufferSize = 0;
         for (size_t i = 0; i < amountCameras; i++) {
             if (configs[i].frames.size() > 0) {
                 // if the vector in i has no frame
                 if (!ready[configs[i].order]) {
+                    avgBufferSize += configs[i].frames.size();
+
+                    /*DEBUG*/
+                    auto now = high_resolution_clock::now();
+                    auto time = (now - timeLastPrint) / std::chrono::milliseconds(1);
+
+                    if (time > 60 * 1000) {
+                        cout << configs[i].cameraName << " buffer size: " << configs[i].frames.size() << endl;
+                        debugged--;
+                        if (debugged == 0) {
+                            timeLastPrint = high_resolution_clock::now();
+                            debugged = amountCameras;
+                        }
+                    }
+                    /*END DEBUG*/
+
                     // take the first frame and delete it
                     frames[configs[i].order] = configs[i].frames[0];
 
@@ -117,11 +140,10 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
                 ready[i] = false;
             }
 
-
             if (somethingDetected) {
                 auto now = high_resolution_clock::now();;
                 auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
-                if (time >= secondsBetweenImage * 1000) {
+                if (time >= (int)secondsBetweenImage * 1000) {
                     std::string date = GetTimeFormated();
                     cv::imwrite("saved_imgs/img_" + date + ".jpg", res);
                     timeLastSavedImage = high_resolution_clock::now();
@@ -132,6 +154,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
             cv::imshow("TEST", res);
             if (cv::waitKey(1) >= 0) {
                 stop = true;
+                break;
                 /* Uncomment to use video recorder
                 out.release();
                 */
@@ -162,6 +185,8 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
         } */       
         /* End video recorder support */
 
+        avgBufferSize /= amountCameras;
+
         Sleep(interval * 0.7);
     }
 }
@@ -178,6 +203,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
     const int x = config->roi[0].x;
     const int h = abs(config->roi[1].y - config->roi[0].y);
     const int w = abs(config->roi[1].x - config->roi[0].x);
+
 #if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
     const uint8_t framesToRecognice = fps * 10; // amount of frame that recognition will be active before going to idle state
@@ -193,9 +219,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 
     cv::VideoCapture capture(config->url);
 
-    if (!capture.isOpened()) {
-        throw "Error: Couldn't open  camera " + config->cameraName + " rtsp.";
-    }
+    cout << "Opening " << config->cameraName << "..." << endl;
+    assert(capture.isOpened());
 
     cv::Mat frame;
     cv::Mat invalid;
@@ -206,12 +231,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
     //auto timeLast2frames = high_resolution_clock::now();
     auto timeLastframe = high_resolution_clock::now();
     int framesCount = 0;
-    bool newFrame = false;
-    while (!stop && capture.isOpened()) {
-        if (!frame.data) {
-            // error
-        }
-                
+    bool newFrame = false;  
+    while (!stop && capture.isOpened()) {                              
         auto now = high_resolution_clock::now();
 
         //auto time = (now - timeLast2frames) / std::chrono::milliseconds(1);
@@ -233,6 +254,18 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 
             #pragma region AnalizeFrame
 
+            //assert(frame.rows != 0); // check if the frame is valid
+            if (frame.rows == 0) {
+                cout << "Received a invalid frame from \"" << config->cameraName << "\". Restarting connection..." << endl;
+                
+                capture.release();
+                capture.open(config->url);
+                
+                framesCount--;
+                assert(capture.isOpened());
+                cout << "Connected to \"" << config->cameraName << "\" successfully...." << endl;
+                continue;
+            }
 
             cv::resize(frame, frame, RESIZERESOLUTION);
 
@@ -261,8 +294,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
             if (totalNonZeroPixels > maxNonZeroPixels) {
                 if (framesLeft < maxFramesLeft)
                     framesLeft += framesToRecognice;
-            } else if (framesLeft == 0) {
-
             }
 #endif
 
@@ -290,6 +321,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 #endif
         }
     }
+
+    cout << "Closed connection with " << config->cameraName << endl;
 
     capture.release();
 }
@@ -342,7 +375,7 @@ int main(){
 
     stop = true;
     t1.join();
-    //t2.join();
+    t2.join();
 
 
     //Process(config1, stop);

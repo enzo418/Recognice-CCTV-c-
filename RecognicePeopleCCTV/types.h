@@ -1,5 +1,8 @@
 #pragma once
 
+#define RES_WIDTH 640
+#define RES_HEIGHT 360
+
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;
 

@@ -31,35 +31,55 @@ class ImageManipulation {
         /// <summary>Stack images Horizontally</summary>
         /// <param name='images'>Array of images to stack</param>
         /// <param name='arraySize'>Amount of images to concat</param>
-        static cv::Mat HStackWithPad(cv::Mat* images, uint8_t arraySize) {
+        /// <param name='height'>Height of each image in the array. Pass 0 to automatically calculate it.</param>
+        static cv::Mat HStackWithPad(cv::Mat* images, ushort arraySize, ushort height = 0) {
             int maxHeight = 0;
             cv::Mat res;
 
-            for (uint8_t i = 0; i < arraySize; i++) {
-                if (images[i].rows > maxHeight) 
-                    maxHeight = images[i].rows;                
-            }
+            assert(arraySize > 0);
 
-            for (uint8_t i = 0; i < arraySize; i++) {
+            if (height == 0) {
+                // calculate the ideal height (bigger)
+                for (ushort i = 0; i < arraySize; i++) {
+                    if (images[i].rows > maxHeight)
+                        maxHeight = images[i].rows;
+                }
+            } else maxHeight = height;
+                        
+            for (ushort i = 0; i < arraySize; i++) {
+                assert(images[i].dims <= 2);
+                assert(images[i].type() == images[0].type());
                 if (images[i].rows != maxHeight)
                     AddPad(images[i], (maxHeight - images[i].rows));
             }
 
-            cv::hconcat(images, arraySize, res);
+            try {
+                cv::hconcat(images, arraySize, res);
+            } catch (const std::exception& e) {
+                std::cout << "Exception: " << e.what() << std::endl;
+                res = cv::Mat(RES_WIDTH * arraySize, RES_HEIGHT, CV_8UC3, cv::Scalar(0, 0, 0)); // black image
+            }            
+
             return res;
         }
 
         /// <summary>Stack images Vertically</summary>
         /// <param name='images'>Array of images to stack</param>
         /// <param name='arraySize'>Amount of images to concat</param>
-        static cv::Mat VStackWithPad(cv::Mat* images, uint8_t arraySize) {
+        /// <param name='width'>Width of each image in the array. Pass 0 to automatically calculate it.</param>
+        static cv::Mat VStackWithPad(cv::Mat* images, uint8_t arraySize, ushort width = 0) {
             int maxWidth = 0;
             cv::Mat res;
 
-            for (uint8_t i = 0; i < arraySize; i++) {                
-                if (images[i].cols > maxWidth)
-                    maxWidth = images[i].cols;
-            }
+            assert(arraySize > 0);
+
+            if (width == 0) {
+                // calculate the ideal width (bigger)
+                for (uint8_t i = 0; i < arraySize; i++) {
+                    if (images[i].cols > maxWidth)
+                        maxWidth = images[i].cols;
+                }
+            } else maxWidth = width;
 
             for (uint8_t i = 0; i < arraySize; i++) {
                 if (images[i].cols != maxWidth)
@@ -70,7 +90,7 @@ class ImageManipulation {
             return res;
         }
 
-        /// <summary>Stack images Horizontally with limit and if images array is bigger than the limit, stack them Vertically</summary>
+        /// <summary>Stack images Horizontally with limit per row, then stack the hstacked rows vertically</summary>
         /// <param name='images'>Array of images to stack</param>
         /// <param name='arraySize'>Amount of images to stack</param>
         /// <param name='maxHStack'>Amount of images to stack horizontally on each row</param>
@@ -79,14 +99,14 @@ class ImageManipulation {
             cv::Mat vstacked;
             uint8_t count = 0;
 
-            if (maxHStack > arraySize) {
-                throw "H stack number is bigger than the size of the array.";
-            } else if (arraySize == maxHStack) {
-                return HStackWithPad(&images[0], maxHStack);
+            assert(maxHStack <= arraySize);
+
+            if (arraySize == maxHStack) {
+                return HStackWithPad(&images[0], maxHStack, RES_HEIGHT);
             }
 
             while (count <= (arraySize - maxHStack)) {
-                hstacked.push_back(HStackWithPad(&images[count], maxHStack));
+                hstacked.push_back(HStackWithPad(&images[count], maxHStack, RES_HEIGHT));
                 count += maxHStack;
             }
 
@@ -97,7 +117,7 @@ class ImageManipulation {
                 hstacked.push_back(StackImages(&images[count], (arraySize - count), (arraySize - count)));
             }
 
-            return VStackWithPad(&hstacked[0], hstacked.size());
+            return VStackWithPad(&hstacked[0], hstacked.size(), RES_WIDTH);
         }
 };
 
