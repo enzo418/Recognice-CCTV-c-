@@ -67,6 +67,8 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     uint8_t stackHSize = amountCameras > 1 ? 2 : 1;
     cv::Mat res;
 
+    bool isFirstIteration = true;
+
     frames.resize(amountCameras);
 
     for (size_t i = 0; i < amountCameras; i++) {
@@ -125,10 +127,12 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
             }
         }
         
-        if (size == amountCameras) {
-            res = ImageManipulation::StackImages(&frames[0], size, stackHSize);
+        if (size == amountCameras || !isFirstIteration) {
+            res = ImageManipulation::StackImages(&frames[0], amountCameras, stackHSize);
             size = 0;
-                        
+
+            isFirstIteration = false;
+
             /* Uncomment if want to record video
             if (frameSize.width != res.cols) {
                 frameSize.width = res.cols;
@@ -136,9 +140,8 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
             }
             */
 
-            for (size_t i = 0; i < amountCameras; i++) {
-                ready[i] = false;
-            }
+            for (size_t i = 0; i < amountCameras; i++)
+                ready[i] = false;            
 
             if (somethingDetected) {
                 auto now = high_resolution_clock::now();;
@@ -232,6 +235,11 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
     auto timeLastframe = high_resolution_clock::now();
     int framesCount = 0;
     bool newFrame = false;  
+
+    /* Image saver */
+    auto timeLastSavedImage = high_resolution_clock::now();
+    ushort secondsBetweenImage = 2;
+
     while (!stop && capture.isOpened()) {                              
         auto now = high_resolution_clock::now();
 
@@ -306,8 +314,18 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
                     cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
                     cv::rectangle(frameToShow, detections[i], color);
                 }
-                if (detections.size() > 0)
+
+                auto now = high_resolution_clock::now();;
+                auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
+                if (detections.size() > 0 && time >= (int)secondsBetweenImage * 1000) {                      
                     somethingDetected = true;
+
+                    std::string date = GetTimeFormated();
+                    cv::imwrite("saved_imgs/img_" + date + ".jpg", frameToShow);
+
+                    timeLastSavedImage = high_resolution_clock::now();
+                }
+
                 cout << config->cameraName << " -- Frames " << framesLeft << endl;
 #if !RECOGNICEALWAYS
                 framesLeft--;
