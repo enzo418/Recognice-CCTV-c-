@@ -7,6 +7,7 @@
 #include <thread>
 #include <map>
 #include <chrono>
+#include "API_KEYS.h"
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
@@ -61,7 +62,6 @@ std::string GetTimeFormated() {
 void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& somethingDetected, bool& stop) {
     /* variables */
     std::vector<cv::Mat> frames;
-    double avgBufferSize = 0;
     std::vector<bool> ready;
     uint8_t size = 0;
     uint8_t stackHSize = amountCameras > 1 ? 2 : 1;
@@ -89,32 +89,11 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     auto timeLastSavedImage = high_resolution_clock::now();
     ushort secondsBetweenImage = 2;
 
-    /* DEBUG */
-    auto timeLastPrint = high_resolution_clock::now();
-    ushort debugged = amountCameras;
-
     while (!stop) {
-        avgBufferSize = 0;
         for (size_t i = 0; i < amountCameras; i++) {
             if (configs[i].frames.size() > 0) {
                 // if the vector in i has no frame
                 if (!ready[configs[i].order]) {
-                    avgBufferSize += configs[i].frames.size();
-
-                    /*DEBUG*/
-                    auto now = high_resolution_clock::now();
-                    auto time = (now - timeLastPrint) / std::chrono::milliseconds(1);
-
-                    if (time > 60 * 1000) {
-                        cout << configs[i].cameraName << " buffer size: " << configs[i].frames.size() << endl;
-                        debugged--;
-                        if (debugged == 0) {
-                            timeLastPrint = high_resolution_clock::now();
-                            debugged = amountCameras;
-                        }
-                    }
-                    /*END DEBUG*/
-
                     // take the first frame and delete it
                     frames[configs[i].order] = configs[i].frames[0];
 
@@ -141,18 +120,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
             */
 
             for (size_t i = 0; i < amountCameras; i++)
-                ready[i] = false;            
-
-            if (somethingDetected) {
-                auto now = high_resolution_clock::now();;
-                auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
-                if (time >= (int)secondsBetweenImage * 1000) {
-                    std::string date = GetTimeFormated();
-                    cv::imwrite("saved_imgs/img_" + date + ".jpg", res);
-                    timeLastSavedImage = high_resolution_clock::now();
-                    somethingDetected = false;
-                }
-            }
+                ready[i] = false;  
 
             cv::imshow("TEST", res);
             if (cv::waitKey(1) >= 0) {
@@ -188,20 +156,18 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
         } */       
         /* End video recorder support */
 
-        avgBufferSize /= amountCameras;
-
         Sleep(interval * 0.7);
     }
 }
 
-// reduces cpu usage from between 1 and 3 %
-///<param name='fps'>How many frames should take per second</param>
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushort interval, bool& somethingDetected) {
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected) {
     #pragma region SetupVideoCapture
 
     ushort framesLeft = 0; // amount of frames left to search a person.
-    const ushort maxFramesLeft = fps * 50;
+    
+    // higher interval -> lower max & lower interval -> higher max
+    const ushort maxFramesLeft = (100 / interval) * 70; // 100 ms => max = 70 frames
 
     const int x = config->roi[0].x;
     const int h = abs(config->roi[1].y - config->roi[0].y);
@@ -209,7 +175,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 
 #if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
-    const uint8_t framesToRecognice = fps * 10; // amount of frame that recognition will be active before going to idle state
+    const uint8_t framesToRecognice = (100 / interval) * 30; // amount of frame that recognition will be active before going to idle state
     const int maxNonZeroPixels = round((w * h) * ((config->sensibility + 0.0) / 100)); // Max non zero to leave idle state
 
     cv::Mat lastFrame;
@@ -230,10 +196,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
     cv::Mat frameToShow;
 
     #pragma endregion
-
-    //auto timeLast2frames = high_resolution_clock::now();
+        
     auto timeLastframe = high_resolution_clock::now();
-    int framesCount = 0;
     bool newFrame = false;  
 
     /* Image saver */
@@ -242,24 +206,17 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
 
     while (!stop && capture.isOpened()) {                              
         auto now = high_resolution_clock::now();
-
-        //auto time = (now - timeLast2frames) / std::chrono::milliseconds(1);
+                
         auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
-        if (framesCount < fps && intervalFrames >= interval) {
+        if (intervalFrames >= interval) {
             capture.read(frame);
-            timeLastframe = high_resolution_clock::now();
-            framesCount++;
+            timeLastframe = high_resolution_clock::now();            
             newFrame = true;
         } else {
             capture.read(invalid); // keep reading to avoid error on VC.
         }
 
-        if (framesCount > 0 && framesCount <= fps && newFrame) {
-            if (framesCount == fps) {
-                //timeLast2frames = high_resolution_clock::now();
-                framesCount = 0;
-            }
-
+        if (newFrame) {
             #pragma region AnalizeFrame
 
             //assert(frame.rows != 0); // check if the frame is valid
@@ -269,7 +226,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
                 capture.release();
                 capture.open(config->url);
                 
-                framesCount--;
+                //framesCount--;
                 assert(capture.isOpened());
                 cout << "Connected to \"" << config->cameraName << "\" successfully...." << endl;
                 continue;
@@ -321,7 +278,11 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort fps, ushor
                     somethingDetected = true;
 
                     std::string date = GetTimeFormated();
-                    cv::imwrite("saved_imgs/img_" + date + ".jpg", frameToShow);
+                    std::string filename = "img_" + date + ".jpg";
+                    cv::imwrite("saved_imgs/"+filename, frameToShow);
+
+                    const std::string ce = "curl -F \"chat_id=" + BOT_CHAT_ID + "\" -F \"photo=@saved_imgs\\"+filename+"\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
+                    system(ce.c_str());
 
                     timeLastSavedImage = high_resolution_clock::now();
                 }
@@ -373,14 +334,13 @@ int main(){
     //configs[1].sensibility = 90; // video
     configs[1].sensibility = 86;  //rtsp
         
-    ushort fps = 3;
-    ushort interval = 100;
-    //configs.shrink_to_fit(); // Requests the removal of unused capacity
-
+    // each time you reduce 50 ms cpu usage increases by 3 to 6 percent.
+    ushort interval = 50; // ms
+    
     //std::thread t1(Process, &configs[0], std::ref(stop));
     //std::thread t2(Process, &configs[1], std::ref(stop));*/
-    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), fps, interval, std::ref(somethingDetected));
-    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), fps, interval, std::ref(somethingDetected));
+    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), interval, std::ref(somethingDetected));
+    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), interval, std::ref(somethingDetected));
 
 #if SHOWFRAMEINSCREEN
     ShowFrames(&configs[0], 2, interval, std::ref(somethingDetected), stop);

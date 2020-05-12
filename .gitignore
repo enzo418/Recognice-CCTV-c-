@@ -339,3 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 *.avi
+/RecognicePeopleCCTV/APIS_KEYS.h
+/RecognicePeopleCCTV/API_KEYS.h
