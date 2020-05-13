@@ -15,6 +15,7 @@ struct CameraConfig{
 	int sensibility;
 	int rotation;
 
-	std::vector<cv::Mat> frames;
+	std::vector<cv::Mat> frames; // frame that the Video Capturer read
+	std::vector<std::tuple<cv::Mat, std::string>> framesToUpload; // the frame wich a person was detected. 
 };
 

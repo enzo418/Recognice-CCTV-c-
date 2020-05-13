@@ -59,6 +59,31 @@ std::string GetTimeFormated() {
     return buffer;
 };
 
+void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& somethingDetected, bool& stop) {
+    cv::Mat frame;
+    std::string date;
+
+    while (!stop) {
+        for (ushort i = 0; i < amountCameras; i++) {
+            if (configs[i].framesToUpload.size() > 0) {
+                // take the first frame and delete it
+                frame = std::get<0>(configs[i].framesToUpload[0]);
+                date = std::get<1>(configs[i].framesToUpload[0]);
+
+                configs[i].framesToUpload.erase(configs[i].framesToUpload.begin());
+
+                std::string filename = "img_" + date + ".jpg";
+                cv::imwrite("saved_imgs/" + filename, frame);
+
+                const std::string ce = "curl -F \"chat_id=" + BOT_CHAT_ID + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
+                system(ce.c_str());
+            }
+        }
+
+        Sleep(3000);
+    }
+}
+
 void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& somethingDetected, bool& stop) {
     /* variables */
     std::vector<cv::Mat> frames;
@@ -278,11 +303,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
                     somethingDetected = true;
 
                     std::string date = GetTimeFormated();
-                    std::string filename = "img_" + date + ".jpg";
-                    cv::imwrite("saved_imgs/"+filename, frameToShow);
 
-                    const std::string ce = "curl -F \"chat_id=" + BOT_CHAT_ID + "\" -F \"photo=@saved_imgs\\"+filename+"\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
-                    system(ce.c_str());
+                    config->framesToUpload.push_back(std::tuple<cv::Mat, std::string>(frameToShow, date));
 
                     timeLastSavedImage = high_resolution_clock::now();
                 }
@@ -335,29 +357,21 @@ int main(){
     configs[1].sensibility = 86;  //rtsp
         
     // each time you reduce 50 ms cpu usage increases by 3 to 6 percent.
-    ushort interval = 50; // ms
+    ushort interval = 80; // ms
     
-    //std::thread t1(Process, &configs[0], std::ref(stop));
-    //std::thread t2(Process, &configs[1], std::ref(stop));*/
     std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), interval, std::ref(somethingDetected));
     std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), interval, std::ref(somethingDetected));
 
 #if SHOWFRAMEINSCREEN
-    ShowFrames(&configs[0], 2, interval, std::ref(somethingDetected), stop);
+    std::thread t3(ShowFrames, &configs[0], 2, interval, std::ref(somethingDetected), std::ref(stop));
 #else
     std::getchar();
 #endif
-    //Sleep(500);
 
-    //CameraConfig d = configs[1];
+    std::thread t4(SaveAndUploadImage, &configs[0], 2, std::ref(somethingDetected), std::ref(stop));
 
-    stop = true;
     t1.join();
     t2.join();
-
-
-    //Process(config1, stop);
-    //RecordSampleOfCamera(config1);
-
-    //std::getchar();
+    t3.join();
+    t4.join();
 }
