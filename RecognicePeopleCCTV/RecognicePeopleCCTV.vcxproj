@@ -149,6 +149,7 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigFileHandler.cpp" />
     <ClCompile Include="ImageManipulation.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

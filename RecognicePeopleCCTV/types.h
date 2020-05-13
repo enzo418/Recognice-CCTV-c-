@@ -1,4 +1,6 @@
 #pragma once
+#include <opencv2\core\base.hpp>
+#include <opencv2\core\types.hpp>
 
 #define RES_WIDTH 640
 #define RES_HEIGHT 360
@@ -17,5 +19,9 @@ struct CameraConfig{
 
 	std::vector<cv::Mat> frames; // frame that the Video Capturer read
 	std::vector<std::tuple<cv::Mat, std::string>> framesToUpload; // the frame wich a person was detected. 
+};
+
+struct ProgramConfig {
+	ushort msBetweenFrame;
 };
 
