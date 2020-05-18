@@ -8,6 +8,10 @@
 #include <map>
 #include <chrono>
 #include "API_KEYS.h"
+#include <sys/stat.h> // To check if file exist
+#include <unordered_map> // To get a unique file id from a camera url
+#include "utils.h"
+#include "ConfigFileHelper.h"
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
@@ -194,9 +198,9 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
     // higher interval -> lower max & lower interval -> higher max
     const ushort maxFramesLeft = (100 / interval) * 70; // 100 ms => max = 70 frames
 
-    const int x = config->roi[0].x;
-    const int h = abs(config->roi[1].y - config->roi[0].y);
-    const int w = abs(config->roi[1].x - config->roi[0].x);
+    const int x = config->roi.point1.x;
+    const int h = abs(config->roi.point2.y - config->roi.point1.y);
+    const int w = abs(config->roi.point2.x - config->roi.point1.x);
 
 #if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
@@ -261,14 +265,14 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             frameToShow = frame.clone();
 
-            if (config->rotation > 0) ImageManipulation::RotateImage(frame, config->rotation);
-
             // Take the region of interes
-            cv::Point r = config->roi[0] + config->roi[1];
-            if ((r).x != 0 || r.y != 0) {
-                cv::Rect roi(config->roi[0], config->roi[1]);
+            if (!config->roi.isEmpty()) {
+                cv::Rect roi(config->roi.point1, config->roi.point2);
                 frame = frame(roi);
             }
+
+            // Then rotate it
+            if (config->rotation > 0) ImageManipulation::RotateImage(frame, config->rotation);
 
             cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
 
@@ -329,10 +333,62 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 }
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
-int main(){
+int main(int argc, char* argv[]){
+    bool isUrl = false;
+    std::string url = "";
+
+    // read for url... this is for the configurator program.
+    if (argc > 1) {
+        for (int i = 1; i < argc; i++) {
+            if (strcmp(argv[i], "-u") == 0) {
+                isUrl = true;
+            } else if (strlen(argv[i]) > 1 && isUrl) {
+                url = argv[i];
+            }
+        }
+
+        if (isUrl) {
+            hash<string> hasher;
+            size_t name = hasher(url);
+            string path = std::to_string(name) + ".jpg";
+
+            if (!Utils::FileExist(path)) {
+                cv::VideoCapture vc(url);
+
+                cv::Mat frame;
+
+                if (vc.isOpened()) {
+                    vc.read(frame);
+                    vc.release();
+
+                    cv::resize(frame, frame, RESIZERESOLUTION);
+
+                    cv::imwrite(path, frame);                    
+                } else {
+                    return -1;
+                }
+            }
+
+            cout << "image_name=" << path << endl;
+
+            return 0;
+        }
+    }
+
+    
     bool stop = false;
     bool somethingDetected = false;
-    CameraConfig configs[2];
+
+    std::vector<CameraConfig> configs;
+    ProgramConfig programConfig;
+
+    ConfigFileHelper fhelper;
+
+    fhelper.ReadFile(programConfig, configs);
+
+    cout << "Cameras found: " << configs.size() << endl;
+
+    /*CameraConfig configs[2];
 
     configs[0].cameraName = "camera1";
     configs[0].order = 0;
@@ -340,7 +396,7 @@ int main(){
     //configs[0].url = configs[0].cameraName + ".avi";
     configs[0].roi[0] = cv::Point(200, 0);
     configs[0].roi[1] = cv::Point(200 + 280, 360);
-    configs[0].rotation = 5;
+    configs[0].rotation = -5;
     configs[0].hitThreshold = 0.05;
     //configs[0].sensibility = 72; // videoj
     configs[0].sensibility = 69; // rtsp
@@ -351,7 +407,7 @@ int main(){
     //configs[1].url = configs[1].cameraName + ".avi";    
     configs[1].roi[0] = cv::Point(310, 0);
     configs[1].roi[1] = cv::Point(310 + 150, 360);
-    configs[1].rotation = -5;
+    configs[1].rotation = 5;
     configs[1].hitThreshold = 0.05;
     //configs[1].sensibility = 90; // video
     configs[1].sensibility = 86;  //rtsp
@@ -373,5 +429,5 @@ int main(){
     t1.join();
     t2.join();
     t3.join();
-    t4.join();
+    t4.join();*/
 }
