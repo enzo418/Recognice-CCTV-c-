@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string.h>
 #include <iterator>
+#include <time.h>
 
 static class Utils {
 	public:
@@ -71,7 +72,7 @@ static class Utils {
 		}
 		#pragma endregion
 
-		#pragma region Time
+		#pragma region Sensibility_Time
 		// <summary> Converts a string of e.g. "10 to 22 use 95" to Time class </summary>
 		static Time GetTime(std::string str) {
 			std::stringstream ss(str);
@@ -114,6 +115,10 @@ static class Utils {
 				res = strtok_s(NULL, ",", &next_token);
 			}
 		}
+
+		static inline void ShouldPickThisSens() {
+
+		}
 		#pragma endregion
 
 		#pragma region RegionOfInteres
@@ -142,5 +147,28 @@ static class Utils {
 		}
 		#pragma endregion
 
+		// <summary> Gets the current time and formats it to a format friendly for windows file name format </summary>
+		static std::string GetTimeFormated() {
+			time_t rawtime;
+			struct tm timeinfo;
+			char buffer[80];
+
+			time(&rawtime);
+			localtime_s(&timeinfo, &rawtime);
+
+			strftime(buffer, 80, "%d_%m_%Y_%H_%M_%S", &timeinfo);
+			return buffer;
+		};
+
+		// <summary> Gets the current hour</summary>
+		static int GetCurrentHour(int& minutesLefToNextHour) {
+			time_t theTime = time(NULL);
+			struct tm aTime;
+			localtime_s(&aTime, &theTime);
+
+			minutesLefToNextHour = 60 - aTime.tm_min;
+						
+			return aTime.tm_hour;
+		};
 };
 

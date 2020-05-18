@@ -51,18 +51,6 @@ void RecordSampleOfCamera(CameraConfig& config) {
     capture.release();
 }
 
-std::string GetTimeFormated() {
-    time_t rawtime;
-    struct tm timeinfo;
-    char buffer[80];
-
-    time(&rawtime);
-    localtime_s(&timeinfo, &rawtime);
-
-    strftime(buffer, 80, "%d_%m_%Y_%H_%M_%S", &timeinfo);
-    return buffer;
-};
-
 void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& somethingDetected, bool& stop) {
     cv::Mat frame;
     std::string date;
@@ -117,6 +105,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     /* Image saver */
     auto timeLastSavedImage = high_resolution_clock::now();
     ushort secondsBetweenImage = 2;
+    
 
     while (!stop) {
         for (size_t i = 0; i < amountCameras; i++) {
@@ -190,7 +179,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
 }
 
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected) {
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected, float secondsBetweenImage) {
     #pragma region SetupVideoCapture
 
     ushort framesLeft = 0; // amount of frames left to search a person.
@@ -205,7 +194,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 #if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
     const uint8_t framesToRecognice = (100 / interval) * 30; // amount of frame that recognition will be active before going to idle state
-    const int maxNonZeroPixels = round((w * h) * ((config->sensibility + 0.0) / 100)); // Max non zero to leave idle state
+    const int frameArea = w * h;
+    //const int maxNonZeroPixels = frameArea * ((config->sensibility + 0.0) / 100); // Max non zero to leave idle state
 
     cv::Mat lastFrame;
     cv::Mat diff;
@@ -217,7 +207,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
     cv::VideoCapture capture(config->url);
 
-    cout << "Opening " << config->cameraName << "..." << endl;
+    std::cout << "Opening " << config->cameraName << "..." << endl;
     assert(capture.isOpened());
 
     cv::Mat frame;
@@ -231,7 +221,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
     /* Image saver */
     auto timeLastSavedImage = high_resolution_clock::now();
-    ushort secondsBetweenImage = 2;
 
     while (!stop && capture.isOpened()) {                              
         auto now = high_resolution_clock::now();
@@ -250,14 +239,14 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             //assert(frame.rows != 0); // check if the frame is valid
             if (frame.rows == 0) {
-                cout << "Received a invalid frame from \"" << config->cameraName << "\". Restarting connection..." << endl;
-                
+                std::cout << "Received a invalid frame from \"" << config->cameraName << "\". Restarting connection..." << std::endl;
+
                 capture.release();
                 capture.open(config->url);
-                
+
                 //framesCount--;
                 assert(capture.isOpened());
-                cout << "Connected to \"" << config->cameraName << "\" successfully...." << endl;
+                std::cout << "Connected to \"" << config->cameraName << "\" successfully...." << std::endl;
                 continue;
             }
 
@@ -272,7 +261,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
             }
 
             // Then rotate it
-            if (config->rotation > 0) ImageManipulation::RotateImage(frame, config->rotation);
+            if (config->rotation != 0) ImageManipulation::RotateImage(frame, config->rotation);
 
             cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
 
@@ -284,8 +273,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             lastFrame = frame;
 
-            //cout << maxNonZeroPixels - totalNonZeroPixels << endl;
-            if (totalNonZeroPixels > maxNonZeroPixels) {
+            // take a percentage of the frame area
+            if (totalNonZeroPixels > frameArea * ((config->sensibility + 0.0) / 100)) {
                 if (framesLeft < maxFramesLeft)
                     framesLeft += framesToRecognice;
             }
@@ -303,17 +292,17 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
                 auto now = high_resolution_clock::now();;
                 auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
-                if (detections.size() > 0 && time >= (int)secondsBetweenImage * 1000) {                      
+                if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {                      
                     somethingDetected = true;
 
-                    std::string date = GetTimeFormated();
+                    std::string date = Utils::GetTimeFormated();
 
                     config->framesToUpload.push_back(std::tuple<cv::Mat, std::string>(frameToShow, date));
 
                     timeLastSavedImage = high_resolution_clock::now();
                 }
 
-                cout << config->cameraName << " -- Frames " << framesLeft << endl;
+                std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
 #if !RECOGNICEALWAYS
                 framesLeft--;
 #endif
@@ -322,14 +311,60 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             newFrame = false;
 #if SHOWFRAMEINSCREEN
-            config->frames.push_back(frameToShow);
+            config->frames.push_back(frame);
 #endif
         }
     }
 
-    cout << "Closed connection with " << config->cameraName << endl;
+    std::cout << "Closed connection with " << config->cameraName << std::endl;
 
     capture.release();
+}
+
+void CheckTimeSensibility(CameraConfig* config, const int configSize, bool& stop) {
+    int secondSleep = 15;
+    int minutesUntilNextHour = 0;
+    int secondsElapsed = 0;
+    while (!stop) {
+        if (secondsElapsed / 60 >= minutesUntilNextHour) {
+            int hour = Utils::GetCurrentHour(std::ref(minutesUntilNextHour));
+            std::cout << "minutes left=" << minutesUntilNextHour << std::endl;
+            bool changeSens = false;
+            // run over each camera configuration
+            for (size_t i = 0; i < configSize; i++) {
+                int sensSize = config[i].sensibilityList.size();
+                // run over each sensibility config
+                for (size_t j = 0; j < sensSize; j++) {
+                    Time sens = config[i].sensibilityList[j];
+                    if (sens.sensibility != config[i].sensibility) {
+                        // separe the if in two scenarios 
+                        // 1. 0----TO----12---FROM---23 => FROM > TO => Only will pass if hour > FROM or hour < to
+                        // 2. 0---FROM---12----TO----23 => FROM < TO => Only will pas if is between FROM and TO.
+                        if (sens.from > sens.to) {
+                            if (hour >= sens.from || hour <= sens.to)
+                                changeSens = true;
+                        } else {
+                            if (hour >= sens.from && hour <= sens.to)
+                                changeSens = true;
+                        }
+
+                        if (changeSens) {
+                            std::cout << "Sensibility changed in " << config[i].cameraName
+                                << " from " << config[i].sensibility << " to " << sens.sensibility << std::endl;
+
+                            config[i].sensibility = sens.sensibility;
+
+                            changeSens = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        //Sleep((minutesUntilNextHour + 2) * 60000);
+        Sleep(secondSleep * 1000); // sleep only seconds to be able to check if stop is true
+        secondsElapsed += secondSleep;
+    }
 }
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
@@ -337,7 +372,7 @@ int main(int argc, char* argv[]){
     bool isUrl = false;
     std::string url = "";
 
-    // read for url... this is for the configurator program.
+    // read for url... this is used for the configurator program.
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             if (strcmp(argv[i], "-u") == 0) {
@@ -369,65 +404,47 @@ int main(int argc, char* argv[]){
                 }
             }
 
-            cout << "image_name=" << path << endl;
+            std::cout << "image_name=" << path << std::endl;
 
             return 0;
         }
     }
-
-    
+        
     bool stop = false;
     bool somethingDetected = false;
 
+    std::vector<thread> threads;
+
+    // configs
     std::vector<CameraConfig> configs;
     ProgramConfig programConfig;
 
+    // Get the cameras and program configurations
     ConfigFileHelper fhelper;
-
     fhelper.ReadFile(programConfig, configs);
 
-    cout << "Cameras found: " << configs.size() << endl;
+    int configsSize = configs.size();
 
-    /*CameraConfig configs[2];
+    std::cout << "Cameras found: " << configsSize << std::endl;
 
-    configs[0].cameraName = "camera1";
-    configs[0].order = 0;
-    configs[0].url = "rtsp://192.168.1.18:554/user=admin&password=d12&channel=4&stream=0.sdp";
-    //configs[0].url = configs[0].cameraName + ".avi";
-    configs[0].roi[0] = cv::Point(200, 0);
-    configs[0].roi[1] = cv::Point(200 + 280, 360);
-    configs[0].rotation = -5;
-    configs[0].hitThreshold = 0.05;
-    //configs[0].sensibility = 72; // videoj
-    configs[0].sensibility = 69; // rtsp
+    // Start a thread for each camera
+    for (size_t i = 0; i < configsSize; i++) {
+        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), programConfig.msBetweenFrame, std::ref(somethingDetected), programConfig.secondsBetweenImage));
+    }
 
-    configs[1].cameraName = "camera2";
-    configs[1].order = 1;
-    configs[1].url = "rtsp://192.168.1.18:554/user=admin&password=d12&channel=3&stream=0.sdp";
-    //configs[1].url = configs[1].cameraName + ".avi";    
-    configs[1].roi[0] = cv::Point(310, 0);
-    configs[1].roi[1] = cv::Point(310 + 150, 360);
-    configs[1].rotation = 5;
-    configs[1].hitThreshold = 0.05;
-    //configs[1].sensibility = 90; // video
-    configs[1].sensibility = 86;  //rtsp
-        
-    // each time you reduce 50 ms cpu usage increases by 3 to 6 percent.
-    ushort interval = 80; // ms
-    
-    std::thread t1(ReadFramesWithIntervals, &configs[0], std::ref(stop), interval, std::ref(somethingDetected));
-    std::thread t2(ReadFramesWithIntervals, &configs[1], std::ref(stop), interval, std::ref(somethingDetected));
+    // Start the thread to show the images captured.
+    threads.push_back(std::thread(ShowFrames, &configs[0], 2, programConfig.msBetweenFrame, std::ref(somethingDetected), std::ref(stop)));
 
-#if SHOWFRAMEINSCREEN
-    std::thread t3(ShowFrames, &configs[0], 2, interval, std::ref(somethingDetected), std::ref(stop));
-#else
-    std::getchar();
-#endif
+    // Start a thread for save and upload the images captured    
+    threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(somethingDetected), std::ref(stop)));
 
-    std::thread t4(SaveAndUploadImage, &configs[0], 2, std::ref(somethingDetected), std::ref(stop));
+    // Start a thread for save and upload the images captured    
+    threads.push_back(std::thread(CheckTimeSensibility, &configs[0], configsSize, std::ref(stop)));
 
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();*/
+    // Wait until every thread finish
+    for (size_t i = 0; i < threads.size(); i++) {
+        threads[i].join();
+        if(i == 0)
+            std::cout << "Please wait... 15 seconds until release all the resources used." << std::endl;
+    }
 }
