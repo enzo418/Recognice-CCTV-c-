@@ -55,6 +55,7 @@ void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& so
     cv::Mat frame;
     std::string date;
 
+
     while (!stop) {
         for (ushort i = 0; i < amountCameras; i++) {
             if (configs[i].framesToUpload.size() > 0) {
@@ -105,7 +106,6 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     /* Image saver */
     auto timeLastSavedImage = high_resolution_clock::now();
     ushort secondsBetweenImage = 2;
-    
 
     while (!stop) {
         for (size_t i = 0; i < amountCameras; i++) {
@@ -311,7 +311,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             newFrame = false;
 #if SHOWFRAMEINSCREEN
-            config->frames.push_back(frame);
+            config->frames.push_back(frameToShow);
 #endif
         }
     }
