@@ -12,6 +12,7 @@
 #include <unordered_map> // To get a unique file id from a camera url
 #include "utils.h"
 #include "ConfigFileHelper.h"
+#include "NotificationIcon.h"
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
@@ -51,7 +52,7 @@ void RecordSampleOfCamera(CameraConfig& config) {
     capture.release();
 }
 
-void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& somethingDetected, bool& stop) {
+void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& stop) {
     cv::Mat frame;
     std::string date;
 
@@ -76,18 +77,37 @@ void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& so
     }
 }
 
-void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval, bool& somethingDetected, bool& stop) {
-    /* variables */
+/// <summary> Takes a frame from each camera then stack and display them in a window </summary>
+void ShowFrames(CameraConfig* configs, const int amountCameras, 
+                ushort interval, bool& stop, HWND hwndl, HMODULE g_hinst) {
+    // ============
+    //  Variables 
+    // ============
+      
+    // saves the frames to show in a iteration
     std::vector<cv::Mat> frames;
+    
+    // saves the cameras that are ready to be displayed
     std::vector<bool> ready;
-    uint8_t size = 0;
+    
+    // counts the cameras displayed
+    uint8_t size = 0; 
+
     uint8_t stackHSize = amountCameras > 1 ? 2 : 1;
+
+    // resolution of each frame
     cv::Mat res;
 
-    bool isFirstIteration = true;
+    // saves the current state of the notification icon
+    NISTATE currentState = NI_STATE_SENTRY;
 
+    // used to, in case is false, display the last frame of the camera that has no frame
+    // in the moment of the iteration.
+    bool isFirstIteration = true;
+       
     frames.resize(amountCameras);
 
+    // init vector of cameras ready
     for (size_t i = 0; i < amountCameras; i++) {
         ready.push_back(false);
     }
@@ -105,12 +125,18 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
     /* Image saver */
     auto timeLastSavedImage = high_resolution_clock::now();
     ushort secondsBetweenImage = 2;
-    
+
+    // ============
+    //  Main loop 
+    // ============
 
     while (!stop) {
+        // if all cameras are in sentry state
+        bool allCamerasInSentry = true;
+
         for (size_t i = 0; i < amountCameras; i++) {
             if (configs[i].frames.size() > 0) {
-                // if the vector in i has no frame
+                // if the vector pos i has no frame
                 if (!ready[configs[i].order]) {
                     // take the first frame and delete it
                     frames[configs[i].order] = configs[i].frames[0];
@@ -122,6 +148,38 @@ void ShowFrames(CameraConfig* configs, const int amountCameras, ushort interval,
                     size++;
                 }
             }
+
+            // Check camera state
+            if (configs[i].state == NI_STATE_DETECTED) {
+                allCamerasInSentry = false;
+                if (currentState != NI_STATE_DETECTED) {
+                    currentState = NI_STATE_DETECTED;
+                    if (!SetStateNotificationIcon(hwndl, g_hinst, currentState))
+                        SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
+                    std::cout << "[W] " << configs[i].cameraName << " detected a person..." << std::endl;
+                }
+            } else if (configs[i].state == NI_STATE_DETECTING) {
+                allCamerasInSentry = false;
+                if (currentState != NI_STATE_DETECTING && currentState != NI_STATE_DETECTED) {
+                    currentState = NI_STATE_DETECTING;
+                    if (!SetStateNotificationIcon(hwndl, g_hinst, currentState))
+                        SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
+                    std::cout << "[I] " << configs[i].cameraName << " is trying to match a person in the frame..." << std::endl;
+                }
+            } else if (configs[i].state == NI_STATE_SENTRY) {
+                allCamerasInSentry = allCamerasInSentry && true;
+            }
+        }
+
+        if (allCamerasInSentry && currentState != NI_STATE_SENTRY) {
+            currentState = NI_STATE_SENTRY;
+
+            if (!SetStateNotificationIcon(hwndl, g_hinst, currentState)) {
+                std::cout << "Trying again" << std::endl;
+                SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
+            }
+
+            std::cout << "[I]" << " All the cameras are back to sentry mode." << std::endl;
         }
         
         if (size == amountCameras || !isFirstIteration) {
@@ -275,6 +333,10 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             // take a percentage of the frame area
             if (totalNonZeroPixels > frameArea * ((config->sensibility + 0.0) / 100)) {
+                if (config->state != NI_STATE_DETECTED && config->state != NI_STATE_DETECTING)
+                    config->state = NI_STATE_DETECTING; // Change the state of the camera
+
+                // Increment frames left
                 if (framesLeft < maxFramesLeft)
                     framesLeft += framesToRecognice;
             }
@@ -292,7 +354,9 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
                 auto now = high_resolution_clock::now();;
                 auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
-                if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {                      
+                if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {    
+                    config->state = NI_STATE_DETECTED;
+
                     somethingDetected = true;
 
                     std::string date = Utils::GetTimeFormated();
@@ -301,17 +365,21 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
                     timeLastSavedImage = high_resolution_clock::now();
                 }
-
-                std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
+                
 #if !RECOGNICEALWAYS
                 framesLeft--;
 #endif
+                std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
             }
             #pragma endregion
 
+            if (framesLeft == 0) {
+                config->state = NI_STATE_SENTRY;
+            }
+
             newFrame = false;
 #if SHOWFRAMEINSCREEN
-            config->frames.push_back(frame);
+            config->frames.push_back(frameToShow);
 #endif
         }
     }
@@ -328,7 +396,6 @@ void CheckTimeSensibility(CameraConfig* config, const int configSize, bool& stop
     while (!stop) {
         if (secondsElapsed / 60 >= minutesUntilNextHour) {
             int hour = Utils::GetCurrentHour(std::ref(minutesUntilNextHour));
-            std::cout << "minutes left=" << minutesUntilNextHour << std::endl;
             bool changeSens = false;
             // run over each camera configuration
             for (size_t i = 0; i < configSize; i++) {
@@ -415,6 +482,11 @@ int main(int argc, char* argv[]){
 
     std::vector<thread> threads;
 
+    HWND hwnd = GetConsoleWindow();
+    HMODULE g_inst = GetModuleHandleA(NULL);
+
+    AddNotificationIcon(hwnd, g_inst);
+
     // configs
     std::vector<CameraConfig> configs;
     ProgramConfig programConfig;
@@ -433,10 +505,10 @@ int main(int argc, char* argv[]){
     }
 
     // Start the thread to show the images captured.
-    threads.push_back(std::thread(ShowFrames, &configs[0], 2, programConfig.msBetweenFrame, std::ref(somethingDetected), std::ref(stop)));
+    threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, programConfig.msBetweenFrame, std::ref(stop), hwnd, g_inst));
 
     // Start a thread for save and upload the images captured    
-    threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(somethingDetected), std::ref(stop)));
+    threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(stop)));
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(CheckTimeSensibility, &configs[0], configsSize, std::ref(stop)));
@@ -444,7 +516,9 @@ int main(int argc, char* argv[]){
     // Wait until every thread finish
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
-        if(i == 0)
-            std::cout << "Please wait... 15 seconds until release all the resources used." << std::endl;
+        if (i == 0)
+            std::cout << "Please wait... 15 seconds until release all the resources used." << std::endl;        
     }
+
+    DeleteNotificationIcon();
 }

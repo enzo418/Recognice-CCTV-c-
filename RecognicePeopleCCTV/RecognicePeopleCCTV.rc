@@ -1,6 +1,5 @@
 // Microsoft Visual C++ generated resource script.
 //
-
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -14,10 +13,36 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Inglés (Estados Unidos) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-LANGUAGE 10, 3
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "CCTV"
+    IDS_TOOLTIP             "CCTV Notifications"
+    IDS_STATE_SENTRY        "State: Sentry"
+    IDS_STATE_DETECTING     "State: DETECTING"
+    IDS_STATE_DETECED       "State: WARNING! Detected!"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Spanish (Spain, International Sort) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESN)
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH_MODERN
+#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -25,18 +50,18 @@ LANGUAGE 10, 3
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE  
+2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE  
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -44,7 +69,31 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Inglés (Estados Unidos) resources
+#endif    // Spanish (Spain, International Sort) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Spanish (Argentina) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESS)
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON_SENTRY         ICON                    "C:\\Users\\cltx\\Pictures\\Icons\\camera_white64.ico"
+
+IDI_ICON_DECTECTING     ICON                    "C:\\Users\\cltx\\Pictures\\Icons\\camera_blue64.ico"
+
+IDI_ICON_DETECTED       ICON                    "C:\\Users\\cltx\\Pictures\\Icons\\camera_red64.ico"
+
+#endif    // Spanish (Argentina) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -58,3 +107,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+

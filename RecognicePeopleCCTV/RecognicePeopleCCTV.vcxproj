@@ -151,17 +151,25 @@
   <ItemGroup>
     <ClCompile Include="ImageManipulation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NotificationIcon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_KEYS.h" />
     <ClInclude Include="ConfigFileHelper.h" />
     <ClInclude Include="ImageManipulation.h" />
+    <ClInclude Include="NotificationIcon.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RecognicePeopleCCTV.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\Pictures\Icons\camera_blue64.ico" />
+    <Image Include="..\..\..\..\Pictures\Icons\camera_red64.ico" />
+    <Image Include="..\..\..\..\Pictures\Icons\camera_white64.ico" />
+    <Image Include="..\..\..\..\pictures\icons\icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
