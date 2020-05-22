@@ -83,7 +83,7 @@ class ImageManipulation {
 
             for (uint8_t i = 0; i < arraySize; i++) {
                 if (images[i].cols != maxWidth)
-                    AddPad(images[i], 0, (maxWidth - images[i].cols));
+                    AddPad(images[i], 0, (maxWidth - images[i].cols));                
             }
 
             cv::vconcat(images, arraySize, res);
@@ -96,7 +96,6 @@ class ImageManipulation {
         /// <param name='maxHStack'>Amount of images to stack horizontally on each row</param>
         static cv::Mat StackImages(cv::Mat* images, uint8_t arraySize, uint8_t maxHStack = 2) {
             std::vector<cv::Mat> hstacked;
-            cv::Mat vstacked;
             uint8_t count = 0;
 
             assert(maxHStack <= arraySize);
@@ -117,7 +116,8 @@ class ImageManipulation {
                 hstacked.push_back(StackImages(&images[count], (arraySize - count), (arraySize - count)));
             }
 
-            return VStackWithPad(&hstacked[0], hstacked.size(), RES_WIDTH);
+            // pass 0 since its the width of two images Hstacked.
+            return VStackWithPad(&hstacked[0], hstacked.size(), 0);
         }
 };
 

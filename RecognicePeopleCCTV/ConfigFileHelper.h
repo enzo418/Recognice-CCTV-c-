@@ -32,6 +32,15 @@ class ConfigFileHelper {
             } else if (id == "rotation") {
                 int val = std::stoi(value);
                 config.rotation = val;
+            } else if (id == "type") {
+                Utils::toLowerCase(value);
+                if (value == "active" || value == "activated" || value == "enabled") {
+                    config.type = CAMERA_ACTIVE;
+                } else if (value == "sentry") {
+                    config.type = CAMERA_SENTRY;
+                } else if (value == "disabled") {
+                    config.type = CAMERA_DISABLED;
+                }
             } else if (id == "sensibility") {
                 Utils::DecodeSensibility(config.sensibilityList, value);
             } else if (id == "hitthreshold") {
@@ -55,6 +64,12 @@ class ConfigFileHelper {
                 std::replace(value.begin(), value.end(), ',', '.');
                 float val = std::stof(value);
                 config.secondsBetweenImage = val;
+            } else if (id == "telegram_bot_api"  || id == "telegram_api"
+                       || id == "telegrambotapi" || id == "telegramapi") {
+                config.telegramConfig.apiKey = value;
+            } else if (id == "telegram_chat_id"  || id == "telegram_bot_chat_id"
+                       || id == "telegramchatid" || id == "telegrambotchatid") {
+                config.telegramConfig.chatId = value;
             }
         }
 
@@ -91,9 +106,6 @@ class ConfigFileHelper {
             PathRemoveFileSpecA(filename);
             PathCombineA(filename, filename, "config.ini");
 
-            std::cout << _fileName << std::endl;
-            std::cout << filename << std::endl;
-
             if (Utils::FileExist(filename)) {
                 _file.open(filename);
             }
@@ -103,6 +115,7 @@ class ConfigFileHelper {
             ConfigFileHelper();
         };
 
+        /// <summary> Reads the config file then builds and return the configurations</summary>
         void ReadFile(ProgramConfig& programConfig, std::vector<CameraConfig>& configs) {
             std::string line;
 
@@ -117,7 +130,19 @@ class ConfigFileHelper {
                             programConfig = ReadNextConfig(_file, config);
                         } else if (line == "camera") {
                             CameraConfig config;
-                            configs.push_back(ReadNextConfig(_file, config));
+                            ReadNextConfig(_file, config);
+
+                            // validate config
+                            if (config.type == CAMERA_DISABLED) {
+                                std::cout << config.cameraName << " skiped because its type is disabled" << std::endl;
+                            } else if (config.url.empty() /* check if is a valid url*/) {
+                                std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
+                            } else {
+                                // set sensibility to 0. Then the program set it again to the real value.
+                                config.sensibility = 0;
+
+                                configs.push_back(config);
+                            }
                         }
                     }
                 }
