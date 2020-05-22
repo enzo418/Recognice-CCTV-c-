@@ -52,7 +52,7 @@ void RecordSampleOfCamera(CameraConfig& config) {
     capture.release();
 }
 
-void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& stop) {
+void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, ProgramConfig& programConfig, bool& stop) {
     cv::Mat frame;
     std::string date;
 
@@ -68,12 +68,13 @@ void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, bool& st
                 std::string filename = "img_" + date + ".jpg";
                 cv::imwrite("saved_imgs/" + filename, frame);
 
-                const std::string ce = "curl -F \"chat_id=" + BOT_CHAT_ID + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
+                const std::string ce = "curl -F \"chat_id=" + programConfig.telegramConfig.apiKey + "\" -F \"photo=@saved_imgs\\" + programConfig.telegramConfig.chatId + "\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
                 system(ce.c_str());
             }
         }
 
-        Sleep(3000);
+        std::this_thread::sleep_for(chrono::milliseconds(3000));
+        //Sleep(3000);
     }
 }
 
@@ -232,7 +233,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
         } */       
         /* End video recorder support */
 
-        Sleep(interval * 0.7);
+        std::this_thread::sleep_for(chrono::milliseconds(int(interval * 0.7)));
     }
 }
 
@@ -249,7 +250,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
     const int h = abs(config->roi.point2.y - config->roi.point1.y);
     const int w = abs(config->roi.point2.x - config->roi.point1.x);
 
-#if !RECOGNICEALWAYS
     int totalNonZeroPixels = 0;
     const uint8_t framesToRecognice = (100 / interval) * 30; // amount of frame that recognition will be active before going to idle state
     const int frameArea = w * h;
@@ -257,7 +257,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
     cv::Mat lastFrame;
     cv::Mat diff;
-#endif
 
     cv::HOGDescriptor hog;
     hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
@@ -283,6 +282,10 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
     while (!stop && capture.isOpened()) {                              
         auto now = high_resolution_clock::now();
                 
+        const CAMERATYPE camType = config->type;
+        const NISTATE camState = config->state;
+        const std::string camName = config->cameraName;
+
         auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
         if (intervalFrames >= interval) {
             capture.read(frame);
@@ -323,7 +326,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
 
-#if !RECOGNICEALWAYS
             if (lastFrame.rows == RESIZERESOLUTION.height) {
                 cv::absdiff(lastFrame, frame, diff);
                 totalNonZeroPixels = cv::countNonZero(diff);
@@ -333,54 +335,66 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             // take a percentage of the frame area
             if (totalNonZeroPixels > frameArea * ((config->sensibility + 0.0) / 100)) {
-                if (config->state != NI_STATE_DETECTED && config->state != NI_STATE_DETECTING)
+                if (camState != NI_STATE_DETECTED 
+                    && camType != CAMERA_SENTRY
+                    && camState != NI_STATE_DETECTING)
                     config->state = NI_STATE_DETECTING; // Change the state of the camera
 
                 // Increment frames left
                 if (framesLeft < maxFramesLeft)
                     framesLeft += framesToRecognice;
             }
-#endif
 
-            std::vector<cv::Rect> detections;
-            vector< double > foundWeights;
-            if (RECOGNICEALWAYS || framesLeft > 0) {
-                hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-                for (size_t i = 0; i < detections.size(); i++) {
-                    detections[i].x += x;
-                    cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
-                    cv::rectangle(frameToShow, detections[i], color);
+            if (camType == CAMERA_SENTRY) {
+                if (framesLeft > 0) {
+                    if (camState != NI_STATE_DETECTING) {
+                        config->state = NI_STATE_DETECTING;
+                    }
+                    framesLeft--;
+                } else {
+                    config->state = NI_STATE_SENTRY;
                 }
 
-                auto now = high_resolution_clock::now();;
-                auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
-                if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {    
-                    config->state = NI_STATE_DETECTED;
+                newFrame = false;
+                config->frames.push_back(frameToShow);
+            } else {
+                std::vector<cv::Rect> detections;
+                vector< double > foundWeights;
+                if (RECOGNICEALWAYS || framesLeft > 0) {
+                    hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+                    for (size_t i = 0; i < detections.size(); i++) {
+                        detections[i].x += x;
+                        cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
+                        cv::rectangle(frameToShow, detections[i], color);
+                    }
 
-                    somethingDetected = true;
+                    auto now = high_resolution_clock::now();;
+                    auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
+                    if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {
+                        config->state = NI_STATE_DETECTED;
 
-                    std::string date = Utils::GetTimeFormated();
+                        somethingDetected = true;
 
-                    config->framesToUpload.push_back(std::tuple<cv::Mat, std::string>(frameToShow, date));
+                        std::string date = Utils::GetTimeFormated();
 
-                    timeLastSavedImage = high_resolution_clock::now();
+                        config->framesToUpload.push_back(std::tuple<cv::Mat, std::string>(frameToShow, date));
+
+                        timeLastSavedImage = high_resolution_clock::now();
+                    }
+
+                    framesLeft--;
+                    std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
                 }
-                
-#if !RECOGNICEALWAYS
-                framesLeft--;
-#endif
-                std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
-            }
-            #pragma endregion
+#pragma endregion
 
-            if (framesLeft == 0) {
-                config->state = NI_STATE_SENTRY;
-            }
+                if (framesLeft == 0) {
+                    config->state = NI_STATE_SENTRY;
+                }
 
-            newFrame = false;
-#if SHOWFRAMEINSCREEN
-            config->frames.push_back(frameToShow);
-#endif
+                newFrame = false;
+
+                config->frames.push_back(frameToShow);
+            }
         }
     }
 
@@ -429,7 +443,8 @@ void CheckTimeSensibility(CameraConfig* config, const int configSize, bool& stop
         }
 
         //Sleep((minutesUntilNextHour + 2) * 60000);
-        Sleep(secondSleep * 1000); // sleep only seconds to be able to check if stop is true
+        std::this_thread::sleep_for(chrono::seconds(secondSleep));
+        //Sleep(secondSleep * 1000); // sleep only seconds to be able to check if stop is true
         secondsElapsed += secondSleep;
     }
 }
@@ -497,6 +512,12 @@ int main(int argc, char* argv[]){
 
     int configsSize = configs.size();
 
+    if (configsSize == 0) {
+        std::cout << "Couldn't fin cameras in the config file." << configsSize << std::endl;
+        std::getchar();
+        return 0;
+    }
+
     std::cout << "Cameras found: " << configsSize << std::endl;
 
     // Start a thread for each camera
@@ -508,16 +529,17 @@ int main(int argc, char* argv[]){
     threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, programConfig.msBetweenFrame, std::ref(stop), hwnd, g_inst));
 
     // Start a thread for save and upload the images captured    
-    threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(stop)));
+    threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(programConfig),  std::ref(stop)));
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(CheckTimeSensibility, &configs[0], configsSize, std::ref(stop)));
 
     // Wait until every thread finish
-    for (size_t i = 0; i < threads.size(); i++) {
-        threads[i].join();
-        if (i == 0)
-            std::cout << "Please wait... 15 seconds until release all the resources used." << std::endl;        
+    int szThreads = threads.size();
+    for (int i = 0; i < szThreads; i++) {
+        if (i == szThreads - 1)
+            std::cout << "Please wait... 15 seconds until release all the resources used." << std::endl;
+        threads[i].join();     
     }
 
     DeleteNotificationIcon();
