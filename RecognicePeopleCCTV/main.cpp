@@ -89,9 +89,12 @@ void inline ChangeNotificationState(HWND hwndl, HMODULE g_hinst, NISTATE state, 
     int maxTries = 4;
     int count = 0;
     while (!SetStateNotificationIcon(hwndl, g_hinst, state, msg, title) && count <= maxTries) {
+        std::cout << "Trying again" << std::endl;
         std::this_thread::sleep_for(chrono::milliseconds(1));        
         count++;
     }
+    if (count >= maxTries)
+        std::cout << "Failed to send notif." << std::endl;
 }
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
@@ -267,7 +270,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
 }
 
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected, float secondsBetweenImage) {
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected, float secondsBetweenImage, cv::HOGDescriptor& hog) {
     #pragma region SetupVideoCapture
 
     ushort framesLeft = 0; // amount of frames left to search a person.
@@ -279,6 +282,10 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
     const int h = abs(config->roi.point2.y - config->roi.point1.y);
     const int w = abs(config->roi.point2.x - config->roi.point1.x);
 
+
+    const char* camName = &config->cameraName[0];
+    const CAMERATYPE camType = config->type;
+
     int totalNonZeroPixels = 0;
     const uint8_t framesToRecognice = (100 / interval) * 30; // amount of frame that recognition will be active before going to idle state
     const int frameArea = w * h;
@@ -287,56 +294,52 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
     cv::Mat lastFrame;
     cv::Mat diff;
 
-    cv::HOGDescriptor hog;
-    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
     //hog.winSize = cv::Size(w, h);
 
     cv::VideoCapture capture(config->url);
 
-    std::cout << "Opening " << config->cameraName << "..." << endl;
+    std::cout << "Opening " << camName << "..." << endl;
     assert(capture.isOpened());
 
     cv::Mat frame;
     cv::Mat invalid;
     cv::Mat frameToShow;
 
-    #pragma endregion
-        
+#pragma endregion
+
     auto timeLastframe = high_resolution_clock::now();
-    bool newFrame = false;  
+    bool newFrame = false;
 
     /* Image saver */
     auto timeLastSavedImage = high_resolution_clock::now();
 
-    while (!stop && capture.isOpened()) {                              
+    while (!stop && capture.isOpened()) {
         auto now = high_resolution_clock::now();
-                
-        const CAMERATYPE camType = config->type;
+
         const NISTATE camState = config->state;
-        const std::string camName = config->cameraName;
 
         auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
         if (intervalFrames >= interval) {
             capture.read(frame);
-            timeLastframe = high_resolution_clock::now();            
+            timeLastframe = high_resolution_clock::now();
             newFrame = true;
         } else {
             capture.read(invalid); // keep reading to avoid error on VC.
         }
 
         if (newFrame) {
-            #pragma region AnalizeFrame
+#pragma region AnalizeFrame
 
             //assert(frame.rows != 0); // check if the frame is valid
             if (frame.rows == 0) {
-                std::cout << "Received a invalid frame from \"" << config->cameraName << "\". Restarting connection..." << std::endl;
+                std::cout << "Received a invalid frame from \"" << camName << "\". Restarting connection..." << std::endl;
 
                 capture.release();
                 capture.open(config->url);
 
                 //framesCount--;
                 assert(capture.isOpened());
-                std::cout << "Connected to \"" << config->cameraName << "\" successfully...." << std::endl;
+                std::cout << "Connected to \"" << camName << "\" successfully...." << std::endl;
                 continue;
             }
 
@@ -365,7 +368,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
             // take a percentage of the frame area
             double percentage = ((config->sensibility + 0.0) / 100);
             if (totalNonZeroPixels > frameArea * percentage) {
-                if (camState != NI_STATE_DETECTED 
+                if (camState != NI_STATE_DETECTED
                     && camType != CAMERA_SENTRY
                     && camState != NI_STATE_DETECTING)
                     config->state = NI_STATE_DETECTING; // Change the state of the camera
@@ -413,7 +416,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
                     }
 
                     framesLeft--;
-                    std::cout << config->cameraName << " -- Frames " << framesLeft << std::endl;
+                    std::cout << camName << " -- Frames " << framesLeft << std::endl;
                 }
 #pragma endregion
 
@@ -423,12 +426,12 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
                 newFrame = false;
 
-                config->frames.push_back(frameToShow);
+                config->frames.push_back(std::move(frameToShow));
             }
         }
     }
 
-    std::cout << "Closed connection with " << config->cameraName << std::endl;
+    std::cout << "Closed connection with " << camName << std::endl;
 
     capture.release();
 }
@@ -550,9 +553,13 @@ int main(int argc, char* argv[]){
 
     std::cout << "Cameras found: " << configsSize << std::endl;
 
+    // start hog decriptor
+    cv::HOGDescriptor hog;
+    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+
     // Start a thread for each camera
     for (size_t i = 0; i < configsSize; i++) {
-        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), programConfig.msBetweenFrame, std::ref(somethingDetected), programConfig.secondsBetweenImage));
+        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), programConfig.msBetweenFrame, std::ref(somethingDetected), programConfig.secondsBetweenImage, std::ref(hog)));
     }
 
     // Start the thread to show the images captured.
