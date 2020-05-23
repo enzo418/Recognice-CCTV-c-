@@ -39,7 +39,7 @@ BOOL AddNotificationIcon(HWND hwnd, HMODULE g_hInst) {
     return Shell_NotifyIcon(NIM_SETVERSION, &nid);
 }
 
-BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state) {
+BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state, const char* msg, const char* title) {
     NOTIFYICONDATA nid;
 
     nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -53,9 +53,8 @@ BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state) {
     else if (state == NI_STATE_DETECTED) { IDS = IDS_STATE_DETECED; IDI = IDI_ICON_DETECTED; }
 
     /* Uncomment to show a windows notification */
-    //nid.dwInfoFlags = NIIF_WARNING | NIIF_RESPECT_QUIET_TIME;
     //LoadString(g_hInst, IDS_, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
-    //LoadString(g_hInst, IDS_, nid.szInfo, ARRAYSIZE(nid.szInfo));
+    //LoadString(g_hInst, IDS_, nid.szInfo, ARRAYSIZE(nid.szInfo));    
 
     // load the icon
     LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI), LIM_SMALL, &nid.hIcon);
@@ -64,6 +63,15 @@ BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state) {
     LoadString(g_hInst, IDS, nid.szTip, ARRAYSIZE(nid.szTip));
 
     nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP; // NIF_INFO => Windows Notif. Alert
+
+    if (strlen(msg) > 0 && strlen(title) > 0) {
+        size_t lengthTitle = 0;
+        mbstowcs_s(&lengthTitle, nid.szInfoTitle, title, strlen(title));
+        size_t lengthMsg = 0;
+        mbstowcs_s(&lengthMsg, nid.szInfo, msg, strlen(msg));
+        nid.uFlags |= NIF_INFO;
+        nid.dwInfoFlags = NIIF_RESPECT_QUIET_TIME;
+    }
 
     return Shell_NotifyIcon(NIM_MODIFY, &nid);
 }

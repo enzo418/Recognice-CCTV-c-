@@ -28,5 +28,5 @@ typedef unsigned char NISTATE;
 #define NI_STATE_DETECTED 3
 
 BOOL AddNotificationIcon(HWND hwnd, HMODULE g_hInst);
-BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state);
+BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state, const char* msg, const char* title);
 BOOL DeleteNotificationIcon();

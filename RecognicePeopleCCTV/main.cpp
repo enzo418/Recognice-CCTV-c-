@@ -13,14 +13,21 @@
 #include "utils.h"
 #include "ConfigFileHelper.h"
 #include "NotificationIcon.h"
+#include <CommCtrl.h>
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true
 
+// forward declarations
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+// ...
+
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std;
 using namespace chrono;
+
+WNDPROC prevWndProc;
 
 void RecordSampleOfCamera(CameraConfig& config) {
     cv::VideoWriter out(config.cameraName + ".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., cv::Size(1280, 720), true);
@@ -68,13 +75,22 @@ void SaveAndUploadImage(CameraConfig* configs, const int amountCameras, ProgramC
                 std::string filename = "img_" + date + ".jpg";
                 cv::imwrite("saved_imgs/" + filename, frame);
 
-                const std::string ce = "curl -F \"chat_id=" + programConfig.telegramConfig.apiKey + "\" -F \"photo=@saved_imgs\\" + programConfig.telegramConfig.chatId + "\" \\ https://api.telegram.org/bot" + BOT_TOKEN + "/sendphoto";
+                const std::string ce = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
                 system(ce.c_str());
             }
         }
 
         std::this_thread::sleep_for(chrono::milliseconds(3000));
         //Sleep(3000);
+    }
+}
+
+void inline ChangeNotificationState(HWND hwndl, HMODULE g_hinst, NISTATE state, const char* msg, const char* title) {
+    int maxTries = 4;
+    int count = 0;
+    while (!SetStateNotificationIcon(hwndl, g_hinst, state, msg, title) && count <= maxTries) {
+        std::this_thread::sleep_for(chrono::milliseconds(1));        
+        count++;
     }
 }
 
@@ -90,6 +106,10 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
     
     // saves the cameras that are ready to be displayed
     std::vector<bool> ready;
+
+    // Windows notification alert message and title
+    //const char* notificationMsg = "";
+    const char* notificationTitle = "Camera alert!";
     
     // counts the cameras displayed
     uint8_t size = 0; 
@@ -153,32 +173,41 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
             // Check camera state
             if (configs[i].state == NI_STATE_DETECTED) {
                 allCamerasInSentry = false;
+
+                // Send notification if the current state != to what the camera state is
                 if (currentState != NI_STATE_DETECTED) {
+
+                    // change the current state
                     currentState = NI_STATE_DETECTED;
-                    if (!SetStateNotificationIcon(hwndl, g_hinst, currentState))
-                        SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
+
+                    // send the notification
+                    ChangeNotificationState(hwndl, g_hinst, currentState, configs[i].cameraName.c_str(), notificationTitle);
+
                     std::cout << "[W] " << configs[i].cameraName << " detected a person..." << std::endl;
                 }
             } else if (configs[i].state == NI_STATE_DETECTING) {
                 allCamerasInSentry = false;
+                
+                // Send notification if the current state != to what the camera state is
                 if (currentState != NI_STATE_DETECTING && currentState != NI_STATE_DETECTED) {
+                    
+                    // change the current state
                     currentState = NI_STATE_DETECTING;
-                    if (!SetStateNotificationIcon(hwndl, g_hinst, currentState))
-                        SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
+
+                    // send the notification
+                    ChangeNotificationState(hwndl, g_hinst, currentState, configs[i].cameraName.c_str(), notificationTitle);
+
                     std::cout << "[I] " << configs[i].cameraName << " is trying to match a person in the frame..." << std::endl;
                 }
-            } else if (configs[i].state == NI_STATE_SENTRY) {
+            }else if (configs[i].state == NI_STATE_SENTRY) {
                 allCamerasInSentry = allCamerasInSentry && true;
-            }
+            }     
         }
 
         if (allCamerasInSentry && currentState != NI_STATE_SENTRY) {
             currentState = NI_STATE_SENTRY;
 
-            if (!SetStateNotificationIcon(hwndl, g_hinst, currentState)) {
-                std::cout << "Trying again" << std::endl;
-                SetStateNotificationIcon(hwndl, g_hinst, currentState); // try again
-            }
+            ChangeNotificationState(hwndl, g_hinst, currentState, "Sentry camera has something.", notificationTitle);
 
             std::cout << "[I]" << " All the cameras are back to sentry mode." << std::endl;
         }
@@ -326,7 +355,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
 
-            if (lastFrame.rows == RESIZERESOLUTION.height) {
+            if (lastFrame.rows > 0) {
                 cv::absdiff(lastFrame, frame, diff);
                 totalNonZeroPixels = cv::countNonZero(diff);
             }
@@ -334,7 +363,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
             lastFrame = frame;
 
             // take a percentage of the frame area
-            if (totalNonZeroPixels > frameArea * ((config->sensibility + 0.0) / 100)) {
+            double percentage = ((config->sensibility + 0.0) / 100);
+            if (totalNonZeroPixels > frameArea * percentage) {
                 if (camState != NI_STATE_DETECTED 
                     && camType != CAMERA_SENTRY
                     && camState != NI_STATE_DETECTING)
