@@ -70,6 +70,9 @@ class ConfigFileHelper {
             } else if (id == "telegram_chat_id"  || id == "telegram_bot_chat_id"
                        || id == "telegramchatid" || id == "telegrambotchatid") {
                 config.telegramConfig.chatId = value;
+            } else if (id == "showpreviewcameras" || id == "showpreviewofcameras") {    
+                Utils::toLowerCase(value);
+                config.showPreview = value == "no" ? false : true;
             }
         }
 

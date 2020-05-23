@@ -117,4 +117,7 @@ struct ProgramConfig {
 
 	// telefram bot config
 	TelegramBotConfig telegramConfig;
+
+	// show preview of the cameras
+	bool showPreview;
 };

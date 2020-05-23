@@ -270,7 +270,9 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
 }
 
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, bool& somethingDetected, float secondsBetweenImage, cv::HOGDescriptor& hog) {
+void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
+                             bool& somethingDetected, float secondsBetweenImage,
+                             bool showPreview, cv::HOGDescriptor& hog) {
     #pragma region SetupVideoCapture
 
     ushort framesLeft = 0; // amount of frames left to search a person.
@@ -345,7 +347,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
             cv::resize(frame, frame, RESIZERESOLUTION);
 
-            frameToShow = frame.clone();
+            if (showPreview)
+                frameToShow = frame.clone();
 
             // Take the region of interes
             if (!config->roi.isEmpty()) {
@@ -389,7 +392,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
                 }
 
                 newFrame = false;
-                config->frames.push_back(frameToShow);
+                if(showPreview)
+                    config->frames.push_back(frameToShow);
             } else {
                 std::vector<cv::Rect> detections;
                 vector< double > foundWeights;
@@ -426,7 +430,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval, 
 
                 newFrame = false;
 
-                config->frames.push_back(std::move(frameToShow));
+                if (showPreview)
+                    config->frames.push_back(std::move(frameToShow));
             }
         }
     }
@@ -559,17 +564,24 @@ int main(int argc, char* argv[]){
 
     // Start a thread for each camera
     for (size_t i = 0; i < configsSize; i++) {
-        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), programConfig.msBetweenFrame, std::ref(somethingDetected), programConfig.secondsBetweenImage, std::ref(hog)));
+        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), programConfig.msBetweenFrame, std::ref(somethingDetected), programConfig.secondsBetweenImage, programConfig.showPreview, std::ref(hog)));
     }
 
-    // Start the thread to show the images captured.
-    threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, programConfig.msBetweenFrame, std::ref(stop), hwnd, g_inst));
+    if (programConfig.showPreview)
+        // Start the thread to show the images captured.
+        threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, programConfig.msBetweenFrame, std::ref(stop), hwnd, g_inst));
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(programConfig),  std::ref(stop)));
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(CheckTimeSensibility, &configs[0], configsSize, std::ref(stop)));
+
+    if (!programConfig.showPreview) {
+        std::cout << "Press a key to stop the program.\n";
+        std::getchar();
+        stop = true;
+    }
 
     // Wait until every thread finish
     int szThreads = threads.size();
