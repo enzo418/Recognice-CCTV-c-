@@ -490,22 +490,23 @@ void CheckTimeSensibility(CameraConfig* config, const int configSize, bool& stop
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(int argc, char* argv[]){
     bool isUrl = false;
-    std::string url = "";
+    char url[200];
 
     // read for url... this is used for the configurator program.
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             if (strcmp(argv[i], "-u") == 0) {
                 isUrl = true;
-            } else if (strlen(argv[i]) > 1 && isUrl) {
-                url = argv[i];
+            } else if (strlen(argv[i]) > 1 && isUrl) {                
+                strcpy_s(url, argv[i]);
             }
         }
 
         if (isUrl) {
             hash<string> hasher;
             size_t name = hasher(url);
-            string path = std::to_string(name) + ".jpg";
+            char path[75];
+            sprintf_s(path, "%lu.jpg", name);
 
             if (!Utils::FileExist(path)) {
                 cv::VideoCapture vc(url);
