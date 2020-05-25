@@ -65,6 +65,9 @@ class ConfigFileHelper {
                 std::replace(value.begin(), value.end(), ',', '.');
                 float val = std::stof(value);
                 config.secondsBetweenImage = val;
+            } else if (id == "secondsbetweenmessage") {
+                int val = std::stoi(value);
+                config.secondsBetweenMessage = val;
             } else if (id == "telegram_bot_api"  || id == "telegram_api"
                        || id == "telegrambotapi" || id == "telegramapi") {
                 config.telegramConfig.apiKey = value;

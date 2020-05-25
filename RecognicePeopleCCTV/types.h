@@ -148,6 +148,9 @@ struct ProgramConfig {
 	// seconds to wait until save a new frame to the fraesToUpload list of the camera.
 	float secondsBetweenImage;
 
+	// seconds to waait until send another message.
+	int secondsBetweenMessage;
+
 	// telefram bot config
 	TelegramBotConfig telegramConfig;
 

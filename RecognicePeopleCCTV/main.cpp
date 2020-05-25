@@ -436,7 +436,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
     //  Messages
     // -----------
     auto lastMessageSended = high_resolution_clock::now();
-    const int secondsBetweenMessages = 5; 
+    const int secondsBetweenMessages = programConfig.secondsBetweenMessage;
 
     while (!stop && capture.isOpened()) {
         const NISTATE camState = config->state;
