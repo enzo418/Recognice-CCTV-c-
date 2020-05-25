@@ -148,7 +148,7 @@ static class Utils {
 		#pragma endregion
 
 		// <summary> Gets the current time and formats it to a format friendly for windows file name format </summary>
-		static std::string GetTimeFormated() {
+		static const char* GetTimeFormated() {
 			time_t rawtime;
 			struct tm timeinfo;
 			char buffer[80];

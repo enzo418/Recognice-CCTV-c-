@@ -6,6 +6,42 @@
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;
 
+// ===========================
+//  ActionMessage definitions
+// ===========================
+
+#define MESSAGE_SIZE 100
+
+class Message {
+	public:
+	cv::Mat image;
+	char text[MESSAGE_SIZE];
+	bool playSound = false;
+
+	// A message can be just text
+	Message(const char* message) {
+		snprintf(text, MESSAGE_SIZE, "%s", message);
+	}
+
+	// Or a image with a date
+	Message(cv::Mat img, const char* date): image(img) {
+		snprintf(text, MESSAGE_SIZE, "%s", date);
+	}
+
+	// Or a action (play sound)
+	Message() { playSound = true; strcpy_s(text, ""); };
+
+	bool IsText() {
+		return image.empty() && strlen(text) > 0;
+	}
+
+	bool IsSound() {
+		return playSound;
+	}
+};
+
+typedef std::vector<Message> MessageArray;
+
 // ====================
 //  Camera definitions
 // ====================
@@ -90,7 +126,7 @@ struct CameraConfig {
 	std::vector<cv::Mat> frames;
 
 	// List of frames, where something was detected, to save in the computer and send to the bot.
-	std::vector<std::tuple<cv::Mat, std::string>> framesToUpload;
+	//std::vector<std::tuple<cv::Mat, std::string>> framesToUpload;
 };
 
 // ===============

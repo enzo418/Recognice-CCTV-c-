@@ -60,29 +60,25 @@ BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state, const c
     nid.guidItem = __uuidof(NotificationIcon);
     
     // Set STATE
-    WORD IDS = IDS_STATE_SENTRY;
-    WORD IDI = IDI_ICON_SENTRY;
-    if (state == NI_STATE_DETECTING) { IDS = IDS_STATE_DETECTING; IDI = IDI_ICON_DECTECTING; }
-    else if (state == NI_STATE_DETECTED) { IDS = IDS_STATE_DETECED; IDI = IDI_ICON_DETECTED; }
-
-    /* Uncomment to show a windows notification */
-    //LoadString(g_hInst, IDS_, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
-    //LoadString(g_hInst, IDS_, nid.szInfo, ARRAYSIZE(nid.szInfo));    
+    //WORD IDS = IDS_STATE_SENTRY;
+    //WORD IDI = IDI_ICON_SENTRY;
+    //if (state == NI_STATE_DETECTING) { IDS = IDS_STATE_DETECTING; IDI = IDI_ICON_DECTECTING; }
+    //else if (state == NI_STATE_DETECTED) { IDS = IDS_STATE_DETECED; IDI = IDI_ICON_DETECTED; }
 
     // load the icon
-    LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI), LIM_SMALL, &nid.hIcon);
+    //LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI), LIM_SMALL, &nid.hIcon);
 
     // Load the tip msg
-    LoadString(g_hInst, IDS, nid.szTip, ARRAYSIZE(nid.szTip));
+    //LoadString(g_hInst, IDS, nid.szTip, ARRAYSIZE(nid.szTip));
 
-    nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP; // NIF_INFO => Windows Notif. Alert
+    //nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP; // NIF_INFO => Windows Notif. Alert
 
     if (strlen(msg) > 0 && strlen(title) > 0) {
         size_t lengthTitle = 0;
         mbstowcs_s(&lengthTitle, nid.szInfoTitle, title, strlen(title));
         size_t lengthMsg = 0;
         mbstowcs_s(&lengthMsg, nid.szInfo, msg, strlen(msg));
-        nid.uFlags |= NIF_INFO;
+        nid.uFlags = NIF_INFO | NIF_SHOWTIP;
         nid.dwInfoFlags = NIIF_RESPECT_QUIET_TIME;
     }
 
