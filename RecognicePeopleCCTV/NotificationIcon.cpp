@@ -9,6 +9,8 @@
 #include <strsafe.h>
 #include <cassert>
 
+#define PLAY_SOUND_ALERT_TIMES 3
+
 BOOL AddNotificationIcon(HWND hwnd, HMODULE g_hInst) {
     // Declare and initialize the notification icon
     NOTIFYICONDATA nid;
@@ -37,6 +39,17 @@ BOOL AddNotificationIcon(HWND hwnd, HMODULE g_hInst) {
     // NOTIFYICON_VERSION_4 is prefered
     nid.uVersion = NOTIFYICON_VERSION_4;
     return Shell_NotifyIcon(NIM_SETVERSION, &nid);
+}
+
+BOOL PlayNotificationSound() {
+    bool sucess = true;
+    for (USHORT i = 0; i < PLAY_SOUND_ALERT_TIMES; i++) {
+        sucess = sucess && PlaySound(
+            MAKEINTRESOURCE(IDR_ALERT_SOUND),
+            GetModuleHandle(NULL),
+            SND_RESOURCE);
+    }
+    return sucess;
 }
 
 BOOL SetStateNotificationIcon(HWND hWnd, HMODULE g_hInst, NISTATE state, const char* msg, const char* title) {

@@ -74,20 +74,17 @@ struct CameraConfig {
 	// Used to show the cameras sorted by order
 	int order;
 
-	// (0-100) percentage of pixels needed to start the classification in the frame
-	int sensibility;
-
 	// rotation of the camera
 	int rotation;
+
+	// pixels that must change to change state to detecting
+	int changeThreshold;
 
 	// Current state of the camera sentry, detecting or detected.
 	NISTATE state;
 
 	// The type of the camera. See definition.
 	CAMERATYPE type;
-
-	// List of "sensibilities" to set depending the current time
-	std::vector<Time> sensibilityList;
 
 	// List of frames captured
 	std::vector<cv::Mat> frames;

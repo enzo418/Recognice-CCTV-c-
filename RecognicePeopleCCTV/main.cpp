@@ -29,6 +29,95 @@ using namespace chrono;
 
 WNDPROC prevWndProc;
 
+void PrepareFrame(cv::Mat& frame, ROI& roi, int& rotation) {
+    cv::resize(frame, frame, RESIZERESOLUTION);
+
+    // Take the region of interes
+    if (!roi.isEmpty()) {
+        cv::Rect roi(roi.point1, roi.point2);
+        frame = frame(roi);
+    }
+
+    // Then rotate it
+    if (rotation != 0) ImageManipulation::RotateImage(frame, rotation);
+
+    cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
+}
+
+// Doesn't work... nz avrg < normal nz
+bool SetupSensibility(cv::VideoCapture& capturer, CameraConfig* config, cv::HOGDescriptor& hog, ulong frameArea, int interval, ulong& value) {
+    /*
+    Recortar y rotar c/ frame.
+    Tomar frame => ver si detectamos una persona
+    Si no se detecta => obtener otro cuadro
+    Hacer la diferencia con el 1° y el 2° y sumarlo a la variable contDiff
+    Despues tomar otro cuadro y hacer la diferencia con el 2° y el 3° y sumarlo a contDiff
+    ...
+    Calcular el promedio de la diferencia (contDiff / n°) 
+    Devolver el numero deseado => prom * 1.05 (5% de diff para activar)
+    */
+    
+    // Read the first frame
+    cv::Mat lastFrame;
+    capturer.read(lastFrame);
+    PrepareFrame(lastFrame, config->roi, config->rotation);
+
+
+    // Classifcation over the first frame
+    std::vector<cv::Rect> detections;
+    vector< double > foundWeights;
+    hog.detectMultiScale(lastFrame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+
+    // if no one where detected
+    if (detections.size() == 0) {
+        // max iterations to get a average
+        ushort framesSample = 4;
+        ushort count = 0; 
+        
+        // accumulator of the diff obteneid 
+        ulong nonZeroAccum = 0;
+
+        cv::Mat diff;
+        cv::Mat newFrame;
+        auto timeLastframe = high_resolution_clock::now();
+        while (count <= framesSample && capturer.isOpened()) {
+            auto now = high_resolution_clock::now();
+            auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
+            if (intervalFrames >= interval) {
+                capturer.read(newFrame);
+                timeLastframe = high_resolution_clock::now();
+                newFrame = true;
+
+                //capturer.read(newFrame);
+                PrepareFrame(newFrame, config->roi, config->rotation);
+                if (newFrame.rows > 0) {
+                    cv::absdiff(lastFrame, newFrame, diff);
+                    nonZeroAccum += cv::countNonZero(diff);
+                }
+
+                lastFrame = std::move(newFrame);
+                count++;
+            } else {
+                capturer.read(diff); // keep reading to avoid error on VC.
+            }
+        }
+
+        if (count > 0) {
+            ulong nZavrg = nonZeroAccum / count;
+            std::cout << "avrg " << config->cameraName << "=" << nZavrg << std::endl;
+
+            double percentage = 1.05; // 105%
+            
+            // value => the change detected should be 5% higher than the average.
+            value = nZavrg * percentage;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void RecordSampleOfCamera(CameraConfig& config) {
     cv::VideoWriter out(config.cameraName + ".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., cv::Size(1280, 720), true);
     if (!out.isOpened()) {
@@ -93,8 +182,12 @@ void inline ChangeNotificationState(HWND hwndl, HMODULE g_hinst, NISTATE state, 
         std::this_thread::sleep_for(chrono::milliseconds(1));        
         count++;
     }
-    if (count >= maxTries)
-        std::cout << "Failed to send notif." << std::endl;
+    if (count >= maxTries) {
+        std::cout << "Failed to send notif. Playing a sound to alert the user." << std::endl;
+        if (!PlayNotificationSound()) {
+            std::cout << "Today it's not a good day... couldn't play the sound." << std::endl;
+        }
+    }
 }
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
@@ -275,28 +368,35 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval,
                              bool showPreview, cv::HOGDescriptor& hog) {
     #pragma region SetupVideoCapture
 
-    ushort framesLeft = 0; // amount of frames left to search a person.
+    // ==============
+    //  consts/vars
+    // ==============
+
+    // if framesLeft > 0 then do a classifcation over the current frame
+    ushort framesLeft = 0; 
     
     // higher interval -> lower max & lower interval -> higher max
-    const ushort maxFramesLeft = (100 / interval) * 70; // 100 ms => max = 70 frames
+    const ushort maxFramesLeft = (100.0 / (interval+0.0)) * 70; // 100 ms => max = 70 frames
 
     const int x = config->roi.point1.x;
     const int h = abs(config->roi.point2.y - config->roi.point1.y);
     const int w = abs(config->roi.point2.x - config->roi.point1.x);
-
+    const ulong frameArea = w * h;
 
     const char* camName = &config->cameraName[0];
     const CAMERATYPE camType = config->type;
-
+    const int changeThreshld = config->changeThreshold;
+        
     int totalNonZeroPixels = 0;
-    const uint8_t framesToRecognice = (100 / interval) * 30; // amount of frame that recognition will be active before going to idle state
-    const int frameArea = w * h;
-    //const int maxNonZeroPixels = frameArea * ((config->sensibility + 0.0) / 100); // Max non zero to leave idle state
+    
+    // ammount of frame that recognition will be active before going to idle state    
+    const uint8_t framesToRecognice = (100 / (interval + 0.0)) * 30; 
 
+    // used to store the current frame to be able to compare it to the next one
     cv::Mat lastFrame;
+    
+    // used to store the diff frame
     cv::Mat diff;
-
-    //hog.winSize = cv::Size(w, h);
 
     cv::VideoCapture capture(config->url);
 
@@ -312,14 +412,15 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval,
     auto timeLastframe = high_resolution_clock::now();
     bool newFrame = false;
 
-    /* Image saver */
+    // ----------------
+    //  Save&Upl image
+    // ----------------
     auto timeLastSavedImage = high_resolution_clock::now();
 
     while (!stop && capture.isOpened()) {
-        auto now = high_resolution_clock::now();
-
         const NISTATE camState = config->state;
 
+        auto now = high_resolution_clock::now();
         auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
         if (intervalFrames >= interval) {
             capture.read(frame);
@@ -363,14 +464,22 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval,
 
             if (lastFrame.rows > 0) {
                 cv::absdiff(lastFrame, frame, diff);
+
+                // 45 works perfect with most of the cameras/resolution
+                cv::threshold(diff, diff, 45, 255, cv::THRESH_BINARY );
+
                 totalNonZeroPixels = cv::countNonZero(diff);
             }
 
+            if (totalNonZeroPixels > 0) {
+                std::cout << config->cameraName
+                    << " Non zero pixels=" << totalNonZeroPixels
+                    << " Configured threshold=" << changeThreshld
+                    << std::endl;
+            }
             lastFrame = frame;
 
-            // take a percentage of the frame area
-            double percentage = ((config->sensibility + 0.0) / 100);
-            if (totalNonZeroPixels > frameArea * percentage) {
+            if (totalNonZeroPixels > changeThreshld) {
                 if (camState != NI_STATE_DETECTED
                     && camType != CAMERA_SENTRY
                     && camState != NI_STATE_DETECTING)
@@ -407,15 +516,12 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval,
 
                     auto now = high_resolution_clock::now();;
                     auto time = (now - timeLastSavedImage) / std::chrono::milliseconds(1);
+
                     if (detections.size() > 0 && time >= secondsBetweenImage * 1000) {
                         config->state = NI_STATE_DETECTED;
-
                         somethingDetected = true;
-
                         std::string date = Utils::GetTimeFormated();
-
                         config->framesToUpload.push_back(std::tuple<cv::Mat, std::string>(frameToShow, date));
-
                         timeLastSavedImage = high_resolution_clock::now();
                     }
 
@@ -439,52 +545,6 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, ushort interval,
     std::cout << "Closed connection with " << camName << std::endl;
 
     capture.release();
-}
-
-void CheckTimeSensibility(CameraConfig* config, const int configSize, bool& stop) {
-    int secondSleep = 15;
-    int minutesUntilNextHour = 0;
-    int secondsElapsed = 0;
-    while (!stop) {
-        if (secondsElapsed / 60 >= minutesUntilNextHour) {
-            int hour = Utils::GetCurrentHour(std::ref(minutesUntilNextHour));
-            bool changeSens = false;
-            // run over each camera configuration
-            for (size_t i = 0; i < configSize; i++) {
-                int sensSize = config[i].sensibilityList.size();
-                // run over each sensibility config
-                for (size_t j = 0; j < sensSize; j++) {
-                    Time sens = config[i].sensibilityList[j];
-                    if (sens.sensibility != config[i].sensibility) {
-                        // separe the if in two scenarios 
-                        // 1. 0----TO----12---FROM---23 => FROM > TO => Only will pass if hour > FROM or hour < to
-                        // 2. 0---FROM---12----TO----23 => FROM < TO => Only will pas if is between FROM and TO.
-                        if (sens.from > sens.to) {
-                            if (hour >= sens.from || hour <= sens.to)
-                                changeSens = true;
-                        } else {
-                            if (hour >= sens.from && hour <= sens.to)
-                                changeSens = true;
-                        }
-
-                        if (changeSens) {
-                            std::cout << "Sensibility changed in " << config[i].cameraName
-                                << " from " << config[i].sensibility << " to " << sens.sensibility << std::endl;
-
-                            config[i].sensibility = sens.sensibility;
-
-                            changeSens = false;
-                        }
-                    }
-                }
-            }
-        }
-
-        //Sleep((minutesUntilNextHour + 2) * 60000);
-        std::this_thread::sleep_for(chrono::seconds(secondSleep));
-        //Sleep(secondSleep * 1000); // sleep only seconds to be able to check if stop is true
-        secondsElapsed += secondSleep;
-    }
 }
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
@@ -574,9 +634,6 @@ int main(int argc, char* argv[]){
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(SaveAndUploadImage, &configs[0], configsSize, std::ref(programConfig),  std::ref(stop)));
-
-    // Start a thread for save and upload the images captured    
-    threads.push_back(std::thread(CheckTimeSensibility, &configs[0], configsSize, std::ref(stop)));
 
     if (!programConfig.showPreview) {
         std::cout << "Press a key to stop the program.\n";

@@ -93,6 +93,22 @@ IDI_ICON_DECTECTING     ICON                    "C:\\Users\\cltx\\Pictures\\Icon
 
 IDI_ICON_DETECTED       ICON                    "C:\\Users\\cltx\\Pictures\\Icons\\camera_red64.ico"
 
+IDI_ICON2               ICON                    "c:\\users\\cltx\\pictures\\icons\\icon2.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// SOUND
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// WAVE
+//
+
+IDR_ALERT_SOUND         WAVE                    "C:\\Users\\cltx\\Music\\windows_alert.wav"
+
 #endif    // Spanish (Argentina) resources
 /////////////////////////////////////////////////////////////////////////////
 

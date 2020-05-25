@@ -41,12 +41,13 @@ class ConfigFileHelper {
                 } else if (value == "disabled") {
                     config.type = CAMERA_DISABLED;
                 }
-            } else if (id == "sensibility") {
-                Utils::DecodeSensibility(config.sensibilityList, value);
             } else if (id == "hitthreshold") {
                 std::replace(value.begin(), value.end(), ',', '.');
                 float val = std::stof(value);
                 config.hitThreshold = val;
+            } else if (id == "changethreshold") {
+                int val = std::stoi(value);
+                config.changeThreshold = val;
             } else if (id == "roi") {
                 // convert [(x1,y1), (x2,y2)] to roi struct
                 config.roi = Utils::GetROI(value);
@@ -141,9 +142,6 @@ class ConfigFileHelper {
                             } else if (config.url.empty() /* check if is a valid url*/) {
                                 std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
                             } else {
-                                // set sensibility to 0. Then the program set it again to the real value.
-                                config.sensibility = 0;
-
                                 configs.push_back(config);
                             }
                         }

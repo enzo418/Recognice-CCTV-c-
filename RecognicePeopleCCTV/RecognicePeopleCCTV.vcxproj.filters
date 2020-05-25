@@ -63,5 +63,18 @@
     <Image Include="..\..\..\..\Pictures\Icons\camera_red64.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\..\..\..\pictures\icons\icon2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\pictures\icons\sound1.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\..\..\..\Music\windows_alert.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

@@ -11,12 +11,16 @@
 #define IDS_STATE_DETECED               105
 #define IDI_ICON1                       105
 #define IDI_ICON_DETECTED               105
+#define IDR_SOUND1                      106
+#define IDI_ICON2                       107
+#define IDR_WAVE1                       108
+#define IDR_ALERT_SOUND                 108
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        106
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
