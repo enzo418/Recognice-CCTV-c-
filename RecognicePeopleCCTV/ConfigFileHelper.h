@@ -51,6 +51,10 @@ class ConfigFileHelper {
             } else if (id == "roi") {
                 // convert [(x1,y1), (x2,y2)] to roi struct
                 config.roi = Utils::GetROI(value);
+            } else if (id == "thresholdnoise" || id == "noisethreshold") {
+                std::replace(value.begin(), value.end(), ',', '.');
+                double val = std::stof(value);
+                config.noiseThreshold = val;
             }
         }
 
@@ -68,7 +72,20 @@ class ConfigFileHelper {
             } else if (id == "secondsbetweenmessage") {
                 int val = std::stoi(value);
                 config.secondsBetweenMessage = val;
-            } else if (id == "telegram_bot_api"  || id == "telegram_api"
+            } else if (id == "outputresolution") {
+                size_t indx = value.find(",");
+                if (indx > 0) {
+                    try {
+                        config.outputResolution.width = std::stoi(value.substr(0, indx));
+                        config.outputResolution.height = std::stoi(value.substr(indx + 1, value.size() - 1));
+                    } catch (std::invalid_argument e) {
+                        std::cout << "Invalid input at option \"outputResolution\" in config.ini header PROGRAM. Expected format: width,height.\n";
+                        this->_file.close();
+                        std::getchar();                        
+                        exit(-1);
+                    }
+                }
+            } else if (id == "telegram_bot_api" || id == "telegram_api"
                        || id == "telegrambotapi" || id == "telegramapi") {
                 config.telegramConfig.apiKey = value;
             } else if (id == "telegram_chat_id"  || id == "telegram_bot_chat_id"
@@ -77,6 +94,12 @@ class ConfigFileHelper {
             } else if (id == "showpreviewcameras" || id == "showpreviewofcameras") {    
                 Utils::toLowerCase(value);
                 config.showPreview = value == "no" ? false : true;
+            } else if (id == "showareacamerasees" || id == "showareacamera") {
+                Utils::toLowerCase(value);
+                config.showAreaCameraSees = value == "no" ? false : true;
+            } else if (id == "showprocessedframes" || id == "showprocessedimages") {
+                Utils::toLowerCase(value);
+                config.showProcessedFrames = value == "no" ? false : true;
             }
         }
 
@@ -85,20 +108,22 @@ class ConfigFileHelper {
             std::string line;
 
             while (!Utils::nextLineIsHeader(file) && std::getline(file, line)) {
-                std::string id;
-                std::string val;
+                if (line.size() > 3 && line[0] != '#') {
+                    std::string id;
+                    std::string val;
 
-                Utils::trim(line);
-                char* str;
-                ushort found = 0;
+                    Utils::trim(line);
+                    char* str;
+                    ushort found = 0;
 
-                int indx = strcspn(line.c_str(), "=");
+                    int indx = strcspn(line.c_str(), "=");
 
-                id = line.substr(0, indx);
-                val = line.substr(indx+1, line.size() - 1);
+                    id = line.substr(0, indx);
+                    val = line.substr(indx + 1, line.size() - 1);
 
-                if (id.size() > 0 && val.size() > 0) {
-                    SaveIdVal(config, id, val);
+                    if (id.size() > 0 && val.size() > 0) {
+                        SaveIdVal(config, id, val);
+                    }
                 }
             }
 
@@ -145,6 +170,10 @@ class ConfigFileHelper {
                             } else if (config.url.empty() /* check if is a valid url*/) {
                                 std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
                             } else {
+                                if (config.noiseThreshold == 0) {
+                                    std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
+                                }
+
                                 configs.push_back(config);
                             }
                         }

@@ -64,18 +64,6 @@ public:
 	};
 };
 
-class Time {
-public:
-	int from, to, sensibility;
-
-	Time(int from, int to, int sensibility) : from(from), to(to), sensibility(sensibility) {};
-	Time() {
-		from = 0;
-		to = 0;
-		sensibility = 0;
-	};
-};
-
 typedef unsigned char CAMERATYPE;
 
 /*	CameraType
@@ -125,9 +113,16 @@ struct CameraConfig {
 	// List of frames captured
 	std::vector<cv::Mat> frames;
 
-	// List of frames, where something was detected, to save in the computer and send to the bot.
-	//std::vector<std::tuple<cv::Mat, std::string>> framesToUpload;
+	// threshold to use when removing the noise of the frame
+	double noiseThreshold;
 };
+
+// to be able to sort the array of configs
+struct {
+	inline bool operator() (const CameraConfig& struct1, const CameraConfig& struct2) {
+		return (struct1.order < struct2.order);
+	}
+}less_than_order;
 
 // ===============
 //  Program types
@@ -151,9 +146,18 @@ struct ProgramConfig {
 	// seconds to waait until send another message.
 	int secondsBetweenMessage;
 
+	// resolution of the preview
+	cv::Size outputResolution;
+
 	// telefram bot config
 	TelegramBotConfig telegramConfig;
 
 	// show preview of the cameras
 	bool showPreview;
+
+	// if should show in the preview the area that the camera sees
+	bool showAreaCameraSees;
+
+	// if should show the processed images with applied roation, threshold, ...
+	bool showProcessedFrames;
 };

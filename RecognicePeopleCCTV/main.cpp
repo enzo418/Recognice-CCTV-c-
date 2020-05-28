@@ -29,6 +29,8 @@ using namespace chrono;
 
 WNDPROC prevWndProc;
 
+
+
 void PrepareFrame(cv::Mat& frame, ROI& roi, int& rotation) {
     cv::resize(frame, frame, RESIZERESOLUTION);
 
@@ -153,7 +155,8 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
     std::string date;
 
     while (!stop) {
-        for (size_t i = 0; i < messages.size(); i++) {
+        size_t size = messages.size();
+        for (size_t i = 0; i < size; i++) {
             // take the first message and delete it
             Message msg = messages[i];
             messages.erase(messages.begin());
@@ -175,7 +178,7 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
             system(command.c_str());
         }
 
-        std::this_thread::sleep_for(chrono::milliseconds(3000));
+        std::this_thread::sleep_for(chrono::milliseconds(1500));
     }
 }
 
@@ -202,13 +205,15 @@ void inline ChangeNotificationState(HWND hwndl, HMODULE g_hinst, NISTATE state,
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
 void ShowFrames(CameraConfig* configs, const int amountCameras, 
-                ushort interval, bool& stop, HWND hwndl, HMODULE g_hinst) {
+                ProgramConfig& programConfig, bool& stop, HWND hwndl, HMODULE g_hinst) {
     // ============
     //  Variables 
     // ============
       
     // saves the frames to show in a iteration
     std::vector<cv::Mat> frames;
+
+    const ushort interval = programConfig.msBetweenFrame;
     
     // saves the cameras that are ready to be displayed
     std::vector<bool> ready;
@@ -216,6 +221,9 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
     // Windows notification alert message and title
     //const char* notificationMsg = "";
     const char* notificationTitle = "Camera alert! Someone Detected";
+
+    const bool showAreaCameraSees = programConfig.showAreaCameraSees;
+    const bool showProcessedFrames = programConfig.showProcessedFrames;
     
     // counts the cameras displayed
     uint8_t size = 0; 
@@ -268,6 +276,11 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
                     // take the first frame and delete it
                     frames[configs[i].order] = configs[i].frames[0];
 
+                    if (showAreaCameraSees && !showProcessedFrames) {
+                        cv::Scalar color = cv::Scalar(255, 0, 0);
+                        cv::rectangle(frames[configs[i].order], configs[i].roi.point1, configs[i].roi.point2, color);
+                    }
+
                     configs[i].frames.erase(configs[i].frames.begin());
                     
                     ready[configs[i].order] = true;
@@ -305,7 +318,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
 
                     std::cout << "[I] " << configs[i].cameraName << " is trying to match a person in the frame..." << std::endl;
                 }
-            }else if (configs[i].state == NI_STATE_SENTRY) {
+            } else if (configs[i].state == NI_STATE_SENTRY) {
                 allCamerasInSentry = allCamerasInSentry && true;
             }     
         }
@@ -334,7 +347,8 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
             for (size_t i = 0; i < amountCameras; i++)
                 ready[i] = false;  
 
-            cv::resize(res, res, cv::Size(640, 360));
+            if (!programConfig.outputResolution.empty())
+                cv::resize(res, res, cv::Size(programConfig.outputResolution.width, programConfig.outputResolution.height));
 
             cv::imshow("TEST", res);
             if (cv::waitKey(1) >= 0) {
@@ -400,7 +414,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
     const CAMERATYPE camType = config->type;
     const int changeThreshld = config->changeThreshold;
 
-    const bool showPreview = programConfig.showPreview;    
+    const bool showPreview = programConfig.showPreview;   
+    const bool showProcessedImages = programConfig.showProcessedFrames;
         
     int totalNonZeroPixels = 0;
     
@@ -487,12 +502,18 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                 cv::absdiff(lastFrame, frame, diff);
 
                 // 45 works perfect with most of the cameras/resolution
-                cv::threshold(diff, diff, 45, 255, cv::THRESH_BINARY);
+                cv::threshold(diff, diff, config->noiseThreshold, 255, cv::THRESH_BINARY);
 
                 totalNonZeroPixels = cv::countNonZero(diff);
+
+                if (showProcessedImages && showPreview) {
+                    // place diff image on top the frame img
+                    cv::addWeighted(frame, 1, diff, 8, 12, diff);
+                    config->frames.push_back(diff);
+                }
             }
 
-            if (totalNonZeroPixels > changeThreshld * 0.3) {
+            if (totalNonZeroPixels > changeThreshld * 0.7) {
                 std::cout << config->cameraName
                     << " Non zero pixels=" << totalNonZeroPixels
                     << " Configured threshold=" << changeThreshld
@@ -536,7 +557,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                 }
 
                 newFrame = false;
-                if (showPreview)
+                if (showPreview && !showProcessedImages)
                     config->frames.push_back(frameToShow);
             } else {
                 std::vector<cv::Rect> detections;
@@ -556,6 +577,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                         somethingDetected = true;
                         const char* date = Utils::GetTimeFormated();
                         messages.push_back(Message(frameToShow, date));
+                        std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
                         timeLastSavedImage = high_resolution_clock::now();
                     }
 
@@ -570,7 +592,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 
                 newFrame = false;
 
-                if (showPreview)
+                if (showPreview && !showProcessedImages)
                     config->frames.push_back(std::move(frameToShow));
             }
         }
@@ -579,6 +601,67 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
     std::cout << "Closed connection with " << camName << std::endl;
 
     capture.release();
+}
+
+int StartDetection(HWND hwnd, HMODULE g_hInst) {
+    bool stop = false;
+    bool somethingDetected = false;
+
+    std::vector<thread> threads;
+
+    // Array of messages that the cameras order to send to telegram.
+    MessageArray messages;
+
+    // configs
+    std::vector<CameraConfig> configs;
+    ProgramConfig programConfig;
+
+    // Get the cameras and program configurations
+    ConfigFileHelper fhelper;
+    fhelper.ReadFile(programConfig, configs);
+
+    int configsSize = configs.size();
+
+    if (configsSize == 0) {
+        std::cout << "Couldn't fin cameras in the config file." << configsSize << std::endl;
+        std::getchar();
+        return 0;
+    }
+
+    Utils::FixOrderCameras(configs);
+
+    std::cout << "Cameras found: " << configsSize << std::endl;
+
+    // start hog decriptor
+    cv::HOGDescriptor hog;
+    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+
+    // Start a thread for each camera
+    for (size_t i = 0; i < configsSize; i++) {
+        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), std::ref(somethingDetected), std::ref(programConfig), std::ref(hog), std::ref(messages)));
+    }
+
+    if (programConfig.showPreview) {
+        // Start the thread to show the images captured.
+        threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, std::ref(programConfig), std::ref(stop), hwnd, g_hInst));
+    }
+
+    // Start a thread for save and upload the images captured    
+    threads.push_back(std::thread(SaveAndUploadImage, std::ref(messages), std::ref(programConfig), std::ref(stop)));
+
+    if (!programConfig.showPreview) {
+        std::cout << "Press a key to stop the program.\n";
+        std::getchar();
+        stop = true;
+    }
+
+    // Wait until every thread finish
+    int szThreads = threads.size();
+    for (int i = 0; i < szThreads; i++) {
+        if (i == szThreads - 1)
+            std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
+        threads[i].join();
+    }
 }
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
@@ -624,68 +707,13 @@ int main(int argc, char* argv[]){
             return 0;
         }
     }
-        
-    bool stop = false;
-    bool somethingDetected = false;
-
-    std::vector<thread> threads;
 
     HWND hwnd = GetConsoleWindow();
     HMODULE g_inst = GetModuleHandleA(NULL);
 
     AddNotificationIcon(hwnd, g_inst);
-    
-    // Array of messages that the cameras order to send to telegram.
-    MessageArray messages;
 
-    // configs
-    std::vector<CameraConfig> configs;
-    ProgramConfig programConfig;
-
-    // Get the cameras and program configurations
-    ConfigFileHelper fhelper;
-    fhelper.ReadFile(programConfig, configs);
-
-    int configsSize = configs.size();
-
-    if (configsSize == 0) {
-        std::cout << "Couldn't fin cameras in the config file." << configsSize << std::endl;
-        std::getchar();
-        return 0;
-    }
-
-    std::cout << "Cameras found: " << configsSize << std::endl;
-
-    // start hog decriptor
-    cv::HOGDescriptor hog;
-    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-
-    // Start a thread for each camera
-    for (size_t i = 0; i < configsSize; i++) {
-        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), std::ref(somethingDetected), std::ref(programConfig), std::ref(hog), std::ref(messages)));
-    }
-
-    if (programConfig.showPreview) {
-        // Start the thread to show the images captured.
-        threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, programConfig.msBetweenFrame, std::ref(stop), hwnd, g_inst));
-    }
-
-    // Start a thread for save and upload the images captured    
-    threads.push_back(std::thread(SaveAndUploadImage, std::ref(messages), std::ref(programConfig),  std::ref(stop)));
-
-    if (!programConfig.showPreview) {
-        std::cout << "Press a key to stop the program.\n";
-        std::getchar();
-        stop = true;
-    }
-
-    // Wait until every thread finish
-    int szThreads = threads.size();
-    for (int i = 0; i < szThreads; i++) {
-        if (i == szThreads - 1)
-            std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
-        threads[i].join();     
-    }
+    StartDetection(hwnd, g_inst);
 
     DeleteNotificationIcon();
 }

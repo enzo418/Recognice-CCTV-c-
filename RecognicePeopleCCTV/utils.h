@@ -72,55 +72,6 @@ static class Utils {
 		}
 		#pragma endregion
 
-		#pragma region Sensibility_Time
-		// <summary> Converts a string of e.g. "10 to 22 use 95" to Time class </summary>
-		static Time GetTime(std::string str) {
-			std::stringstream ss(str);
-
-			int found, from, to, sensibility;
-			int control = 0;
-			std::string temp;
-			Time time;
-
-			while (std::getline(ss, temp, ' ')) {
-				if (temp[0] >= '0' && temp[0] <= '9') {
-					std::stringstream(temp) >> found;
-					if (control == 0)
-						from = found;
-					else if (control == 1)
-						to = found;
-					else if (control == 2)
-						sensibility = found;
-					control++;
-				}
-			}
-
-			if (control >= 2) {
-				time.from = from;
-				time.to = to;
-				time.sensibility = sensibility;
-			}
-
-			return time;
-		}
-
-		static void DecodeSensibility(std::vector<Time>& time_list, std::string time_str) {
-			if (time_str.size() == 0)
-				return;
-
-			char* next_token;
-			char* res = strtok_s(&time_str[0], ",", &next_token);
-			while (res != NULL) {
-				time_list.push_back(GetTime(res));
-				res = strtok_s(NULL, ",", &next_token);
-			}
-		}
-
-		static inline void ShouldPickThisSens() {
-
-		}
-		#pragma endregion
-
 		#pragma region RegionOfInteres
 		static ROI GetROI(std::string roi_str) {
 			ROI roi;
@@ -170,5 +121,16 @@ static class Utils {
 						
 			return aTime.tm_hour;
 		};
+
+		// <summary> Fix the member "order" so it start from 0 and we don't skip any number between cameras </summary>
+		static void FixOrderCameras(std::vector<CameraConfig>& cameras) {	
+			std::sort(cameras.begin(), cameras.end(), less_than_order);
+			int size = cameras.size();
+			for (int expected = 0; expected < size; expected++) {
+				if (cameras[expected].order != expected) {
+					cameras[expected].order = expected;
+				}
+			}			
+		}
 };
 
