@@ -161,21 +161,29 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
             Message msg = messages[i];
             messages.erase(messages.begin());
             
+            std::cout << "Sending message => " 
+                << "IsText=" << (msg.IsText() ? "yes" : "no") 
+                << "\tIsSound=" << (msg.IsSound() ? "yes" : "no")
+                << "\tFrame size=" << msg.image.cols << "," << msg.image.rows
+                << "\tText=" << msg.text
+                << std::endl;
+
             std::string command;
 
-            if (!msg.IsText() && !msg.IsSound()) {
+            if (!msg.IsText() && !msg.IsSound() && msg.image.rows > 0) {
                 std::string filename = "img_";
-                filename += (msg.text);
+                filename += msg.text;
                 filename += ".jpg";
                 cv::imwrite("saved_imgs/" + filename, msg.image);
 
                 command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
+                system(command.c_str());
             } else if(msg.IsText()) {
                 command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + msg.text + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
+                system(command.c_str());
             } else {
                 PlayNotificationSound();
             }
-            system(command.c_str());
         }
 
         std::this_thread::sleep_for(chrono::milliseconds(1500));
@@ -575,14 +583,15 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                     if (detections.size() > 0 && time >= programConfig.secondsBetweenImage) {
                         config->state = NI_STATE_DETECTED;
                         somethingDetected = true;
-                        const char* date = Utils::GetTimeFormated();
-                        messages.push_back(Message(frameToShow, date));
+                        Message msg = Message(frameToShow, "");
+                        snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated());
+                        messages.push_back(msg);
                         std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
                         timeLastSavedImage = high_resolution_clock::now();
                     }
 
                     framesLeft--;
-                    std::cout << camName << " -- Frames " << framesLeft << std::endl;
+                    //std::cout << camName << " -- Frames " << framesLeft << std::endl;
                 }
 #pragma endregion
 

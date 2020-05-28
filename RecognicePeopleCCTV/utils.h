@@ -108,6 +108,7 @@ static class Utils {
 			localtime_s(&timeinfo, &rawtime);
 
 			strftime(buffer, 80, "%d_%m_%Y_%H_%M_%S", &timeinfo);
+			std::cout << " pero qcarajos=> " << buffer << std::endl;
 			return buffer;
 		};
 

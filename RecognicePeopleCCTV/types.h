@@ -10,34 +10,44 @@ typedef unsigned long int ulong;
 //  ActionMessage definitions
 // ===========================
 
-#define MESSAGE_SIZE 100
+#define MESSAGE_SIZE 150
 
 class Message {
 	public:
 	cv::Mat image;
 	char text[MESSAGE_SIZE];
-	bool playSound = false;
 
 	// A message can be just text
 	Message(const char* message) {
 		snprintf(text, MESSAGE_SIZE, "%s", message);
+		isText = true;
 	}
 
 	// Or a image with a date
-	Message(cv::Mat img, const char* date): image(img) {
+	Message(cv::Mat img, const char* date){
+		image = img;
+		std::cout << date << std::endl;
+		//sprintf_s(text, "%s", date);
 		snprintf(text, MESSAGE_SIZE, "%s", date);
 	}
 
 	// Or a action (play sound)
-	Message() { playSound = true; strcpy_s(text, ""); };
+	Message() { 
+		isSound = true; 
+		strcpy_s(text, ""); 
+	};
 
 	bool IsText() {
-		return image.empty() && strlen(text) > 0;
+		return isText;
 	}
 
 	bool IsSound() {
-		return playSound;
+		return isSound;
 	}
+
+	private:
+	bool isSound = false;
+	bool isText = false;
 };
 
 typedef std::vector<Message> MessageArray;
