@@ -96,9 +96,22 @@ static class Utils {
 
 			return roi;
 		}
+
+		static std::string RoiToString(const ROI& roi) {
+			std::ostringstream ss;
+			ss << "[(" << roi.point1.x << "," << roi.point1.y
+				<< "),(" << roi.point2.x << "," << roi.point2.y << ")]";
+			return std::move(ss).str();
+		}
 		#pragma endregion
 
-		// <summary> Gets the current time and formats it to a format friendly for windows file name format </summary>
+		static std::string CamTypeToString(CAMERATYPE const& type) {
+			if (type == CAMERA_ACTIVE) return "Active";
+			else if (type == CAMERA_DISABLED) return "Disabled";
+			else if (type == CAMERA_SENTRY) return "Sentry";
+		}
+
+		/// <summary> Gets the current time and formats it to a format friendly for windows file name format </summary>
 		static const char* GetTimeFormated() {
 			time_t rawtime;
 			struct tm timeinfo;
@@ -112,7 +125,7 @@ static class Utils {
 			return buffer;
 		};
 
-		// <summary> Gets the current hour</summary>
+		/// <summary> Gets the current hour</summary>
 		static int GetCurrentHour(int& minutesLefToNextHour) {
 			time_t theTime = time(NULL);
 			struct tm aTime;
@@ -123,7 +136,7 @@ static class Utils {
 			return aTime.tm_hour;
 		};
 
-		// <summary> Fix the member "order" so it start from 0 and we don't skip any number between cameras </summary>
+		/// <summary> Fix the member "order" so it start from 0 and we don't skip any number between cameras </summary>
 		static void FixOrderCameras(std::vector<CameraConfig>& cameras) {	
 			std::sort(cameras.begin(), cameras.end(), less_than_order);
 			int size = cameras.size();

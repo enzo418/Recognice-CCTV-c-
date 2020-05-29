@@ -2,6 +2,8 @@
 #include "NotificationIcon.h"
 #include <opencv2\core\base.hpp>
 #include <opencv2\core\types.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;
@@ -59,6 +61,8 @@ typedef std::vector<Message> MessageArray;
 #define RES_WIDTH 640
 #define RES_HEIGHT 360
 
+// START ROI def
+
 class ROI {
 public:
 	cv::Point point1;
@@ -73,6 +77,8 @@ public:
 		return (point1.x == 0 && point1.y == 0 && point2.x == 0 && point2.y == 0);
 	};
 };
+
+// END ROI def
 
 typedef unsigned char CAMERATYPE;
 

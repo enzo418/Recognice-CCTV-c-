@@ -7,12 +7,12 @@
 #include <thread>
 #include <map>
 #include <chrono>
-#include "API_KEYS.h"
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
 #include "utils.h"
 #include "ConfigFileHelper.h"
 #include "NotificationIcon.h"
+#include "Configuration.h"
 #include <CommCtrl.h>
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
@@ -612,7 +612,9 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
     capture.release();
 }
 
-int StartDetection(HWND hwnd, HMODULE g_hInst) {
+
+int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programConfig, 
+                   HWND hwnd, HMODULE g_hInst) {
     bool stop = false;
     bool somethingDetected = false;
 
@@ -621,12 +623,8 @@ int StartDetection(HWND hwnd, HMODULE g_hInst) {
     // Array of messages that the cameras order to send to telegram.
     MessageArray messages;
 
-    // configs
-    std::vector<CameraConfig> configs;
-    ProgramConfig programConfig;
-
     // Get the cameras and program configurations
-    ConfigFileHelper fhelper;
+    Config::ConfigFileHelper fhelper;
     fhelper.ReadFile(programConfig, configs);
 
     int configsSize = configs.size();
@@ -676,6 +674,7 @@ int StartDetection(HWND hwnd, HMODULE g_hInst) {
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(int argc, char* argv[]){
     bool isUrl = false;
+    bool startConfiguration = false;
     char url[200];
 
     // read for url... this is used for the configurator program.
@@ -683,7 +682,9 @@ int main(int argc, char* argv[]){
         for (int i = 1; i < argc; i++) {
             if (strcmp(argv[i], "-u") == 0) {
                 isUrl = true;
-            } else if (strlen(argv[i]) > 1 && isUrl) {                
+            } else if (strcmp(argv[i], "--config") == 0) {
+                startConfiguration = true;
+            } else if (strlen(argv[i]) > 1 && isUrl) {
                 strcpy_s(url, argv[i]);
             }
         }
@@ -720,9 +721,15 @@ int main(int argc, char* argv[]){
     HWND hwnd = GetConsoleWindow();
     HMODULE g_inst = GetModuleHandleA(NULL);
 
+    // configs
+    std::vector<CameraConfig> camerasConfigs;
+    ProgramConfig programConfig;
+
     AddNotificationIcon(hwnd, g_inst);
 
-    StartDetection(hwnd, g_inst);
+    if (startConfiguration) Config::StartConfiguration(camerasConfigs, programConfig);
+
+    StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
 
     DeleteNotificationIcon();
 }
