@@ -39,7 +39,7 @@ static class Utils {
 		#pragma endregion
 
 		#pragma region ConfigFileHelpers
-		static bool nextLineIsHeader(std::ifstream& file) {
+		static bool nextLineIsHeader(std::fstream& file) {
 			char c = 0;
 			char last = 0;
 

@@ -3,13 +3,10 @@
 #include <vector>
 #include "types.h"
 #include "utils.h"
+#include "ConfigurationFile.h"
 
 namespace Config
 {
-    void SaveIdVal(CameraConfig& config, std::string id, std::string  value);
-
-    void SaveIdVal(ProgramConfig& config, std::string id, std::string  value);
-
     void ModifyCamera(std::vector<CameraConfig>& configs);
 
     void AddNewCamera(std::vector<CameraConfig>& configs);

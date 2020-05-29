@@ -10,7 +10,7 @@
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
 #include "utils.h"
-#include "ConfigFileHelper.h"
+#include "ConfigurationFile.h"
 #include "NotificationIcon.h"
 #include "Configuration.h"
 #include <CommCtrl.h>
@@ -722,7 +722,7 @@ int main(int argc, char* argv[]){
     ProgramConfig programConfig;
 
     // Get the cameras and program configurations
-    Config::ConfigFileHelper fhelper;
+    Config::File::ConfigFileHelper fhelper;
     fhelper.ReadFile(programConfig, camerasConfigs);
 
     AddNotificationIcon(hwnd, g_inst);

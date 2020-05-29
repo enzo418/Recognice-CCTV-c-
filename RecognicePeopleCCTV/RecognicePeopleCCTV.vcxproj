@@ -226,13 +226,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="ConfigurationFile.cpp" />
     <ClCompile Include="ImageManipulation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NotificationIcon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="ConfigFileHelper.h" />
+    <ClInclude Include="ConfigurationFile.h" />
     <ClInclude Include="ImageManipulation.h" />
     <ClInclude Include="NotificationIcon.h" />
     <ClInclude Include="resource.h" />
