@@ -165,13 +165,16 @@ namespace Config
 
         size_t size = configs.size();
 
-        for (size_t i = 1; i <= size; i++) {
-            std::cout << "\t" << i << ". " << configs[i].cameraName;
-            std::cout << "\t  " << "url=" << configs[i].url;
+        for (size_t i = 0; i < size; i++) {
+            std::cout << "\t" << i+1 << ". " << configs[i].cameraName << std::endl;
+            std::cout << "\t  " << "url=" << configs[i].url << std::endl;
         }
 
-        std::cout << "- Please enter a camera config:";
-        std::getline(std::cin, input);
+        while (input.empty()) {
+            std::cout << "- Please enter a camera config:";
+            std::getline(std::cin, input);
+        }
+
         int indx = std::stoi(input) - 1;
 
         if (indx > 0 && indx < size) {

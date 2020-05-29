@@ -623,10 +623,6 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
     // Array of messages that the cameras order to send to telegram.
     MessageArray messages;
 
-    // Get the cameras and program configurations
-    Config::ConfigFileHelper fhelper;
-    fhelper.ReadFile(programConfig, configs);
-
     int configsSize = configs.size();
 
     if (configsSize == 0) {
@@ -725,9 +721,14 @@ int main(int argc, char* argv[]){
     std::vector<CameraConfig> camerasConfigs;
     ProgramConfig programConfig;
 
+    // Get the cameras and program configurations
+    Config::ConfigFileHelper fhelper;
+    fhelper.ReadFile(programConfig, camerasConfigs);
+
     AddNotificationIcon(hwnd, g_inst);
 
-    if (startConfiguration) Config::StartConfiguration(camerasConfigs, programConfig);
+    if (camerasConfigs.size() == 0 || startConfiguration)
+        Config::StartConfiguration(camerasConfigs, programConfig);
 
     StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
 
