@@ -9,6 +9,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+.codelite
+.vscode
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -341,3 +343,16 @@ healthchecksdb
 *.avi
 /RecognicePeopleCCTV/APIS_KEYS.h
 /RecognicePeopleCCTV/API_KEYS.h
+build/
+.vscode/*
+
+CMakeFiles/*
+.*
+CMakeCache.txt
+cmake_install.cmake
+CMakeLists.bk
+
+Recognice.project
+Recognice.workspace
+
+command.txt

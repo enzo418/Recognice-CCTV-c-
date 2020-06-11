@@ -1,7 +1,7 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib, "comctl32.lib")
 
-#include "NotificationIcon.h"
+#include "NotificationIconWindows.hpp"
 #include "resource.h"
 #include <windows.h>
 #include <shellapi.h>

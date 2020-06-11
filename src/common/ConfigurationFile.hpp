@@ -7,11 +7,16 @@
 #include <vector>
 #include <algorithm>
 
+#ifdef WINDOWS
 #include <Windows.h>
 #include <shlwapi.h>
+#else
+#define strcpy_s(x,y) strcpy(x,y)
+#define MAX_PATH 260
+#endif
 
-#include "types.h"
-#include "utils.h"
+#include "types.hpp"
+#include "utils.hpp"
 
 namespace Config
 {
@@ -55,13 +60,15 @@ namespace Config
             }
 
             const char* GetFilePath(const char* fileName) {
+				#ifdef WINDOWS
                 char path[MAX_PATH] = {};
-
                 GetModuleFileNameA(NULL, path, MAX_PATH);
                 PathRemoveFileSpecA(path);
                 PathCombineA(path, path, fileName);
-
                 return path;
+				#else
+				return fileName;
+				#endif
             }
 
             void OpenFileRead() {

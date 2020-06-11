@@ -1,7 +1,14 @@
 #pragma once
-#include "NotificationIcon.h"
-#include <opencv2\core\base.hpp>
-#include <opencv2\core\types.hpp>
+#ifdef WINDOWS
+#include "../windows/NotificationIconWindows.hpp"
+#else
+#include "../unix/NotificationIconUnix.hpp"
+#define strcpy_s(x,y) strcpy(x,y)
+#define HWND long*
+#define HMODULE long*
+#endif
+#include <opencv2/core/base.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 

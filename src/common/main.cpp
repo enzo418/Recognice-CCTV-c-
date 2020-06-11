@@ -1,154 +1,34 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <iostream>
-#include "ImageManipulation.h"
-#include <Windows.h>
 #include <vector>
 #include <thread>
 #include <map>
 #include <chrono>
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
-#include "utils.h"
-#include "ConfigurationFile.h"
-#include "NotificationIcon.h"
-#include "Configuration.h"
+
+#include "ImageManipulation.hpp"
+#include "utils.hpp"
+#include "ConfigurationFile.hpp"
+#include "Configuration.hpp"
+
+#ifdef WINDOWS
+#include <Windows.h>
 #include <CommCtrl.h>
+#include "../windows/NotificationIconWindows.hpp"
+#else
+#include "../unix/NotificationIconUnix.hpp"
+#define sprintf_s sprintf
+#endif
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true
 
-// forward declarations
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-// ...
-
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std;
 using namespace chrono;
-
-WNDPROC prevWndProc;
-
-
-
-void PrepareFrame(cv::Mat& frame, ROI& roi, int& rotation) {
-    cv::resize(frame, frame, RESIZERESOLUTION);
-
-    // Take the region of interes
-    if (!roi.isEmpty()) {
-        cv::Rect roi(roi.point1, roi.point2);
-        frame = frame(roi);
-    }
-
-    // Then rotate it
-    if (rotation != 0) ImageManipulation::RotateImage(frame, rotation);
-
-    cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-}
-
-// Doesn't work... nz avrg < normal nz
-bool SetupSensibility(cv::VideoCapture& capturer, CameraConfig* config, cv::HOGDescriptor& hog, ulong frameArea, int interval, ulong& value) {
-    /*
-    Recortar y rotar c/ frame.
-    Tomar frame => ver si detectamos una persona
-    Si no se detecta => obtener otro cuadro
-    Hacer la diferencia con el 1° y el 2° y sumarlo a la variable contDiff
-    Despues tomar otro cuadro y hacer la diferencia con el 2° y el 3° y sumarlo a contDiff
-    ...
-    Calcular el promedio de la diferencia (contDiff / n°) 
-    Devolver el numero deseado => prom * 1.05 (5% de diff para activar)
-    */
-    
-    // Read the first frame
-    cv::Mat lastFrame;
-    capturer.read(lastFrame);
-    PrepareFrame(lastFrame, config->roi, config->rotation);
-
-
-    // Classifcation over the first frame
-    std::vector<cv::Rect> detections;
-    vector< double > foundWeights;
-    hog.detectMultiScale(lastFrame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-
-    // if no one where detected
-    if (detections.size() == 0) {
-        // max iterations to get a average
-        ushort framesSample = 4;
-        ushort count = 0; 
-        
-        // accumulator of the diff obteneid 
-        ulong nonZeroAccum = 0;
-
-        cv::Mat diff;
-        cv::Mat newFrame;
-        auto timeLastframe = high_resolution_clock::now();
-        while (count <= framesSample && capturer.isOpened()) {
-            auto now = high_resolution_clock::now();
-            auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
-            if (intervalFrames >= interval) {
-                capturer.read(newFrame);
-                timeLastframe = high_resolution_clock::now();
-                newFrame = true;
-
-                //capturer.read(newFrame);
-                PrepareFrame(newFrame, config->roi, config->rotation);
-                if (newFrame.rows > 0) {
-                    cv::absdiff(lastFrame, newFrame, diff);
-                    nonZeroAccum += cv::countNonZero(diff);
-                }
-
-                lastFrame = std::move(newFrame);
-                count++;
-            } else {
-                capturer.read(diff); // keep reading to avoid error on VC.
-            }
-        }
-
-        if (count > 0) {
-            ulong nZavrg = nonZeroAccum / count;
-            std::cout << "avrg " << config->cameraName << "=" << nZavrg << std::endl;
-
-            double percentage = 1.05; // 105%
-            
-            // value => the change detected should be 5% higher than the average.
-            value = nZavrg * percentage;
-
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void RecordSampleOfCamera(CameraConfig& config) {
-    cv::VideoWriter out(config.cameraName + ".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., cv::Size(1280, 720), true);
-    if (!out.isOpened()) {
-        cerr << "Could not open the output video file for write\n";
-        throw "Erorr.";
-    }
-
-    cv::VideoCapture capture(config.url);
-
-    if (!capture.isOpened()) {
-        throw "Error: Couldn't open  camera " + config.cameraName + " rtsp.";
-    }
-
-    cv::Mat frame;
-
-    while (capture.isOpened()) {
-        if (!capture.read(frame)) {
-            //Error
-        }
-        out.write(frame);
-
-        cv::imshow("TEST", frame);
-
-        if (cv::waitKey(1) >= 0) break;
-    }
-
-    out.release();
-    capture.release();
-}
 
 void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bool& stop) {
     cv::Mat frame;
@@ -179,7 +59,7 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
                 command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
                 system(command.c_str());
             } else if(msg.IsText()) {
-                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + msg.text + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
+                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + msg.text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
                 system(command.c_str());
             } else {
                 PlayNotificationSound();
@@ -190,30 +70,34 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
     }
 }
 
-void inline ChangeNotificationState(HWND hwndl, HMODULE g_hinst, NISTATE state, 
-                                    const char* msg, const char* title, MessageArray* messages = nullptr) {
-    int maxTries = 0;
-    int count = 0;
+void inline ChangeNotificationState(NISTATE state, const char* msg, const char* title,
+									HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
+    #ifdef WINDOWS
+		int maxTries = 0;
+		int count = 0;
 
-    while (!SetStateNotificationIcon(hwndl, g_hinst, state, msg, title) && count <= maxTries) {
-        std::cout << "Trying again" << std::endl;
-        std::this_thread::sleep_for(chrono::milliseconds(1));        
-        count++;
-    }
+		while (!SetStateNotificationIcon(hwndl, g_hinst, state, msg, title) && count <= maxTries) {
+			std::cout << "Trying again" << std::endl;
+			std::this_thread::sleep_for(chrono::milliseconds(1));        
+			count++;
+		}
 
-    if (count >= maxTries) {
-        std::cout << "Failed to send notif.";
-        if (messages) {
-            std::cout << " Playing a sound to alert.";
-            messages->push_back(Message());
-        }
-        std::cout << std::endl;
-    }
+		if (count >= maxTries) {
+			std::cout << "Failed to send notif.";
+			if (messages) {
+				std::cout << " Playing a sound to alert.";
+				messages->push_back(Message());
+			}
+			std::cout << std::endl;
+		}
+		}
+	}
+	#endif
 }
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
 void ShowFrames(CameraConfig* configs, const int amountCameras, 
-                ProgramConfig& programConfig, bool& stop, HWND hwndl, HMODULE g_hinst) {
+                ProgramConfig& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
     // ============
     //  Variables 
     // ============
@@ -308,7 +192,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
                     currentState = NI_STATE_DETECTED;
 
                     // send the notification
-                    ChangeNotificationState(hwndl, g_hinst, currentState, configs[i].cameraName.c_str(), notificationTitle);
+                    ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
 
                     std::cout << "[W] " << configs[i].cameraName << " detected a person..." << std::endl;
                 }
@@ -322,7 +206,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
                     currentState = NI_STATE_DETECTING;
 
                     // send the notification
-                    //ChangeNotificationState(hwndl, g_hinst, currentState, configs[i].cameraName.c_str(), notificationTitle);
+                    //ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
 
                     std::cout << "[I] " << configs[i].cameraName << " is trying to match a person in the frame..." << std::endl;
                 }
@@ -334,7 +218,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
         if (allCamerasInSentry && currentState != NI_STATE_SENTRY) {
             currentState = NI_STATE_SENTRY;
 
-            //ChangeNotificationState(hwndl, g_hinst, currentState, "Sentry camera has something.", notificationTitle);
+            //ChangeNotificationState(currentState, "Sentry camera has something.", notificationTitle, hwndl, g_hinst);
 
             std::cout << "[I]" << " All the cameras are back to sentry mode." << std::endl;
         }
@@ -360,8 +244,9 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
 
             cv::imshow("TEST", res);
             if (cv::waitKey(1) >= 0) {
-                stop = true;
-                break;
+                //stop = true;
+                //break;
+				
                 /* Uncomment to use video recorder
                 out.release();
                 */
@@ -517,6 +402,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                 if (showProcessedImages && showPreview) {
                     // place diff image on top the frame img
                     cv::addWeighted(frame, 1, diff, 8, 12, diff);
+					
                     config->frames.push_back(diff);
                 }
             }
@@ -543,7 +429,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 
                     // and then send a message
                     char msg[100];
-                    snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", config->cameraName);
+                    snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", config->cameraName.c_str());
                     messages.push_back(Message(msg));
 
                     lastMessageSended = high_resolution_clock::now();
@@ -652,11 +538,16 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(SaveAndUploadImage, std::ref(messages), std::ref(programConfig), std::ref(stop)));
 
-    if (!programConfig.showPreview) {
+    /*if (!programConfig.showPreview) {
         std::cout << "Press a key to stop the program.\n";
         std::getchar();
         stop = true;
-    }
+    }*/
+	
+	std::cout << "Press a key to stop the program.\n";
+	std::getchar();
+	
+	stop = true;
 
     // Wait until every thread finish
     int szThreads = threads.size();
@@ -713,9 +604,7 @@ int main(int argc, char* argv[]){
             return 0;
         }
     }
-
-    HWND hwnd = GetConsoleWindow();
-    HMODULE g_inst = GetModuleHandleA(NULL);
+	
 
     // configs
     std::vector<CameraConfig> camerasConfigs;
@@ -725,12 +614,16 @@ int main(int argc, char* argv[]){
     Config::File::ConfigFileHelper fhelper;
     fhelper.ReadFile(programConfig, camerasConfigs);
 
-    AddNotificationIcon(hwnd, g_inst);
-
     if (camerasConfigs.size() == 0 || startConfiguration)
         Config::StartConfiguration(camerasConfigs, programConfig);
 
-    StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
-
-    DeleteNotificationIcon();
+#ifdef WINDOWS
+	HWND hwnd = GetConsoleWindow();
+	HMODULE g_inst = GetModuleHandleA(NULL);
+	AddNotificationIcon(hwnd, g_inst);
+	StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
+	DeleteNotificationIcon();
+#else
+	StartDetection(camerasConfigs, programConfig, nullptr, nullptr);
+#endif
 }

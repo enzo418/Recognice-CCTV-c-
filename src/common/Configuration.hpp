@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include "types.h"
-#include "utils.h"
-#include "ConfigurationFile.h"
+#include "types.hpp"
+#include "utils.hpp"
+#include "ConfigurationFile.hpp"
 
 namespace Config
 {
