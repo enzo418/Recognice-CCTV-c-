@@ -35,7 +35,8 @@ class Message {
 	// Or a image with a date
 	Message(cv::Mat img, const char* date){
 		image = img;
-		std::cout << date << std::endl;
+		std::cout << "date => " << date << std::endl;
+		std::cout << " 3 Frame size " << image.rows << ", " << image.cols << std::endl;
 		//sprintf_s(text, "%s", date);
 		snprintf(text, MESSAGE_SIZE, "%s", date);
 	}
@@ -168,6 +169,9 @@ struct ProgramConfig {
 
 	// seconds to waait until send another message.
 	int secondsBetweenMessage;
+
+	// if should send a image when the threshold change was passed.
+	bool sendImageWhenDetectChange;
 
 	// resolution of the preview
 	cv::Size outputResolution;

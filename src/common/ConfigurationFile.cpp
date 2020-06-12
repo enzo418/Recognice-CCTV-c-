@@ -81,6 +81,8 @@ void Config::SaveIdVal(ProgramConfig& config, std::string id, std::string value)
 	} else if (id == "showprocessedframes" || id == "showprocessedimages") {
 		Utils::toLowerCase(value);
 		config.showProcessedFrames = value == "no" ? false : true;
+	} else if (id == "sendimagewhendetectchange" || id == "sendimageafterdetectigchange"){
+		config.sendImageWhenDetectChange = value == "no" ? false : true;
 	}
 }
 

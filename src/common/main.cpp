@@ -27,8 +27,7 @@
 #define SHOWFRAMEINSCREEN true
 
 //using namespace cv; // Gives error whe used with <Windows.h>
-using namespace std;
-using namespace chrono;
+using namespace std::chrono;
 
 void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bool& stop) {
     cv::Mat frame;
@@ -38,35 +37,45 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
         size_t size = messages.size();
         for (size_t i = 0; i < size; i++) {
             // take the first message and delete it
-            Message msg = messages[i];
-            messages.erase(messages.begin());
+            //Message msg = messages[i];
             
             std::cout << "Sending message => " 
-                << "IsText=" << (msg.IsText() ? "yes" : "no") 
-                << "\tIsSound=" << (msg.IsSound() ? "yes" : "no")
-                << "\tFrame size=" << msg.image.cols << "," << msg.image.rows
-                << "\tText=" << msg.text
+                << "IsText=" << (messages[i].IsText() ? "yes" : "no") 
+                << "\tIsSound=" << (messages[i].IsSound() ? "yes" : "no")
+                << "\tFrame size=" << messages[i].image.cols << "," << messages[i].image.rows
+                << "\tText=" << messages[i].text
                 << std::endl;
 
             std::string command;
 
-            if (!msg.IsText() && !msg.IsSound() && msg.image.rows > 0) {
+            if (!messages[i].IsText() && !messages[i].IsSound() && messages[i].image.rows > 0) {
                 std::string filename = "img_";
-                filename += msg.text;
+                filename += messages[i].text;
                 filename += ".jpg";
-                cv::imwrite("saved_imgs/" + filename, msg.image);
+                //std::cout << "Filename = " << filename << std::endl;
+                cv::imwrite("./saved_imgs/" + filename, messages[i].image);
 
+                #ifdef WINDOWS
                 command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
+                #else
+                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
+                #endif
+
+                std::cout << "command => " << command << std::endl;
                 system(command.c_str());
-            } else if(msg.IsText()) {
-                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + msg.text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
+            } else if(messages[i].IsText()) {
+                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + messages[i].text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
                 system(command.c_str());
             } else {
                 PlayNotificationSound();
             }
         }
 
-        std::this_thread::sleep_for(chrono::milliseconds(1500));
+        // this clears all the messages, wich is not good but
+        // messages is bugged when try to copy the message to a new variable...
+        messages.clear();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     }
 }
 
@@ -277,7 +286,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
         } */       
         /* End video recorder support */
 
-        std::this_thread::sleep_for(chrono::milliseconds(int(interval * 0.7)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
     }
 }
 
@@ -309,6 +318,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 
     const bool showPreview = programConfig.showPreview;   
     const bool showProcessedImages = programConfig.showProcessedFrames;
+    const bool sendImageAfterChange = programConfig.sendImageWhenDetectChange;
         
     int totalNonZeroPixels = 0;
     
@@ -323,7 +333,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 
     cv::VideoCapture capture(config->url);
 
-    std::cout << "Opening " << camName << "..." << endl;
+    std::cout << "Opening " << camName << "..." << std::endl;
     assert(capture.isOpened());
 
     cv::Mat frame;
@@ -364,20 +374,20 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 
             //assert(frame.rows != 0); // check if the frame is valid
             if (frame.rows == 0) {
-                std::cout << "Received a invalid frame from \"" << camName << "\". Restarting connection..." << std::endl;
+                //std::cout << "Received a invalid frame from \"" << camName << "\". Restarting connection..." << std::endl;
 
                 capture.release();
                 capture.open(config->url);
 
                 //framesCount--;
                 assert(capture.isOpened());
-                std::cout << "Connected to \"" << camName << "\" successfully...." << std::endl;
+                //std::cout << "Connected to \"" << camName << "\" successfully...." << std::endl;
                 continue;
             }
 
             cv::resize(frame, frame, RESIZERESOLUTION);
 
-            if (showPreview)
+            //if (showPreview)
                 frameToShow = frame.clone();
 
             // Take the region of interes
@@ -427,10 +437,17 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                     // Play a sound
                     messages.push_back(Message());
 
-                    // and then send a message
-                    char msg[100];
-                    snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", config->cameraName.c_str());
-                    messages.push_back(Message(msg));
+                    if(sendImageAfterChange){                        
+                        // and then send a message
+                        const char* txt = "temp_image";
+                        Message msg = Message(frameToShow, txt);                        
+                        messages.push_back(msg);
+                    }else{
+                        // and then send a message
+                        char msg[100];
+                        snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", config->cameraName.c_str());
+                        messages.push_back(Message(msg));
+                    }
 
                     lastMessageSended = high_resolution_clock::now();
                 }
@@ -455,7 +472,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                     config->frames.push_back(frameToShow);
             } else {
                 std::vector<cv::Rect> detections;
-                vector< double > foundWeights;
+                std::vector< double > foundWeights;
                 if (RECOGNICEALWAYS || framesLeft > 0) {
                     hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
                     for (size_t i = 0; i < detections.size(); i++) {
@@ -470,7 +487,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                         config->state = NI_STATE_DETECTED;
                         somethingDetected = true;
                         Message msg = Message(frameToShow, "");
-                        snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated());
+                        snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
                         messages.push_back(msg);
                         std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
                         timeLastSavedImage = high_resolution_clock::now();
@@ -504,7 +521,7 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
     bool stop = false;
     bool somethingDetected = false;
 
-    std::vector<thread> threads;
+    std::vector<std::thread> threads;
 
     // Array of messages that the cameras order to send to telegram.
     MessageArray messages;
@@ -577,7 +594,7 @@ int main(int argc, char* argv[]){
         }
 
         if (isUrl) {
-            hash<string> hasher;
+            std::hash<std::string> hasher;
             size_t name = hasher(url);
             char path[75];
             sprintf_s(path, "%lu.jpg", name);

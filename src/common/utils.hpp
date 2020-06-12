@@ -5,7 +5,12 @@
 #include <sstream>
 #include <string.h>
 #include <iterator>
+
 #include <time.h>
+#include <ctime>
+#include <stdio.h>
+
+
 
 namespace Utils {
 	#pragma region StringManipulation
@@ -126,7 +131,7 @@ namespace Utils {
 	}
 
 	/// <summary> Gets the current time and formats it to a format friendly for windows file name format </summary>
-	static const char* GetTimeFormated() {
+	static const std::string GetTimeFormated() {
 		#ifdef WINDOWS
 		time_t rawtime;
 		struct tm timeinfo;
@@ -138,13 +143,13 @@ namespace Utils {
 		strftime(buffer, 80, "%d_%m_%Y_%H_%M_%S", &timeinfo);
 		return buffer;
 		#else
-		std::time_t t = std::time(nullptr);
-		std::tm tm = *std::localtime(&t);
-		
-		std::stringstream buffer;
-		buffer << std::put_time(&tm, "%d_%m_%Y_%H_%M_%S");
-		
-		return buffer.str().c_str();
+		time_t     now = time(0);
+		struct tm  tstruct;
+		char       buf[80];
+		tstruct = *localtime(&now);
+		strftime(buf, sizeof(buf), "%d_%m_%Y_%H_%M_%S", &tstruct);
+
+		return buf;
 		#endif
 	};
 

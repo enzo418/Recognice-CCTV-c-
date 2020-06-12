@@ -143,33 +143,6 @@ recognice/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/build
 .PHONY : recognice/fast
 
-src/common/ConfigFileHandler.o: src/common/ConfigFileHandler.cpp.o
-
-.PHONY : src/common/ConfigFileHandler.o
-
-# target to build an object file
-src/common/ConfigFileHandler.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigFileHandler.cpp.o
-.PHONY : src/common/ConfigFileHandler.cpp.o
-
-src/common/ConfigFileHandler.i: src/common/ConfigFileHandler.cpp.i
-
-.PHONY : src/common/ConfigFileHandler.i
-
-# target to preprocess a source file
-src/common/ConfigFileHandler.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigFileHandler.cpp.i
-.PHONY : src/common/ConfigFileHandler.cpp.i
-
-src/common/ConfigFileHandler.s: src/common/ConfigFileHandler.cpp.s
-
-.PHONY : src/common/ConfigFileHandler.s
-
-# target to generate assembly for a file
-src/common/ConfigFileHandler.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigFileHandler.cpp.s
-.PHONY : src/common/ConfigFileHandler.cpp.s
-
 src/common/Configuration.o: src/common/Configuration.cpp.o
 
 .PHONY : src/common/Configuration.o
@@ -314,9 +287,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... recognice"
-	@echo "... src/common/ConfigFileHandler.o"
-	@echo "... src/common/ConfigFileHandler.i"
-	@echo "... src/common/ConfigFileHandler.s"
 	@echo "... src/common/Configuration.o"
 	@echo "... src/common/Configuration.i"
 	@echo "... src/common/Configuration.s"

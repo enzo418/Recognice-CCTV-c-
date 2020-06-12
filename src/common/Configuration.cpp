@@ -1,5 +1,6 @@
 #include "Configuration.hpp"
 
+// This module is not complete.
 
 void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification = false) {
 	std::string input;        

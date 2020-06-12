@@ -29,7 +29,8 @@ namespace Config
 
         class ConfigFileHelper {
         private:
-            const char* _fileName = "config.ini";
+            //const char* _fileName = "./build/config.ini";
+            const char* _fileName = "./config.ini";
             std::fstream _file;
 
             template<typename T>
