@@ -13,6 +13,6 @@
 - Remove curl ouput from console.
 
 - Configuration:
-    - Allow the user to disable / enable a camera.
-    - Allow the user to set a telegram bot API key.
+    ~~-- Allow the user to disable / enable a camera.~~-
+    ~~-- Allow the user to set a telegram bot API key.~~-
     - Allow the user to set a messaging service like dweet.io
