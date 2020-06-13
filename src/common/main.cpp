@@ -579,56 +579,64 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
 int main(int argc, char* argv[]){
     bool isUrl = false;
     bool startConfiguration = false;
-    char url[200];
+    std::string pathConfig = "./config.ini";    
 
-    // read for url... this is used for the configurator program.
-    if (argc > 1) {
-        for (int i = 1; i < argc; i++) {
-            if (strcmp(argv[i], "-u") == 0) {
-                isUrl = true;
-            } else if (strcmp(argv[i], "--config") == 0) {
-                startConfiguration = true;
-            } else if (strlen(argv[i]) > 1 && isUrl) {
-                strcpy_s(url, argv[i]);
-            }
-        }
+    const std::string keys = 
+        "{help h      |            | show help message}"
+        "{url         |            | url of the camera to obtain a image}"
+        "{config_path | config.ini | path of the configuration file}";
 
-        if (isUrl) {
-            std::hash<std::string> hasher;
-            size_t name = hasher(url);
-            char path[75];
-            sprintf_s(path, "%lu.jpg", name);
+    cv::CommandLineParser parser (argc, argv, keys);
 
-            if (!Utils::FileExist(path)) {
-                cv::VideoCapture vc(url);
-
-                cv::Mat frame;
-
-                if (vc.isOpened()) {
-                    vc.read(frame);
-                    vc.release();
-
-                    cv::resize(frame, frame, RESIZERESOLUTION);
-
-                    cv::imwrite(path, frame);                    
-                } else {
-                    return -1;
-                }
-            }
-
-            std::cout << "image_name=" << path << std::endl;
-
-            return 0;
-        }
+    if (parser.has("help")) {
+        parser.printMessage();
+        return 0;
     }
-	
+
+    if (parser.has("url")) {
+        std::hash<std::string> hasher;
+        std::string url = parser.get<std::string>("url");
+        size_t name = hasher(url);
+
+        std::cout << "URL => " << url;
+
+        return 0;
+        
+        char path[75];
+        sprintf_s(path, "%lu.jpg", name);
+
+        if (!Utils::FileExist(path)) {
+            cv::VideoCapture vc(url);
+
+            cv::Mat frame;
+
+            if (vc.isOpened()) {
+                vc.read(frame);
+                vc.release();
+
+                cv::resize(frame, frame, RESIZERESOLUTION);
+
+                cv::imwrite(path, frame);                    
+            } else {
+                return -1;
+            }
+        }
+
+        std::cout << "image_name=" << path << std::endl;
+
+        return 0;
+    }
+
+    if (parser.has("config_path")) {
+        pathConfig = parser.get<std::string>("config_path");
+    }	
 
     // configs
     std::vector<CameraConfig> camerasConfigs;
     ProgramConfig programConfig;
 
     // Get the cameras and program configurations
-    Config::File::ConfigFileHelper fhelper;
+    Config::File::ConfigFileHelper fhelper(pathConfig.c_str());
     fhelper.ReadFile(programConfig, camerasConfigs);
 
     if (camerasConfigs.size() == 0 || startConfiguration)
