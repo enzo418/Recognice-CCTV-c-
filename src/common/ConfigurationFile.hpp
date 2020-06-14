@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -148,14 +149,48 @@ namespace Config
                 OpenFileWrite();
             }
 
+            inline void WriteLineInFile(const char* line){
+                _file.write(line, sizeof(char) * strlen(line));
+            }
+
             void WriteInFile(CameraConfig& cfg) {
                 OpenFileWrite();
 
+                std::string tmp;
+
                 // Write header
-                const char header[] = "\n[CAMERA]";
-                _file.write(header, sizeof(char) * strlen(header));
+                WriteLineInFile("\n[CAMERA]");
+                
+                tmp = "cameraName=" + cfg.cameraName;                
+                WriteLineInFile(tmp.c_str());
 
+                tmp = "order=" + cfg.order;
+                WriteLineInFile(tmp.c_str());
 
+                tmp = "url=" + cfg.url;
+                WriteLineInFile(tmp.c_str());
+
+                tmp = "rotation=" + cfg.rotation;
+                WriteLineInFile(tmp.c_str());
+
+                tmp = "type=" + cfg.type;
+                WriteLineInFile(tmp.c_str());
+
+                std::ostringstream strs;
+                strs << cfg.hitThreshold;
+                tmp = "hitThreshold=" + strs.str();                
+                WriteLineInFile(tmp.c_str());
+
+                tmp = "changeThreshold=" + cfg.changeThreshold;
+                WriteLineInFile(tmp.c_str());
+
+                tmp = "roi=" + Utils::RoiToString(cfg.roi);
+                WriteLineInFile(tmp.c_str());
+
+                std::ostringstream strs;
+                strs << cfg.noiseThreshold;
+                tmp = "thresholdNoise=" + strs.str();  
+                WriteLineInFile(tmp.c_str());
             }
         };        
     };
