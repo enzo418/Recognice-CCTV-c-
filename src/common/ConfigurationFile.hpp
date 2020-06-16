@@ -33,33 +33,10 @@ namespace Config
             //const char* _fileName = "./build/config.ini";
             const char* _fileName = "./config.ini";
             std::fstream _file;
+            char openMode = '\0';
 
             template<typename T>
-            T ReadNextConfig(std::fstream& file, T& config) {
-                std::string line;
-
-                while (!Utils::nextLineIsHeader(file) && std::getline(file, line)) {
-                    if (line.size() > 3 && line[0] != '#') {
-                        std::string id;
-                        std::string val;
-
-                        Utils::trim(line);
-                        char* str;
-                        ushort found = 0;
-
-                        int indx = strcspn(line.c_str(), "=");
-
-                        id = line.substr(0, indx);
-                        val = line.substr(indx + 1, line.size() - 1);
-
-                        if (id.size() > 0 && val.size() > 0) {
-                            Config::SaveIdVal(config, id, val);
-                        }
-                    }
-                }
-
-                return config;
-            }
+            T ReadNextConfig(std::fstream& file, T& config);
 
             const char* GetFilePath(const char* fileName) {
 				#ifdef WINDOWS
@@ -72,12 +49,18 @@ namespace Config
 				return fileName;
 				#endif
             }
-
+            
             void OpenFileRead() {
-                if (_file.is_open()) _file.close();
+                if (_file.is_open()){ 
+                    if (openMode != 'r')
+                        _file.close();
+                    else return;
+                }
 
                 char filename[MAX_PATH] = {};
                 strcpy_s(filename, GetFilePath(_fileName));
+
+                openMode = 'r';
 
                 if (Utils::FileExist(filename)) {
                     _file.open(filename);
@@ -85,10 +68,16 @@ namespace Config
             }
 
             void OpenFileWrite() {
-                if (_file.is_open()) _file.close();
+                if (_file.is_open()){
+                    if(openMode != 'w')
+                        _file.close();
+                    else return;
+                }
 
                 char filename[MAX_PATH] = {};
                 strcpy_s(filename, GetFilePath(_fileName));
+
+                openMode = 'w';
 
                 if (Utils::FileExist(filename)) {
                     _file.open(filename, std::ios::app);
@@ -105,93 +94,15 @@ namespace Config
             };
 
             /// <summary> Reads the config file then builds and return the configurations</summary>
-            void ReadFile(ProgramConfig& programConfig, std::vector<CameraConfig>& configs) {
-                std::string line;
+            void ReadFile(ProgramConfig& programConfig, std::vector<CameraConfig>& configs);
 
-                while (std::getline(_file, line)) {
-                    if (line != "") {
-                        if (line[0] == '[') {
-                            line = line.substr(1, line.size() - 2);
-                            Utils::toLowerCase(line);
+            void WriteFile();
 
-                            if (line == "program") {
-                                ProgramConfig config;
-                                programConfig = ReadNextConfig(_file, config);
-                            } else if (line == "camera") {
-                                CameraConfig config;
-                                ReadNextConfig(_file, config);
+            void WriteInFile(std::vector<CameraConfig>& configs);
 
-                                // validate config
-                                if (config.type == CAMERA_DISABLED) {
-                                    std::cout << config.cameraName << " skiped because its type is disabled" << std::endl;
-                                } else if (config.url.empty() /* check if is a valid url*/) {
-                                    std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
-                                } else {
-                                    if (config.noiseThreshold == 0) {
-                                        std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
-                                    }
+            inline void WriteLineInFile(const char* line);
 
-                                    configs.push_back(config);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                _file.close();
-            }
-
-            void WriteFile() {
-                OpenFileWrite();
-            }
-
-            void WriteInFile(std::vector<CameraConfig>& configs) {
-                OpenFileWrite();
-            }
-
-            inline void WriteLineInFile(const char* line){
-                _file.write(line, sizeof(char) * strlen(line));
-            }
-
-            void WriteInFile(CameraConfig& cfg) {
-                OpenFileWrite();
-
-                std::string tmp;
-
-                // Write header
-                WriteLineInFile("\n[CAMERA]");
-                
-                tmp = "cameraName=" + cfg.cameraName;                
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "order=" + cfg.order;
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "url=" + cfg.url;
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "rotation=" + cfg.rotation;
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "type=" + cfg.type;
-                WriteLineInFile(tmp.c_str());
-
-                std::ostringstream strs;
-                strs << cfg.hitThreshold;
-                tmp = "hitThreshold=" + strs.str();                
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "changeThreshold=" + cfg.changeThreshold;
-                WriteLineInFile(tmp.c_str());
-
-                tmp = "roi=" + Utils::RoiToString(cfg.roi);
-                WriteLineInFile(tmp.c_str());
-
-                std::ostringstream strs;
-                strs << cfg.noiseThreshold;
-                tmp = "thresholdNoise=" + strs.str();  
-                WriteLineInFile(tmp.c_str());
-            }
+            void WriteInFile(CameraConfig& cfg);
         };        
     };
 };

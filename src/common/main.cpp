@@ -251,40 +251,9 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
             if (!programConfig.outputResolution.empty())
                 cv::resize(res, res, cv::Size(programConfig.outputResolution.width, programConfig.outputResolution.height));
 
-            cv::imshow("TEST", res);
-            if (cv::waitKey(1) >= 0) {
-                //stop = true;
-                //break;
-				
-                /* Uncomment to use video recorder
-                out.release();
-                */
-            }
+            cv::imshow("Cameras", res);
+            cv::waitKey(1);            
         }
-
-        /* Start video recorder support */                
-        /*auto now = high_resolution_clock::now();
-        auto time = (now - timeLastCheck) / std::chrono::milliseconds(1);
-        if (time > 60 * 1000) {
-            if (somethingDetected) {
-                videosSaved += 1;
-                somethingDetected = false;
-            } else {
-                out.release();
-                
-                // create a new video
-                out.open(GetTimeFormated()+"__"+std::to_string(videosSaved)+".avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., frameSize, true);
-                if (!out.isOpened()) {
-                    cerr << "Could not open the output video file for write\n";
-                }
-            }
-        } else if (videosSaved == 0) {
-            out.open(GetTimeFormated() + "__0.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., frameSize, true);
-            if (!out.isOpened()) {
-                cerr << "Could not open the output video file for write\n";
-            }
-        } */       
-        /* End video recorder support */
 
         std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
     }
@@ -639,8 +608,10 @@ int main(int argc, char* argv[]){
     Config::File::ConfigFileHelper fhelper(pathConfig.c_str());
     fhelper.ReadFile(programConfig, camerasConfigs);
 
-    if (camerasConfigs.size() == 0 || startConfiguration)
+    if (camerasConfigs.size() == 0 || startConfiguration){
+        std::cout << "Couldn't find the configuration file. \n";
         Config::StartConfiguration(camerasConfigs, programConfig);
+    }
 
 #ifdef WINDOWS
 	HWND hwnd = GetConsoleWindow();
