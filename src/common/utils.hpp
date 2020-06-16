@@ -178,5 +178,28 @@ namespace Utils {
 			}
 		}			
 	}
+
+	static bool RectanglesOverlap(cv::Rect rect1, cv::Rect rect2){
+		cv::Point r1(rect1.x + rect1.width, rect1.y + rect1.height);
+		cv::Point r2(rect2.x + rect2.width, rect2.y + rect2.height);
+
+		// is left to the other
+		if (rect1.x >= r2.x || rect2.x >= r1.x) 
+			return false; 
+	
+		// is above to the other
+		if (rect1.y <= r2.y || rect2.y <= r1.y) 
+			return false; 
+	
+		return true; 
+	} 
+
+	static float OverlappingArea(cv::Rect rect1, cv::Rect rect2) { 
+		cv::Point r1(rect1.x + rect1.width, rect1.y + rect1.height);
+		cv::Point r2(rect2.x + rect2.width, rect2.y + rect2.height);
+
+		return (std::min(r1.x, r2.x) - std::max(rect1.x, rect2.x)) * 
+				(std::min(r1.y, r2.y) - std::max(rect1.y, rect2.y));
+	} 
 };
 
