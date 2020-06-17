@@ -107,6 +107,14 @@ typedef unsigned char CAMERATYPE;
 */
 #define CAMERA_DISABLED 0
 
+
+struct AreasDelimiters {
+	// area to consider that the person is in the "entry point"
+	cv::Rect rectEntry;
+	// area to consider that the person is in the "exit point"
+	cv::Rect rectExit;
+};
+
 struct CameraConfig {
 	std::string cameraName;
 
@@ -139,6 +147,9 @@ struct CameraConfig {
 
 	// threshold to use when removing the noise of the frame
 	double noiseThreshold;
+
+	// Delimiters to the entry vs exit area.
+	AreasDelimiters areasDelimiters;
 };
 
 // to be able to sort the array of configs

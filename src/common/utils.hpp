@@ -201,5 +201,57 @@ namespace Utils {
 		return (std::min(r1.x, r2.x) - std::max(rect1.x, rect2.x)) * 
 				(std::min(r1.y, r2.y) - std::max(rect1.y, rect2.y));
 	} 
+
+	static AreasDelimiters StringToAreaDelimiters(char* str){		
+		const char* delimiters = " [],()";
+		AreasDelimiters adel;
+		
+		#ifdef WINDOWS
+		char* next_token;
+		char* res = strtok_s(&str[0], delimiters, &next_token);
+		#else
+		char* res = strtok(&str[0], delimiters);
+		#endif
+		
+		uint8_t control = 0;
+		while (res != NULL) {
+			int fnd = std::stoi(res);
+			if (control == 0)
+				adel.rectEntry.x = fnd;
+			else if (control == 1)
+				adel.rectEntry.y = fnd;
+			else if (control == 2)
+				adel.rectEntry.width = fnd;
+			else if (control == 3)
+				adel.rectEntry.height = fnd;
+			else if (control == 4)
+				adel.rectExit.x = fnd;
+			else if (control == 5)
+				adel.rectExit.y = fnd;
+			else if (control == 6)
+				adel.rectExit.width = fnd;
+			else if (control == 7)
+				adel.rectExit.height = fnd;
+
+			#ifdef WINDOWS
+			res = strtok_s(NULL, delimiters, &next_token);
+			#else
+			res = strtok(NULL, delimiters);
+			#endif
+			
+			control++;
+		}
+
+		return adel;
+	}
+	
+	static std::string AreasDelimitersToString(const AreasDelimiters& adel) {
+		std::ostringstream ss;
+		ss << "[(" << adel.rectEntry.x << "," << adel.rectEntry.y
+			<< "),(" << adel.rectEntry.width << "," << adel.rectEntry.height << ")]" 
+			<< "[(" << adel.rectExit.x << "," << adel.rectExit.y
+			<< "),(" << adel.rectExit.width << "," << adel.rectExit.height << ")]" ;
+		return std::move(ss).str();
+	}
 };
 

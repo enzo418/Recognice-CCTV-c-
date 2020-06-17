@@ -1,6 +1,90 @@
 #include "Configuration.hpp"
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 // This module is not complete.
+
+cv::Mat img;
+cv::Mat dst;
+cv::Point entryPoint1;
+cv::Point entryPoint2;
+cv::Rect lastRectEntry;
+
+cv::Point exitPoint1;
+cv::Point exitPoint2;
+cv::Rect lastRectExit;
+
+CameraConfig config;
+int lastEvent = -1;
+
+int radius = 50;
+cv::Scalar colorEntry(0,255,255);
+cv::Scalar colorExit(0,255,0);
+
+static void onMouse( int event, int x, int y, int flags, void* params) {
+    cv::Point point(x, y);
+    dst = img.clone();
+    bool updateImg = false;
+
+    if (event == cv::EVENT_LBUTTONDOWN){ // EVENT_LBUTTONDOWN
+        lastEvent = cv::EVENT_LBUTTONDOWN;        
+        entryPoint1 = point;
+    } else if (event == cv::EVENT_RBUTTONDOWN){ // EVENT_RBUTTONDOWN
+        lastEvent = cv::EVENT_RBUTTONDOWN;
+        exitPoint1 = point;
+    } else if (event == cv::EVENT_LBUTTONUP || event == cv::EVENT_RBUTTONUP){
+        lastEvent = -1;
+        updateImg = false;
+    } else if (event == cv::EVENT_MOUSEMOVE){
+        if (lastEvent != -1){
+            cv::Point point1 = lastEvent == cv::EVENT_RBUTTONDOWN ? exitPoint1 : entryPoint1;
+            cv::Scalar color;
+            cv::Rect rect = cv::Rect(cv::Point(point1.x - point.x / 2, point1.y - point.y / 2), cv::Size(point));
+
+            if (lastEvent == cv::EVENT_RBUTTONDOWN){
+                exitPoint2 = point;
+                color = colorExit;
+                lastRectExit = rect;
+                if(!lastRectEntry.empty()) cv::rectangle(dst, lastRectEntry, colorEntry, radius/10);
+            } else if (lastEvent == cv::EVENT_LBUTTONDOWN){
+                entryPoint2 = point;
+                color = colorEntry;
+                lastRectEntry = rect;
+                if(!lastRectExit.empty()) cv::rectangle(dst, lastRectExit, colorExit, radius/10);
+            }
+
+            cv::rectangle(dst, rect, color, radius/10);
+            updateImg = true;
+        }
+    }
+
+    if(updateImg){
+        cv::imshow("Press a key to exit", dst);
+    }
+}
+
+AreasDelimiters StartConfigurationAreaEntryExit(CameraConfig& config){
+
+    cv::namedWindow("Press a key to exit", 0);
+
+    cv::setMouseCallback("Press a key to exit", onMouse, 0);  
+
+    cv::VideoCapture capture(config.url);
+    capture.read(img);
+
+    //cv::resize(img, img, RESIZERESOLUTION);
+
+    if (!config.roi.isEmpty()) {
+        cv::Rect roi(config.roi.point1, config.roi.point2);
+        img = img(roi);
+    }
+    
+    cv::imshow("Press a key to exit", img);
+
+    cv::waitKey(0);
+
+    return {lastRectEntry, lastRectExit};
+}
 
 void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification = false) {
 	std::string input;        
@@ -70,11 +154,18 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 		std::getline(std::cin, input);
 		if (!input.empty())
 			Config::SaveIdVal(dst, "noisethreshold", input);
+				
+		std::cout << "The program will show you a window where you will nedd to select: "
+						"\n The area where if a person is seen in it, they will be marked as entering the site."
+						"\n The area where if a person is seen in it, they will be marked as leaving the site."
+						"Use LeftMouseClick or LeftMouseClick to set the set the entry or exit point and then Move the mouse to select the area.";
+		// call the f
+		dst.areasDelimiters = StartConfigurationAreaEntryExit(dst);
 
 		std::cout << "Exit and save changes? (yes/no):";
 		std::getline(std::cin, input);
 		if (input == "yes" || input == "YES") {
-			src = dst;
+			src = dst;			
 			return;
 		} else {
 			std::cout << "Edit again? (yes/no):";
