@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <vector>
+#include <iterator>
+#include <algorithm>
 #include <thread>
 #include <map>
 #include <chrono>
@@ -24,7 +26,6 @@
 #define sprintf_s sprintf
 #endif
 
-#define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true
 
@@ -104,6 +105,75 @@ void inline ChangeNotificationState(NISTATE state, const char* msg, const char* 
 		}
 	}
 	#endif
+}
+
+void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
+    auto lastTimeCleaned = high_resolution_clock::now();
+    size_t lastCleanedSize = 0;
+    const int secondsIntervalClean = 120;
+    const int cleanRegistersThreshold = 120;
+    const size_t cleanItems = 50;
+
+    while (!stop)
+    {
+        auto now = std::chrono::high_resolution_clock::now();
+
+        // run over cameras
+        for(size_t i = 0; i < amountCameras; i++){
+            // if the cameras has a register
+            if(configs[i].registers.size() > 0) 
+            {
+                // then run over the registers
+                for (size_t j = 0; j < configs[j].registers.size(); j++)
+                {
+                    // if we find a register that is not finished
+                    if(!configs[i].registers[j].finished)
+                    {
+                        // again, run over the register to find another that is not finished
+                        for (size_t k = j+1; k < configs[j].registers.size(); k++)
+                        {
+                            // if this register is not finished and is different to the register of above
+                            if(!configs[i].registers[k].finished && configs[i].registers[k].firstPoint != configs[i].registers[j].firstPoint)
+                            {
+                                // and we are within the time (timeout)
+                                if((configs[i].registers[k].time_point - configs[i].registers[j].time_point).count() <= configs[i].secondsWaitEntryExit){                                    
+                                    configs[i].registers[k].partner = configs[i].registers[j].id;
+                                    configs[i].registers[j].partner = configs[i].registers[k].id;
+
+                                    configs[i].registers[k].finished = true;
+                                    configs[i].registers[j].finished = true;
+
+                                    configs[i].registers[k].lastPoint = configs[i].registers[k].firstPoint;
+                                    configs[i].registers[j].lastPoint = configs[i].registers[k].firstPoint;
+
+                                    std::cout << " A person was found in " << configs[i].cameraName << " " 
+                                    << (configs[i].registers[k].time_point - configs[i].registers[j].time_point).count() << " seconds ago "
+                                    << " starting from the " << (configs[i].registers[j].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
+                                    << " point and ending at the " << (configs[i].registers[k].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
+                                    << " point" << std::endl;
+                                }
+                            }
+                        }                        
+                    }
+                }                  
+
+                // if needed clean the vector of registers
+                // TODO: Insted of just delete them save all of them in a file.
+                if((now - lastTimeCleaned).count() > secondsIntervalClean && configs[i].registers.size() > cleanRegistersThreshold){
+                    std::vector<size_t> listId;
+                    size_t end = std::min(configs[i].registers.size(), cleanItems);
+                    for (size_t x = 0; x < end; x++) {
+                        if(configs[i].registers[x].finished && !findInVector(listId, configs[i].registers[x].partner)){
+                            configs[i].registers.erase(configs[i].registers.begin()+x);
+                            listId.push_back(configs[i].registers[x].id);
+                        }
+                    }
+                }             
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }    
 }
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
@@ -446,22 +516,43 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                 std::vector< double > foundWeights;
                 if (RECOGNICEALWAYS || framesLeft > 0) {
                     hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-                    for (size_t i = 0; i < detections.size(); i++) {
-                        detections[i].x += x;
-                        cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
-                        cv::rectangle(frameToShow, detections[i], color);
-                    }
+                    size_t detectSz = detections.size();
 
-                    now = high_resolution_clock::now();
-                    auto time = (now - timeLastSavedImage) / std::chrono::seconds(1);
-                    if (detections.size() > 0 && time >= programConfig.secondsBetweenImage) {
-                        config->state = NI_STATE_DETECTED;
-                        somethingDetected = true;
-                        Message msg = Message(frameToShow, "");
-                        snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
-                        messages.push_back(msg);
-                        std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
-                        timeLastSavedImage = high_resolution_clock::now();
+                    if(detectSz > 0){
+                        float areaMatchEntry = 0;
+                        float areaMatchExit = 0;
+
+                        for (size_t i = 0; i < detectSz; i++) {
+                            detections[i].x += x;
+                            cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
+                            cv::rectangle(frameToShow, detections[i], color);
+
+                            areaMatchEntry += Utils::OverlappingArea(config->areasDelimiters.rectEntry, detections[i]);
+                            areaMatchExit += Utils::OverlappingArea(config->areasDelimiters.rectExit, detections[i]);
+                        }
+                        
+                        // Save a register 
+                        Register regp;
+                        regp.id = config->registers.size();
+                        regp.time_point = std::chrono::system_clock::now();
+                        regp.date = Utils::GetTimeFormated().c_str();
+                        regp.finished = false;
+                        regp.firstPoint = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
+
+                        config->registers.push_back(regp);
+
+                        // Send a telegram message
+                        now = high_resolution_clock::now();
+                        auto time = (now - timeLastSavedImage) / std::chrono::seconds(1);
+                        if (time >= programConfig.secondsBetweenImage) {
+                            config->state = NI_STATE_DETECTED;
+                            somethingDetected = true;
+                            Message msg = Message(frameToShow, "");
+                            snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
+                            messages.push_back(msg);
+                            std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
+                            timeLastSavedImage = high_resolution_clock::now();
+                        }
                     }
 
                     framesLeft--;
@@ -549,7 +640,6 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
 
     return 0;
 }
-
 
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp

@@ -12,6 +12,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 
+#include <chrono>
+
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;
 
@@ -62,6 +64,37 @@ class Message {
 
 typedef std::vector<Message> MessageArray;
 
+// =====================
+//  Register Definition
+// =====================
+
+enum RegisterPoint {entryPoint, exitPoint};
+
+// registers the person that enters or leaves the site
+struct Register{
+	// numerical identifier
+	size_t id;
+
+	// saves if the person was entering or leaving the site
+	RegisterPoint firstPoint;
+	
+	// date for logging purposes
+	std::string date;
+
+	// saves the time (Unix Time) used to know if the timeout was reached
+	std::chrono::system_clock::time_point time_point;
+	
+	// flag to know if this register was finished (could find the next point or we reached the timeout)
+	bool finished;	
+
+	// saves the id of the partner (the other register), size_t max if it was not valid.
+	size_t partner;
+
+	// afters is finished saves the last point where the person was seen.
+	RegisterPoint lastPoint;
+};
+
+
 // ====================
 //  Camera definitions
 // ====================
@@ -69,8 +102,9 @@ typedef std::vector<Message> MessageArray;
 #define RES_WIDTH 640
 #define RES_HEIGHT 360
 
-// START ROI def
+#define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 
+// Region of interest
 class ROI {
 public:
 	cv::Point point1;
@@ -85,8 +119,6 @@ public:
 		return (point1.x == 0 && point1.y == 0 && point2.x == 0 && point2.y == 0);
 	};
 };
-
-// END ROI def
 
 typedef unsigned char CAMERATYPE;
 
@@ -144,6 +176,12 @@ struct CameraConfig {
 
 	// List of frames captured
 	std::vector<cv::Mat> frames;
+
+	// Temporal list of registers of when someone did enter o leave a site.
+	std::vector<Register> registers;
+
+	// Time to wait from the time a person reaches the point of entry or exit until they reach the other point
+	int secondsWaitEntryExit;
 
 	// threshold to use when removing the noise of the frame
 	double noiseThreshold;

@@ -72,7 +72,7 @@ AreasDelimiters StartConfigurationAreaEntryExit(CameraConfig& config){
     cv::VideoCapture capture(config.url);
     capture.read(img);
 
-    //cv::resize(img, img, RESIZERESOLUTION);
+    cv::resize(img, img, RESIZERESOLUTION);
 
     if (!config.roi.isEmpty()) {
         cv::Rect roi(config.roi.point1, config.roi.point2);
@@ -155,12 +155,20 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 		if (!input.empty())
 			Config::SaveIdVal(dst, "noisethreshold", input);
 				
-		std::cout << "The program will show you a window where you will nedd to select: "
-						"\n The area where if a person is seen in it, they will be marked as entering the site."
-						"\n The area where if a person is seen in it, they will be marked as leaving the site."
-						"Use LeftMouseClick or LeftMouseClick to set the set the entry or exit point and then Move the mouse to select the area.";
+		std::cout 	<< "The program will show you a window where you will nedd to select: "
+					<<	"\n [YELLOW] The area where if a person is seen in it, they will be marked as entering the site."
+					<<	"\n [GREEN]  The area where if a person is seen in it, they will be marked as leaving the site."
+					<<	"\n Use LeftMouseClick or LeftMouseClick to set the set the entry or exit point and then Move the mouse to select the area." 
+					<< std::endl;
 		// call the f
 		dst.areasDelimiters = StartConfigurationAreaEntryExit(dst);
+
+		std::cout << "Enter the time (in seconds) to wait from the time a person reaches the point of entry or "
+					<< "exit until they reach the other point. After this time the program forgets about that person: ";
+		if (isModification) std::cout << "[" << src.secondsWaitEntryExit << "] ";
+		std::getline(std::cin, input);
+		if (!input.empty())
+			dst.secondsWaitEntryExit = std::stoi(input);
 
 		std::cout << "Exit and save changes? (yes/no):";
 		std::getline(std::cin, input);
