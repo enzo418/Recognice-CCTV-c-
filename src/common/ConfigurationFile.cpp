@@ -40,7 +40,7 @@ void Config::SaveIdVal(CameraConfig& config, std::string id, std::string value) 
 	} else if (id == "secondswaitentryexit") {
 		int val = std::stoi(value);
 		config.secondsWaitEntryExit = val;
-	} else if (id == "areasdelimiters"){
+	} else if (id == "areasdelimiters" || id == "areadelimiters"){
 		config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
 	}
 }
