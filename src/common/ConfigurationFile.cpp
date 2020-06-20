@@ -37,6 +37,11 @@ void Config::SaveIdVal(CameraConfig& config, std::string id, std::string value) 
 		std::replace(value.begin(), value.end(), ',', '.');
 		double val = std::stof(value);
 		config.noiseThreshold = val;
+	} else if (id == "secondswaitentryexit") {
+		int val = std::stoi(value);
+		config.secondsWaitEntryExit = val;
+	} else if (id == "areasdelimiters"){
+		config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
 	}
 }
 
@@ -83,6 +88,9 @@ void Config::SaveIdVal(ProgramConfig& config, std::string id, std::string value)
 		config.showProcessedFrames = value == "no" ? false : true;
 	} else if (id == "sendimagewhendetectchange" || id == "sendimageafterdetectigchange"){
 		config.sendImageWhenDetectChange = value == "no" ? false : true;
+	} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
+		Utils::toLowerCase(value);
+		config.telegramConfig.useTelegramBot = value == "no" ? false : true;
 	}
 }
 

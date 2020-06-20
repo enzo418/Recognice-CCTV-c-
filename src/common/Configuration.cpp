@@ -83,6 +83,8 @@ AreasDelimiters StartConfigurationAreaEntryExit(CameraConfig& config){
 
     cv::waitKey(0);
 
+	cv::destroyAllWindows();
+
     return {lastRectEntry, lastRectExit};
 }
 
@@ -162,6 +164,8 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 					<< std::endl;
 		// call the f
 		dst.areasDelimiters = StartConfigurationAreaEntryExit(dst);
+
+		std::cout << "Selected areas => " << Utils::AreasDelimitersToString(dst.areasDelimiters) << std::endl;
 
 		std::cout << "Enter the time (in seconds) to wait from the time a person reaches the point of entry or "
 					<< "exit until they reach the other point. After this time the program forgets about that person: ";

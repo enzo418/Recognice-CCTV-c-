@@ -169,6 +169,11 @@ namespace Utils {
 		#endif
 	};
 
+	static void inline LogTime(tm* time){
+		std::cout << time->tm_mday << "/" << time->tm_mon << "/" << time->tm_year << " "
+				<< time->tm_hour << ":" << time->tm_min << ":" << time->tm_sec << ":";
+	}
+
 	/// <summary> Fix the member "order" so it start from 0 and we don't skip any number between cameras </summary>
 	static void FixOrderCameras(std::vector<CameraConfig>& cameras) {	
 		std::sort(cameras.begin(), cameras.end(), less_than_order);
@@ -200,38 +205,48 @@ namespace Utils {
 			cv::Point r1(rect1.x + rect1.width, rect1.y + rect1.height);
 			cv::Point r2(rect2.x + rect2.width, rect2.y + rect2.height);
 
-			return (std::min(r1.x, r2.x) - std::max(rect1.x, rect2.x)) * 
+			const float area = (std::min(r1.x, r2.x) - std::max(rect1.x, rect2.x)) * 
 					(std::min(r1.y, r2.y) - std::max(rect1.y, rect2.y));
-		}else
+
+			std::cout << " Will return area = " << area << std::endl;
+
+			return area;
+		}else{
+			std::cout << " Rectangles doesn't overlap =>  1. [(" << rect1.x <<"," << rect1.y << "),("<<rect1.width<<","<<rect1.height << ")]"
+			<< " 2. [(" << rect2.x <<"," << rect2.y << "),("<<rect2.width<<","<<rect2.height << ")]"
+			<< std::endl;
 			return 0;
+		}
 	} 
 
-	static AreasDelimiters StringToAreaDelimiters(char* str){		
+	static AreasDelimiters StringToAreaDelimiters(const char* str, ROI& roi){
 		const char* delimiters = " [],()";
 		AreasDelimiters adel;
+
+		char* copy = strdup(str);
 		
 		#ifdef WINDOWS
 		char* next_token;
-		char* res = strtok_s(&str[0], delimiters, &next_token);
+		char* res = strtok_s(&copy[0], delimiters, &next_token);
 		#else
-		char* res = strtok(&str[0], delimiters);
+		char* res = strtok(&copy[0], delimiters);
 		#endif
 		
 		uint8_t control = 0;
 		while (res != NULL) {
 			int fnd = std::stoi(res);
 			if (control == 0)
-				adel.rectEntry.x = fnd;
+				adel.rectEntry.x = fnd + roi.point1.x;
 			else if (control == 1)
-				adel.rectEntry.y = fnd;
+				adel.rectEntry.y = fnd + roi.point1.y;
 			else if (control == 2)
 				adel.rectEntry.width = fnd;
 			else if (control == 3)
 				adel.rectEntry.height = fnd;
 			else if (control == 4)
-				adel.rectExit.x = fnd;
+				adel.rectExit.x = fnd + roi.point1.x;
 			else if (control == 5)
-				adel.rectExit.y = fnd;
+				adel.rectExit.y = fnd + roi.point1.y;
 			else if (control == 6)
 				adel.rectExit.width = fnd;
 			else if (control == 7)
@@ -245,6 +260,8 @@ namespace Utils {
 			
 			control++;
 		}
+
+		free(copy);
 
 		return adel;
 	}

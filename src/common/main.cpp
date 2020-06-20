@@ -9,6 +9,7 @@
 #include <thread>
 #include <map>
 #include <chrono>
+#include <ctime>
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
 
@@ -31,6 +32,7 @@
 
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std::chrono;
+
 
 void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bool& stop) {
     cv::Mat frame;
@@ -58,17 +60,21 @@ void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bo
                 //std::cout << "Filename = " << filename << std::endl;
                 cv::imwrite("./saved_imgs/" + filename, messages[i].image);
 
-                #ifdef WINDOWS
-                command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
-                #else
-                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
-                #endif
+                if(programConfig.telegramConfig.useTelegramBot){
+                    #ifdef WINDOWS
+                    command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
+                    #else
+                    command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
+                    #endif
 
-                std::cout << "command => " << command << std::endl;
-                system(command.c_str());
+                    std::cout << "command => " << command << std::endl;
+                    system(command.c_str());
+                }
             } else if(messages[i].IsText()) {
-                command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + messages[i].text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
-                system(command.c_str());
+                if(programConfig.telegramConfig.useTelegramBot){
+                    command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + messages[i].text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
+                    system(command.c_str());
+                }
             } else {
                 PlayNotificationSound();
             }
@@ -107,8 +113,8 @@ void inline ChangeNotificationState(NISTATE state, const char* msg, const char* 
 	#endif
 }
 
-void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
-    auto lastTimeCleaned = high_resolution_clock::now();
+void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){    
+    static auto lastTimeCleaned = high_resolution_clock::now();
     size_t lastCleanedSize = 0;
     const int secondsIntervalClean = 120;
     const int cleanRegistersThreshold = 120;
@@ -124,19 +130,20 @@ void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
             if(configs[i].registers.size() > 0) 
             {
                 // then run over the registers
-                for (size_t j = 0; j < configs[j].registers.size(); j++)
+                for (size_t j = 0; j < configs[i].registers.size(); j++)
                 {
                     // if we find a register that is not finished
                     if(!configs[i].registers[j].finished)
                     {
                         // again, run over the register to find another that is not finished
-                        for (size_t k = j+1; k < configs[j].registers.size(); k++)
-                        {
+                        for (size_t k = j+1; k < configs[i].registers.size(); k++)
+                        {                         
                             // if this register is not finished and is different to the register of above
                             if(!configs[i].registers[k].finished && configs[i].registers[k].firstPoint != configs[i].registers[j].firstPoint)
                             {
+                                double seconds = configs[i].registers[k].time_point->tm_sec - configs[i].registers[j].time_point->tm_sec;
                                 // and we are within the time (timeout)
-                                if((configs[i].registers[k].time_point - configs[i].registers[j].time_point).count() <= configs[i].secondsWaitEntryExit){                                    
+                                if(seconds <= configs[i].secondsWaitEntryExit){
                                     configs[i].registers[k].partner = configs[i].registers[j].id;
                                     configs[i].registers[j].partner = configs[i].registers[k].id;
 
@@ -146,8 +153,11 @@ void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
                                     configs[i].registers[k].lastPoint = configs[i].registers[k].firstPoint;
                                     configs[i].registers[j].lastPoint = configs[i].registers[k].firstPoint;
 
-                                    std::cout << " A person was found in " << configs[i].cameraName << " " 
-                                    << (configs[i].registers[k].time_point - configs[i].registers[j].time_point).count() << " seconds ago "
+                                    std::cout << "[T] Time k = "; Utils::LogTime(configs[i].registers[k].time_point);
+                                    std::cout << "\n    Time j = "; Utils::LogTime(configs[i].registers[j].time_point);
+
+                                    std::cout << "\n [I] A person was found in " << configs[i].cameraName << " " 
+                                    << seconds << " seconds ago  or "
                                     << " starting from the " << (configs[i].registers[j].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
                                     << " point and ending at the " << (configs[i].registers[k].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
                                     << " point" << std::endl;
@@ -158,23 +168,32 @@ void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
                 }                  
 
                 // if needed clean the vector of registers
-                // TODO: Insted of just delete them save all of them in a file.
-                if((now - lastTimeCleaned).count() > secondsIntervalClean && configs[i].registers.size() > cleanRegistersThreshold){
-                    std::vector<size_t> listId;
-                    size_t end = std::min(configs[i].registers.size(), cleanItems);
-                    for (size_t x = 0; x < end; x++) {
-                        if(configs[i].registers[x].finished && !findInVector(listId, configs[i].registers[x].partner)){
-                            configs[i].registers.erase(configs[i].registers.begin()+x);
-                            listId.push_back(configs[i].registers[x].id);
-                        }
-                    }
-                }             
+                /// TODO: Insted of just delete them save all of them in a file.
+                // if((now - lastTimeCleaned).count() >= secondsIntervalClean && configs[i].registers.size() > cleanRegistersThreshold){
+                //     std::vector<size_t> listId;
+                //     size_t end = std::min(configs[i].registers.size(), cleanItems);
+                //     for (size_t x = 0; x < end; x++) {
+                //         if(configs[i].registers[x].finished && !findInVector(listId, configs[i].registers[x].partner)){
+                //             configs[i].registers.erase(configs[i].registers.begin()+x);
+                //             listId.push_back(configs[i].registers[x].id);
+                //         }
+                //     }
+
+                //     lastTimeCleaned = high_resolution_clock::now();
+                // }             
             }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }    
 }
+
+
+// Used to call functions that need their own thread but doesnt take too much time to complete
+// void ParallelMain(CameraConfig* configs, const int amountCameras, MessageArray& messages, ProgramConfig& programConfig, bool& stop){
+    /// TODO: Implement
+// }
+
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
 void ShowFrames(CameraConfig* configs, const int amountCameras, 
@@ -253,6 +272,14 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
                         cv::Scalar color = cv::Scalar(255, 0, 0);
                         cv::rectangle(frames[configs[i].order], configs[i].roi.point1, configs[i].roi.point2, color);
                     }
+
+                    /// Only for testing puporses
+                        cv::Scalar colorEntry(0,255,255);
+                        cv::Scalar colorExit(0,255,0);
+                        
+                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectEntry, colorEntry);                        
+                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectExit, colorExit);
+                    /// ...
 
                     configs[i].frames.erase(configs[i].frames.begin());
                     
@@ -360,6 +387,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
     const bool showPreview = programConfig.showPreview;   
     const bool showProcessedImages = programConfig.showProcessedFrames;
     const bool sendImageAfterChange = programConfig.sendImageWhenDetectChange;
+
+    const int maxRegisterPerPoint = 10;
         
     int totalNonZeroPixels = 0;
     
@@ -407,7 +436,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
             timeLastframe = high_resolution_clock::now();
             newFrame = true;
         } else {
-            capture.read(invalid); // keep reading to avoid error on VC.
+            /// TEST => REMOVE COMMENT BELOW
+            //capture.read(invalid); // keep reading to avoid error on VC.
         }
 
         if (newFrame) {
@@ -531,15 +561,33 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                             areaMatchExit += Utils::OverlappingArea(config->areasDelimiters.rectExit, detections[i]);
                         }
                         
-                        // Save a register 
-                        Register regp;
-                        regp.id = config->registers.size();
-                        regp.time_point = std::chrono::system_clock::now();
-                        regp.date = Utils::GetTimeFormated().c_str();
-                        regp.finished = false;
-                        regp.firstPoint = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
+                        RegisterPoint point = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
+                        bool shouldSave = false;
+                        int count = 0;
 
-                        config->registers.push_back(regp);
+                        size_t regSz = config->registers.size();
+                        for (size_t i = 0; i < regSz; i++)
+                            if(config->registers[i].firstPoint == point) 
+                                count++;                      
+
+                        if(count < maxRegisterPerPoint){
+                            // Save a register 
+                            Register regp;
+                            regp.id = config->registers.size();
+                            time_t ntime = time(0);
+                            regp.time_point = localtime(&ntime);
+                            regp.finished = false;
+                            regp.firstPoint = point;
+                            
+                            std::cout << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
+                            << " time = " << regp.time_point->tm_min << "m:" << regp.time_point->tm_sec << "s"
+                            << " areaEntry = " <<  areaMatchEntry << " areaExit =" << areaMatchExit
+                            << std::endl;
+
+                            config->registers.push_back(regp);
+                        }else{
+                            std::cout << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
+                        }
 
                         // Send a telegram message
                         now = high_resolution_clock::now();
@@ -616,6 +664,9 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
 
     // Start a thread for save and upload the images captured    
     threads.push_back(std::thread(SaveAndUploadImage, std::ref(messages), std::ref(programConfig), std::ref(stop)));
+
+    // Start a thread to check the registers
+    threads.push_back(std::thread(CheckRegisters, &configs[0], configsSize, std::ref(stop)));
 
     /*if (!programConfig.showPreview) {
         std::cout << "Press a key to stop the program.\n";

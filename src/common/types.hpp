@@ -78,11 +78,8 @@ struct Register{
 	// saves if the person was entering or leaving the site
 	RegisterPoint firstPoint;
 	
-	// date for logging purposes
-	std::string date;
-
 	// saves the time (Unix Time) used to know if the timeout was reached
-	std::chrono::system_clock::time_point time_point;
+	tm* time_point;
 	
 	// flag to know if this register was finished (could find the next point or we reached the timeout)
 	bool finished;	
@@ -202,6 +199,8 @@ struct {
 // ===============
 
 struct TelegramBotConfig {
+	bool useTelegramBot;
+	
 	// telefram bot API
 	std::string apiKey;
 
