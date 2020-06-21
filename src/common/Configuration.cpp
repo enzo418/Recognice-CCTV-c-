@@ -188,7 +188,7 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 	}
 }
 
-void Config::ModifyCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
+/*void Config::ModifyCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	std::cout << "\n# Modify camera config\n";
 	std::string input;
 
@@ -207,10 +207,13 @@ void Config::ModifyCamera(std::vector<CameraConfig>& configs, Config::File::Conf
 	int indx = std::stoi(input) - 1;
 
 	if (indx >= 0 && indx < size) {
+		Config::File::CameraConfigPos control = fh.FindConfigInFile(configs[indx]);
 		LoadConfigCamera(configs[indx], configs[indx], true);
-		// Write config in file
+		
+		std::string content = fh.GetContentFileExcept(control.begin, control.end);
+				
 	} else std::cout << "ERROR: Invalid index " << indx << std::endl;
-}
+}*/
 
 void Config::AddNewCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	CameraConfig config;
@@ -219,7 +222,7 @@ void Config::AddNewCamera(std::vector<CameraConfig>& configs, Config::File::Conf
 
 	fh.WriteInFile(config);	
 
-	if (config.type != CAMERA_DISABLED) configs.push_back(config);
+	configs.push_back(config);
 }
 
 void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
@@ -230,7 +233,7 @@ void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::Fil
 		while (input.empty()) {
 			std::cout << "\n# Cameras configurations" << std::endl
 				<< "\t1. Add new camera" << std::endl
-				<< "\t2. Modify camera" << std::endl
+				/*<< "\t2. Modify camera" << std::endl*/
 				<< "\t3. Back" << std::endl
 				<< "- Chose a option: ";
 
@@ -238,10 +241,13 @@ void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::Fil
 		}
 
 		if (input == "1") {
-			Config::AddNewCamera(configs, fh);
+			Config::AddNewCamera(configs, fh);			
 		} else if (input == "2") {
-			Config::ModifyCamera(configs, fh);
+			
+			//Config::ModifyCamera(configs, fh);
 		}
+		
+		input.clear();
 	}
 }
 

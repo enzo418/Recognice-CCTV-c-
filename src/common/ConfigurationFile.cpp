@@ -155,6 +155,73 @@ void Config::File::ConfigFileHelper::ReadFile(ProgramConfig& programConfig, std:
 	_file.close();
 }
 
+/*std::string Config::File::ConfigFileHelper::GetContentFileExcept(int beg, int end){	
+	std::string content;
+	std::string line;
+	
+	_file.seekg (0, _file.beg);
+
+	while (std::getline(_file, line))
+	{
+		const int pos = _file.tellg();
+		if(pos < beg && pos > end)
+			content += line;
+	}
+
+	if(_file.eof()) _file.clear();
+
+	_file.seekg (0, _file.beg);
+
+	return content;		
+}*/
+
+/* Config::File::CameraConfigPos Config::File::ConfigFileHelper::FindConfigInFile(CameraConfig& config){
+	CameraConfigPos pos;
+	std::string line;
+	bool isCamera;
+	pos.begin = -1;
+	pos.end = -1;
+
+	while (std::getline(_file, line)) {
+		if(pos.begin != -1 && pos.end != -1)
+			break;
+
+		if (line != "") 
+		{
+			if (line[0] == '[' && line[1] == 'C') {
+				isCamera = true;
+				if(pos.begin == -1){
+					pos.begin = _file.tellg();
+				}else{
+					pos.end = _file.tellg() - 1;
+				}
+			} else if (line[0] == '[' && line[1] == 'P') {
+				isCamera = false;
+				if(pos.begin != -1){
+					pos.end = _file.tellg() - 1;				
+				}else{
+					pos.begin = -1;
+					pos.end = -1;
+				}
+			}else{
+				if(isCamera) {
+					Utils::trim(line);
+					if(line.find("order=") != std::string::npos){
+						if(line != "order="+config.order){
+							pos.begin = -1;
+						}
+					}
+				}
+			}
+		}
+	}	
+
+	// if eof clear the eofbit flag 
+	if (_file.eof()) _file.clear();
+	
+	return pos;
+}*/
+
 inline void Config::File::ConfigFileHelper::WriteLineInFile(const char* line){
 	_file.write(line, sizeof(char) * strlen(line));
 }

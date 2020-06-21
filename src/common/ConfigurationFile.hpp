@@ -26,6 +26,11 @@ namespace Config
 
     namespace File
     {
+        struct CameraConfigPos{
+            std::streampos begin;
+            std::streampos end;
+        };
+
         class ConfigFileHelper {
         private:
             //const char* _fileName = "./build/config.ini";
@@ -77,7 +82,7 @@ namespace Config
 
                 openMode = 'w';
                 
-                _file.open(filename, std::ios::app);                
+                _file.open(filename, std::ios::app | std::ios::binary);
             }
 
         public:
@@ -99,6 +104,9 @@ namespace Config
             inline void WriteLineInFile(const char* line);
 
             void WriteInFile(CameraConfig& cfg);
+
+            //CameraConfigPos FindConfigInFile(CameraConfig& config);
+            //std::string GetContentFileExcept(int beg, int end);
         };        
     };
 };
