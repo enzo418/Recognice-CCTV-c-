@@ -174,9 +174,10 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 		if (!input.empty())
 			dst.secondsWaitEntryExit = std::stoi(input);
 
-		std::cout << "Exit and save changes? (yes/no):";
+		std::cout << "Exit and save changes? (y/N):";
 		std::getline(std::cin, input);
-		if (input == "yes" || input == "YES") {
+		Utils::toLowerCase(input);
+		if (input == "yes" || input == "y") {
 			src = dst;			
 			return;
 		} else {
@@ -187,7 +188,7 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 	}
 }
 
-void Config::ModifyCamera(std::vector<CameraConfig>& configs) {
+void Config::ModifyCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	std::cout << "\n# Modify camera config\n";
 	std::string input;
 
@@ -211,52 +212,62 @@ void Config::ModifyCamera(std::vector<CameraConfig>& configs) {
 	} else std::cout << "ERROR: Invalid index " << indx << std::endl;
 }
 
-void Config::AddNewCamera(std::vector<CameraConfig>& configs) {
+void Config::AddNewCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	CameraConfig config;
 
 	LoadConfigCamera(config, config, false);
 
-	Config::File::AppendCameraConfig(config);
+	fh.WriteInFile(config);	
 
 	if (config.type != CAMERA_DISABLED) configs.push_back(config);
 }
 
-void Config::CameraConfiguration(std::vector<CameraConfig>& configs) {
+void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	std::string input;
-	while (input.empty()) {
-		std::cout << "\n# Cameras configurations" << std::endl
-			<< "\t1. Add new camera" << std::endl
-			<< "\t2. Modify camera" << std::endl
-			<< "- Chose a option: ";
+	
+	while (input != "3")
+	{
+		while (input.empty()) {
+			std::cout << "\n# Cameras configurations" << std::endl
+				<< "\t1. Add new camera" << std::endl
+				<< "\t2. Modify camera" << std::endl
+				<< "\t3. Back" << std::endl
+				<< "- Chose a option: ";
 
-		std::getline(std::cin, input);
-	}
+			std::getline(std::cin, input);
+		}
 
-	if (input == "1") {
-		Config::AddNewCamera(configs);
-	} else if (input == "2") {
-		Config::ModifyCamera(configs);
+		if (input == "1") {
+			Config::AddNewCamera(configs, fh);
+		} else if (input == "2") {
+			Config::ModifyCamera(configs, fh);
+		}
 	}
 }
 
-void Config::ProgramConfiguration(ProgramConfig& config) {
+void Config::ProgramConfiguration(ProgramConfig& config, Config::File::ConfigFileHelper& fh) {
 
 }
 
-void Config::StartConfiguration(std::vector<CameraConfig>& configs, ProgramConfig& programConfig) {
+void Config::StartConfiguration(std::vector<CameraConfig>& configs, ProgramConfig& programConfig, Config::File::ConfigFileHelper& fh) {
 	std::string input;
-	while (input.empty()) {
-		std::cout << "# Configuration" << std::endl
-			<< "\t1. Cameras" << std::endl
-			<< "\t2. Program" << std::endl
-			<< "- Chose a option: ";
+	char configsText[] = "3. Exit configuration";
+	while(input != "3" || configs.size() <= 0){
+		while (input.empty()) {
+			std::cout << "# Configuration" << std::endl
+				<< "\t1. Cameras" << std::endl
+				<< "\t2. Program" << std::endl
+				<< "- Chose a option: ";
+			
+			if(configs.size() > 0) std::cout << configsText;
 
-		std::getline(std::cin, input);
-	}
+			std::getline(std::cin, input);
+		}
 
-	if (input == "1") {
-		Config::CameraConfiguration(configs);
-	} else if (input == "2") {
-		Config::ProgramConfiguration(programConfig);
+		if (input == "1") {
+			Config::CameraConfiguration(configs, fh);
+		} else if (input == "2") {
+			Config::ProgramConfiguration(programConfig, fh);
+		}
 	}
 }

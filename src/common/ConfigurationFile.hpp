@@ -26,8 +26,6 @@ namespace Config
 
     namespace File
     {
-        void AppendCameraConfig(CameraConfig& cfg);
-
         class ConfigFileHelper {
         private:
             //const char* _fileName = "./build/config.ini";
@@ -78,10 +76,8 @@ namespace Config
                 strcpy_s(filename, GetFilePath(_fileName));
 
                 openMode = 'w';
-
-                if (Utils::FileExist(filename)) {
-                    _file.open(filename, std::ios::app);
-                }
+                
+                _file.open(filename, std::ios::app);                
             }
 
         public:

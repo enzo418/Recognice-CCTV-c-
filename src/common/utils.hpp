@@ -185,36 +185,78 @@ namespace Utils {
 		}			
 	}
 
+	static std::string PointToString(cv::Point rt){
+		return "(" + std::to_string(rt.x)  + "," + std::to_string(rt.y) + ")";
+	}
+
+	static std::string RectangleToString(cv::Rect rt, bool leftUpRighBtm){
+		if(!leftUpRighBtm)
+			return "[(" + std::to_string(rt.x)  + "," + std::to_string(rt.y) + "),("+std::to_string(rt.width)+","+std::to_string(rt.height) + ")]";
+		else
+			return "[(" + std::to_string(rt.tl().x)  + "," + std::to_string(rt.tl().y) + "),("+std::to_string(rt.br().x)+","+std::to_string(rt.br().y) + ")]";
+	}
+
+	static cv::Point TopLeftRectangle(cv::Rect rect){
+		return cv::Point(rect.x, rect.y+rect.height);
+	}
+
+	static cv::Point BottomRightRectangle(cv::Rect rect){
+		return cv::Point(rect.x + rect.width, rect.y);
+	}
+
 	static bool RectanglesOverlap(cv::Rect rect1, cv::Rect rect2){
-		cv::Point r1(rect1.x + rect1.width, rect1.y + rect1.height);
-		cv::Point r2(rect2.x + rect2.width, rect2.y + rect2.height);
+		// top left point
+		cv::Point tl1 = TopLeftRectangle(rect1);
+		cv::Point tl2 = TopLeftRectangle(rect2);
+
+		// bottom righ point
+		cv::Point br1 = BottomRightRectangle(rect1);
+		cv::Point br2 = BottomRightRectangle(rect2);
 
 		// is left to the other
-		if (rect1.x >= r2.x || rect2.x >= r1.x) 
+		if (tl1.x >= br2.x || tl2.x >= br1.x) 
 			return false; 
 	
 		// is above to the other
-		if (rect1.y <= r2.y || rect2.y <= r1.y) 
+		if (tl1.y <= br2.y || tl2.y <= br1.y) 
 			return false; 
 	
-		return true; 
+		return true;
 	} 
 
-	static float OverlappingArea(cv::Rect rect1, cv::Rect rect2) { 
-		if(RectanglesOverlap(rect1, rect2)){
-			cv::Point r1(rect1.x + rect1.width, rect1.y + rect1.height);
-			cv::Point r2(rect2.x + rect2.width, rect2.y + rect2.height);
+	static int OverlappingArea(cv::Rect rect1, cv::Rect rect2) { 
+		// top left point
+		cv::Point tl1 = TopLeftRectangle(rect1);
+		cv::Point tl2 = TopLeftRectangle(rect2);
 
-			const float area = (std::min(r1.x, r2.x) - std::max(rect1.x, rect2.x)) * 
-					(std::min(r1.y, r2.y) - std::max(rect1.y, rect2.y));
+		// bottom righ point
+		cv::Point br1 = BottomRightRectangle(rect1);
+		cv::Point br2 = BottomRightRectangle(rect2);
+
+		std::cout << " Points =>  1. [" << PointToString(tl1) << "," << PointToString(br1) << "]"
+				<<   "\n          2. [" << PointToString(tl2) << "," << PointToString(br2) << "]"
+		<< std::endl;
+
+		if(RectanglesOverlap(rect1, rect2)){
+
+			const int area = abs((std::max(tl1.x, tl2.x) - std::min(br1.x, br2.x)) * 
+					(std::max(tl1.y, tl2.y) - std::min(br1.y, br2.y)));
 
 			std::cout << " Will return area = " << area << std::endl;
 
 			return area;
 		}else{
-			std::cout << " Rectangles doesn't overlap =>  1. [(" << rect1.x <<"," << rect1.y << "),("<<rect1.width<<","<<rect1.height << ")]"
-			<< " 2. [(" << rect2.x <<"," << rect2.y << "),("<<rect2.width<<","<<rect2.height << ")]"
-			<< std::endl;
+			// std::cout << " Rectangles doesn't overlap =>  1. [(" << rect1.x <<"," << rect1.y << "),("<<rect1.width<<","<<rect1.height << ")]"
+			// << " 2. [(" << rect2.x <<"," << rect2.y << "),("<<rect2.width<<","<<rect2.height << ")]"
+			// << std::endl;
+
+			// std::cout << " Rectangles doesn't overlap => 1. " << RectangleToString(rect1, true) 
+			// << "\n 			2. " << RectangleToString(rect2, true)
+			// << std::endl;
+
+			// std::cout << " Rectangles doesn't overlap => 1. [" << PointToString(tl1) << "," << PointToString(br1) << "]"
+			// << "\n 				2. " << PointToString(tl2) << "," << PointToString(br2) << "]"
+			// << std::endl;
 			return 0;
 		}
 	} 

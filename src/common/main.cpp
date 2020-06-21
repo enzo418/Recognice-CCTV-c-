@@ -549,8 +549,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                     size_t detectSz = detections.size();
 
                     if(detectSz > 0){
-                        float areaMatchEntry = 0;
-                        float areaMatchExit = 0;
+                        int areaMatchEntry = 0;
+                        int areaMatchExit = 0;
 
                         for (size_t i = 0; i < detectSz; i++) {
                             detections[i].x += x;
@@ -758,9 +758,19 @@ int main(int argc, char* argv[]){
     fhelper.ReadFile(programConfig, camerasConfigs);
 
     if (camerasConfigs.size() == 0 || startConfiguration){
-        std::cout << "Couldn't find the configuration file. \n";
-        Config::StartConfiguration(camerasConfigs, programConfig);
+        std::cout << "Couldn't find the configuration file. \n";        
+        Config::StartConfiguration(camerasConfigs, programConfig, fhelper);
     }
+
+    size_t szConfigs = camerasConfigs.size();
+    for (size_t i = 0; i < szConfigs; i++)
+    {
+        if(camerasConfigs[i].type == CAMERA_DISABLED){
+            std::cout << camerasConfigs[i].cameraName << " skiped because its type is disabled" << std::endl;
+            camerasConfigs.erase(camerasConfigs.begin()+int(i));
+        }
+    }
+    
 
 #ifdef WINDOWS
 	HWND hwnd = GetConsoleWindow();

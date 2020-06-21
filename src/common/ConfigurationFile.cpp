@@ -94,11 +94,6 @@ void Config::SaveIdVal(ProgramConfig& config, std::string id, std::string value)
 	}
 }
 
-void Config::File::AppendCameraConfig(CameraConfig& cfg) {
-	ConfigFileHelper fh;
-	fh.WriteInFile(cfg);
-}
-
 template<typename T>
 T Config::File::ConfigFileHelper::ReadNextConfig(std::fstream& file, T& config) {
 	std::string line;
@@ -143,9 +138,7 @@ void Config::File::ConfigFileHelper::ReadFile(ProgramConfig& programConfig, std:
 					ReadNextConfig(_file, config);
 
 					// validate config
-					if (config.type == CAMERA_DISABLED) {
-						std::cout << config.cameraName << " skiped because its type is disabled" << std::endl;
-					} else if (config.url.empty() /* check if is a valid url*/) {
+					if (config.url.empty() /* check if is a valid url*/) {
 						std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
 					} else {
 						if (config.noiseThreshold == 0) {
@@ -187,34 +180,40 @@ void Config::File::ConfigFileHelper::WriteInFile(CameraConfig& cfg){
 	// Write header
 	ConfigFileHelper::WriteLineInFile("\n[CAMERA]");
 
-	tmp = "cameraName=" + cfg.cameraName;                
+	tmp = "\ncameraName=" + cfg.cameraName;                
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "order=" + cfg.order;
+	tmp = "\norder=" + cfg.order;
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "url=" + cfg.url;
+	tmp = "\nurl=" + cfg.url;
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "rotation=" + cfg.rotation;
+	tmp = "\nrotation=" + cfg.rotation;
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "type=" + cfg.type;
+	tmp = "\ntype=" + cfg.type;
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
 	std::ostringstream strs;
 	strs << cfg.hitThreshold;
-	tmp = "hitThreshold=" + strs.str();                
+	tmp = "\nhitThreshold=" + strs.str();                
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "changeThreshold=" + cfg.changeThreshold;
+	tmp = "\nchangeThreshold=" + cfg.changeThreshold;
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
-	tmp = "roi=" + Utils::RoiToString(cfg.roi);
+	tmp = "\nroi=" + Utils::RoiToString(cfg.roi);
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
 
 	strs.clear();
 	strs << cfg.noiseThreshold;
-	tmp = "thresholdNoise=" + strs.str();  
+	tmp = "\nthresholdNoise=" + strs.str();  
 	ConfigFileHelper::WriteLineInFile(tmp.c_str());
+
+	tmp = "\nsecondsWaitEntryExit=" + cfg.secondsWaitEntryExit;
+	ConfigFileHelper::WriteLineInFile(tmp.c_str());
+
+	tmp = "\nareasDelimiters=" + Utils::AreasDelimitersToString(cfg.areasDelimiters);
+	ConfigFileHelper::WriteLineInFile(tmp.c_str());	
 }

@@ -7,13 +7,13 @@
 
 namespace Config
 {
-    void ModifyCamera(std::vector<CameraConfig>& configs);
+    void ModifyCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
 
-    void AddNewCamera(std::vector<CameraConfig>& configs);
+    void AddNewCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
 
-    void CameraConfiguration(std::vector<CameraConfig>& configs);
+    void CameraConfiguration(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
 
-    void ProgramConfiguration(ProgramConfig& config);
+    void ProgramConfiguration(ProgramConfig& config, Config::File::ConfigFileHelper& fh);
 
-    void StartConfiguration(std::vector<CameraConfig>& configs, ProgramConfig& programConfig);
+    void StartConfiguration(std::vector<CameraConfig>& configs, ProgramConfig& programConfig, Config::File::ConfigFileHelper& fh);
 }
