@@ -82,7 +82,7 @@ namespace Config
 
                 openMode = 'w';
                 
-                _file.open(filename, std::ios::app | std::ios::binary);
+                _file.open(filename, std::ios::app);
             }
 
         public:

@@ -639,7 +639,7 @@ int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programCon
     int configsSize = configs.size();
 
     if (configsSize == 0) {
-        std::cout << "Couldn't fin cameras in the config file." << configsSize << std::endl;
+        std::cout << "Couldn't find cameras in the config file." << std::endl;
         std::getchar();
         return 0;
     }
@@ -700,9 +700,10 @@ int main(int argc, char* argv[]){
     std::string pathConfig = "./config.ini";    
 
     const std::string keys = 
-        "{help h      |            | show help message}"
-        "{url         |            | url of the camera to obtain a image}"
-        "{config_path | config.ini | path of the configuration file}";
+        "{help h       |            | show help message}"
+        "{url          |            | url of the camera to obtain a image}"
+        "{config_path  | config.ini | path of the configuration file}"
+        "{start_config | no         | start the configuration of the cameras}";
 
     cv::CommandLineParser parser (argc, argv, keys);
 
@@ -749,6 +750,10 @@ int main(int argc, char* argv[]){
         pathConfig = parser.get<std::string>("config_path");
     }	
 
+    if(parser.has("start_config")){
+        startConfiguration = parser.get<std::string>("start_config") != "no";
+    }
+
     // configs
     std::vector<CameraConfig> camerasConfigs;
     ProgramConfig programConfig;
@@ -758,19 +763,10 @@ int main(int argc, char* argv[]){
     fhelper.ReadFile(programConfig, camerasConfigs);
 
     if (camerasConfigs.size() == 0 || startConfiguration){
-        std::cout << "Couldn't find the configuration file. \n";        
+        if(!startConfiguration)
+            std::cout << "Couldn't find the configuration file. \n";        
         Config::StartConfiguration(camerasConfigs, programConfig, fhelper);
-    }
-
-    size_t szConfigs = camerasConfigs.size();
-    for (size_t i = 0; i < szConfigs; i++)
-    {
-        if(camerasConfigs[i].type == CAMERA_DISABLED){
-            std::cout << camerasConfigs[i].cameraName << " skiped because its type is disabled" << std::endl;
-            camerasConfigs.erase(camerasConfigs.begin()+int(i));
-        }
-    }
-    
+    }    
 
 #ifdef WINDOWS
 	HWND hwnd = GetConsoleWindow();
