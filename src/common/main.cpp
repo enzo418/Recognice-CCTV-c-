@@ -435,9 +435,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
             capture.read(frame);
             timeLastframe = high_resolution_clock::now();
             newFrame = true;
-        } else {
-            /// TEST => REMOVE COMMENT BELOW
-            //capture.read(invalid); // keep reading to avoid error on VC.
+        } else {            
+            capture.read(invalid); // keep reading to avoid error on VC.
         }
 
         if (newFrame) {

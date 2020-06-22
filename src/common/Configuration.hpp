@@ -11,6 +11,8 @@ namespace Config
 
     void AddNewCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
 
+    void SetAreaDelimitersCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
+
     void CameraConfiguration(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh);
 
     void ProgramConfiguration(ProgramConfig& config, Config::File::ConfigFileHelper& fh);

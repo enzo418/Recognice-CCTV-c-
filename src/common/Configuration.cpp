@@ -215,6 +215,50 @@ void LoadConfigCamera(CameraConfig& src, CameraConfig& dst, bool isModification 
 	} else std::cout << "ERROR: Invalid index " << indx << std::endl;
 }*/
 
+void Config::SetAreaDelimitersCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
+	std::cout << "\n# Set Area Delimiters. Active cameras: \n";
+	std::string configsOpts = "(";
+	std::string input;
+
+	size_t size = configs.size();
+
+	for (size_t i = 0; i < size; i++) {
+		configsOpts += std::to_string(i+1) + (i != size-1 ? "," : ")");		
+
+		std::cout << "\t" << i+1 << ". " << configs[i].cameraName << std::endl;
+		std::cout << "\t  " << " url=" << configs[i].url << std::endl;
+		if(configs[i].areasDelimiters.rectEntry.empty() && configs[i].areasDelimiters.rectExit.empty()){
+			std::cout << "\t  " << " areasDelimiters not found" << std::endl;
+		}else{
+			std::cout << "\t  " << " areaDelimiters=" << Utils::AreasDelimitersToString(configs[i].areasDelimiters) << std::endl;
+		}
+	}
+
+	std::cout 	<< "Before you select a config know that the program will show you a window where you will nedd to select: "
+				<<	"\n [YELLOW] The area where if a person is seen in it, they will be marked as entering the site."
+				<<	"\n [GREEN]  The area where if a person is seen in it, they will be marked as leaving the site."
+				<<	"\n Use LeftMouseClick or LeftMouseClick to set the set the entry or exit point and then Move the mouse to select the area." 
+				<< std::endl;
+
+	while (input.empty()) {
+		std::cout << "- Please enter a camera config "<< configsOpts << ":";
+		std::getline(std::cin, input);
+	}
+
+	int indx = std::stoi(input) - 1;
+
+	if (indx >= 0 && indx < size) {
+		AreasDelimiters del = StartConfigurationAreaEntryExit(configs[indx]);
+		if(del.rectEntry.empty() && del.rectExit.empty()) std::cout << "The areas are empty." << std::endl;
+		configs[indx].areasDelimiters = del;
+		
+		std::cout << "Selected areas has been updated => " << Utils::AreasDelimitersToString(configs[indx].areasDelimiters) 
+					<< "\n Copy that to the corresponding camera configuration in the configuration file to save it."
+					<< std::endl;
+
+	} else std::cout << "ERROR: Invalid index " << indx << std::endl;
+}
+
 void Config::AddNewCamera(std::vector<CameraConfig>& configs, Config::File::ConfigFileHelper& fh) {
 	CameraConfig config;
 
@@ -233,7 +277,7 @@ void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::Fil
 		while (input.empty()) {
 			std::cout << "\n# Cameras configurations" << std::endl
 				<< "\t1. Add new camera" << std::endl
-				/*<< "\t2. Modify camera" << std::endl*/
+				<< "\t2. Set the Area Delimiters of a camera" << std::endl
 				<< "\t3. Back" << std::endl
 				<< "- Chose a option: ";
 
@@ -243,8 +287,7 @@ void Config::CameraConfiguration(std::vector<CameraConfig>& configs, Config::Fil
 		if (input == "1") {
 			Config::AddNewCamera(configs, fh);			
 		} else if (input == "2") {
-			
-			//Config::ModifyCamera(configs, fh);
+			SetAreaDelimitersCamera(configs, fh);
 		}
 		
 		input.clear();
@@ -262,10 +305,11 @@ void Config::StartConfiguration(std::vector<CameraConfig>& configs, ProgramConfi
 		while (input.empty()) {
 			std::cout << "# Configuration" << std::endl
 				<< "\t1. Cameras" << std::endl
-				<< "\t2. Program" << std::endl
-				<< "- Chose a option: ";
+				<< "\t2. Program" << std::endl;
 			
-			if(configs.size() > 0) std::cout << configsText;
+			if(configs.size() > 0) std::cout << configsText << std::endl;
+
+			std::cout << "- Chose a option: ";
 
 			std::getline(std::cin, input);
 		}
