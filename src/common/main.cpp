@@ -278,7 +278,7 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
                         cv::Scalar colorExit(0,255,0);
                         
                         cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectEntry, colorEntry);                        
-                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectExit, colorExit);
+                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectExit, colorExit);                        
                     /// ...
 
                     configs[i].frames.erase(configs[i].frames.begin());
@@ -555,6 +555,8 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                             detections[i].x += x;
                             cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
                             cv::rectangle(frameToShow, detections[i], color);
+                            
+                            putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
 
                             areaMatchEntry += Utils::OverlappingArea(config->areasDelimiters.rectEntry, detections[i]);
                             areaMatchExit += Utils::OverlappingArea(config->areasDelimiters.rectExit, detections[i]);
@@ -578,14 +580,14 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                             regp.finished = false;
                             regp.firstPoint = point;
                             
-                            std::cout << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
+                            std::cout << "[" << config->order << "]" << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
                             << " time = " << regp.time_point->tm_min << "m:" << regp.time_point->tm_sec << "s"
                             << " areaEntry = " <<  areaMatchEntry << " areaExit =" << areaMatchExit
                             << std::endl;
 
                             config->registers.push_back(regp);
                         }else{
-                            std::cout << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
+                            std::cout << "[" << config->order << "]" << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
                         }
 
                         // Send a telegram message
@@ -597,7 +599,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
                             Message msg = Message(frameToShow, "");
                             snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
                             messages.push_back(msg);
-                            std::cout << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
+                            std::cout << "[" << config->order << "]" << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
                             timeLastSavedImage = high_resolution_clock::now();
                         }
                     }

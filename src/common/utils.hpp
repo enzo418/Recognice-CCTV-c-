@@ -233,16 +233,16 @@ namespace Utils {
 		cv::Point br1 = BottomRightRectangle(rect1);
 		cv::Point br2 = BottomRightRectangle(rect2);
 
-		std::cout << " Points =>  1. [" << PointToString(tl1) << "," << PointToString(br1) << "]"
-				<<   "\n          2. [" << PointToString(tl2) << "," << PointToString(br2) << "]"
-		<< std::endl;
+		// std::cout << " Points =>  1. [" << PointToString(tl1) << "," << PointToString(br1) << "]"
+		// 		<<   "\n          2. [" << PointToString(tl2) << "," << PointToString(br2) << "]"
+		// << std::endl;
 
 		if(RectanglesOverlap(rect1, rect2)){
 
 			const int area = abs((std::max(tl1.x, tl2.x) - std::min(br1.x, br2.x)) * 
 					(std::max(tl1.y, tl2.y) - std::min(br1.y, br2.y)));
 
-			std::cout << " Will return area = " << area << std::endl;
+			//std::cout << " Will return area = " << area << std::endl;
 
 			return area;
 		}else{
