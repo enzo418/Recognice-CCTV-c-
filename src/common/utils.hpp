@@ -10,6 +10,9 @@
 #include <ctime>
 #include <stdio.h>
 
+#include "types.hpp"
+#include "types_configuration.hpp"
+
 #define findInVector(vector,val) (std::find(std::begin(vector), std::end(vector), val) != std::end(vector))
 
 
@@ -175,7 +178,7 @@ namespace Utils {
 	}
 
 	/// <summary> Fix the member "order" so it start from 0 and we don't skip any number between cameras </summary>
-	static void FixOrderCameras(std::vector<CameraConfig>& cameras) {	
+	static void FixOrderCameras(CamerasConfigurations& cameras) {	
 		std::sort(cameras.begin(), cameras.end(), less_than_order);
 		int size = cameras.size();
 		for (int expected = 0; expected < size; expected++) {

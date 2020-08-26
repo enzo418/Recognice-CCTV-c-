@@ -16,7 +16,6 @@
 #include "ImageManipulation.hpp"
 #include "utils.hpp"
 #include "ConfigurationFile.hpp"
-#include "Configuration.hpp"
 
 #ifdef WINDOWS
 #include <Windows.h>
@@ -34,7 +33,7 @@
 using namespace std::chrono;
 
 
-void SaveAndUploadImage(MessageArray& messages, ProgramConfig& programConfig, bool& stop) {
+void SaveAndUploadImage(MessageArray& messages, ProgramConfiguration& programConfig, bool& stop) {
     cv::Mat frame;
     std::string date;
 
@@ -113,7 +112,7 @@ void inline ChangeNotificationState(NISTATE state, const char* msg, const char* 
 	#endif
 }
 
-void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){    
+void CheckRegisters(CameraConfiguration* configs, const int amountCameras, bool& stop){    
     static auto lastTimeCleaned = high_resolution_clock::now();
     size_t lastCleanedSize = 0;
     const int secondsIntervalClean = 120;
@@ -190,14 +189,14 @@ void CheckRegisters(CameraConfig* configs, const int amountCameras, bool& stop){
 
 
 // Used to call functions that need their own thread but doesnt take too much time to complete
-// void ParallelMain(CameraConfig* configs, const int amountCameras, MessageArray& messages, ProgramConfig& programConfig, bool& stop){
+// void ParallelMain(CameraConfiguration* configs, const int amountCameras, MessageArray& messages, ProgramConfiguration& programConfig, bool& stop){
     /// TODO: Implement
 // }
 
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
-void ShowFrames(CameraConfig* configs, const int amountCameras, 
-                ProgramConfig& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
+void ShowFrames(CameraConfiguration* configs, const int amountCameras, 
+                ProgramConfiguration& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
     // ============
     //  Variables 
     // ============
@@ -359,8 +358,8 @@ void ShowFrames(CameraConfig* configs, const int amountCameras,
 }
 
 ///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDetected, 
-                             ProgramConfig& programConfig, cv::HOGDescriptor& hog, MessageArray& messages) {
+void ReadFramesWithIntervals(CameraConfiguration* config, bool& stop, bool& somethingDetected, 
+                             ProgramConfiguration& programConfig, cv::HOGDescriptor& hog, MessageArray& messages) {
     #pragma region SetupVideoCapture
 
     // ==============
@@ -627,7 +626,7 @@ void ReadFramesWithIntervals(CameraConfig* config, bool& stop, bool& somethingDe
 }
 
 
-int StartDetection(std::vector<CameraConfig>& configs, ProgramConfig& programConfig, 
+int StartDetection(CamerasConfigurations& configs, ProgramConfiguration& programConfig, 
                    HWND hwnd, HMODULE g_hInst) {
     bool stop = false;
     bool somethingDetected = false;
@@ -755,18 +754,14 @@ int main(int argc, char* argv[]){
         startConfiguration = parser.get<std::string>("start_config") != "no";
     }
 
-    // configs
-    std::vector<CameraConfig> camerasConfigs;
-    ProgramConfig programConfig;
-
     // Get the cameras and program configurations
-    Config::File::ConfigFileHelper fhelper(pathConfig.c_str());
-    fhelper.ReadFile(programConfig, camerasConfigs);
+    Configuration fhelper(pathConfig.c_str());
+    fhelper.ReadConfigurations();
 
-    if (camerasConfigs.size() == 0 || startConfiguration){
+    if (fhelper.configurations.camerasConfigs.size() == 0 || startConfiguration){
         if(!startConfiguration)
             std::cout << "Couldn't find the configuration file. \n";        
-        Config::StartConfiguration(camerasConfigs, programConfig, fhelper);
+        fhelper.StartConfiguration();
     }    
 
 #ifdef WINDOWS
@@ -776,6 +771,6 @@ int main(int argc, char* argv[]){
 	StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
 	DeleteNotificationIcon();
 #else
-	StartDetection(camerasConfigs, programConfig, nullptr, nullptr);
+	StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, nullptr, nullptr);
 #endif
 }

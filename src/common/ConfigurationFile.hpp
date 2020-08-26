@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 
 #ifdef WINDOWS
 #include <Windows.h>
@@ -17,97 +18,61 @@
 #endif
 
 #include "types.hpp"
+#include "types_configuration.hpp"
 #include "utils.hpp"
 
-namespace Config
-{
-    void SaveIdVal(CameraConfig& config, std::string id, std::string value);
-    void SaveIdVal(ProgramConfig& config, std::string id, std::string value);
+class Configuration {
+private:
+	const char* _fileName = "./config.ini";
+	std::fstream _file;
+	char openMode = '\0';
 
-    namespace File
-    {
-        struct CameraConfigPos{
-            std::streampos begin;
-            std::streampos end;
-        };
+	AreaEntryExitConfig* areaConfig; // used only as a temporal way to store some data for StartConfigurationAreaEntryExit
 
-        class ConfigFileHelper {
-        private:
-            //const char* _fileName = "./build/config.ini";
-            const char* _fileName = "./config.ini";
-            std::fstream _file;
-            char openMode = '\0';
+	const char* GetFilePath(const char* fileName);
 
-            template<typename T>
-            T ReadNextConfig(std::fstream& file, T& config);
+	void OpenFile();
 
-            const char* GetFilePath(const char* fileName) {
-				#ifdef WINDOWS
-                char path[MAX_PATH] = {};
-                GetModuleFileNameA(NULL, path, MAX_PATH);
-                PathRemoveFileSpecA(path);
-                PathCombineA(path, path, fileName);
-                return path;
-				#else
-				return fileName;
-				#endif
-            }
-            
-            void OpenFileRead() {
-                if (_file.is_open()){ 
-                    if (openMode != 'r')
-                        _file.close();
-                    else return;
-                }
+	void WriteProgramConfiguration();
 
-                char filename[MAX_PATH] = {};
-                strcpy_s(filename, GetFilePath(_fileName));
+	void WriteCameraConfiguration(CameraConfiguration& cfg);
 
-                openMode = 'r';
+	template<typename T>
+	T ReadNextConfiguration(std::fstream& file, T& config);
 
-                if (Utils::FileExist(filename)) {
-                    _file.open(filename);
-                }
-            }
+	// writes the value in the field id
+	void SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
 
-            void OpenFileWrite() {
-                if (_file.is_open()){
-                    if(openMode != 'w')
-                        _file.close();
-                    else return;
-                }
+	// writes the value in the field id
+	void SaveIdVal(ProgramConfiguration& config, std::string id, std::string value);
 
-                char filename[MAX_PATH] = {};
-                strcpy_s(filename, GetFilePath(_fileName));
+	/// --- Proc/funcs to create or modify configurations
+	void StartCameraConfiguration();
+	void ReadNewCamera();
+	void LoadConfigCamera(CameraConfiguration& src, CameraConfiguration& dst, bool isModification);
+	AreasDelimiters StartConfigurationAreaEntryExit(CameraConfiguration& config);
+	void SetAreaDelimitersCamera();
+	static void onMouse(int event, int x, int y, int flags, void* params);
+	void StartProgramConfiguration();
 
-                openMode = 'w';
-                
-                _file.open(filename, std::ios::app);
-            }
+	inline void WriteLineInFile(const char* line);
 
-        public:
-            ConfigFileHelper() {
-                OpenFileRead();
-            };
+public:
+	Configurations configurations;
 
-            ConfigFileHelper(const char* filePath) : _fileName(filePath) {
-                OpenFileRead();
-            };
+	/// ---- Constructors
+	Configuration();
 
-            /// <summary> Reads the config file then builds and return the configurations</summary>
-            void ReadFile(ProgramConfig& programConfig, std::vector<CameraConfig>& configs);
+	Configuration(const char* filePath);
 
-            void WriteFile();
+	/// ---- Other Public messages
 
-            void WriteInFile(std::vector<CameraConfig>& configs);
+	/// <summary> Reads the config file </summary>
+	void ReadConfigurations();
 
-            inline void WriteLineInFile(const char* line);
-
-            void WriteInFile(CameraConfig& cfg);
-
-            //CameraConfigPos FindConfigInFile(CameraConfig& config);
-            //std::string GetContentFileExcept(int beg, int end);
-        };        
-    };
+	/// <summary> Interacts with the user to add or modificate configurations </summary>
+	void StartConfiguration();
+	
+	/// <summary> Writes the configurations into the file </summary>
+	void SaveConfigurations();
 };
-
