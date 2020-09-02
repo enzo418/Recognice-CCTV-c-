@@ -17,6 +17,8 @@
     ~~-- Allow the user to set a telegram bot API key.~~-
     - Allow the user to set a messaging service like dweet.io
 
+- Add a flag that, if enabled, will make log every 30m the average change of pixels. Also the maximun and minimum. With this the user will be able to set the perfect threshold for each hor/time of the day.
+
 ## New way to read the configuration:
 1. Read a scheduler.ini file that has the following format
 `FROM: HH:MM TO: HH:MM FILE: config1.ini
