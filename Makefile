@@ -143,6 +143,33 @@ recognice/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/build
 .PHONY : recognice/fast
 
+src/common/Camera.o: src/common/Camera.cpp.o
+
+.PHONY : src/common/Camera.o
+
+# target to build an object file
+src/common/Camera.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.o
+.PHONY : src/common/Camera.cpp.o
+
+src/common/Camera.i: src/common/Camera.cpp.i
+
+.PHONY : src/common/Camera.i
+
+# target to preprocess a source file
+src/common/Camera.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.i
+.PHONY : src/common/Camera.cpp.i
+
+src/common/Camera.s: src/common/Camera.cpp.s
+
+.PHONY : src/common/Camera.s
+
+# target to generate assembly for a file
+src/common/Camera.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.s
+.PHONY : src/common/Camera.cpp.s
+
 src/common/ConfigurationFile.o: src/common/ConfigurationFile.cpp.o
 
 .PHONY : src/common/ConfigurationFile.o
@@ -260,6 +287,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... recognice"
+	@echo "... src/common/Camera.o"
+	@echo "... src/common/Camera.i"
+	@echo "... src/common/Camera.s"
 	@echo "... src/common/ConfigurationFile.o"
 	@echo "... src/common/ConfigurationFile.i"
 	@echo "... src/common/ConfigurationFile.s"
