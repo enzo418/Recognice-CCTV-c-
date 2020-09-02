@@ -687,8 +687,6 @@ int StartDetection(CamerasConfigurations& configs, ProgramConfiguration& program
         threads[i].join();
     }
 
-    threads.~vector();
-
     return 0;
 }
 
