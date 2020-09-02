@@ -200,6 +200,9 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 	} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 		Utils::toLowerCase(value);
 		config.telegramConfig.useTelegramBot = value == "no" ? false : true;
+	} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
+		Utils::toLowerCase(value);
+		config.sendImageOfAllCameras = value == "no" ? false : true;
 	}
 }
 

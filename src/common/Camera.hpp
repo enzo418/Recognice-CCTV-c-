@@ -31,6 +31,7 @@ private:
 public:
 	CameraConfiguration config;
 
+	// alerts created by this camera
 	std::vector<Message> pendingAlerts;
 
 	// List of frames captured

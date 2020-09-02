@@ -71,6 +71,21 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 
 						std::cout << "command => " << command << std::endl;
 						system(command.c_str());
+
+						if(programConfig.sendImageOfAllCameras && !programConfig.frameWithAllTheCameras.empty() && cameras.size() > 1){
+							std::string filename = "img__all.jpg";
+							
+							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
+
+							#ifdef WINDOWS
+							command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
+							#else
+							command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
+							#endif
+
+							std::cout << "command => " << command << std::endl;
+							system(command.c_str());
+						}
 					}
 				} else if(camera.pendingAlerts[i].IsText()) {
 					if(programConfig.telegramConfig.useTelegramBot){
@@ -355,6 +370,7 @@ void ShowFrames(Camera* cameras, const int amountCameras,
 
             cv::imshow("Cameras", res);
             cv::waitKey(1);            
+			programConfig.frameWithAllTheCameras = std::move(res);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
@@ -383,8 +399,7 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
 
     Utils::FixOrderCameras(configs);
 
-    std::cout << "Cameras found: " << configsSize << std::endl;
-	
+    std::cout << "Cameras found: " << configsSize << std::endl;	
 
     // start hog decriptor
     cv::HOGDescriptor hog;
