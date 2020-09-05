@@ -47,6 +47,9 @@ struct CameraConfiguration {
 
 	// Delimiters to the entry vs exit area.
 	AreasDelimiters areasDelimiters;
+
+	// used as minimun value of threshold (to avoid noise)
+	int minimumThreshold;
 };
 
 // to be able to sort the array of configs

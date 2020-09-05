@@ -2,6 +2,7 @@
 
 Camera::Camera(CameraConfiguration cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
 	this->Connect();
+	this->accumulatorThresholds = cameraConfig.changeThreshold;
 }
 
 void Camera::Connect(){
@@ -43,6 +44,35 @@ void Camera::CalculateNonZeroPixels() {
 		cv::addWeighted(frame, 1, diff, 8, 12, diff);
 		
 		this->frames.push_back(diff);
+	}
+}
+
+void Camera::UpdateThreshold(){
+	if(this->totalNonZeroPixels > 0){
+		this->accumulatorThresholds += this->config.minimumThreshold + this->totalNonZeroPixels;
+		// std::cout << "+" << this->totalNonZeroPixels << " total=" << this->accumulatorThresholds << std::endl;
+		this->thresholdSamples++;
+	}
+		
+	if(this->thresholdSamples == 0 || this->accumulatorThresholds == 0) return;
+
+	auto time = (this->now - this->lastThresholdUpdate) / std::chrono::seconds(1);
+	if(time >= this->updateFrequencyThreshold) {
+		const int oldThres = this->config.changeThreshold;
+
+		this->config.changeThreshold = this->accumulatorThresholds / this->thresholdSamples * this->abovePercentage;
+
+		std::cout << "[I] Threshold " << this->config.cameraName 
+				<< " chaged from: " << oldThres << " to: " << this->config.changeThreshold 
+				<< " [accumulator=" << accumulatorThresholds
+				<< " / samples=" << this->thresholdSamples
+				<< "] => average=" << this->accumulatorThresholds / this->thresholdSamples
+				<< std::endl;
+			
+		this->accumulatorThresholds = 0;
+		this->thresholdSamples = 0;
+
+		this->lastThresholdUpdate = std::chrono::high_resolution_clock::now();
 	}
 }
 
@@ -207,18 +237,19 @@ void Camera::ReadFramesWithInterval() {
 
             if (this->lastFrame.rows > 0) {
 				this->CalculateNonZeroPixels();
+				this->UpdateThreshold();
             }
 
-            if (totalNonZeroPixels > changeThreshold * 0.7) {
+            if (totalNonZeroPixels > this->config.changeThreshold * 0.7) {
                 std::cout << this->config.cameraName
                     << " Non zero pixels=" << totalNonZeroPixels
-                    << " Configured threshold=" << changeThreshold
+                    << " Configured threshold=" << this->config.changeThreshold
                     << std::endl;
             }
 
             this->lastFrame = this->frame;
 
-            if (totalNonZeroPixels > changeThreshold) {
+            if (totalNonZeroPixels > this->config.changeThreshold) {
 				this->ChangeTheStateAndAlert(now);
 
                 // Increment frames left

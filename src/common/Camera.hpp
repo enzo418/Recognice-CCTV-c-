@@ -18,12 +18,16 @@
 
 class Camera {
 private:
-	/** Externals vars */
+	// ============================
+	//  Pointers to externals vars
+	// =============================
 	bool* _stop_flag = nullptr;
 	ProgramConfiguration* _programConfig = nullptr;	
 	cv::HOGDescriptor* _descriptor = nullptr;
 
-	/** Class vars */
+	// ============
+	//  Class vars
+	// ============
 	cv::VideoCapture capturer;
 	
 	// current frame.
@@ -47,6 +51,33 @@ private:
 	std::vector<cv::Rect> detections;
 	std::vector< double > foundWeights;
 
+	// ==================
+	//  Change-threshold
+	// ==================
+
+	// the update Frequency of the threshold in seconds
+	const int updateFrequencyThreshold = 60;
+
+	// accumulator used while
+	unsigned long accumulatorThresholds = 0;
+	
+	// how many samples were collected
+	uint64_t thresholdSamples = 0;
+
+	// the updatable threshold
+	int temporalChangeThreshold = 0;
+	
+	// this will be used as indicator to know how much the threshold will be from the average threshold
+	const double abovePercentage = 1.2;
+
+	// saves the last time the threshold was updated
+	std::chrono::system_clock::time_point lastThresholdUpdate = std::chrono::high_resolution_clock::now();
+
+	void UpdateThreshold();
+
+	// ==================
+	//  Mmethods
+	// ==================
 
 	void ReadFramesWithInterval();
 
@@ -57,6 +88,7 @@ private:
 	void ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now);
 
 	void CheckForHumans();
+
 public:
 	CameraConfiguration config;
 

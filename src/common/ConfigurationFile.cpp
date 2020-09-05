@@ -249,6 +249,9 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 		config.secondsWaitEntryExit = val;
 	} else if (id == "areasdelimiters" || id == "areadelimiters"){
 		config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
+	} else if (id == "minimumthreshold") {
+		int val = std::stoi(value);
+		config.minimumThreshold = val;
 	}
 }
 
