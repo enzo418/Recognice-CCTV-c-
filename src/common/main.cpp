@@ -66,7 +66,7 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 						#ifdef WINDOWS
 						command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
 						#else
-						command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
+						command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F caption=\""+ camera.pendingAlerts[i].caption + "\" -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
 						#endif
 
 						std::cout << "command => " << command << std::endl;

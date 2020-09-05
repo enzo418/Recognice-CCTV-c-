@@ -25,9 +25,38 @@ private:
 
 	/** Class vars */
 	cv::VideoCapture capturer;
+	
+	// current frame.
+	cv::Mat frame;
+
+	// at the end of the processing of the current frame it is stored in lastFrame to be compared with the next one.
+	cv::Mat lastFrame;
+
+	// frame to send to the display.
+	cv::Mat frameToShow;
+	
+	// used to store the diff frame between lastFrame and frame.
+	cv::Mat diff; 
+
+	int totalNonZeroPixels = 0;
+
+	std::chrono::system_clock::time_point now = std::chrono::high_resolution_clock::now(), 
+								lastSavedImage = std::chrono::high_resolution_clock::now(),
+								lastMessageSended = std::chrono::high_resolution_clock::now();
+
+	std::vector<cv::Rect> detections;
+	std::vector< double > foundWeights;
+
 
 	void ReadFramesWithInterval();
 
+	void CalculateNonZeroPixels();
+
+	void ApplyBasicsTransformations();
+
+	void ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now);
+
+	void CheckForHumans();
 public:
 	CameraConfiguration config;
 
