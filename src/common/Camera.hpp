@@ -56,7 +56,7 @@ private:
 	// ==================
 
 	// the update Frequency of the threshold in seconds
-	const int updateFrequencyThreshold = 15;
+	const int updateFrequencyThreshold = 5;
 
 	// accumulator used while
 	unsigned long accumulatorThresholds = 0;

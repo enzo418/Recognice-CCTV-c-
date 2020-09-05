@@ -57,16 +57,18 @@ void Camera::UpdateThreshold(){
 	if(this->thresholdSamples == 0 || this->accumulatorThresholds == 0) return;
 
 	auto time = (this->now - this->lastThresholdUpdate) / std::chrono::seconds(1);
-	if(time >= this->updateFrequencyThreshold) {
+	if(time >= this->config.updateThresholdFrequency) {
 		const int oldThres = this->config.changeThreshold;
 
-		this->config.changeThreshold = this->accumulatorThresholds / this->thresholdSamples * this->abovePercentage;
+		this->config.changeThreshold = this->accumulatorThresholds / this->thresholdSamples * this->config.increaseTresholdFactor;
 
 		std::cout << "[I] Threshold " << this->config.cameraName 
+				<< " freq=" << this->config.updateThresholdFrequency
 				<< " chaged from: " << oldThres << " to: " << this->config.changeThreshold 
 				<< " [accumulator=" << accumulatorThresholds
 				<< " / samples=" << this->thresholdSamples
 				<< "] => average=" << this->accumulatorThresholds / this->thresholdSamples
+				<< " (factor = " << this->config.increaseTresholdFactor << ")"
 				<< std::endl;
 			
 		this->accumulatorThresholds = 0;

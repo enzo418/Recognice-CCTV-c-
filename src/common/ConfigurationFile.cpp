@@ -203,6 +203,8 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 	} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
 		Utils::toLowerCase(value);
 		config.sendImageOfAllCameras = value == "no" ? false : true;
+	} else {
+		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}
 }
 
@@ -252,6 +254,15 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 	} else if (id == "minimumthreshold") {
 		int val = std::stoi(value);
 		config.minimumThreshold = val;
+	} else if (id == "increasetresholdfactor" || id == "increaseTreshold") {
+		std::replace(value.begin(), value.end(), ',', '.');
+		double val = std::stof(value);
+		config.increaseTresholdFactor = val;
+	} else if (id == "updatethresholdfrequency") {
+		uint32_t val = std::stoi(value);
+		config.updateThresholdFrequency = val;
+	} else {
+		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}
 }
 

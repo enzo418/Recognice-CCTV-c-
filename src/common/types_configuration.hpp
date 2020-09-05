@@ -50,6 +50,11 @@ struct CameraConfiguration {
 
 	// used as minimun value of threshold (to avoid noise)
 	int minimumThreshold;
+
+	// % to increase from the minimum threshold
+	float increaseTresholdFactor;
+
+	uint32_t updateThresholdFrequency;
 };
 
 // to be able to sort the array of configs
