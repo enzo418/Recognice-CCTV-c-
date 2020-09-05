@@ -63,13 +63,13 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 					cv::imwrite("./saved_imgs/" + filename, camera.pendingAlerts[i].image);
 
 					if(programConfig.telegramConfig.useTelegramBot){
-						#ifdef WINDOWS
-						command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
+						#ifdef WINDOWS						
+						Utils::BuildCommand(command, "@saved_imgs\\" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 						#else
-						command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F caption=\""+ camera.pendingAlerts[i].caption + "\" -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
+						Utils::BuildCommand(command, "@saved_imgs//" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 						#endif
-
-						std::cout << "command => " << command << std::endl;
+		
+						// std::cout << "command => " << command << std::endl;
 						system(command.c_str());
 
 						if(programConfig.sendImageOfAllCameras && !programConfig.frameWithAllTheCameras.empty() && cameras.size() > 1){
@@ -78,18 +78,18 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
 
 							#ifdef WINDOWS
-							command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
-							#else
-							command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
-							#endif
+							Utils::BuildCommand(command, "@saved_imgs\\" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							#else							
+							Utils::BuildCommand(command, "@saved_imgs//" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							#endif							
 
-							std::cout << "command => " << command << std::endl;
+							// std::cout << "command => " << command << std::endl;
 							system(command.c_str());
 						}
 					}
 				} else if(camera.pendingAlerts[i].IsText()) {
 					if(programConfig.telegramConfig.useTelegramBot){
-						command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + camera.pendingAlerts[i].text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
+						Utils::BuildCommand(command, camera.pendingAlerts[i].text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);						
 						system(command.c_str());
 					}
 				} else {
