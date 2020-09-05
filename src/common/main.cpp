@@ -78,10 +78,10 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
 
 							#ifdef WINDOWS
-							Utils::BuildCommand(command, "@saved_imgs\\" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							Utils::BuildCommand(command, "@saved_imgs\\" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 							#else							
-							Utils::BuildCommand(command, "@saved_imgs//" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-							#endif							
+							Utils::BuildCommand(command, "@saved_imgs//" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							#endif
 
 							// std::cout << "command => " << command << std::endl;
 							system(command.c_str());
