@@ -605,7 +605,15 @@ int main(int argc, char* argv[]){
 	DeleteNotificationIcon();
 #else
 	std::thread bot = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(close), std::ref(fhelper), nullptr, nullptr);
-	bot.join();
+	
 	// StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, std::ref(stop), nullptr, nullptr);
 #endif
+
+        std::cout << "Press a key to stop the program.\n";
+	std::getchar();
+	
+	stop = true;
+        close = true;
+
+        bot.join();
 }
