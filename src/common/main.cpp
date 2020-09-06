@@ -52,7 +52,6 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 	while (!close) {
 		now = std::chrono::high_resolution_clock::now();
 		auto diff = (now - lastCheck) / std::chrono::seconds(1);
-		std::cout << "time: " << diff << std::endl;
 		if(diff >= 9) {
 			std::time_t unix_time = 0;
 			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time /*, authUsersList*/);
