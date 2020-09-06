@@ -31,6 +31,7 @@ class Message {
 	public:
 	cv::Mat image;
 	char text[MESSAGE_SIZE];
+	char caption[MESSAGE_SIZE];
 
 	// A message can be just text
 	Message(const char* message) {
@@ -39,12 +40,14 @@ class Message {
 	}
 
 	// Or a image with a date
-	Message(cv::Mat img, const char* date){
+	Message(cv::Mat img, const char* filename, const char* imageCaption){
 		image = img;
-		std::cout << "date => " << date << std::endl;
+		std::cout << " filename => " << filename << std::endl;
 		std::cout << " 3 Frame size " << image.rows << ", " << image.cols << std::endl;
 		//sprintf_s(text, "%s", date);
-		snprintf(text, MESSAGE_SIZE, "%s", date);
+		snprintf(text, MESSAGE_SIZE, "%s", filename);
+
+		snprintf(caption, MESSAGE_SIZE, "%s", imageCaption);
 	}
 
 	// Or a action (play sound)

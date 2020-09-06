@@ -68,10 +68,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/cltx/projects/cpp/recognice
+CMAKE_SOURCE_DIR = /home/cltx/projects/cpp/Recognice-CCTV-c-
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/cltx/projects/cpp/recognice
+CMAKE_BINARY_DIR = /home/cltx/projects/cpp/Recognice-CCTV-c-
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -89,8 +89,8 @@ rebuild_cache/fast: rebuild_cache
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -100,9 +100,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cltx/projects/cpp/recognice/CMakeFiles /home/cltx/projects/cpp/recognice/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cltx/projects/cpp/Recognice-CCTV-c-/CMakeFiles /home/cltx/projects/cpp/Recognice-CCTV-c-/CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cltx/projects/cpp/recognice/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cltx/projects/cpp/Recognice-CCTV-c-/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -142,6 +142,33 @@ recognice: cmake_check_build_system
 recognice/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/build
 .PHONY : recognice/fast
+
+src/common/Camera.o: src/common/Camera.cpp.o
+
+.PHONY : src/common/Camera.o
+
+# target to build an object file
+src/common/Camera.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.o
+.PHONY : src/common/Camera.cpp.o
+
+src/common/Camera.i: src/common/Camera.cpp.i
+
+.PHONY : src/common/Camera.i
+
+# target to preprocess a source file
+src/common/Camera.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.i
+.PHONY : src/common/Camera.cpp.i
+
+src/common/Camera.s: src/common/Camera.cpp.s
+
+.PHONY : src/common/Camera.s
+
+# target to generate assembly for a file
+src/common/Camera.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.s
+.PHONY : src/common/Camera.cpp.s
 
 src/common/ConfigurationFile.o: src/common/ConfigurationFile.cpp.o
 
@@ -260,6 +287,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... recognice"
+	@echo "... src/common/Camera.o"
+	@echo "... src/common/Camera.i"
+	@echo "... src/common/Camera.s"
 	@echo "... src/common/ConfigurationFile.o"
 	@echo "... src/common/ConfigurationFile.i"
 	@echo "... src/common/ConfigurationFile.s"

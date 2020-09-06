@@ -26,6 +26,8 @@
 #define sprintf_s sprintf
 #endif
 
+#include "Camera.hpp"
+
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true
 
@@ -33,55 +35,72 @@
 using namespace std::chrono;
 
 
-void SaveAndUploadImage(MessageArray& messages, ProgramConfiguration& programConfig, bool& stop) {
+void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& programConfig, bool& stop) {
     cv::Mat frame;
     std::string date;
 
     while (!stop) {
-        size_t size = messages.size();
-        for (size_t i = 0; i < size; i++) {
-            // take the first message and delete it
-            //Message msg = messages[i];
-            
-            std::cout << "Sending message => " 
-                << "IsText=" << (messages[i].IsText() ? "yes" : "no") 
-                << "\tIsSound=" << (messages[i].IsSound() ? "yes" : "no")
-                << "\tFrame size=" << messages[i].image.cols << "," << messages[i].image.rows
-                << "\tText=" << messages[i].text
-                << std::endl;
+		for (auto &&camera : cameras) {
+        	size_t size = camera.pendingAlerts.size();
+			for (size_t i = 0; i < size; i++) {
+				// take the first message and delete it
+				//Message msg = messages[i];
+				
+				std::cout << "Sending message => " 
+					<< "IsText=" << (camera.pendingAlerts[i].IsText() ? "yes" : "no") 
+					<< "\tIsSound=" << (camera.pendingAlerts[i].IsSound() ? "yes" : "no")
+					<< "\tFrame size=" << camera.pendingAlerts[i].image.cols << "," << camera.pendingAlerts[i].image.rows
+					<< "\tText=" << camera.pendingAlerts[i].text
+					<< std::endl;
 
-            std::string command;
+				std::string command;
 
-            if (!messages[i].IsText() && !messages[i].IsSound() && messages[i].image.rows > 0) {
-                std::string filename = "img_";
-                filename += messages[i].text;
-                filename += ".jpg";
-                //std::cout << "Filename = " << filename << std::endl;
-                cv::imwrite("./saved_imgs/" + filename, messages[i].image);
+				if (!camera.pendingAlerts[i].IsText() && !camera.pendingAlerts[i].IsSound() && camera.pendingAlerts[i].image.rows > 0) {
+					std::string filename = "img_";
+					filename += camera.pendingAlerts[i].text;
+					filename += ".jpg";
+					//std::cout << "Filename = " << filename << std::endl;
+					cv::imwrite("./saved_imgs/" + filename, camera.pendingAlerts[i].image);
 
-                if(programConfig.telegramConfig.useTelegramBot){
-                    #ifdef WINDOWS
-                    command = "curl -F \"chat_id=" + programConfig.telegramConfig.chatId + "\" -F \"photo=@saved_imgs\\" + filename + "\" \\ https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";                
-                    #else
-                    command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F photo=\"@saved_imgs//"+ filename + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendphoto";
-                    #endif
+					if(programConfig.telegramConfig.useTelegramBot){
+						#ifdef WINDOWS						
+						Utils::BuildCommand(command, "@saved_imgs\\" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+						#else
+						Utils::BuildCommand(command, "@saved_imgs//" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+						#endif
+		
+						// std::cout << "command => " << command << std::endl;
+						system(command.c_str());
 
-                    std::cout << "command => " << command << std::endl;
-                    system(command.c_str());
-                }
-            } else if(messages[i].IsText()) {
-                if(programConfig.telegramConfig.useTelegramBot){
-                    command = "curl -F chat_id=" + programConfig.telegramConfig.chatId + " -F text=\"" + messages[i].text + "\" https://api.telegram.org/bot" + programConfig.telegramConfig.apiKey + "/sendMessage";
-                    system(command.c_str());
-                }
-            } else {
-                PlayNotificationSound();
-            }
-        }
+						if(programConfig.sendImageOfAllCameras && !programConfig.frameWithAllTheCameras.empty() && cameras.size() > 1){
+							std::string filename = "img__all.jpg";
+							
+							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
 
-        // this clears all the messages, wich is not good but
-        // messages is bugged when try to copy the message to a new variable...
-        messages.clear();
+							#ifdef WINDOWS
+							Utils::BuildCommand(command, "@saved_imgs\\" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							#else							
+							Utils::BuildCommand(command, "@saved_imgs//" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+							#endif
+
+							// std::cout << "command => " << command << std::endl;
+							system(command.c_str());
+						}
+					}
+				} else if(camera.pendingAlerts[i].IsText()) {
+					if(programConfig.telegramConfig.useTelegramBot){
+						Utils::BuildCommand(command, camera.pendingAlerts[i].text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);						
+						system(command.c_str());
+					}
+				} else {
+					PlayNotificationSound();
+				}
+			}
+
+			// this clears all the camera.pendingAlerts, wich is not good but
+			// camera.pendingAlerts is bugged when try to copy the message to a new variable...
+			camera.pendingAlerts.clear();
+		}
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     }
@@ -195,7 +214,7 @@ void CheckRegisters(CameraConfiguration* configs, const int amountCameras, bool&
 
 
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
-void ShowFrames(CameraConfiguration* configs, const int amountCameras, 
+void ShowFrames(Camera* cameras, const int amountCameras, 
                 ProgramConfiguration& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
     // ============
     //  Variables 
@@ -261,35 +280,35 @@ void ShowFrames(CameraConfiguration* configs, const int amountCameras,
         bool allCamerasInSentry = true;
 
         for (size_t i = 0; i < amountCameras; i++) {
-            if (configs[i].frames.size() > 0) {
+            if (cameras[i].frames.size() > 0) {
                 // if the vector pos i has no frame
-                if (!ready[configs[i].order]) {
+                if (!ready[cameras[i].config.order]) {
                     // take the first frame and delete it
-                    frames[configs[i].order] = configs[i].frames[0];
+                    frames[cameras[i].config.order] = cameras[i].frames[0];
 
                     if (showAreaCameraSees && !showProcessedFrames) {
                         cv::Scalar color = cv::Scalar(255, 0, 0);
-                        cv::rectangle(frames[configs[i].order], configs[i].roi.point1, configs[i].roi.point2, color);
+                        cv::rectangle(frames[cameras[i].config.order], cameras[i].config.roi.point1, cameras[i].config.roi.point2, color);
                     }
 
                     /// Only for testing puporses
-                        cv::Scalar colorEntry(0,255,255);
-                        cv::Scalar colorExit(0,255,0);
+                        // cv::Scalar colorEntry(0,255,255);
+                        // cv::Scalar colorExit(0,255,0);
                         
-                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectEntry, colorEntry);                        
-                        cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectExit, colorExit);                        
+                        // cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectEntry, colorEntry);                        
+                        // cv::rectangle(frames[configs[i].order], configs[i].areasDelimiters.rectExit, colorExit);                        
                     /// ...
 
-                    configs[i].frames.erase(configs[i].frames.begin());
+                    cameras[i].frames.erase(cameras[i].frames.begin());
                     
-                    ready[configs[i].order] = true;
+                    ready[cameras[i].config.order] = true;
                     
                     size++;
                 }
             }
 
             // Check camera state
-            if (configs[i].state == NI_STATE_DETECTED) {
+            if (cameras[i].config.state == NI_STATE_DETECTED) {
                 allCamerasInSentry = false;
 
                 // Send notification if the current state != to what the camera state is
@@ -299,11 +318,11 @@ void ShowFrames(CameraConfiguration* configs, const int amountCameras,
                     currentState = NI_STATE_DETECTED;
 
                     // send the notification
-                    ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
+                    ChangeNotificationState(currentState, cameras[i].config.cameraName.c_str(), notificationTitle, hwndl, g_hinst);
 
-                    std::cout << "[W] " << configs[i].cameraName << " detected a person..." << std::endl;
+                    std::cout << "[W] " << cameras[i].config.cameraName << " detected a person..." << std::endl;
                 }
-            } else if (configs[i].state == NI_STATE_DETECTING) {
+            } else if (cameras[i].config.state == NI_STATE_DETECTING) {
                 allCamerasInSentry = false;
                 
                 // Send notification if the current state != to what the camera state is
@@ -315,9 +334,9 @@ void ShowFrames(CameraConfiguration* configs, const int amountCameras,
                     // send the notification
                     //ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
 
-                    std::cout << "[I] " << configs[i].cameraName << " is trying to match a person in the frame..." << std::endl;
+                    std::cout << "[I] " << cameras[i].config.cameraName << " is trying to match a person in the frame..." << std::endl;
                 }
-            } else if (configs[i].state == NI_STATE_SENTRY) {
+            } else if (cameras[i].config.state == NI_STATE_SENTRY) {
                 allCamerasInSentry = allCamerasInSentry && true;
             }     
         }
@@ -351,287 +370,21 @@ void ShowFrames(CameraConfiguration* configs, const int amountCameras,
 
             cv::imshow("Cameras", res);
             cv::waitKey(1);            
+			programConfig.frameWithAllTheCameras = std::move(res);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
     }
 }
 
-///<param name='interval'>Minimum distance (in ms) between frame</param>
-void ReadFramesWithIntervals(CameraConfiguration* config, bool& stop, bool& somethingDetected, 
-                             ProgramConfiguration& programConfig, cv::HOGDescriptor& hog, MessageArray& messages) {
-    #pragma region SetupVideoCapture
-
-    // ==============
-    //  consts/vars
-    // ==============
-
-    // if framesLeft > 0 then do a classifcation over the current frame
-    ushort framesLeft = 0; 
-
-    const ushort interval = programConfig.msBetweenFrame;
-    
-    // higher interval -> lower max & lower interval -> higher max
-    const ushort maxFramesLeft = (100.0 / (interval+0.0)) * 70; // 100 ms => max = 70 frames
-
-    const int x = config->roi.point1.x;
-    const int h = abs(config->roi.point2.y - config->roi.point1.y);
-    const int w = abs(config->roi.point2.x - config->roi.point1.x);
-    const ulong frameArea = w * h;
-
-    const char* camName = &config->cameraName[0];
-    const CAMERATYPE camType = config->type;
-    const int changeThreshld = config->changeThreshold;
-
-    const bool showPreview = programConfig.showPreview;   
-    const bool showProcessedImages = programConfig.showProcessedFrames;
-    const bool sendImageAfterChange = programConfig.sendImageWhenDetectChange;
-
-    const int maxRegisterPerPoint = 10;
-        
-    int totalNonZeroPixels = 0;
-    
-    // ammount of frame that recognition will be active before going to idle state    
-    const uint8_t framesToRecognice = (100 / (interval + 0.0)) * 30; 
-
-    // used to store the current frame to be able to compare it to the next one
-    cv::Mat lastFrame;
-    
-    // used to store the diff frame
-    cv::Mat diff;
-
-    cv::VideoCapture capture(config->url);
-
-    std::cout << "Opening " << camName << "..." << std::endl;
-    assert(capture.isOpened());
-
-    cv::Mat frame;
-    cv::Mat invalid;
-    cv::Mat frameToShow;
-
-#pragma endregion
-
-    auto timeLastframe = high_resolution_clock::now();
-    bool newFrame = false;
-
-    // ----------------
-    //  Save&Upl image
-    // ----------------
-    auto timeLastSavedImage = high_resolution_clock::now();
-    
-    // -----------
-    //  Messages
-    // -----------
-    auto lastMessageSended = high_resolution_clock::now();
-    const int secondsBetweenMessages = programConfig.secondsBetweenMessage;
-
-    while (!stop && capture.isOpened()) {
-        const NISTATE camState = config->state;
-
-        auto now = high_resolution_clock::now();
-        auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
-        if (intervalFrames >= interval) {
-            capture.read(frame);
-            timeLastframe = high_resolution_clock::now();
-            newFrame = true;
-        } else {            
-            capture.read(invalid); // keep reading to avoid error on VC.
-        }
-
-        if (newFrame) {
-#pragma region AnalizeFrame
-
-            //assert(frame.rows != 0); // check if the frame is valid
-            if (frame.rows == 0) {
-                //std::cout << "Received a invalid frame from \"" << camName << "\". Restarting connection..." << std::endl;
-
-                capture.release();
-                capture.open(config->url);
-
-                //framesCount--;
-                assert(capture.isOpened());
-                //std::cout << "Connected to \"" << camName << "\" successfully...." << std::endl;
-                continue;
-            }
-
-            cv::resize(frame, frame, RESIZERESOLUTION);
-
-            //if (showPreview)
-                frameToShow = frame.clone();
-
-            // Take the region of interes
-            if (!config->roi.isEmpty()) {
-                cv::Rect roi(config->roi.point1, config->roi.point2);
-                frame = frame(roi);
-            }
-
-            // Then rotate it
-            if (config->rotation != 0) ImageManipulation::RotateImage(frame, config->rotation);
-
-            cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-
-            if (lastFrame.rows > 0) {
-                cv::absdiff(lastFrame, frame, diff);
-
-                // 45 works perfect with most of the cameras/resolution
-                cv::threshold(diff, diff, config->noiseThreshold, 255, cv::THRESH_BINARY);
-
-                totalNonZeroPixels = cv::countNonZero(diff);
-
-                if (showProcessedImages && showPreview) {
-                    // place diff image on top the frame img
-                    cv::addWeighted(frame, 1, diff, 8, 12, diff);
-					
-                    config->frames.push_back(diff);
-                }
-            }
-
-            if (totalNonZeroPixels > changeThreshld * 0.7) {
-                std::cout << config->cameraName
-                    << " Non zero pixels=" << totalNonZeroPixels
-                    << " Configured threshold=" << changeThreshld
-                    << std::endl;
-            }
-            lastFrame = frame;
-
-            if (totalNonZeroPixels > changeThreshld) {
-                if (camState != NI_STATE_DETECTED
-                    && camType != CAMERA_SENTRY
-                    && camState != NI_STATE_DETECTING)
-                    config->state = NI_STATE_DETECTING; // Change the state of the camera
-                                
-                // every secondsBetweenMessages send a message to the telegram bot
-                intervalFrames = (now - lastMessageSended) / std::chrono::seconds(1);
-                if (intervalFrames >= secondsBetweenMessages) {
-                    // Play a sound
-                    messages.push_back(Message());
-
-                    if(sendImageAfterChange){                        
-                        // and then send a message
-                        const char* txt = "temp_image";
-                        Message msg = Message(frameToShow, txt);                        
-                        messages.push_back(msg);
-                    }else{
-                        // and then send a message
-                        char msg[100];
-                        snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", config->cameraName.c_str());
-                        messages.push_back(Message(msg));
-                    }
-
-                    lastMessageSended = high_resolution_clock::now();
-                }
-
-                // Increment frames left
-                if (framesLeft < maxFramesLeft)
-                    framesLeft += framesToRecognice;
-            }
-
-            if (camType == CAMERA_SENTRY) {
-                if (framesLeft > 0) {
-                    if (camState != NI_STATE_DETECTING) {
-                        config->state = NI_STATE_DETECTING;
-                    }
-                    framesLeft--;
-                } else {
-                    config->state = NI_STATE_SENTRY;
-                }
-
-                newFrame = false;
-                if (showPreview && !showProcessedImages)
-                    config->frames.push_back(frameToShow);
-            } else {
-                std::vector<cv::Rect> detections;
-                std::vector< double > foundWeights;
-                if (RECOGNICEALWAYS || framesLeft > 0) {
-                    hog.detectMultiScale(frame, detections, foundWeights, config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-                    size_t detectSz = detections.size();
-
-                    if(detectSz > 0){
-                        int areaMatchEntry = 0;
-                        int areaMatchExit = 0;
-
-                        for (size_t i = 0; i < detectSz; i++) {
-                            detections[i].x += x;
-                            cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);
-                            cv::rectangle(frameToShow, detections[i], color);
-                            
-                            putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
-
-                            areaMatchEntry += Utils::OverlappingArea(config->areasDelimiters.rectEntry, detections[i]);
-                            areaMatchExit += Utils::OverlappingArea(config->areasDelimiters.rectExit, detections[i]);
-                        }
-                        
-                        RegisterPoint point = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
-                        bool shouldSave = false;
-                        int count = 0;
-
-                        size_t regSz = config->registers.size();
-                        for (size_t i = 0; i < regSz; i++)
-                            if(config->registers[i].firstPoint == point) 
-                                count++;                      
-
-                        if(count < maxRegisterPerPoint){
-                            // Save a register 
-                            Register regp;
-                            regp.id = config->registers.size();
-                            time_t ntime = time(0);
-                            regp.time_point = localtime(&ntime);
-                            regp.finished = false;
-                            regp.firstPoint = point;
-                            
-                            std::cout << "[" << config->order << "]" << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
-                            << " time = " << regp.time_point->tm_min << "m:" << regp.time_point->tm_sec << "s"
-                            << " areaEntry = " <<  areaMatchEntry << " areaExit =" << areaMatchExit
-                            << std::endl;
-
-                            config->registers.push_back(regp);
-                        }else{
-                            std::cout << "[" << config->order << "]" << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
-                        }
-
-                        // Send a telegram message
-                        now = high_resolution_clock::now();
-                        auto time = (now - timeLastSavedImage) / std::chrono::seconds(1);
-                        if (time >= programConfig.secondsBetweenImage) {
-                            config->state = NI_STATE_DETECTED;
-                            somethingDetected = true;
-                            Message msg = Message(frameToShow, "");
-                            snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
-                            messages.push_back(msg);
-                            std::cout << "[" << config->order << "]" << "Pushed image seconds=" << time << " of " << programConfig.secondsBetweenImage << std::endl;
-                            timeLastSavedImage = high_resolution_clock::now();
-                        }
-                    }
-
-                    framesLeft--;
-                    //std::cout << camName << " -- Frames " << framesLeft << std::endl;
-                }
-#pragma endregion
-
-                if (framesLeft == 0) {
-                    config->state = NI_STATE_SENTRY;
-                }
-
-                newFrame = false;
-
-                if (showPreview && !showProcessedImages)
-                    config->frames.push_back(std::move(frameToShow));
-            }
-        }
-    }
-
-    std::cout << "Closed connection with " << camName << std::endl;
-
-    capture.release();
-}
-
-
-int StartDetection(CamerasConfigurations& configs, ProgramConfiguration& programConfig, 
+int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, 
                    HWND hwnd, HMODULE g_hInst) {
     bool stop = false;
     bool somethingDetected = false;
 
     std::vector<std::thread> threads;
+
+	std::vector<Camera> cameras;
 
     // Array of messages that the cameras order to send to telegram.
     MessageArray messages;
@@ -646,27 +399,32 @@ int StartDetection(CamerasConfigurations& configs, ProgramConfiguration& program
 
     Utils::FixOrderCameras(configs);
 
-    std::cout << "Cameras found: " << configsSize << std::endl;
+    std::cout << "Cameras found: " << configsSize << std::endl;	
 
     // start hog decriptor
     cv::HOGDescriptor hog;
     hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
 
+	// Create the cameras objs
+	for (auto &config : configs) {
+		cameras.push_back(Camera(config, &programConfig, &stop, &hog));
+	}
+
     // Start a thread for each camera
     for (size_t i = 0; i < configsSize; i++) {
-        threads.push_back(std::thread(ReadFramesWithIntervals, &configs[i], std::ref(stop), std::ref(somethingDetected), std::ref(programConfig), std::ref(hog), std::ref(messages)));
+        threads.push_back(cameras[i].StartDetection());
     }
 
     if (programConfig.showPreview) {
         // Start the thread to show the images captured.
-        threads.push_back(std::thread(ShowFrames, &configs[0], configsSize, std::ref(programConfig), std::ref(stop), hwnd, g_hInst));
+        threads.push_back(std::thread(ShowFrames, &cameras[0], configsSize, std::ref(programConfig), std::ref(stop), hwnd, g_hInst));
     }
 
     // Start a thread for save and upload the images captured    
-    threads.push_back(std::thread(SaveAndUploadImage, std::ref(messages), std::ref(programConfig), std::ref(stop)));
+    threads.push_back(std::thread(SaveAndUploadImage, std::ref(cameras), std::ref(programConfig), std::ref(stop)));
 
     // Start a thread to check the registers
-    threads.push_back(std::thread(CheckRegisters, &configs[0], configsSize, std::ref(stop)));
+    // threads.push_back(std::thread(CheckRegisters, &configs[0], configsSize, std::ref(stop)));
 
     /*if (!programConfig.showPreview) {
         std::cout << "Press a key to stop the program.\n";
@@ -686,8 +444,6 @@ int StartDetection(CamerasConfigurations& configs, ProgramConfiguration& program
             std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
         threads[i].join();
     }
-
-    threads.~vector();
 
     return 0;
 }

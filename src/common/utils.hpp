@@ -319,5 +319,13 @@ namespace Utils {
 			<< "),(" << adel.rectExit.width << "," << adel.rectExit.height << ")]" ;
 		return std::move(ss).str();
 	}
+
+	static void BuildCommand(std::string& command, std::string filename, const char* caption, std::string chatId, std::string& apiKey) {
+		command = "curl -F chat_id=" + chatId + " -F caption=\""+ caption + "\" -F photo=\"" + filename + "\" https://api.telegram.org/bot" + apiKey + "/sendphoto";
+	}
+
+	static void BuildCommand(std::string& command, const char* message, std::string chatId, std::string apiKey) {
+		command = "curl -F chat_id=" + chatId + " -F text=\"" + message + "\" https://api.telegram.org/bot" + apiKey + "/sendMessage";
+	}
 };
 

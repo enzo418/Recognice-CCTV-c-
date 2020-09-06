@@ -47,6 +47,14 @@ struct CameraConfiguration {
 
 	// Delimiters to the entry vs exit area.
 	AreasDelimiters areasDelimiters;
+
+	// used as minimun value of threshold (to avoid noise)
+	int minimumThreshold;
+
+	// % to increase from the minimum threshold
+	float increaseTresholdFactor;
+
+	uint32_t updateThresholdFrequency;
 };
 
 // to be able to sort the array of configs
@@ -83,6 +91,12 @@ struct ProgramConfiguration {
 
 	// if should show the processed images with applied roation, threshold, ...
 	bool showProcessedFrames;
+
+	// if should send a image with all the cameras when something is detected.
+	bool sendImageOfAllCameras;
+
+	// Used to save a frame with all the cameras, is updated every
+	cv::Mat frameWithAllTheCameras;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;
