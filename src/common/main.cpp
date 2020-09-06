@@ -43,6 +43,7 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 	auto now = std::chrono::high_resolution_clock::now();
 	std::string lastMessage = "";
 	std::string message = "";
+	std::time_t unix_time_start = std::time(0);
 
 	std::thread detectionThread = std::thread(StartDetection, 
 					std::ref(fhelper.configurations.camerasConfigs), 
@@ -50,41 +51,44 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 	
 	while (!close) {
 		now = std::chrono::high_resolution_clock::now();
-		auto time = (now - lastCheck) / std::chrono::seconds(1);
-		std::cout << "time: " << time << std::endl;
-		if(time >= 9) {
-			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message /*, authUsersList*/);
+		auto diff = (now - lastCheck) / std::chrono::seconds(1);
+		std::cout << "time: " << diff << std::endl;
+		if(diff >= 9) {
+			std::time_t unix_time = 0;
+			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time /*, authUsersList*/);
 			std::string reply = "Comando no reconocido.";
 
-			std::cout << "Message: " << message << " Last Message: " << lastMessage << std::endl;
-			
-			if(lastMessage != message){
-				/// TODO: Read the messages needed from a file so is user-specific.
-				if (message == "/apagar") {
-					close = true; // closes the bot
-					stop = true; // closes the cameras connections
+			if(unix_time > unix_time_start) {
+				std::cout << "Message: " << message << " Last Message: " << lastMessage << std::endl;
+				
+				if(lastMessage != message){
+					/// TODO: Read the messages needed from a file so is user-specific.
+					if (message == "/apagar") {
+						close = true; // closes the bot
+						stop = true; // closes the cameras connections
 
-					reply = "Reconocedor apagado.";
-				} else if (message == "/pausar"){
-					stop = true;
+						reply = "Reconocedor apagado.";
+					} else if (message == "/pausar"){
+						stop = true;
 
-					if(detectionThread.joinable())
-						detectionThread.join();
+						if(detectionThread.joinable())
+							detectionThread.join();
 
-					cv::destroyAllWindows();
+						cv::destroyAllWindows();
 
-					reply = "Reconocedor pausado.";
-				} else if (message == "/reanudar") {
-					stop = false;
-					detectionThread = std::thread(StartDetection, 
-						std::ref(fhelper.configurations.camerasConfigs), 
-						std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(hwnd), std::ref(g_hInst));
+						reply = "Reconocedor pausado.";
+					} else if (message == "/reanudar") {
+						stop = false;
+						detectionThread = std::thread(StartDetection, 
+							std::ref(fhelper.configurations.camerasConfigs), 
+							std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(hwnd), std::ref(g_hInst));
 
-					reply = "Reconocedor reanudado.";
+						reply = "Reconocedor reanudado.";
+					}
+
+					SendMessageToUser(reply, fromId, programConfig.telegramConfig.apiKey);
+					lastMessage = message;
 				}
-
-				SendMessageToUser(reply, fromId, programConfig.telegramConfig.apiKey);
-				lastMessage = message;
 			}
 
 			lastCheck = std::chrono::high_resolution_clock::now();

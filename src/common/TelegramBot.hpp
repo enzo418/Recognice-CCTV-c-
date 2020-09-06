@@ -13,6 +13,6 @@
 #include "ConfigurationFile.hpp"
 #include "utils.hpp"
 
-std::string GetLastMessageFromBot(std::string& apiKey, std::string& result);
+std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs);
 
 void SendMessageToUser(const std::string& message, std::string& chatID, std::string& apiKey);

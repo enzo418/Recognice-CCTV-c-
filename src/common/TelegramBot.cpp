@@ -14,7 +14,7 @@ namespace
     }
 }
 
-std::string GetLastMessageFromBot(std::string& apiKey, std::string& result) {
+std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs) {
 	const std::string url("https://api.telegram.org/bot" + apiKey + "/getUpdates?offset=-1");
 	
 	CURL* curl = curl_easy_init();
@@ -64,7 +64,7 @@ std::string GetLastMessageFromBot(std::string& apiKey, std::string& result) {
 				jsonData = jsonData["result"][0]["message"];
 				Json::Value def = Json::Value(0);
 
-				// std::cout << jsonData["from"].toStyledString() << std::endl;
+				unixTimeMs = jsonData["date"].asUInt64();
 
 				fromId = jsonData["from"]["id"].asString();
 				/*
