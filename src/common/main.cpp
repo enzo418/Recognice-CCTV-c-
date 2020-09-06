@@ -17,6 +17,8 @@
 #include "utils.hpp"
 #include "ConfigurationFile.hpp"
 
+#include "TelegramBot.hpp"
+
 #ifdef WINDOWS
 #include <Windows.h>
 #include <CommCtrl.h>
@@ -34,6 +36,68 @@
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std::chrono;
 
+int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop, HWND hwnd, HMODULE g_hInst);
+
+void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& close, Configuration& fhelper, HWND hwnd, HMODULE g_hInst){
+	auto lastCheck = std::chrono::high_resolution_clock::now();
+	auto now = std::chrono::high_resolution_clock::now();
+	std::string lastMessage = "";
+	std::string message = "";
+
+	std::thread detectionThread = std::thread(StartDetection, 
+					std::ref(fhelper.configurations.camerasConfigs), 
+					std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(hwnd), std::ref(g_hInst));
+	
+	while (!close) {
+		now = std::chrono::high_resolution_clock::now();
+		auto time = (now - lastCheck) / std::chrono::seconds(1);
+		std::cout << "time: " << time << std::endl;
+		if(time >= 9) {
+			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message /*, authUsersList*/);
+			std::string reply = "Comando no reconocido.";
+
+			std::cout << "Message: " << message << " Last Message: " << lastMessage << std::endl;
+			
+			if(lastMessage != message){
+				/// TODO: Read the messages needed from a file so is user-specific.
+				if (message == "/apagar") {
+					close = true; // closes the bot
+					stop = true; // closes the cameras connections
+
+					reply = "Reconocedor apagado.";
+				} else if (message == "/pausar"){
+					stop = true;
+
+					if(detectionThread.joinable())
+						detectionThread.join();
+
+					cv::destroyAllWindows();
+
+					reply = "Reconocedor pausado.";
+				} else if (message == "/reanudar") {
+					stop = false;
+					detectionThread = std::thread(StartDetection, 
+						std::ref(fhelper.configurations.camerasConfigs), 
+						std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(hwnd), std::ref(g_hInst));
+
+					reply = "Reconocedor reanudado.";
+				}
+
+				SendMessageToUser(reply, fromId, programConfig.telegramConfig.apiKey);
+				lastMessage = message;
+			}
+
+			lastCheck = std::chrono::high_resolution_clock::now();
+		}
+
+		std::this_thread::sleep_for(std::chrono::seconds(3));		
+	}	
+
+	if(detectionThread.joinable())
+		detectionThread.join();
+
+	std::cout << "Wait until the bot closes." << std::endl;
+}
 
 void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& programConfig, bool& stop) {
     cv::Mat frame;
@@ -377,9 +441,8 @@ void ShowFrames(Camera* cameras, const int amountCameras,
     }
 }
 
-int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, 
+int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop,
                    HWND hwnd, HMODULE g_hInst) {
-    bool stop = false;
     bool somethingDetected = false;
 
     std::vector<std::thread> threads;
@@ -432,10 +495,10 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
         stop = true;
     }*/
 	
-	std::cout << "Press a key to stop the program.\n";
-	std::getchar();
+	// std::cout << "Press a key to stop the program.\n";
+	// std::getchar();
 	
-	stop = true;
+	// stop = true;
 
     // Wait until every thread finish
     int szThreads = threads.size();
@@ -520,13 +583,26 @@ int main(int argc, char* argv[]){
         fhelper.StartConfiguration();
     }    
 
+	// closes the program when true
+	bool close = false; 
+
+	// closes all the cameras when true but keeps updating the last bot message. 
+	bool stop = false; 
+
 #ifdef WINDOWS
 	HWND hwnd = GetConsoleWindow();
 	HMODULE g_inst = GetModuleHandleA(NULL);
 	AddNotificationIcon(hwnd, g_inst);
-	StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
+
+	std::thread bot = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(close), fhelper, hwnd, g_inst);
+
+	// StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
+	bot.join();
+
 	DeleteNotificationIcon();
 #else
-	StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, nullptr, nullptr);
+	std::thread bot = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(close), std::ref(fhelper), nullptr, nullptr);
+	bot.join();
+	// StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, std::ref(stop), nullptr, nullptr);
 #endif
 }
