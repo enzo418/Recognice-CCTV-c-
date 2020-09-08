@@ -85,7 +85,7 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 						reply = "Reconocedor reanudado.";
 					}
 
-					SendMessageToUser(reply, fromId, programConfig.telegramConfig.apiKey);
+					SendMessageToChat(reply, fromId, programConfig.telegramConfig.apiKey);
 					lastMessage = message;
 				}
 			}
@@ -126,38 +126,23 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 					std::string filename = "img_";
 					filename += camera.pendingAlerts[i].text;
 					filename += ".jpg";
-					//std::cout << "Filename = " << filename << std::endl;
 					cv::imwrite("./saved_imgs/" + filename, camera.pendingAlerts[i].image);
 
 					if(programConfig.telegramConfig.useTelegramBot){
-						#ifdef WINDOWS						
-						Utils::BuildCommand(command, "@saved_imgs\\" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-						#else
-						Utils::BuildCommand(command, "@saved_imgs//" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-						#endif
-		
-						// std::cout << "command => " << command << std::endl;
-						system(command.c_str());
+						SendImageToChat("saved_imgs/" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 
+						// send image of all the cameras
 						if(programConfig.sendImageOfAllCameras && !programConfig.frameWithAllTheCameras.empty() && cameras.size() > 1){
 							std::string filename = "img__all.jpg";
 							
 							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
 
-							#ifdef WINDOWS
-							Utils::BuildCommand(command, "@saved_imgs\\" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-							#else							
-							Utils::BuildCommand(command, "@saved_imgs//" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-							#endif
-
-							// std::cout << "command => " << command << std::endl;
-							system(command.c_str());
+							SendImageToChat("saved_imgs/" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 						}
 					}
 				} else if(camera.pendingAlerts[i].IsText()) {
 					if(programConfig.telegramConfig.useTelegramBot){
-						Utils::BuildCommand(command, camera.pendingAlerts[i].text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);						
-						system(command.c_str());
+						SendMessageToChat(camera.pendingAlerts[i].text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 					}
 				} else {
 					PlayNotificationSound();
@@ -492,17 +477,6 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
     // Start a thread to check the registers
     // threads.push_back(std::thread(CheckRegisters, &configs[0], configsSize, std::ref(stop)));
 
-    /*if (!programConfig.showPreview) {
-        std::cout << "Press a key to stop the program.\n";
-        std::getchar();
-        stop = true;
-    }*/
-	
-	// std::cout << "Press a key to stop the program.\n";
-	// std::getchar();
-	
-	// stop = true;
-
     // Wait until every thread finish
     int szThreads = threads.size();
     for (int i = 0; i < szThreads; i++) {
@@ -609,11 +583,11 @@ int main(int argc, char* argv[]){
 	// StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, std::ref(stop), nullptr, nullptr);
 #endif
 
-        std::cout << "Press a key to stop the program.\n";
+	std::cout << "Press a key to stop the program.\n";
 	std::getchar();
 	
 	stop = true;
-        close = true;
+	close = true;
 
-        bot.join();
+	bot.join();
 }

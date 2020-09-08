@@ -15,4 +15,6 @@
 
 std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs);
 
-void SendMessageToUser(const std::string& message, std::string& chatID, std::string& apiKey);
+void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey);
+
+void SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey);
