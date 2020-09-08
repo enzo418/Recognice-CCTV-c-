@@ -202,7 +202,9 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 		config.telegramConfig.useTelegramBot = value == "no" ? false : true;
 	} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
 		Utils::toLowerCase(value);
-		config.sendImageOfAllCameras = value == "no" ? false : true;
+		config.sendImageOfAllCameras = value == "no" ? false : true;		
+	} else if(id == "authuserstosendactions" || id == "authserssendactions"){
+		config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

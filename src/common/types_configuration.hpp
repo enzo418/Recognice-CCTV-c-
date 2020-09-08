@@ -97,6 +97,8 @@ struct ProgramConfiguration {
 
 	// Used to save a frame with all the cameras, is updated every
 	cv::Mat frameWithAllTheCameras;
+
+	std::vector<std::string> authUsersToSendActions;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

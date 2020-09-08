@@ -54,7 +54,7 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 		auto diff = (now - lastCheck) / std::chrono::seconds(1);
 		if(diff >= 9) {
 			std::time_t unix_time = 0;
-			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time /*, authUsersList*/);
+			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time, programConfig.authUsersToSendActions);
 			std::string reply = "Comando no reconocido.";
 
 			if(unix_time > unix_time_start) {
@@ -243,7 +243,7 @@ void CheckRegisters(CameraConfiguration* configs, const int amountCameras, bool&
                 //     std::vector<size_t> listId;
                 //     size_t end = std::min(configs[i].registers.size(), cleanItems);
                 //     for (size_t x = 0; x < end; x++) {
-                //         if(configs[i].registers[x].finished && !findInVector(listId, configs[i].registers[x].partner)){
+                //         if(configs[i].registers[x].finished && !ExistInVector(listId, configs[i].registers[x].partner)){
                 //             configs[i].registers.erase(configs[i].registers.begin()+x);
                 //             listId.push_back(configs[i].registers[x].id);
                 //         }

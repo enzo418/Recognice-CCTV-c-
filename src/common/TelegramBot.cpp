@@ -14,11 +14,11 @@ namespace
     }
 }
 
-std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs) {
+std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs, const std::vector<std::string>& authUsers) {
 	const std::string url("https://api.telegram.org/bot" + apiKey + "/getUpdates?offset=-1");
 		
 	result = "";
-	std::string fromId = "";
+	std::string senderID = "";
 	
 	CURL* curl = curl_easy_init();
 
@@ -67,12 +67,16 @@ std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std:
 
 					unixTimeMs = jsonData["date"].asUInt64();
 
-					fromId = jsonData["from"]["id"].asString();
-					/*
-						if (fromId not in authUsersList) 
-							return
-					*/
+					senderID = jsonData["from"]["id"].asString();
 
+					const std::string username = jsonData["from"]["username"].asString();
+					
+					if(!ExistInVector(authUsers, username)) {
+						std::cout << "User is'nt auth: " << username << std::endl;
+						return "";
+						// ? return or call again
+					}
+					
 					Json::Value text = jsonData.get("text", def);
 					if(text != def) {
 						// The message has text
@@ -90,7 +94,7 @@ std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std:
 		}
 	}
 	
-	return fromId;
+	return senderID;
 }
 
 void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey) {

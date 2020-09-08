@@ -13,8 +13,7 @@
 #include "types.hpp"
 #include "types_configuration.hpp"
 
-#define findInVector(vector,val) (std::find(std::begin(vector), std::end(vector), val) != std::end(vector))
-
+#define ExistInVector(vector,val) (std::find(std::begin(vector), std::end(vector), val) != std::end(vector))
 
 namespace Utils {
 	#pragma region StringManipulation
@@ -318,6 +317,21 @@ namespace Utils {
 			<< "[(" << adel.rectExit.x << "," << adel.rectExit.y
 			<< "),(" << adel.rectExit.width << "," << adel.rectExit.height << ")]" ;
 		return std::move(ss).str();
+	}
+
+	static std::vector<std::string> SplitString(const std::string& str, const std::string& delim) {
+		std::vector<std::string> tokens;
+		size_t prev = 0, pos = 0;
+		do {
+			pos = str.find(delim, prev);
+			if (pos == std::string::npos) pos = str.length();
+			std::string token = str.substr(prev, pos-prev);
+			trim(token);
+			tokens.push_back(token);
+			prev = pos + delim.length();
+		} while (pos < str.length() && prev < str.length());
+
+		return tokens;
 	}
 };
 
