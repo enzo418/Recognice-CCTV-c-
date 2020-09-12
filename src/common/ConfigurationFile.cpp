@@ -159,15 +159,12 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 	Utils::toLowerCase(id);
 
 	if (id == "msbetweenframe" || id == "millisbetweenframe") {
-		int val = std::stoi(value);
-		config.msBetweenFrame = (ushort)val;
+		config.msBetweenFrame = (ushort)std::stoi(value);
 	} else if (id == "secondsbetweenimage") {
 		std::replace(value.begin(), value.end(), ',', '.');
-		float val = std::stof(value);
-		config.secondsBetweenImage = val;
+		config.secondsBetweenImage = std::stof(value);
 	} else if (id == "secondsbetweenmessage") {
-		int val = std::stoi(value);
-		config.secondsBetweenMessage = val;
+		config.secondsBetweenMessage = std::stoi(value);;
 	} else if (id == "outputresolution") {
 		size_t indx = value.find(",");
 		if (indx > 0) {
@@ -205,6 +202,8 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 		config.sendImageOfAllCameras = value == "no" ? false : true;		
 	} else if(id == "authuserstosendactions" || id == "authserssendactions"){
 		config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
+	} else if (id == "ratioscaleoutput") {
+		config.ratioScaleOutput = std::stod(value);
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

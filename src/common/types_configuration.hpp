@@ -98,7 +98,11 @@ struct ProgramConfiguration {
 	// Used to save a frame with all the cameras, is updated every
 	cv::Mat frameWithAllTheCameras;
 
+	// holds a vector of users that are allowed to send commands to the bot
 	std::vector<std::string> authUsersToSendActions;
+
+	// % used to scale the output image
+	double ratioScaleOutput;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

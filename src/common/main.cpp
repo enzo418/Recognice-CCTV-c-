@@ -12,6 +12,7 @@
 #include <ctime>
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
+#include <signal.h> // to catch ctrl c signal
 
 #include "ImageManipulation.hpp"
 #include "utils.hpp"
@@ -37,6 +38,27 @@
 using namespace std::chrono;
 
 int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop, HWND hwnd, HMODULE g_hInst);
+
+
+/** This two flags and the thread used to be inside main, but i needed to add a 
+  * signal handler for ctrl c so now they are global */
+
+
+bool _close = false, // closes the program when true
+	 _stop = false; // closes all the cameras when true but keeps updating the last bot message. 
+
+std::thread _botThread; // holds the bot thread
+
+void signal_callback_handler(int signum) {
+	_stop = true;
+	_close = true;
+
+	if(_botThread.joinable())
+		_botThread.join();
+
+	// Terminate program
+	exit(signum);
+}
 
 void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& close, Configuration& fhelper, HWND hwnd, HMODULE g_hInst){
 	auto lastCheck = std::chrono::high_resolution_clock::now();
@@ -417,8 +439,17 @@ void ShowFrames(Camera* cameras, const int amountCameras,
             for (size_t i = 0; i < amountCameras; i++)
                 ready[i] = false;  
 
-            if (!programConfig.outputResolution.empty())
-                cv::resize(res, res, cv::Size(programConfig.outputResolution.width, programConfig.outputResolution.height));
+			double scaleW = programConfig.outputResolution.width * programConfig.ratioScaleOutput;
+			double scaleH = programConfig.outputResolution.height * programConfig.ratioScaleOutput;
+            if (!programConfig.outputResolution.empty()){
+				scaleW = programConfig.outputResolution.width * programConfig.ratioScaleOutput;
+				scaleH = programConfig.outputResolution.height * programConfig.ratioScaleOutput;
+			} else {
+				scaleW = res.cols * programConfig.ratioScaleOutput;
+				scaleH = res.rows * programConfig.ratioScaleOutput;
+			}
+
+			cv::resize(res, res, cv::Size(scaleW, scaleH));
 
             cv::imshow("Cameras", res);
             cv::waitKey(1);            
@@ -560,34 +591,29 @@ int main(int argc, char* argv[]){
         fhelper.StartConfiguration();
     }    
 
-	// closes the program when true
-	bool close = false; 
-
-	// closes all the cameras when true but keeps updating the last bot message. 
-	bool stop = false; 
-
 #ifdef WINDOWS
 	HWND hwnd = GetConsoleWindow();
 	HMODULE g_inst = GetModuleHandleA(NULL);
 	AddNotificationIcon(hwnd, g_inst);
 
-	std::thread bot = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(close), fhelper, hwnd, g_inst);
+	_botThread = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(_stop), std::ref(_close), fhelper, hwnd, g_inst);
 
 	// StartDetection(camerasConfigs, programConfig, hwnd, g_inst);
 	bot.join();
 
 	DeleteNotificationIcon();
 #else
-	std::thread bot = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(stop), std::ref(close), std::ref(fhelper), nullptr, nullptr);
+	_botThread = std::thread(CheckActionsBot, std::ref(fhelper.configurations.programConfig), std::ref(_stop), std::ref(_close), std::ref(fhelper), nullptr, nullptr);
 	
 	// StartDetection(fhelper.configurations.camerasConfigs, fhelper.configurations.programConfig, std::ref(stop), nullptr, nullptr);
 #endif
+	signal(SIGINT, signal_callback_handler);
 
-	std::cout << "Press a key to stop the program.\n";
+	// std::cout << "Press a key to stop the program.\n";
 	std::getchar();
-	
-	stop = true;
-	close = true;
 
-	bot.join();
+	_stop = true;
+	_close = true;
+
+	_botThread.join();
 }
