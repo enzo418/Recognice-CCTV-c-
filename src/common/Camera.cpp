@@ -19,6 +19,12 @@ void Camera::ApplyBasicsTransformations() {
 	
 	this->frameToShow = this->frame.clone();
 
+	// auto intervalFrames = (now - this->lastBackupImageStored) / std::chrono::seconds(1);
+	// if (intervalFrames >= 10) {
+	// 	this->imageFrom10SecondsAgo = this->imageFrom10SecondsAgo;
+	// 	this->lastBackupImageStored = std::chrono::high_resolution_clock::now();
+	// }
+
 	// Take the region of interes
 	if (!this->config.roi.isEmpty()) {
 		cv::Rect roi(this->config.roi.point1, this->config.roi.point2);
@@ -29,6 +35,8 @@ void Camera::ApplyBasicsTransformations() {
 	if (this->config.rotation != 0) ImageManipulation::RotateImage(this->frame, this->config.rotation);
 
 	cv::cvtColor(this->frame, this->frame, cv::COLOR_RGB2GRAY);
+
+	cv::equalizeHist(this->frame, this->frame);
 }
 
 void Camera::CalculateNonZeroPixels() {
@@ -104,7 +112,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 }
 
 void Camera::CheckForHumans(){
-	this->_descriptor->detectMultiScale(frame, this->detections, this->foundWeights, this->config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+	this->_descriptor->detectMultiScale(this->frame, this->detections, this->foundWeights, this->config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
 	size_t detectSz = this->detections.size();
 
 	if(detectSz > 0){

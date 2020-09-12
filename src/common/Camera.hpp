@@ -47,6 +47,7 @@ private:
 	std::chrono::system_clock::time_point now = std::chrono::high_resolution_clock::now(), 
 								lastSavedImage = std::chrono::high_resolution_clock::now(),
 								lastMessageSended = std::chrono::high_resolution_clock::now();
+								// lastBackupImageStored = std::chrono::high_resolution_clock::now();
 
 	std::vector<cv::Rect> detections;
 	std::vector< double > foundWeights;
@@ -100,6 +101,9 @@ public:
 
 	// Temporal list of registers of when someone did enter o leave a site.
 	std::vector<Register> registers;
+
+	// that
+	// cv::Mat imageFrom10SecondsAgo;
 
 	Camera(CameraConfiguration cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog);
 
