@@ -262,6 +262,8 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 	} else if (id == "updatethresholdfrequency") {
 		uint32_t val = std::stoi(value);
 		config.updateThresholdFrequency = val;
+	} else if (id == "usehighconstrast") {
+		config.useHighConstrast = value == "yes";
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

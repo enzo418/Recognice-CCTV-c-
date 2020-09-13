@@ -55,6 +55,8 @@ struct CameraConfiguration {
 	float increaseTresholdFactor;
 
 	uint32_t updateThresholdFrequency;
+
+	bool useHighConstrast = false;
 };
 
 // to be able to sort the array of configs

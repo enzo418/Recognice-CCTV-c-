@@ -36,7 +36,8 @@ void Camera::ApplyBasicsTransformations() {
 
 	cv::cvtColor(this->frame, this->frame, cv::COLOR_RGB2GRAY);
 
-	cv::equalizeHist(this->frame, this->frame);
+	// Don't use hight constrast here... it only increases the change between images.
+	// is more usefull when trying to detect objs.
 }
 
 void Camera::CalculateNonZeroPixels() {
@@ -112,6 +113,11 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 }
 
 void Camera::CheckForHumans(){
+	// first increase the constrast in the image
+	if(this->config.useHighConstrast){
+		cv::equalizeHist(this->frame, this->frame);
+	}
+
 	this->_descriptor->detectMultiScale(this->frame, this->detections, this->foundWeights, this->config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
 	size_t detectSz = this->detections.size();
 
