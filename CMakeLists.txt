@@ -17,6 +17,7 @@ find_package(CURL REQUIRED)
 set(source_dir "${PROJECT_SOURCE_DIR}/src")
 
 file(GLOB COMMON_SRC "${source_dir}/common/*.cpp")
+file(GLOB CHANGEDESCRIPTOR_MODULE "ChangeDescriptor/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
@@ -26,7 +27,7 @@ else()
 	file(GLOB PLATFORM_SRC "${source_dir}/unix/*.cpp")
 endif()
 
-set(SOURCES ${COMMON_SRC} ${PLATFORM_SRC})
+set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE} ${PLATFORM_SRC})
 
 # Print sources
 message(${SOURCES})
