@@ -42,6 +42,15 @@ private:
 	// used to store the diff frame between lastFrame and frame.
 	cv::Mat diff; 
 
+	// Rectangle that causes incorrect detections
+	std::vector<FindingInfo> untFindings;
+	
+	// Used to save the finding as untrusted if no person was detected
+	bool personDetected = false;
+
+	// The diff frame that caused the start of detection
+	cv::Mat diffFrameCausedDetection;
+
 	int totalNonZeroPixels = 0;
 
 	std::chrono::system_clock::time_point now = std::chrono::high_resolution_clock::now(), 
@@ -77,7 +86,7 @@ private:
 	void UpdateThreshold();
 
 	// ==================
-	//  Mmethods
+	//  Methods
 	// ==================
 
 	void ReadFramesWithInterval();

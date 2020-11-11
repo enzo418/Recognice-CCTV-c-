@@ -43,6 +43,8 @@ void Camera::ApplyBasicsTransformations() {
 void Camera::CalculateNonZeroPixels() {
 	cv::absdiff(this->lastFrame, frame, diff);
 
+	cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
+
 	// 45 works perfect with most of the cameras/resolution
 	cv::threshold(diff, diff, this->config.noiseThreshold, 255, cv::THRESH_BINARY);
 
@@ -183,6 +185,10 @@ void Camera::CheckForHumans(){
 
 			this->lastSavedImage = std::chrono::high_resolution_clock::now();
 		}
+
+		this->personDetected = true;
+	} else {
+		this->personDetected = false;
 	}
 	//std::cout << camName << " -- Frames " << framesLeft << std::endl;
 }
@@ -266,11 +272,26 @@ void Camera::ReadFramesWithInterval() {
             this->lastFrame = this->frame;
 
             if (totalNonZeroPixels > this->config.changeThreshold) {
-				this->ChangeTheStateAndAlert(now);
+				this->diff.copyTo(this->diffFrameCausedDetection);
+				FindingInfo finding = FindRect(this->diff);
+				bool isValid = true;
 
-                // Increment frames left
-                if (framesLeft < maxFramesLeft)
-                    framesLeft += framesToRecognice;
+				for (size_t i = 0; i < this->untFindings.size(); i++) {
+					if (CalculateSimilarityFindings(finding, untFindings[i]) > 0.5) {
+						isValid = false;
+						break;
+					}
+				}				
+
+				if (isValid) { 
+					this->ChangeTheStateAndAlert(now);
+
+					// Increment frames left
+					if (framesLeft < maxFramesLeft)
+						framesLeft += framesToRecognice;
+				} else {
+					std::cout << this->config.cameraName << " Skipped change because is not trusted." << std::endl;
+				}
             }
 
 			// camera type sentry = no detection, only seeks for changes in the image
@@ -282,14 +303,17 @@ void Camera::ReadFramesWithInterval() {
                     framesLeft--;
                 } else {
                     this->config.state = NI_STATE_SENTRY;
+					
+					if (!this->personDetected){ 
+						untFindings.push_back(FindRect(this->diffFrameCausedDetection));
+					} else this->personDetected = false;
                 }
 
                 shouldProcessFrame = false;
                 
 				// push a new frame to display.
 				if (showPreview && !showProcessedImages)
-                    this->frames.push_back(frameToShow);
-					
+                    this->frames.push_back(frameToShow);					
             } else {
 				// camera type active => tries to detect a person.
 
@@ -300,6 +324,10 @@ void Camera::ReadFramesWithInterval() {
 
                 if (framesLeft == 0) {
                     this->config.state = NI_STATE_SENTRY;
+
+					if (!this->personDetected) {
+						untFindings.push_back(FindRect(this->diffFrameCausedDetection));	
+					} else this->personDetected = false;			
                 }
 
                 shouldProcessFrame = false;

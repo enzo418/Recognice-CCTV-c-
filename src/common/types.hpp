@@ -7,6 +7,9 @@
 #define HWND long*
 #define HMODULE long*
 #endif
+
+#include "../../ChangeDescriptor/ChangeDescriptor.hpp"
+
 #include <opencv2/core/base.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
@@ -172,3 +175,10 @@ struct TelegramBotConfig {
 	// channel to send the images
 	std::string chatId;
 };
+
+// struct UntrustedFinding {
+// 	FindingInfo finding;
+	
+// 	// Value to indecate trust, min is -128 and max 127
+// 	char trust;
+// };
