@@ -95,19 +95,16 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 					
 	// every secondsBetweenMessages send a message to the telegram bot
 	auto intervalFrames = (now - this->lastMessageSended) / std::chrono::seconds(1);
-	if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {
+	if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {	
 		// Play a sound
-		this->pendingAlerts.push_back(Message());
+		this->pendingNotifications.push_back(Notification::Notification());
 
-		if(this->_programConfig->sendImageWhenDetectChange){                        
-			// and then send a message                        
-			Message msg = Message(this->frameToShow, "temp_image", "Movimiento detectado en esta camara.");                        
-			this->pendingAlerts.push_back(msg);
+		if(this->_programConfig->sendImageWhenDetectChange){                  
+			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
+			this->pendingNotifications.push_back(imn);
 		}else{
-			// and then send a message
-			char msg[100];
-			snprintf(msg, MESSAGE_SIZE, "[W] Motion detected in %s", this->config.cameraName.c_str());
-			this->pendingAlerts.push_back(Message(msg));
+			Notification::Notification imn("Movimiento detectado en la camara " + this->config.cameraName);
+			this->pendingNotifications.push_back(imn);
 		}
 
 		this->lastMessageSended = std::chrono::high_resolution_clock::now();
@@ -176,10 +173,8 @@ void Camera::CheckForHumans(){
 		if (time >= this->_programConfig->secondsBetweenImage) {
 			this->config.state = NI_STATE_DETECTED;
 
-			// push a new message
-			Message msg = Message(this->frameToShow, "", "Se ha detectado algo en esta camara.");
-			snprintf(msg.text, MESSAGE_SIZE, "%s", Utils::GetTimeFormated().c_str());
-			this->pendingAlerts.push_back(msg);
+			Notification::Notification ntf (this->frameToShow, "Se ha detectado algo en esta camara.", true);
+			this->pendingNotifications.push_back(ntf);
 
 			std::cout << "[" << this->config.order << "]" << "Pushed image seconds=" << time << " of " << this->_programConfig->secondsBetweenImage << std::endl;
 
@@ -352,9 +347,9 @@ void Camera::ReadFramesWithInterval() {
 							std::cout 	<< "Is a good match? " << finding.isGoodMatch
 										<< " Center: " << finding.center << " Angle: " 
 										<< finding.angle << " Area: " << finding.area << std::endl;
-
-							Message msg = Message(this->diffFrameCausedDetection, "", "Diff frame.");			
-							this->pendingAlerts.push_back(msg);
+							
+							Notification::Notification ntf(this->diffFrameCausedDetection, "Diff img.", false);
+							this->pendingNotifications.push_back(ntf);
 						// }
 
 						this->discriminateDetection = false;

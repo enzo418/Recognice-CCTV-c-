@@ -105,6 +105,9 @@ struct ProgramConfiguration {
 
 	// % used to scale the output image
 	double ratioScaleOutput;
+
+	// relative folder to save the imgs of the changes / detections
+	std::string imagesFolder = "saved_imgs";
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

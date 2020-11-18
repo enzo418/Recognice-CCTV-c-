@@ -24,56 +24,6 @@
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;
 
-// ===========================
-//  ActionMessage definitions
-// ===========================
-
-#define MESSAGE_SIZE 150
-
-class Message {
-	public:
-	cv::Mat image;
-	char text[MESSAGE_SIZE];
-	char caption[MESSAGE_SIZE];
-
-	// A message can be just text
-	Message(const char* message) {
-		snprintf(text, MESSAGE_SIZE, "%s", message);
-		isText = true;
-	}
-
-	// Or a image with a date
-	Message(cv::Mat img, const char* filename, const char* imageCaption){
-		image = img;
-		std::cout << " filename => " << filename << std::endl;
-		std::cout << " 3 Frame size " << image.rows << ", " << image.cols << std::endl;
-		//sprintf_s(text, "%s", date);
-		snprintf(text, MESSAGE_SIZE, "%s", filename);
-
-		snprintf(caption, MESSAGE_SIZE, "%s", imageCaption);
-	}
-
-	// Or a action (play sound)
-	Message() { 
-		isSound = true; 
-		strcpy_s(text, ""); 
-	};
-
-	bool IsText() {
-		return isText;
-	}
-
-	bool IsSound() {
-		return isSound;
-	}
-
-	private:
-	bool isSound = false;
-	bool isText = false;
-};
-
-typedef std::vector<Message> MessageArray;
-
 // =====================
 //  Register Definition
 // =====================

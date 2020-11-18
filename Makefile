@@ -304,6 +304,33 @@ src/common/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/main.cpp.s
 .PHONY : src/common/main.cpp.s
 
+src/common/notification.o: src/common/notification.cpp.o
+
+.PHONY : src/common/notification.o
+
+# target to build an object file
+src/common/notification.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.o
+.PHONY : src/common/notification.cpp.o
+
+src/common/notification.i: src/common/notification.cpp.i
+
+.PHONY : src/common/notification.i
+
+# target to preprocess a source file
+src/common/notification.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.i
+.PHONY : src/common/notification.cpp.i
+
+src/common/notification.s: src/common/notification.cpp.s
+
+.PHONY : src/common/notification.s
+
+# target to generate assembly for a file
+src/common/notification.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.s
+.PHONY : src/common/notification.cpp.s
+
 src/unix/NotificationIconUnix.o: src/unix/NotificationIconUnix.cpp.o
 
 .PHONY : src/unix/NotificationIconUnix.o
@@ -358,6 +385,9 @@ help:
 	@echo "... src/common/main.o"
 	@echo "... src/common/main.i"
 	@echo "... src/common/main.s"
+	@echo "... src/common/notification.o"
+	@echo "... src/common/notification.i"
+	@echo "... src/common/notification.s"
 	@echo "... src/unix/NotificationIconUnix.o"
 	@echo "... src/unix/NotificationIconUnix.i"
 	@echo "... src/unix/NotificationIconUnix.s"

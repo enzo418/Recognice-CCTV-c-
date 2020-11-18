@@ -13,8 +13,10 @@
 #include "ConfigurationFile.hpp"
 #include "utils.hpp"
 
-std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs, const std::vector<std::string>& authUsers);
+namespace TelegramBot { 
+	std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs, const std::vector<std::string>& authUsers);
 
-void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey);
+	void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey);
 
-void SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey);
+	void SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey);
+}

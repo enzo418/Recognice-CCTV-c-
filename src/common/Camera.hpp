@@ -16,6 +16,8 @@
 #include <ctime>
 #include <unordered_map> // To get a unique file id from a camera url
 
+#include "notification.hpp"
+
 class Camera {
 private:
 	// ============================
@@ -106,7 +108,7 @@ public:
 	CameraConfiguration config;
 
 	// alerts created by this camera
-	std::vector<Message> pendingAlerts;
+	std::vector<Notification::Notification> pendingNotifications;
 
 	// List of frames captured
 	std::vector<cv::Mat> frames;

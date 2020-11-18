@@ -14,7 +14,7 @@ namespace
     }
 }
 
-std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs, const std::vector<std::string>& authUsers) {
+std::string TelegramBot::GetLastMessageFromBot(std::string& apiKey, std::string& result, std::time_t& unixTimeMs, const std::vector<std::string>& authUsers) {
 	const std::string url("https://api.telegram.org/bot" + apiKey + "/getUpdates?offset=-1");
 		
 	result = "";
@@ -97,7 +97,7 @@ std::string GetLastMessageFromBot(std::string& apiKey, std::string& result, std:
 	return senderID;
 }
 
-void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey) {
+void TelegramBot::SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey) {
 	std::string url("https://api.telegram.org/bot" + apiKey + "/sendMessage");
 	
 	CURL* curl = curl_easy_init();
@@ -139,7 +139,7 @@ void SendMessageToChat(const std::string& message, std::string& chatID, std::str
 	}
 }
 
-void SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey){
+void TelegramBot::SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey){
 	std::string url("https://api.telegram.org/bot" + apiKey + "/sendphoto");
 
 	CURL* curl = curl_easy_init();

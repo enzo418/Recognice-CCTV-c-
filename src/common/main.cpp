@@ -76,7 +76,7 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 		auto diff = (now - lastCheck) / std::chrono::seconds(1);
 		if(diff >= 9) {
 			std::time_t unix_time = 0;
-			std::string fromId = GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time, programConfig.authUsersToSendActions);
+			std::string fromId = TelegramBot::GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time, programConfig.authUsersToSendActions);
 			std::string reply = "Comando no reconocido.";
 
 			if(unix_time > unix_time_start) {
@@ -107,7 +107,7 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 						reply = "Reconocedor reanudado.";
 					}
 
-					SendMessageToChat(reply, fromId, programConfig.telegramConfig.apiKey);
+					TelegramBot::SendMessageToChat(reply, fromId, programConfig.telegramConfig.apiKey);
 					lastMessage = message;
 				}
 			}
@@ -130,50 +130,23 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 
     while (!stop) {
 		for (auto &&camera : cameras) {
-        	size_t size = camera.pendingAlerts.size();
+        	size_t size = camera.pendingNotifications.size();
 			for (size_t i = 0; i < size; i++) {
-				// take the first message and delete it
-				//Message msg = messages[i];
 				
-				std::cout << "Sending message => " 
-					<< "IsText=" << (camera.pendingAlerts[i].IsText() ? "yes" : "no") 
-					<< "\tIsSound=" << (camera.pendingAlerts[i].IsSound() ? "yes" : "no")
-					<< "\tFrame size=" << camera.pendingAlerts[i].image.cols << "," << camera.pendingAlerts[i].image.rows
-					<< "\tText=" << camera.pendingAlerts[i].text
-					<< std::endl;
+				// std::cout << "Sending message => " 
+				// 	<< "IsText=" << (camera.pendingAlerts[i].IsText() ? "yes" : "no") 
+				// 	<< "\tIsSound=" << (camera.pendingAlerts[i].IsSound() ? "yes" : "no")
+				// 	<< "\tFrame size=" << camera.pendingAlerts[i].image.cols << "," << camera.pendingAlerts[i].image.rows
+				// 	<< "\tText=" << camera.pendingAlerts[i].text
+				// 	<< std::endl;
 
-				std::string command;
+				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
 
-				if (!camera.pendingAlerts[i].IsText() && !camera.pendingAlerts[i].IsSound() && camera.pendingAlerts[i].image.rows > 0) {
-					std::string filename = "img_";
-					filename += camera.pendingAlerts[i].text;
-					filename += ".jpg";
-					cv::imwrite("./saved_imgs/" + filename, camera.pendingAlerts[i].image);
-
-					if(programConfig.telegramConfig.useTelegramBot){
-						SendImageToChat("saved_imgs/" + filename, camera.pendingAlerts[i].caption, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-
-						// send image of all the cameras
-						if(programConfig.sendImageOfAllCameras && !programConfig.frameWithAllTheCameras.empty() && cameras.size() > 1){
-							std::string filename = "img__all.jpg";
-							
-							cv::imwrite("./saved_imgs/" + filename, programConfig.frameWithAllTheCameras);							
-
-							SendImageToChat("saved_imgs/" + filename, "Imagen de todas las camaras activas.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-						}
-					}
-				} else if(camera.pendingAlerts[i].IsText()) {
-					if(programConfig.telegramConfig.useTelegramBot){
-						SendMessageToChat(camera.pendingAlerts[i].text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-					}
-				} else {
-					PlayNotificationSound();
-				}
+				camera.pendingNotifications[i].send(programConfig);
 			}
-
 			// this clears all the camera.pendingAlerts, wich is not good but
 			// camera.pendingAlerts is bugged when try to copy the message to a new variable...
-			camera.pendingAlerts.clear();
+			camera.pendingNotifications.clear();
 		}
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1500));
@@ -467,9 +440,6 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
     std::vector<std::thread> threads;
 
 	std::vector<Camera> cameras;
-
-    // Array of messages that the cameras order to send to telegram.
-    MessageArray messages;
 
     int configsSize = configs.size();
 
