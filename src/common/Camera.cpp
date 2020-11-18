@@ -272,18 +272,24 @@ void Camera::ReadFramesWithInterval() {
             this->lastFrame = this->frame;
 
             if (totalNonZeroPixels > this->config.changeThreshold) {
-				this->diff.copyTo(this->diffFrameCausedDetection);
-				FindingInfo finding = FindRect(this->diff);
-				bool isValid = true;
+				this->discriminateDetection = true;
 
+				/// === Check if the change was something valid
+				
+				this->diff.copyTo(this->diffFrameCausedDetection); // save the frame
+				FindingInfo finding = FindRect(this->diff); // find the rectangle that describes the change
+				bool isValid = true; 
+
+				// Compare Similarity of the rectangle to all the others not valid rectangles
 				for (size_t i = 0; i < this->untFindings.size(); i++) {
 					if (CalculateSimilarityFindings(finding, untFindings[i]) > 0.5) {
 						isValid = false;
 						break;
 					}
-				}				
+				}
 
 				if (isValid) { 
+					// is valid, send an alert
 					this->ChangeTheStateAndAlert(now);
 
 					// Increment frames left
@@ -291,6 +297,9 @@ void Camera::ReadFramesWithInterval() {
 						framesLeft += framesToRecognice;
 				} else {
 					std::cout << this->config.cameraName << " Skipped change because is not trusted." << std::endl;
+					
+					// it's already not a valid change... so there is no need to search for it again
+					this->discriminateDetection = false;
 				}
             }
 
@@ -304,9 +313,13 @@ void Camera::ReadFramesWithInterval() {
                 } else {
                     this->config.state = NI_STATE_SENTRY;
 					
-					if (!this->personDetected){ 
-						untFindings.push_back(FindRect(this->diffFrameCausedDetection));
-					} else this->personDetected = false;
+					// it's commented since is in SENTRY mode, all the changes need to be reported
+					// if (this->discriminateDetection && !this->personDetected){ 
+					// 	untFindings.push_back(FindRect(this->diffFrameCausedDetection));
+					// 	this->discriminateDetection = false;
+					// } else {
+					// 	this->personDetected = false;
+					// }
                 }
 
                 shouldProcessFrame = false;
@@ -325,8 +338,26 @@ void Camera::ReadFramesWithInterval() {
                 if (framesLeft == 0) {
                     this->config.state = NI_STATE_SENTRY;
 
-					if (!this->personDetected) {
-						untFindings.push_back(FindRect(this->diffFrameCausedDetection));	
+					// If a change was detected before and a person wasn't detected
+					if (this->discriminateDetection && !this->personDetected) {
+						// Find the rectangle that describes the change and save it as untrusted...
+
+						FindingInfo finding;
+						ContourArray ca = FindRect(this->diffFrameCausedDetection, finding);
+
+						// if (finding.isGoodMatch) {
+							untFindings.push_back(finding);	
+							cv::Mat findingsImage = DrawFinding(this->diffFrameCausedDetection.size(), finding, ca, false);
+							
+							std::cout 	<< "Is a good match? " << finding.isGoodMatch
+										<< " Center: " << finding.center << " Angle: " 
+										<< finding.angle << " Area: " << finding.area << std::endl;
+
+							Message msg = Message(this->diffFrameCausedDetection, "", "Diff frame.");			
+							this->pendingAlerts.push_back(msg);
+						// }
+
+						this->discriminateDetection = false;
 					} else this->personDetected = false;			
                 }
 

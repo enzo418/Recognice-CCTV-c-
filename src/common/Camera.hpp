@@ -48,6 +48,9 @@ private:
 	// Used to save the finding as untrusted if no person was detected
 	bool personDetected = false;
 
+	// Used to know when to process the frame that caused the detection
+	bool discriminateDetection = false;
+
 	// The diff frame that caused the start of detection
 	cv::Mat diffFrameCausedDetection;
 
