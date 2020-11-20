@@ -484,7 +484,10 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
         if (i == szThreads - 1)
             std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
         threads[i].join();
+		std::cout << "Thread " << i << " has ended." << std::endl;
     }
+
+	std::cout << "All thread endend." << std::endl;
 
     return 0;
 }

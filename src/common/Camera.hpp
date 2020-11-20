@@ -47,8 +47,7 @@ private:
 	// Rectangle that causes incorrect detections
 	std::vector<FindingInfo> untFindings;
 	
-	// Used to save the finding as untrusted if no person was detected
-	bool personDetected = false;
+	std::chrono::system_clock::time_point lastPersonDetected = std::chrono::high_resolution_clock::now();
 
 	// Used to know when to process the frame that caused the detection
 	bool discriminateDetection = false;
