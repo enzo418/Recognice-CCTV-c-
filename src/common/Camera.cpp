@@ -275,30 +275,33 @@ void Camera::ReadFramesWithInterval() {
 					
 					this->diff.copyTo(this->diffFrameCausedDetection); // save the frame
 					FindingInfo finding = FindRect(this->diff); // find the rectangle that describes the change
-					bool isValid = true; 
+					
+					if (finding.isGoodMatch) { 
+						bool isValid = true; 
 
-					// Compare Similarity of the rectangle to all the others not valid rectangles
-					for (size_t i = 0; i < this->untFindings.size(); i++) {
-						if (CalculateSimilarityFindings(finding, untFindings[i]) > 0.5) {
-							isValid = false;
-							break;
+						// Compare Similarity of the rectangle to all the others not valid rectangles
+						for (size_t i = 0; i < this->untFindings.size(); i++) {
+							if (CalculateSimilarityFindings(finding, untFindings[i]) > 0.5) {
+								isValid = false;
+								break;
+							}
 						}
-					}
 
-					if (isValid) { 
-						// is valid, send an alert
-						this->ChangeTheStateAndAlert(now);
+						if (isValid) { 
+							// is valid, send an alert
+							this->ChangeTheStateAndAlert(now);
 
-						// Increment frames left
-						if (framesLeft < maxFramesLeft)
-							framesLeft += framesToRecognice;
-					} else {
-						std::cout << this->config.cameraName  
-							<< "Skipped change because is not trusted."
-							<< " Finding: " << finding << std::endl;
-						
-						// it's already not a valid change... so there is no need to search for it again
-						this->discriminateDetection = false;
+							// Increment frames left
+							if (framesLeft < maxFramesLeft)
+								framesLeft += framesToRecognice;
+						} else {
+							std::cout << this->config.cameraName  
+								<< "Skipped change because is not trusted."
+								<< " Finding: " << finding << std::endl;
+							
+							// it's already not a valid change... so there is no need to search for it again
+							this->discriminateDetection = false;
+						}
 					}
 				}
             }

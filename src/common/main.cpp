@@ -118,10 +118,8 @@ void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& clos
 		std::this_thread::sleep_for(std::chrono::seconds(3));		
 	}	
 
-	if(detectionThread.joinable())
-		detectionThread.join();
-
-	std::cout << "Wait until the bot closes." << std::endl;
+	detectionThread.detach();
+	_stop = true;
 }
 
 void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& programConfig, bool& stop) {
@@ -483,15 +481,11 @@ int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programC
     for (int i = 0; i < szThreads; i++) {
         if (i == szThreads - 1)
             std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
-        threads[i].join();
-		std::cout << "Thread " << i << " has ended." << std::endl;
+        threads[i].join();	
     }
-
-	std::cout << "All thread endend." << std::endl;
 
     return 0;
 }
-
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(int argc, char* argv[]){
