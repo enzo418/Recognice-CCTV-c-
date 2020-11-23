@@ -104,6 +104,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 			this->pendingNotifications.push_back(imn);
 		} else if (this->_programConfig->useGifInstedImage) {
+			std::cout << "Ready before, now update after." << std::endl;
 			this->gifFrames.updateBefore = false;
 			this->gifFrames.updateAfter = true;
 		} else {
@@ -246,25 +247,20 @@ void Camera::ReadFramesWithInterval() {
 
 		// Once a new frame is ready, update gif images
 		if (this->_programConfig->useGifInstedImage) {
-			size_t i = 0;
 			if (this->gifFrames.updateBefore) {
-				i = this->gifFrames.indexBefore + 1;
+				this->frameToShow.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
-				i = i >= GIF_IMAGES ? 0 : i;
-
-				this->frameToShow.copyTo(this->gifFrames.before[i]);
-
-				this->gifFrames.indexBefore = i;
+				size_t i = this->gifFrames.indexBefore;
+				this->gifFrames.indexBefore = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
 			}
 
 			if (this->gifFrames.updateAfter) {
-				i = this->gifFrames.indexAfter + 1;
+				if (this->gifFrames.indexAfter < GIF_IMAGES) {
+					this->frameToShow.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
-				if (i < GIF_IMAGES) {
-					this->frameToShow.copyTo(this->gifFrames.after[i]);
-
-					this->gifFrames.indexAfter = i;
+					this->gifFrames.indexAfter++;
 				} else {
+					std::cout << "Update after, send gif, index: " << this->gifFrames.indexAfter << std::endl;
 					this->gifFrames.sendGif = true;
 					this->gifFrames.updateAfter = false;
 				}

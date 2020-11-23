@@ -139,8 +139,8 @@ void TelegramBot::SendMessageToChat(const std::string& message, std::string& cha
 	}
 }
 
-void TelegramBot::SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey){
-	std::string url("https://api.telegram.org/bot" + apiKey + "/sendphoto");
+void TelegramBot::SendMediaToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey, bool isAnimation){
+	std::string url("https://api.telegram.org/bot" + apiKey + (isAnimation ? "/sendAnimation" : "/sendphoto"));
 
 	CURL* curl = curl_easy_init();
 
@@ -163,7 +163,7 @@ void TelegramBot::SendImageToChat(const std::string& imagePath, const std::strin
 		// Set up form
 		// Add photo
 		curl_formadd(&post, &last,
-                 CURLFORM_COPYNAME, "photo",
+                 CURLFORM_COPYNAME, (isAnimation ? "animation" : "photo"),
                  CURLFORM_FILE, imagePath.c_str(),
                  CURLFORM_END);
 		

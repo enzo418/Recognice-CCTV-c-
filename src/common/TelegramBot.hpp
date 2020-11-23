@@ -18,5 +18,5 @@ namespace TelegramBot {
 
 	void SendMessageToChat(const std::string& message, std::string& chatID, std::string& apiKey);
 
-	void SendImageToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey);
+	void SendMediaToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey, bool isAnimation = false);
 }

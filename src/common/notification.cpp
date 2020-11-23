@@ -22,7 +22,7 @@ void Notification::Notification::send(ProgramConfiguration& programConfig) {
 			std::string location = programConfig.imagesFolder + "/" + this->filename;
 			cv::imwrite("./" + location, this->image);
 
-			TelegramBot::SendImageToChat(location, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+			TelegramBot::SendMediaToChat(location, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 		}
 	} else if (this->type == Type::TEXT) {
 		if (programConfig.telegramConfig.useTelegramBot) {
