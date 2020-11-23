@@ -15,7 +15,9 @@ std::thread Camera::StartDetection() {
 
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
-	cv::resize(this->frame, this->frame, RESIZERESOLUTION);
+	// if use gif is true, it's already resized
+	if (!this->_programConfig->useGifInstedImage)
+		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 	
 	this->frameToShow = this->frame.clone();
 
@@ -103,8 +105,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInstedImage){                  
 			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 			this->pendingNotifications.push_back(imn);
-		} else if (this->_programConfig->useGifInstedImage) {
-			std::cout << "Ready before, now update after." << std::endl;
+		} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInstedImage) {			
 			this->gifFrames.updateBefore = false;
 			this->gifFrames.updateAfter = true;
 		} else {
@@ -221,8 +222,6 @@ void Camera::ReadFramesWithInterval() {
     std::cout << "Opening " << camName << "..." << std::endl;
     assert(capture.isOpened());
 
-    cv::Mat invalid;
-
     auto timeLastframe = std::chrono::high_resolution_clock::now();
     bool shouldProcessFrame = false;
     
@@ -242,32 +241,31 @@ void Camera::ReadFramesWithInterval() {
             timeLastframe = std::chrono::high_resolution_clock::now();
             shouldProcessFrame = true;
         } else {            
-            capture.read(invalid); // keep reading to avoid error on VC.
+            capture.read(this->frame); // keep reading to avoid error on VC.
         }
 
 		// Once a new frame is ready, update gif images
-		if (this->_programConfig->useGifInstedImage) {
+		if (this->_programConfig->useGifInstedImage && !this->frame.empty()) {
+			cv::resize(this->frame, this->frame, RESIZERESOLUTION);
+
 			if (this->gifFrames.updateBefore) {
-				this->frameToShow.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
+				this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
 				size_t i = this->gifFrames.indexBefore;
 				this->gifFrames.indexBefore = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
-			}
-
-			if (this->gifFrames.updateAfter) {
+			} else if (this->gifFrames.updateAfter) {
 				if (this->gifFrames.indexAfter < GIF_IMAGES) {
-					this->frameToShow.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
+					this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
 					this->gifFrames.indexAfter++;
 				} else {
-					std::cout << "Update after, send gif, index: " << this->gifFrames.indexAfter << std::endl;
 					this->gifFrames.sendGif = true;
 					this->gifFrames.updateAfter = false;
 				}
 			}
 		}
 
-        if (shouldProcessFrame) {            
+        if (shouldProcessFrame) {
 			// If the frame is not valid try resetting the connection with the camera
             if (this->frame.rows == 0) {                
                 capture.release();
@@ -385,8 +383,6 @@ void Camera::ReadFramesWithInterval() {
 					}		
                 }
 
-                shouldProcessFrame = false;
-
 				// push a new frame to display.
                 if (showPreview && !showProcessedImages)
                     this->frames.push_back(std::move(this->frameToShow));
@@ -395,6 +391,8 @@ void Camera::ReadFramesWithInterval() {
 				this->detections.clear();
                 this->foundWeights.clear();
             }
+
+			shouldProcessFrame = false;
         }
     }
 

@@ -129,59 +129,48 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
     while (!stop) {
 		for (auto &&camera : cameras) {
         	size_t size = camera.pendingNotifications.size();
+			
 			for (size_t i = 0; i < size; i++) {	
 				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
 
 				camera.pendingNotifications[i].send(programConfig);
 			}
 			
-			if (programConfig.telegramConfig.useTelegramBot && camera.gifFrames.sendGif) {
+			// Send gif
+			if (programConfig.telegramConfig.useTelegramBot && programConfig.useGifInstedImage && camera.gifFrames.sendGif) {
 				// --------------------------------------------------------
 				// Take all to single files and then make them in one file
 				// --------------------------------------------------------
-
-				cv::Mat* images[GIF_IMAGES*2];
-				size_t totalFrames = 0;
-
 				const std::string identifier = std::to_string(clock());
-				const std::string gifName = identifier + ".gif";
 				const std::string imageFolder = programConfig.imagesFolder;
-				const std::string root = "./" + imageFolder + "/";
+				const std::string root = "./" + imageFolder + "/" + identifier;
+				const std::string gifPath = root + ".gif";
 				std::string location;
 
 				// before: 
+				size_t totalFrames = 0;
 				for (size_t i = camera.gifFrames.indexBefore;;) {
 					if (totalFrames < GIF_IMAGES) {						
-						images[totalFrames] = &camera.gifFrames.before[i];
-						location = root + identifier + "_" + std::to_string((int)totalFrames) + ".jpg";
+						location = root + "_" + std::to_string((int)totalFrames) + ".jpg";
 						cv::imwrite(location, camera.gifFrames.before[i]);
 						totalFrames++;
-						std::cout << "Total frames: " << totalFrames << " index: " << i << " empty? " << camera.gifFrames.before[i].empty() << std::endl;
 						i = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
 					} else
-						break;		
+						break;
+				}
+				
+				for (; totalFrames < GIF_IMAGES*2; totalFrames++) {
+					location = root + "_" + std::to_string((int)totalFrames) + ".jpg";
+					cv::imwrite(location, camera.gifFrames.after[totalFrames - GIF_IMAGES]);
 				}
 
-				// after:
-				for (size_t i = totalFrames; i < GIF_IMAGES * 2; i++) {
-					location = root + identifier + "_" + std::to_string((int)totalFrames) + ".jpg";
-					cv::imwrite(location, camera.gifFrames.after[i-GIF_IMAGES]);
-					// images[i] = &camera.gifFrames.after[i-GIF_IMAGES];
-					totalFrames++;
-					std::cout << "Total frames: " << totalFrames << " index: " << i-GIF_IMAGES << " empty? " << camera.gifFrames.after[i-GIF_IMAGES].empty() << std::endl;
-				}
-
-				// for (size_t i = 0; i < totalFrames; i++) {
-				// 	std::cout << "frame " << i << " cols " << images[i]->cols << " empty? " << images[i]->empty() << std::endl;
-				// }
-
-				std::string command = "convert -resize 65% -delay 40 -loop 0 " + root + identifier + "_{0.." + std::to_string(totalFrames-1) + "}.jpg " + root + gifName;
+				std::string command = "convert -resize 65% -delay 33 -loop 0 " + root + "_{0.." + std::to_string(GIF_IMAGES*2-1) + "}.jpg " + gifPath;
 
 				std::system(command.c_str());
 
-				std::string gifPath = root + gifName;
+				TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 
-				TelegramBot::SendMediaToChat(gifPath, "Gif movement.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+				std::cout << "Gif sended." << std::endl;
 
 				// ---
 				// update gif collection data

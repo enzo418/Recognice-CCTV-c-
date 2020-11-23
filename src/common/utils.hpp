@@ -333,22 +333,5 @@ namespace Utils {
 
 		return tokens;
 	}
-
-	static const std::string ImagesToGif(cv::Mat* images, size_t length, std::string imageFolder) {
-		const std::string identifier = std::to_string(clock());
-		const std::string gifName = identifier + ".gif";
-		std::string location;
-
-		for (size_t i = 0; i < length; i++) {
-			location = "./" + imageFolder + "/" + identifier + "_" + std::to_string((int)i) + ".jpg";
-			cv::imwrite(location, images[i]);
-		}
-
-		std::string command = "convert -resize 65% -delay 40 -loop 0 " + identifier + "_{0.." + std::to_string(length-1) + "}.jpg ./" + imageFolder + "/" + gifName;
-
-		std::system(command.c_str());
-
-		return "./" + imageFolder + "/" + gifName;
-	}
 };
 
