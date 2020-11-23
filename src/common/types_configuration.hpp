@@ -108,6 +108,8 @@ struct ProgramConfiguration {
 
 	// relative folder to save the imgs of the changes / detections
 	std::string imagesFolder = "saved_imgs";
+
+	bool useGifInstedImage = true;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

@@ -129,21 +129,58 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
     while (!stop) {
 		for (auto &&camera : cameras) {
         	size_t size = camera.pendingNotifications.size();
-			for (size_t i = 0; i < size; i++) {
-				
-				// std::cout << "Sending message => " 
-				// 	<< "IsText=" << (camera.pendingAlerts[i].IsText() ? "yes" : "no") 
-				// 	<< "\tIsSound=" << (camera.pendingAlerts[i].IsSound() ? "yes" : "no")
-				// 	<< "\tFrame size=" << camera.pendingAlerts[i].image.cols << "," << camera.pendingAlerts[i].image.rows
-				// 	<< "\tText=" << camera.pendingAlerts[i].text
-				// 	<< std::endl;
-
+			for (size_t i = 0; i < size; i++) {	
 				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
 
 				camera.pendingNotifications[i].send(programConfig);
 			}
-			// this clears all the camera.pendingAlerts, wich is not good but
-			// camera.pendingAlerts is bugged when try to copy the message to a new variable...
+			
+			if (programConfig.telegramConfig.useTelegramBot && camera.gifFrames.sendGif) {
+				// --------------------------------------------------------
+				// Take all to single files and then make them in one file
+				// --------------------------------------------------------
+
+				cv::Mat* images[GIF_IMAGES*2];
+				size_t totalFrames = 0;
+
+				// before: image 1 is lastIndex + 1
+				size_t i_nextFrame = camera.gifFrames.indexBefore + 1;
+				i_nextFrame = i_nextFrame >= GIF_IMAGES ? 0 : camera.gifFrames.indexBefore;
+				for (size_t i = i_nextFrame;;) {
+					if (totalFrames < GIF_IMAGES) {						
+						images[totalFrames] = &camera.gifFrames.before[i];
+						totalFrames++;
+						i = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
+					} else
+						break;					
+				}
+
+				// after: image 1 is lastIndex + 1
+				for (size_t i = totalFrames; i < GIF_IMAGES; i++) {					
+					images[i] = &camera.gifFrames.after[i];
+					totalFrames++;
+				}
+
+				for (size_t i = 0; i < totalFrames; i++) {
+					std::cout << "frame " << i << " cols " << images[i]->cols << " empty? " << images[i]->empty() << std::endl;
+				}
+
+				std::string gifPath = Utils::ImagesToGif(images[0], totalFrames, programConfig.imagesFolder);
+
+				TelegramBot::SendImageToChat(gifPath, "Gif movement.", programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+
+				// ---
+				// update gif collection data
+				// ---
+				camera.gifFrames.indexBefore = 0;
+				camera.gifFrames.indexAfter = 0;
+
+				camera.gifFrames.sendGif = false;
+				camera.gifFrames.updateAfter = false;
+				camera.gifFrames.updateBefore = true;				
+			}
+
+			// This proc shouldn't clear all the notifcations since it's a multithread process :p
 			camera.pendingNotifications.clear();
 		}
 

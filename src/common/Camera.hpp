@@ -18,6 +18,22 @@
 
 #include "notification.hpp"
 
+#define GIF_IMAGES 10
+
+struct GifFrames {
+	// Flag used by save and upload images to know when to send the image
+	bool sendGif = false;
+
+	bool updateBefore = true;
+	bool updateAfter = false;
+
+	size_t indexBefore = 0;
+	cv::Mat before[GIF_IMAGES];
+	
+	cv::Mat after[GIF_IMAGES];
+	size_t indexAfter = 0;
+};
+
 class Camera {
 private:
 	// ============================
@@ -114,6 +130,8 @@ public:
 
 	// Temporal list of registers of when someone did enter o leave a site.
 	std::vector<Register> registers;
+
+	GifFrames gifFrames;
 
 	// that
 	// cv::Mat imageFrom10SecondsAgo;

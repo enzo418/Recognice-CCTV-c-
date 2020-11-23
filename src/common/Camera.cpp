@@ -100,10 +100,13 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		// Play a sound
 		this->pendingNotifications.push_back(Notification::Notification());
 
-		if(this->_programConfig->sendImageWhenDetectChange){                  
+		if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInstedImage){                  
 			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 			this->pendingNotifications.push_back(imn);
-		}else{
+		} else if (this->_programConfig->useGifInstedImage) {
+			this->gifFrames.updateBefore = false;
+			this->gifFrames.updateAfter = true;
+		} else {
 			Notification::Notification imn("Movimiento detectado en la camara " + this->config.cameraName);
 			this->pendingNotifications.push_back(imn);
 		}
@@ -241,6 +244,33 @@ void Camera::ReadFramesWithInterval() {
             capture.read(invalid); // keep reading to avoid error on VC.
         }
 
+		// Once a new frame is ready, update gif images
+		if (this->_programConfig->useGifInstedImage) {
+			size_t i = 0;
+			if (this->gifFrames.updateBefore) {
+				i = this->gifFrames.indexBefore + 1;
+
+				i = i >= GIF_IMAGES ? 0 : i;
+
+				this->frameToShow.copyTo(this->gifFrames.before[i]);
+
+				this->gifFrames.indexBefore = i;
+			}
+
+			if (this->gifFrames.updateAfter) {
+				i = this->gifFrames.indexAfter + 1;
+
+				if (i < GIF_IMAGES) {
+					this->frameToShow.copyTo(this->gifFrames.after[i]);
+
+					this->gifFrames.indexAfter = i;
+				} else {
+					this->gifFrames.sendGif = true;
+					this->gifFrames.updateAfter = false;
+				}
+			}
+		}
+
         if (shouldProcessFrame) {            
 			// If the frame is not valid try resetting the connection with the camera
             if (this->frame.rows == 0) {                
@@ -321,7 +351,7 @@ void Camera::ReadFramesWithInterval() {
                 
 				// push a new frame to display.
 				if (showPreview && !showProcessedImages)
-                    this->frames.push_back(frameToShow);					
+                    this->frames.push_back(this->frameToShow);					
             } else {
 				// camera type active => tries to detect a person.
 
@@ -363,7 +393,7 @@ void Camera::ReadFramesWithInterval() {
 
 				// push a new frame to display.
                 if (showPreview && !showProcessedImages)
-                    this->frames.push_back(std::move(frameToShow));
+                    this->frames.push_back(std::move(this->frameToShow));
 
 				// clear the detection results
 				this->detections.clear();
