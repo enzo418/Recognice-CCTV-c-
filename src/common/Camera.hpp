@@ -18,8 +18,6 @@
 
 #include "notification.hpp"
 
-#define GIF_IMAGES 10
-
 struct GifFrames {
 	// Flag used by save and upload images to know when to send the image
 	bool sendGif = false;
@@ -28,10 +26,12 @@ struct GifFrames {
 	bool updateAfter = false;
 
 	size_t indexBefore = 0;
-	cv::Mat before[GIF_IMAGES];
+	std::vector<cv::Mat> before;
 	
-	cv::Mat after[GIF_IMAGES];
+	std::vector<cv::Mat> after;
 	size_t indexAfter = 0;
+
+	cv::RotatedRect rotatedRectChange;
 };
 
 class Camera {

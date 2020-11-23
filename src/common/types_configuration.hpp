@@ -66,6 +66,8 @@ struct {
 	}
 }less_than_order;
 
+enum GifResizePercentage {None = 100, Low = 80, Medium = 60, High = 40, VeryHigh = 20};
+
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
 	ushort msBetweenFrame;
@@ -109,7 +111,12 @@ struct ProgramConfiguration {
 	// relative folder to save the imgs of the changes / detections
 	std::string imagesFolder = "saved_imgs";
 
-	bool useGifInstedImage = true;
+	bool useGifInsteadImage = true;
+
+	GifResizePercentage gifResizePercentage = GifResizePercentage::Medium;
+
+	// Frame on each side (before, after)
+	size_t halfGifFrames = 10;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

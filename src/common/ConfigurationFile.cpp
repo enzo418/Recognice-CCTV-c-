@@ -204,6 +204,32 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 		config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 	} else if (id == "ratioscaleoutput") {
 		config.ratioScaleOutput = std::stod(value);
+	} else if (id == "usegifinsteadofimage" || id == "usegif") {
+		Utils::toLowerCase(value);
+		config.useGifInsteadImage = value == "no" ? false : true;
+	} else if (id == "gifresizepercentage" || id == "gifresize") {
+		if (value == "None") {
+			config.gifResizePercentage = GifResizePercentage::None;
+		} else if (value == "Low") {
+			config.gifResizePercentage = GifResizePercentage::Low;
+		} else if (value == "Medium") {
+			config.gifResizePercentage = GifResizePercentage::Medium;
+		} else if (value == "High") {
+			config.gifResizePercentage = GifResizePercentage::High;
+		} else if (value == "VeryHigh") {
+			config.gifResizePercentage = GifResizePercentage::VeryHigh;
+		}
+	} else if (id == "gifframes") {		
+		int val = std::stoi(value);
+
+		if (val < 2) {
+			std::cout << "Campo \"" << id << "\" tiene que ser >= 2." << std::endl;
+			std::exit(0);
+		}
+
+		val = val % 2 != 0 ? (val + 1) : val;
+
+		config.halfGifFrames = val / 2;
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

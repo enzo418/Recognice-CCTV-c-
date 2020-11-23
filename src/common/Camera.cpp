@@ -1,11 +1,13 @@
 #include "Camera.hpp"
 
 Camera::Camera(CameraConfiguration cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
+	this->gifFrames.after.resize(programConfig->halfGifFrames);
+	this->gifFrames.before.resize(programConfig->halfGifFrames);
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.changeThreshold;
 }
 
-void Camera::Connect(){
+void Camera::Connect() {
 	this->capturer.open(this->config.url);
 }
 
@@ -16,7 +18,7 @@ std::thread Camera::StartDetection() {
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
 	// if use gif is true, it's already resized
-	if (!this->_programConfig->useGifInstedImage)
+	if (!this->_programConfig->useGifInsteadImage)
 		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 	
 	this->frameToShow = this->frame.clone();
@@ -102,10 +104,10 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		// Play a sound
 		this->pendingNotifications.push_back(Notification::Notification());
 
-		if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInstedImage){                  
+		if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
 			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 			this->pendingNotifications.push_back(imn);
-		} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInstedImage) {			
+		} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {			
 			this->gifFrames.updateBefore = false;
 			this->gifFrames.updateAfter = true;
 		} else {
@@ -245,16 +247,16 @@ void Camera::ReadFramesWithInterval() {
         }
 
 		// Once a new frame is ready, update gif images
-		if (this->_programConfig->useGifInstedImage && !this->frame.empty()) {
+		if (this->_programConfig->useGifInsteadImage && !this->frame.empty()) {
 			cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 			if (this->gifFrames.updateBefore) {
 				this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
 				size_t i = this->gifFrames.indexBefore;
-				this->gifFrames.indexBefore = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
+				this->gifFrames.indexBefore = (i + 1) >= this->_programConfig->halfGifFrames ? 0 : (i + 1);
 			} else if (this->gifFrames.updateAfter) {
-				if (this->gifFrames.indexAfter < GIF_IMAGES) {
+				if (this->gifFrames.indexAfter < this->_programConfig->halfGifFrames) {
 					this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
 					this->gifFrames.indexAfter++;
@@ -312,6 +314,9 @@ void Camera::ReadFramesWithInterval() {
 						}
 
 						if (isValid) { 
+							this->gifFrames.rotatedRectChange = finding.rect;
+							this->gifFrames.rotatedRectChange.center += cv::Point2f(this->config.roi.point1.x, 0);
+
 							// is valid, send an alert
 							this->ChangeTheStateAndAlert(now);
 

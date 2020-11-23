@@ -137,34 +137,47 @@ void SaveAndUploadImage(std::vector<Camera>& cameras, ProgramConfiguration& prog
 			}
 			
 			// Send gif
-			if (programConfig.telegramConfig.useTelegramBot && programConfig.useGifInstedImage && camera.gifFrames.sendGif) {
-				// --------------------------------------------------------
-				// Take all to single files and then make them in one file
-				// --------------------------------------------------------
+			if (programConfig.telegramConfig.useTelegramBot && programConfig.useGifInsteadImage && camera.gifFrames.sendGif) {
+				// -----------------------------------------------------------
+				// Take before and after frames and combine them into a .gif
+				// -----------------------------------------------------------
 				const std::string identifier = std::to_string(clock());
 				const std::string imageFolder = programConfig.imagesFolder;
 				const std::string root = "./" + imageFolder + "/" + identifier;
 				const std::string gifPath = root + ".gif";
+				const size_t gframes = programConfig.halfGifFrames;
 				std::string location;
+
+				cv::Point2f vertices[4];
+				camera.gifFrames.rotatedRectChange.points(vertices);
 
 				// before: 
 				size_t totalFrames = 0;
 				for (size_t i = camera.gifFrames.indexBefore;;) {
-					if (totalFrames < GIF_IMAGES) {						
+					if (totalFrames < gframes) {						
 						location = root + "_" + std::to_string((int)totalFrames) + ".jpg";
+
+						for (int j = 0; j < 4; j++)
+							cv::line(camera.gifFrames.before[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 2);
+
 						cv::imwrite(location, camera.gifFrames.before[i]);
+
 						totalFrames++;
-						i = (i + 1) >= GIF_IMAGES ? 0 : (i + 1);
+						i = (i + 1) >= gframes ? 0 : (i + 1);
 					} else
 						break;
 				}
 				
-				for (; totalFrames < GIF_IMAGES*2; totalFrames++) {
+				for (; totalFrames < gframes*2; totalFrames++) {
 					location = root + "_" + std::to_string((int)totalFrames) + ".jpg";
-					cv::imwrite(location, camera.gifFrames.after[totalFrames - GIF_IMAGES]);
+
+					for (int j = 0; j < 4; j++)
+						cv::line(camera.gifFrames.after[totalFrames - gframes], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 2);
+
+					cv::imwrite(location, camera.gifFrames.after[totalFrames - gframes]);
 				}
 
-				std::string command = "convert -resize 65% -delay 33 -loop 0 " + root + "_{0.." + std::to_string(GIF_IMAGES*2-1) + "}.jpg " + gifPath;
+				std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes*2-1) + "}.jpg " + gifPath;
 
 				std::system(command.c_str());
 
