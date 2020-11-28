@@ -60,6 +60,69 @@ void signal_callback_handler(int signum) {
 	exit(signum);
 }
 
+class Recognize {
+public:
+	void StartActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& close, Configuration& fhelper, HWND hwnd, HMODULE g_hInst);
+	void StartNotificationsSender(std::vector<Camera>& cameras, ProgramConfiguration& programConfig, bool& stop);
+	void StartPreviewCameras(Camera* cameras, const int amountCameras, ProgramConfiguration& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr);
+	void StartCamerasThreads(std::vector<std::Thread>& threads, CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop, HWND hwnd, HMODULE g_hInst);
+};
+
+Recognize::StartCamerasThreads(void) {
+	bool somethingDetected = false;
+
+	std::vector<std::thread> threads;
+
+	std::vector<Camera> cameras;
+
+	int configsSize = configs.size();
+
+    if (configsSize == 0) {
+        std::cout << "Couldn't find cameras in the config file." << std::endl;
+        std::getchar();
+        return 0;
+    }
+
+    Utils::FixOrderCameras(configs);
+
+    std::cout << "Cameras found: " << configsSize << std::endl;	
+
+    // start hog decriptor
+    cv::HOGDescriptor hog;
+    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+
+	// Create the cameras objs
+	for (auto &config : configs) {
+		cameras.push_back(Camera(config, &programConfig, &stop, &hog));
+	}
+
+    // Start a thread for each camera
+    for (size_t i = 0; i < configsSize; i++) {
+        threads.push_back(cameras[i].StartDetection());
+    }
+
+    if (programConfig.showPreview) {
+        // Start the thread to show the images captured.
+        threads.push_back(std::thread(ShowFrames, &cameras[0], configsSize, std::ref(programConfig), std::ref(stop), hwnd, g_hInst));
+    }
+
+    // Start a thread for save and upload the images captured    
+    threads.push_back(std::thread(SaveAndUploadImage, std::ref(cameras), std::ref(programConfig), std::ref(stop)));
+
+    // Start a thread to check the registers
+    // threads.push_back(std::thread(CheckRegisters, &configs[0], configsSize, std::ref(stop)));
+
+    // Wait until every thread finish
+    int szThreads = threads.size();
+    for (int i = 0; i < szThreads; i++) {
+        if (i == szThreads - 1)
+            std::cout << "Please wait... 3 seconds until release all the resources used." << std::endl;
+        threads[i].join();	
+    }
+
+    return 0;
+}
+
 void CheckActionsBot(ProgramConfiguration& programConfig, bool& stop, bool& close, Configuration& fhelper, HWND hwnd, HMODULE g_hInst){
 	auto lastCheck = std::chrono::high_resolution_clock::now();
 	auto now = std::chrono::high_resolution_clock::now();
@@ -304,16 +367,8 @@ void CheckRegisters(CameraConfiguration* configs, const int amountCameras, bool&
     }    
 }
 
-
-// Used to call functions that need their own thread but doesnt take too much time to complete
-// void ParallelMain(CameraConfiguration* configs, const int amountCameras, MessageArray& messages, ProgramConfiguration& programConfig, bool& stop){
-    /// TODO: Implement
-// }
-
-
 /// <summary> Takes a frame from each camera then stack and display them in a window </summary>
-void ShowFrames(Camera* cameras, const int amountCameras, 
-                ProgramConfiguration& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
+void ShowFrames(Camera* cameras, const int amountCameras, ProgramConfiguration& programConfig, bool& stop, HWND hwndl = nullptr, HMODULE g_hinst = nullptr) {
     // ============
     //  Variables 
     // ============
@@ -484,8 +539,7 @@ void ShowFrames(Camera* cameras, const int amountCameras,
     }
 }
 
-int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop,
-                   HWND hwnd, HMODULE g_hInst) {
+int StartDetection(CamerasConfigurations configs, ProgramConfiguration& programConfig, bool& stop, HWND hwnd, HMODULE g_hInst) {
     bool somethingDetected = false;
 
     std::vector<std::thread> threads;
