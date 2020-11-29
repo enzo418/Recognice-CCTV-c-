@@ -193,16 +193,13 @@ void Recognize::StartPreviewCameras() {
 	// used to, in case is false, display the last frame of the camera that has no frame
 	// in the moment of the iteration.
 	bool isFirstIteration = true;
-	std::cout << "? 225" << std::endl;
 	frames.resize(amountCameras);
 
-	std::cout << "228" << std::endl;
 	// init vector of cameras ready
 	for (size_t i = 0; i < amountCameras; i++) {
 		ready.push_back(false);
 	}
 
-	std::cout << "234" << std::endl;
 	ready.shrink_to_fit();
 	
 	/* Video writer */
@@ -220,8 +217,6 @@ void Recognize::StartPreviewCameras() {
 	// ============
 	//  Main loop 
 	// ============
-
-	std::cout << "well... is in the while loop" << std::endl;
 
 	while (!stop) {
 		if (this->camerasConfigs.size() != amountCameras) {
