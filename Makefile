@@ -331,33 +331,6 @@ src/common/notification.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.s
 .PHONY : src/common/notification.cpp.s
 
-src/unix/NotificationIconUnix.o: src/unix/NotificationIconUnix.cpp.o
-
-.PHONY : src/unix/NotificationIconUnix.o
-
-# target to build an object file
-src/unix/NotificationIconUnix.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/unix/NotificationIconUnix.cpp.o
-.PHONY : src/unix/NotificationIconUnix.cpp.o
-
-src/unix/NotificationIconUnix.i: src/unix/NotificationIconUnix.cpp.i
-
-.PHONY : src/unix/NotificationIconUnix.i
-
-# target to preprocess a source file
-src/unix/NotificationIconUnix.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/unix/NotificationIconUnix.cpp.i
-.PHONY : src/unix/NotificationIconUnix.cpp.i
-
-src/unix/NotificationIconUnix.s: src/unix/NotificationIconUnix.cpp.s
-
-.PHONY : src/unix/NotificationIconUnix.s
-
-# target to generate assembly for a file
-src/unix/NotificationIconUnix.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/unix/NotificationIconUnix.cpp.s
-.PHONY : src/unix/NotificationIconUnix.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -388,9 +361,6 @@ help:
 	@echo "... src/common/notification.o"
 	@echo "... src/common/notification.i"
 	@echo "... src/common/notification.s"
-	@echo "... src/unix/NotificationIconUnix.o"
-	@echo "... src/unix/NotificationIconUnix.i"
-	@echo "... src/unix/NotificationIconUnix.s"
 .PHONY : help
 
 

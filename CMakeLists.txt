@@ -21,13 +21,13 @@ file(GLOB CHANGEDESCRIPTOR_MODULE "ChangeDescriptor/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-if(WIN32 OR MINGW OR MSYS OR CYGWIN)
-	file(GLOB PLATFORM_SRC "${source_dir}/windows/*.cpp") 
-else()
-	file(GLOB PLATFORM_SRC "${source_dir}/unix/*.cpp")
-endif()
+# if(WIN32 OR MINGW OR MSYS OR CYGWIN)
+# 	file(GLOB PLATFORM_SRC "${source_dir}/windows/*.cpp") 
+# else()
+# 	file(GLOB PLATFORM_SRC "${source_dir}/unix/*.cpp")
+# endif()
 
-set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE} ${PLATFORM_SRC})
+set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE})
 
 # Print sources
 message(${SOURCES})

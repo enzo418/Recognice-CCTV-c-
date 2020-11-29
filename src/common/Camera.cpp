@@ -301,7 +301,7 @@ void Camera::ReadFramesWithInterval() {
 					
 					this->diff.copyTo(this->diffFrameCausedDetection); // save the frame
 					FindingInfo finding = FindRect(this->diff); // find the rectangle that describes the change
-					
+				
 					if (finding.isGoodMatch) { 
 						bool isValid = true; 
 
@@ -317,8 +317,12 @@ void Camera::ReadFramesWithInterval() {
 							this->gifFrames.rotatedRectChange = finding.rect;
 							this->gifFrames.rotatedRectChange.center += cv::Point2f(this->config.roi.point1.x, 0);
 
+							std::cout << "Goingto save an alert" << std::endl;
+
 							// is valid, send an alert
 							this->ChangeTheStateAndAlert(now);
+
+							std::cout << "saved." << std::endl;
 
 							// Increment frames left
 							if (framesLeft < maxFramesLeft)

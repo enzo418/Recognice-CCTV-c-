@@ -4,12 +4,6 @@
 #include "types_configuration.hpp"
 #include "TelegramBot.hpp"
 
-#ifdef WINDOWS
-#include "../windows/NotificationIconWindows.hpp"
-#else
-#include "../unix/NotificationIconUnix.hpp"
-#endif
-
 namespace Notification {
 	enum Type {SOUND = 0, TEXT, IMAGE};
 

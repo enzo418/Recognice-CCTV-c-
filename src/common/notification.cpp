@@ -28,7 +28,5 @@ void Notification::Notification::send(ProgramConfiguration& programConfig) {
 		if (programConfig.telegramConfig.useTelegramBot) {
 			TelegramBot::SendMessageToChat(this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
 		}
-	} else if (this->type == Type::SOUND) {
-		PlayNotificationSound();
 	}
 }
