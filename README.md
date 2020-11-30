@@ -8,7 +8,10 @@
 
 
 # Todo
-- Configuration:
+## Comment the code :(
+
+## Configuration:
     - Allow the user to set a messaging service like dweet.io
 
+## Others
 - Add a flag that, if enabled, will make log every 30m the average change of pixels. Also the maximun and minimum. With this the user will be able to set the perfect threshold for each hor/time of the day.

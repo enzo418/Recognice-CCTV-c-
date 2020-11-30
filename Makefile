@@ -331,6 +331,33 @@ src/common/notification.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.s
 .PHONY : src/common/notification.cpp.s
 
+src/common/recognize.o: src/common/recognize.cpp.o
+
+.PHONY : src/common/recognize.o
+
+# target to build an object file
+src/common/recognize.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.o
+.PHONY : src/common/recognize.cpp.o
+
+src/common/recognize.i: src/common/recognize.cpp.i
+
+.PHONY : src/common/recognize.i
+
+# target to preprocess a source file
+src/common/recognize.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.i
+.PHONY : src/common/recognize.cpp.i
+
+src/common/recognize.s: src/common/recognize.cpp.s
+
+.PHONY : src/common/recognize.s
+
+# target to generate assembly for a file
+src/common/recognize.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.s
+.PHONY : src/common/recognize.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -361,6 +388,9 @@ help:
 	@echo "... src/common/notification.o"
 	@echo "... src/common/notification.i"
 	@echo "... src/common/notification.s"
+	@echo "... src/common/recognize.o"
+	@echo "... src/common/recognize.i"
+	@echo "... src/common/recognize.s"
 .PHONY : help
 
 

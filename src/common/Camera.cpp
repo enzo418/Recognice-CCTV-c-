@@ -261,7 +261,7 @@ void Camera::ReadFramesWithInterval() {
 
 					this->gifFrames.indexAfter++;
 				} else {
-					this->gifFrames.sendGif = true;
+					this->gifFrames.state = State::Ready;
 					this->gifFrames.updateAfter = false;
 				}
 			}
@@ -292,51 +292,29 @@ void Camera::ReadFramesWithInterval() {
 
             this->lastFrame = this->frame;
 
-            if (this->totalNonZeroPixels > this->config.changeThreshold) {
-				if (!this->discriminateDetection) {
-					std::cout << "Diff frame saved for later. Now seeing if it's untrusted. Size utn: " << untFindings.size()  << std::endl;
-					this->discriminateDetection = true;
+            if (this->totalNonZeroPixels > this->config.changeThreshold) {				
+				std::cout << "Diff frame saved for later."  << std::endl;
 
-					/// === Check if the change was something valid
-					
-					this->diff.copyTo(this->diffFrameCausedDetection); // save the frame
-					FindingInfo finding = FindRect(this->diff); // find the rectangle that describes the change
+				/// === Check if the change was something valid
 				
-					if (finding.isGoodMatch) { 
-						bool isValid = true; 
+				// this->diff.copyTo(this->diffFrameCausedDetection); // save the frame
+				// FindingInfo finding = FindRect(this->diff); // find the rectangle that describes the change
+			
+				// if (finding.isGoodMatch) { 
+				// 	this->gifFrames.rotatedRectChange = finding.rect;
+				// 	this->gifFrames.rotatedRectChange.center += cv::Point2f(this->config.roi.point1.x, 0);
 
-						// Compare Similarity of the rectangle to all the others not valid rectangles
-						for (size_t i = 0; i < this->untFindings.size(); i++) {
-							if (CalculateSimilarityFindings(finding, untFindings[i]) > 0.5) {
-								isValid = false;
-								break;
-							}
-						}
+					// std::cout << "Goingto save an alert" << std::endl;
 
-						if (isValid) { 
-							this->gifFrames.rotatedRectChange = finding.rect;
-							this->gifFrames.rotatedRectChange.center += cv::Point2f(this->config.roi.point1.x, 0);
+					// is valid, send an alert
+					this->ChangeTheStateAndAlert(now);
 
-							std::cout << "Goingto save an alert" << std::endl;
+					// std::cout << "saved." << std::endl;
 
-							// is valid, send an alert
-							this->ChangeTheStateAndAlert(now);
-
-							std::cout << "saved." << std::endl;
-
-							// Increment frames left
-							if (framesLeft < maxFramesLeft)
-								framesLeft += framesToRecognice;
-						} else {
-							std::cout << this->config.cameraName  
-								<< "Skipped change because is not trusted."
-								<< " Finding: " << finding << std::endl;
-							
-							// it's already not a valid change... so there is no need to search for it again
-							this->discriminateDetection = false;
-						}
-					}
-				}
+					// Increment frames left
+					if (framesLeft < maxFramesLeft)
+						framesLeft += framesToRecognice;
+				// }
             }
 
 			// camera type sentry = no detection, only seeks for changes in the image
@@ -365,31 +343,6 @@ void Camera::ReadFramesWithInterval() {
 
                 if (framesLeft == 0) {
                     this->config.state = NI_STATE_SENTRY;
-
-					auto secondsLastPerson = (this->now - this->lastPersonDetected) / std::chrono::seconds(1);
-					// If a change was detected before and a person wasn't detected
-					if (this->discriminateDetection && secondsLastPerson > 15) {
-						std::cout << "Diff being processed." << std::endl;
-
-						// Find the rectangle that describes the change and save it as untrusted...
-						FindingInfo finding;
-						ContourArray ca = FindRect(this->diffFrameCausedDetection, finding);
-
-						std::ostringstream findingStr;
-						findingStr << finding;
-						std::cout << findingStr.str() << std::endl;
-
-						if (finding.isGoodMatch) {
-							untFindings.push_back(finding);	
-
-							// DrawFinding(this->diffFrameCausedDetection, finding, ca, false);							
-							
-							// Notification::Notification ntf(this->diffFrameCausedDetection, findingStr.str(), false);
-							// this->pendingNotifications.push_back(ntf);
-						}
-
-						this->discriminateDetection = false;
-					}		
                 }
 
 				// push a new frame to display.

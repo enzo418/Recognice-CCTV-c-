@@ -18,10 +18,15 @@
 
 #include "notification.hpp"
 
-struct GifFrames {
-	// Flag used by save and upload images to know when to send the image
-	bool sendGif = false;
+enum State { 	
+				Initial, /** Initial state: updating "before" frames **/
+				Ready, /** filled "after" frames, ready to send **/
+				Wait, /** Do not send... yet **/
+				Send, /** green flag to continue **/
+				Cancelled /** red flag. Delete the notification **/
+			};
 
+struct GifFrames {
 	bool updateBefore = true;
 	bool updateAfter = false;
 
@@ -31,7 +36,12 @@ struct GifFrames {
 	std::vector<cv::Mat> after;
 	size_t indexAfter = 0;
 
-	cv::RotatedRect rotatedRectChange;
+	State state = State::Initial;
+
+	double avrgDistanceFrames = 0;
+	double avrgAreaDifference = 0;
+
+	std::string debugMessage;
 };
 
 class Camera {
@@ -64,12 +74,6 @@ private:
 	std::vector<FindingInfo> untFindings;
 	
 	std::chrono::system_clock::time_point lastPersonDetected = std::chrono::high_resolution_clock::now();
-
-	// Used to know when to process the frame that caused the detection
-	bool discriminateDetection = false;
-
-	// The diff frame that caused the start of detection
-	cv::Mat diffFrameCausedDetection;
 
 	int totalNonZeroPixels = 0;
 
