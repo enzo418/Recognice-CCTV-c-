@@ -366,5 +366,18 @@ namespace Utils {
 		} 
 		return results;
 	}
+
+	static std::vector<std::string> GetRange(std::string s) {
+		std::regex r("(-?[0-9]*)?(..)(-?[0-9]*)?"); 
+		std::vector<std::string> results;
+		for(std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r); i != std::sregex_iterator(); ++i)  { 
+			std::smatch m = *i; 
+			for(int j = 0; j < m.size(); j++)
+				if (!m[j].str().empty() && j != 0)
+					results.push_back(m[j].str());
+		} 
+		
+		return results;
+	}
 };
 

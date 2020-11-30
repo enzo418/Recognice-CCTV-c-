@@ -82,9 +82,6 @@ private:
 								lastMessageSended = std::chrono::high_resolution_clock::now();
 								// lastBackupImageStored = std::chrono::high_resolution_clock::now();
 
-	std::vector<cv::Rect> detections;
-	std::vector< double > foundWeights;
-
 	// ==================
 	//  Change-threshold
 	// ==================

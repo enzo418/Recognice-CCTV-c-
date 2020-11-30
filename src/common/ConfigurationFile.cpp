@@ -39,7 +39,7 @@ T Configuration::ReadNextConfiguration(std::fstream& file, T& config) {
 	std::string line;
 
 	while (!Utils::nextLineIsHeader(file) && std::getline(file, line)) {
-		if (line.size() > 3 && line[0] != '#') {
+		if (line.size() > 3 && line[0] != '#' && line[0] != ';') {
 			std::string id;
 			std::string val;
 
@@ -94,6 +94,16 @@ void Configuration::ReadConfigurations() {
 	}
 
 	_file.close();
+}
+
+void Configuration::PreprocessConfigurations() {
+	for (auto &&config : this->configurations.camerasConfigs) {
+		if (config.framesToAnalyze.framesBefore == nullptr)
+			config.framesToAnalyze.framesBefore = new size_t(this->configurations.programConfig.halfGifFrames);
+		
+		if (config.framesToAnalyze.framesAfter == nullptr)
+			config.framesToAnalyze.framesAfter = new size_t(this->configurations.programConfig.halfGifFrames);
+	}	
 }
 
 // Writes a camera configuration to the file
@@ -295,7 +305,21 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 		for (size_t i = 0; i < results.size() / 4; i++) {
 			int base = i * 4;
 			config.ignoredAreas.push_back(cv::Rect(cv::Point(results[base], results[base+1]), cv::Size(results[base+2], results[base+3])));			
-		}		
+		}	
+	} else if (id == "framestoanalyze") {
+		std::vector<std::string> results = Utils::GetRange(value);
+		size_t sz = results.size();
+		if (sz >= 1) {
+			if (results[0] == "..") {
+				if (sz >= 2)
+					config.framesToAnalyze.framesAfter = new size_t(std::stol(results[1]));
+			} else {
+				config.framesToAnalyze.framesBefore = new size_t(std::stol(results[0]));
+
+				if (sz >= 3)
+					config.framesToAnalyze.framesAfter = new size_t(std::stol(results[2]));
+			}
+		}
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

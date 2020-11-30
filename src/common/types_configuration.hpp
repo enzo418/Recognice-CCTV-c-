@@ -6,6 +6,11 @@
 // 	   Types
 // ===============
 
+struct TotalFramesAnalyze {
+	size_t* framesBefore = nullptr;
+	size_t* framesAfter = nullptr;
+};
+
 struct CameraConfiguration {
 	std::string cameraName;
 
@@ -59,6 +64,8 @@ struct CameraConfiguration {
 	bool useHighConstrast = false;
 
 	std::vector<cv::Rect> ignoredAreas;
+
+	TotalFramesAnalyze framesToAnalyze;
 };
 
 // to be able to sort the array of configs

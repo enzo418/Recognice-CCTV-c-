@@ -125,74 +125,74 @@ void Camera::CheckForHumans(){
 	// 	cv::equalizeHist(this->frame, this->frame);
 	// }
 
-	this->_descriptor->detectMultiScale(this->frame, this->detections, this->foundWeights, this->config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-	size_t detectSz = this->detections.size();
+	// this->_descriptor->detectMultiScale(this->frame, this->detections, this->foundWeights, this->config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+	// size_t detectSz = this->detections.size();
 
-	if(detectSz > 0){
-		int areaMatchEntry = 0;
-		int areaMatchExit = 0;
+	// if(detectSz > 0){
+	// 	int areaMatchEntry = 0;
+	// 	int areaMatchExit = 0;
 
-		for (size_t i = 0; i < detectSz; i++) {
-			this->detections[i].x += this->config.roi.point1.x;
-			cv::Scalar color = cv::Scalar(0, this->foundWeights[i] * this->foundWeights[i] * 200, 0);
-			// draw the rectangle that indicates where it was detected.
-			cv::rectangle(this->frameToShow, this->detections[i], color);
+	// 	for (size_t i = 0; i < detectSz; i++) {
+	// 		this->detections[i].x += this->config.roi.point1.x;
+	// 		cv::Scalar color = cv::Scalar(0, this->foundWeights[i] * this->foundWeights[i] * 200, 0);
+	// 		// draw the rectangle that indicates where it was detected.
+	// 		cv::rectangle(this->frameToShow, this->detections[i], color);
 			
-			putText(this->frame, std::to_string(this->foundWeights[i]), Utils::BottomRightRectangle(this->detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+	// 		putText(this->frame, std::to_string(this->foundWeights[i]), Utils::BottomRightRectangle(this->detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
 
-			// used for registers functionality.
-			areaMatchEntry += Utils::OverlappingArea(this->config.areasDelimiters.rectEntry, this->detections[i]);
-			areaMatchExit += Utils::OverlappingArea(this->config.areasDelimiters.rectExit, this->detections[i]);
-		}
+	// 		// used for registers functionality.
+	// 		areaMatchEntry += Utils::OverlappingArea(this->config.areasDelimiters.rectEntry, this->detections[i]);
+	// 		areaMatchExit += Utils::OverlappingArea(this->config.areasDelimiters.rectExit, this->detections[i]);
+	// 	}
 		
-		RegisterPoint point = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
-		bool shouldSave = false;
-		int count = 0;
+	// 	RegisterPoint point = areaMatchEntry > areaMatchExit ? RegisterPoint::entryPoint : RegisterPoint::exitPoint;
+	// 	bool shouldSave = false;
+	// 	int count = 0;
 
-		size_t regSz = this->registers.size();
-		for (size_t i = 0; i < regSz; i++)
-			if(this->registers[i].firstPoint == point) 
-				count++;                      
+	// 	size_t regSz = this->registers.size();
+	// 	for (size_t i = 0; i < regSz; i++)
+	// 		if(this->registers[i].firstPoint == point) 
+	// 			count++;                      
 		
-		/* Registers will not be here for now.
-		if(count < maxRegisterPerPoint){
-			// Save a register 
-			Register regp;
-			regp.id = this->registers.size();
-			time_t ntime = time(0);
-			regp.time_point = localtime(&ntime);
-			regp.finished = false;
-			regp.firstPoint = point;
+	// 	/* Registers will not be here for now.
+	// 	if(count < maxRegisterPerPoint){
+	// 		// Save a register 
+	// 		Register regp;
+	// 		regp.id = this->registers.size();
+	// 		time_t ntime = time(0);
+	// 		regp.time_point = localtime(&ntime);
+	// 		regp.finished = false;
+	// 		regp.firstPoint = point;
 			
-			std::cout << "[" << this->config.order << "]" << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
-			<< " time = " << regp.time_point->tm_min << "m:" << regp.time_point->tm_sec << "s"
-			<< " areaEntry = " <<  areaMatchEntry << " areaExit =" << areaMatchExit
-			<< std::endl;
+	// 		std::cout << "[" << this->config.order << "]" << "Pushed a register " << (regp.firstPoint == RegisterPoint::entryPoint ? "entry" : "exit") 
+	// 		<< " time = " << regp.time_point->tm_min << "m:" << regp.time_point->tm_sec << "s"
+	// 		<< " areaEntry = " <<  areaMatchEntry << " areaExit =" << areaMatchExit
+	// 		<< std::endl;
 
-			this->registers.push_back(regp);
-		}else{
-			std::cout << "[" << this->config.order << "]" << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
-		}
-		*/
+	// 		this->registers.push_back(regp);
+	// 	}else{
+	// 		std::cout << "[" << this->config.order << "]" << "Canno't push max reached, count = " << count << " size= " << regSz << std::endl;
+	// 	}
+	// 	*/
 
-		// Send a telegram message
-		auto now = std::chrono::high_resolution_clock::now();
-		auto time = (now - this->lastSavedImage) / std::chrono::seconds(1);
-		if (time >= this->_programConfig->secondsBetweenImage) {
-			this->config.state = NI_STATE_DETECTED;
+	// 	// Send a telegram message
+	// 	auto now = std::chrono::high_resolution_clock::now();
+	// 	auto time = (now - this->lastSavedImage) / std::chrono::seconds(1);
+	// 	if (time >= this->_programConfig->secondsBetweenImage) {
+	// 		this->config.state = NI_STATE_DETECTED;
 
-			Notification::Notification ntf (this->frameToShow, "Se ha detectado algo en esta camara.", true);
-			this->pendingNotifications.push_back(ntf);
+	// 		Notification::Notification ntf (this->frameToShow, "Se ha detectado algo en esta camara.", true);
+	// 		this->pendingNotifications.push_back(ntf);
 
-			std::cout << "[" << this->config.order << "]" << "Pushed image seconds=" << time << " of " << this->_programConfig->secondsBetweenImage << std::endl;
+	// 		std::cout << "[" << this->config.order << "]" << "Pushed image seconds=" << time << " of " << this->_programConfig->secondsBetweenImage << std::endl;
 
-			this->lastSavedImage = std::chrono::high_resolution_clock::now();
-		}
+	// 		this->lastSavedImage = std::chrono::high_resolution_clock::now();
+	// 	}
 
-		this->lastPersonDetected = std::chrono::high_resolution_clock::now();
-	} 
+	// 	this->lastPersonDetected = std::chrono::high_resolution_clock::now();
+	// } 
 
-	//std::cout << camName << " -- Frames " << framesLeft << std::endl;
+	// //std::cout << camName << " -- Frames " << framesLeft << std::endl;
 }
 
 void Camera::ReadFramesWithInterval() {
@@ -357,8 +357,8 @@ void Camera::ReadFramesWithInterval() {
 				}
 
 				// clear the detection results
-				this->detections.clear();
-                this->foundWeights.clear();
+				// this->detections.clear();
+                // this->foundWeights.clear();
             }
 
 			shouldProcessFrame = false;

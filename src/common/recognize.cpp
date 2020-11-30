@@ -136,10 +136,54 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		}
 	}
 
-	if (validFrames != 0 && overlappingFindings < validFrames * 0.3) {
+	if (validFrames != 0 && overlappingFindings < validFrames * 0.15) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
-		camera.gifFrames.state = State::Send;
+
+		//// Recognize a person
+		bool personDetected = false;
+		size_t start = programConfig.halfGifFrames - *camera.config.framesToAnalyze.framesBefore;
+		start = start < 0 ? 0 : start;
+
+		size_t end = programConfig.halfGifFrames + *camera.config.framesToAnalyze.framesAfter;
+		end = end > frames.size() ? frames.size() : end;
+
+		// Iterate frames
+		for (size_t i = start; i < end; i++) {
+			std::vector<cv::Rect> detections;
+			std::vector<double> foundWeights;
+
+			// query descriptor with frame
+			this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+			size_t detectSz = detections.size();			
+
+			if(detectSz > 0) {
+				// draw detections on frame
+				for (size_t i = 0; i < detectSz; i++) {
+					// detections[i].x += camera.config.roi.point1.x;
+					cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
+					cv::rectangle(framesTransformed[i].frame, detections[i], color);					
+					// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+				}
+
+				camera.config.state = NI_STATE_DETECTED;
+
+				// send a extra notification?
+				// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
+				// this->pendingNotifications.push_back(ntf);
+				camera.gifFrames.debugMessage += "\nA person was detected.";
+				
+				personDetected = true;
+				break;
+			}
+		}
+
+		/// TODO: Add config to select if want to send only when someone is detected
+		// if (personDetected) {
+			camera.gifFrames.state = State::Send;
+		// } else {
+		// 	camera.gifFrames.state = State::Cancelled;
+		// }
 	} else {
 		camera.gifFrames.avrgDistanceFrames = 0;
 		camera.gifFrames.avrgAreaDifference = 0;
@@ -147,7 +191,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		camera.gifFrames.debugMessage += "Cancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
 	}
 
-	camera.gifFrames.debugMessage += "Average distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + " and average area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + " frames used: " + std::to_string(validFrames);
+	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + " and average area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + " frames used: " + std::to_string(validFrames) + " overlapeds: " + std::to_string(overlappingFindings);
 	
 	std::cout << camera.gifFrames.debugMessage << std::endl;
 
@@ -436,14 +480,7 @@ void Recognize::StartNotificationsSender() {
 	std::string date;
 
 	while (!stop) {
-		for (auto &&camera : cameras) {
-			size_t size = camera.pendingNotifications.size();
-			for (size_t i = 0; i < size; i++) {	
-				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
-
-				camera.pendingNotifications[i].send(programConfig);
-			}
-			
+		for (auto &&camera : cameras) {			
 			// Send gif
 			if (programConfig.useGifInsteadImage && camera.gifFrames.state == State::Ready) {
 				// -----------------------------------------------------------
@@ -483,6 +520,13 @@ void Recognize::StartNotificationsSender() {
 				camera.gifFrames.state = State::Initial;
 				camera.gifFrames.updateAfter = false;
 				camera.gifFrames.updateBefore = true;
+			}
+
+			size_t size = camera.pendingNotifications.size();
+			for (size_t i = 0; i < size; i++) {	
+				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
+
+				camera.pendingNotifications[i].send(programConfig);
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p

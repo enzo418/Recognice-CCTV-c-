@@ -57,6 +57,8 @@ private:
 
 	inline void WriteLineInFile(const char* line);
 
+	void PreprocessConfigurations();
+
 public:
 	Configurations configurations;
 
