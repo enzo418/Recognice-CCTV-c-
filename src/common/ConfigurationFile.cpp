@@ -290,6 +290,12 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 		config.updateThresholdFrequency = val;
 	} else if (id == "usehighconstrast") {
 		config.useHighConstrast = value == "yes";
+	} else if (id == "ignoredareas"){
+		std::vector<int> results = Utils::GetNumbersString(value);
+		for (size_t i = 0; i < results.size() / 4; i++) {
+			int base = i * 4;
+			config.ignoredAreas.push_back(cv::Rect(cv::Point(results[base], results[base+1]), cv::Size(results[base+2], results[base+3])));			
+		}		
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

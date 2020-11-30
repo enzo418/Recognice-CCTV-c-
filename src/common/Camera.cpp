@@ -346,8 +346,15 @@ void Camera::ReadFramesWithInterval() {
                 }
 
 				// push a new frame to display.
-                if (showPreview && !showProcessedImages)
+                if (showPreview && !showProcessedImages) {
+					// Draw ignored areas
+					// for (auto i : this->config.ignoredAreas) {						
+					// 	i.x += this->config.roi.point1.x;						
+					// 	cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
+					// }
+					
                     this->frames.push_back(std::move(this->frameToShow));
+				}
 
 				// clear the detection results
 				this->detections.clear();

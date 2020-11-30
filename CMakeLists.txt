@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(Recognice VERSION 1.0.0)
+project(Recognize VERSION 1.0.0)
 
 # Opencv package
 find_package(OpenCV REQUIRED)
@@ -35,10 +35,10 @@ message(${SOURCES})
 # Set cmake cxx flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
 
-add_executable(recognice ${SOURCES})
+add_executable(recognize ${SOURCES})
 
 # Include curl
 include_directories(${CURL_INCLUDE_DIR})
 
 # set -l of opencv and curl
-target_link_libraries(recognice ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp)
+target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp)

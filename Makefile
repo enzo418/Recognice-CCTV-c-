@@ -130,17 +130,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named recognice
+# Target rules for targets named recognize
 
 # Build rule for target.
-recognice: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 recognice
-.PHONY : recognice
+recognize: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 recognize
+.PHONY : recognize
 
 # fast build rule for target.
-recognice/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/build
-.PHONY : recognice/fast
+recognize/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/build
+.PHONY : recognize/fast
 
 ChangeDescriptor/ChangeDescriptor.o: ChangeDescriptor/ChangeDescriptor.cpp.o
 
@@ -148,7 +148,7 @@ ChangeDescriptor/ChangeDescriptor.o: ChangeDescriptor/ChangeDescriptor.cpp.o
 
 # target to build an object file
 ChangeDescriptor/ChangeDescriptor.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/ChangeDescriptor/ChangeDescriptor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/ChangeDescriptor/ChangeDescriptor.cpp.o
 .PHONY : ChangeDescriptor/ChangeDescriptor.cpp.o
 
 ChangeDescriptor/ChangeDescriptor.i: ChangeDescriptor/ChangeDescriptor.cpp.i
@@ -157,7 +157,7 @@ ChangeDescriptor/ChangeDescriptor.i: ChangeDescriptor/ChangeDescriptor.cpp.i
 
 # target to preprocess a source file
 ChangeDescriptor/ChangeDescriptor.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/ChangeDescriptor/ChangeDescriptor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/ChangeDescriptor/ChangeDescriptor.cpp.i
 .PHONY : ChangeDescriptor/ChangeDescriptor.cpp.i
 
 ChangeDescriptor/ChangeDescriptor.s: ChangeDescriptor/ChangeDescriptor.cpp.s
@@ -166,7 +166,7 @@ ChangeDescriptor/ChangeDescriptor.s: ChangeDescriptor/ChangeDescriptor.cpp.s
 
 # target to generate assembly for a file
 ChangeDescriptor/ChangeDescriptor.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/ChangeDescriptor/ChangeDescriptor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/ChangeDescriptor/ChangeDescriptor.cpp.s
 .PHONY : ChangeDescriptor/ChangeDescriptor.cpp.s
 
 src/common/Camera.o: src/common/Camera.cpp.o
@@ -175,7 +175,7 @@ src/common/Camera.o: src/common/Camera.cpp.o
 
 # target to build an object file
 src/common/Camera.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/Camera.cpp.o
 .PHONY : src/common/Camera.cpp.o
 
 src/common/Camera.i: src/common/Camera.cpp.i
@@ -184,7 +184,7 @@ src/common/Camera.i: src/common/Camera.cpp.i
 
 # target to preprocess a source file
 src/common/Camera.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/Camera.cpp.i
 .PHONY : src/common/Camera.cpp.i
 
 src/common/Camera.s: src/common/Camera.cpp.s
@@ -193,7 +193,7 @@ src/common/Camera.s: src/common/Camera.cpp.s
 
 # target to generate assembly for a file
 src/common/Camera.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/Camera.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/Camera.cpp.s
 .PHONY : src/common/Camera.cpp.s
 
 src/common/ConfigurationFile.o: src/common/ConfigurationFile.cpp.o
@@ -202,7 +202,7 @@ src/common/ConfigurationFile.o: src/common/ConfigurationFile.cpp.o
 
 # target to build an object file
 src/common/ConfigurationFile.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigurationFile.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ConfigurationFile.cpp.o
 .PHONY : src/common/ConfigurationFile.cpp.o
 
 src/common/ConfigurationFile.i: src/common/ConfigurationFile.cpp.i
@@ -211,7 +211,7 @@ src/common/ConfigurationFile.i: src/common/ConfigurationFile.cpp.i
 
 # target to preprocess a source file
 src/common/ConfigurationFile.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigurationFile.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ConfigurationFile.cpp.i
 .PHONY : src/common/ConfigurationFile.cpp.i
 
 src/common/ConfigurationFile.s: src/common/ConfigurationFile.cpp.s
@@ -220,7 +220,7 @@ src/common/ConfigurationFile.s: src/common/ConfigurationFile.cpp.s
 
 # target to generate assembly for a file
 src/common/ConfigurationFile.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ConfigurationFile.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ConfigurationFile.cpp.s
 .PHONY : src/common/ConfigurationFile.cpp.s
 
 src/common/ImageManipulation.o: src/common/ImageManipulation.cpp.o
@@ -229,7 +229,7 @@ src/common/ImageManipulation.o: src/common/ImageManipulation.cpp.o
 
 # target to build an object file
 src/common/ImageManipulation.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ImageManipulation.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ImageManipulation.cpp.o
 .PHONY : src/common/ImageManipulation.cpp.o
 
 src/common/ImageManipulation.i: src/common/ImageManipulation.cpp.i
@@ -238,7 +238,7 @@ src/common/ImageManipulation.i: src/common/ImageManipulation.cpp.i
 
 # target to preprocess a source file
 src/common/ImageManipulation.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ImageManipulation.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ImageManipulation.cpp.i
 .PHONY : src/common/ImageManipulation.cpp.i
 
 src/common/ImageManipulation.s: src/common/ImageManipulation.cpp.s
@@ -247,7 +247,7 @@ src/common/ImageManipulation.s: src/common/ImageManipulation.cpp.s
 
 # target to generate assembly for a file
 src/common/ImageManipulation.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/ImageManipulation.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/ImageManipulation.cpp.s
 .PHONY : src/common/ImageManipulation.cpp.s
 
 src/common/TelegramBot.o: src/common/TelegramBot.cpp.o
@@ -256,7 +256,7 @@ src/common/TelegramBot.o: src/common/TelegramBot.cpp.o
 
 # target to build an object file
 src/common/TelegramBot.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/TelegramBot.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/TelegramBot.cpp.o
 .PHONY : src/common/TelegramBot.cpp.o
 
 src/common/TelegramBot.i: src/common/TelegramBot.cpp.i
@@ -265,7 +265,7 @@ src/common/TelegramBot.i: src/common/TelegramBot.cpp.i
 
 # target to preprocess a source file
 src/common/TelegramBot.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/TelegramBot.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/TelegramBot.cpp.i
 .PHONY : src/common/TelegramBot.cpp.i
 
 src/common/TelegramBot.s: src/common/TelegramBot.cpp.s
@@ -274,7 +274,7 @@ src/common/TelegramBot.s: src/common/TelegramBot.cpp.s
 
 # target to generate assembly for a file
 src/common/TelegramBot.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/TelegramBot.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/TelegramBot.cpp.s
 .PHONY : src/common/TelegramBot.cpp.s
 
 src/common/main.o: src/common/main.cpp.o
@@ -283,7 +283,7 @@ src/common/main.o: src/common/main.cpp.o
 
 # target to build an object file
 src/common/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/main.cpp.o
 .PHONY : src/common/main.cpp.o
 
 src/common/main.i: src/common/main.cpp.i
@@ -292,7 +292,7 @@ src/common/main.i: src/common/main.cpp.i
 
 # target to preprocess a source file
 src/common/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/main.cpp.i
 .PHONY : src/common/main.cpp.i
 
 src/common/main.s: src/common/main.cpp.s
@@ -301,7 +301,7 @@ src/common/main.s: src/common/main.cpp.s
 
 # target to generate assembly for a file
 src/common/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/main.cpp.s
 .PHONY : src/common/main.cpp.s
 
 src/common/notification.o: src/common/notification.cpp.o
@@ -310,7 +310,7 @@ src/common/notification.o: src/common/notification.cpp.o
 
 # target to build an object file
 src/common/notification.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/notification.cpp.o
 .PHONY : src/common/notification.cpp.o
 
 src/common/notification.i: src/common/notification.cpp.i
@@ -319,7 +319,7 @@ src/common/notification.i: src/common/notification.cpp.i
 
 # target to preprocess a source file
 src/common/notification.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/notification.cpp.i
 .PHONY : src/common/notification.cpp.i
 
 src/common/notification.s: src/common/notification.cpp.s
@@ -328,7 +328,7 @@ src/common/notification.s: src/common/notification.cpp.s
 
 # target to generate assembly for a file
 src/common/notification.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/notification.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/notification.cpp.s
 .PHONY : src/common/notification.cpp.s
 
 src/common/recognize.o: src/common/recognize.cpp.o
@@ -337,7 +337,7 @@ src/common/recognize.o: src/common/recognize.cpp.o
 
 # target to build an object file
 src/common/recognize.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/recognize.cpp.o
 .PHONY : src/common/recognize.cpp.o
 
 src/common/recognize.i: src/common/recognize.cpp.i
@@ -346,7 +346,7 @@ src/common/recognize.i: src/common/recognize.cpp.i
 
 # target to preprocess a source file
 src/common/recognize.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/recognize.cpp.i
 .PHONY : src/common/recognize.cpp.i
 
 src/common/recognize.s: src/common/recognize.cpp.s
@@ -355,7 +355,7 @@ src/common/recognize.s: src/common/recognize.cpp.s
 
 # target to generate assembly for a file
 src/common/recognize.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognice.dir/build.make CMakeFiles/recognice.dir/src/common/recognize.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/recognize.dir/build.make CMakeFiles/recognize.dir/src/common/recognize.cpp.s
 .PHONY : src/common/recognize.cpp.s
 
 # Help Target
@@ -366,7 +366,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... recognice"
+	@echo "... recognize"
 	@echo "... ChangeDescriptor/ChangeDescriptor.o"
 	@echo "... ChangeDescriptor/ChangeDescriptor.i"
 	@echo "... ChangeDescriptor/ChangeDescriptor.s"

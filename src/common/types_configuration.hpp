@@ -57,6 +57,8 @@ struct CameraConfiguration {
 	uint32_t updateThresholdFrequency;
 
 	bool useHighConstrast = false;
+
+	std::vector<cv::Rect> ignoredAreas;
 };
 
 // to be able to sort the array of configs

@@ -17,6 +17,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	size_t validFrames = 0;
 	double totalDistance = 0;
 	double totalArea = 0;
+	size_t overlappingFindings = 0;
 
 	FindingInfo* lastValidFind = nullptr;
 
@@ -56,7 +57,15 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 					for (int j = 0; j < 4; j++) {			
 						vertices[j].x += camera.config.roi.point1.x;
 					}
-
+					
+					// check if finding is overlapping with a ignored area
+					for (auto &&i : camera.config.ignoredAreas) {					
+						cv::Rect inters = finding.rect.boundingRect() & i;
+						if (inters.area() >= finding.rect.boundingRect().area()) {
+							overlappingFindings += 1;
+						}
+					}								
+				
 					lastValidFind = &framesTransformed[totalFrames].finding;
 					
 					for (int j = 0; j < 4; j++) {			
@@ -110,14 +119,24 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 		lastValidFind = &framesTransformed[totalFrames].finding;
 
-		if (finding.isGoodMatch && lastValidFind != nullptr) {
-			validFrames++;
-			totalDistance += euclideanDist(framesTransformed[totalFrames].finding.center, lastValidFind->center);
-			totalArea += abs(framesTransformed[totalFrames].finding.area - lastValidFind->area);
-		}		
+		if (finding.isGoodMatch) {
+			// check if finding is overlapping with a ignored area
+			for (auto &&i : camera.config.ignoredAreas) {					
+				cv::Rect inters = finding.rect.boundingRect() & i;
+				if (inters.area() >= finding.rect.boundingRect().area()) {
+					overlappingFindings += 1;
+				}
+			}	
+
+			if (lastValidFind != nullptr){ 
+				validFrames++;
+				totalDistance += euclideanDist(framesTransformed[totalFrames].finding.center, lastValidFind->center);
+				totalArea += abs(framesTransformed[totalFrames].finding.area - lastValidFind->area);
+			}
+		}
 	}
 
-	if (validFrames != 0) {
+	if (validFrames != 0 && overlappingFindings < validFrames * 0.3) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
 		camera.gifFrames.state = State::Send;
@@ -125,9 +144,10 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		camera.gifFrames.avrgDistanceFrames = 0;
 		camera.gifFrames.avrgAreaDifference = 0;
 		camera.gifFrames.state = State::Cancelled;
+		camera.gifFrames.debugMessage += "Cancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
 	}
 
-	camera.gifFrames.debugMessage = "Average distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + " and average area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + " frames used: " + std::to_string(validFrames);
+	camera.gifFrames.debugMessage += "Average distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + " and average area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + " frames used: " + std::to_string(validFrames);
 	
 	std::cout << camera.gifFrames.debugMessage << std::endl;
 
@@ -459,7 +479,7 @@ void Recognize::StartNotificationsSender() {
 				camera.gifFrames.indexBefore = 0;
 				camera.gifFrames.indexAfter = 0;
 
-				// camera.gifFrames.sendGif = false;
+				camera.gifFrames.debugMessage = "";
 				camera.gifFrames.state = State::Initial;
 				camera.gifFrames.updateAfter = false;
 				camera.gifFrames.updateBefore = true;

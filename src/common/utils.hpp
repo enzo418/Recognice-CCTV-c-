@@ -9,6 +9,7 @@
 #include <time.h>
 #include <ctime>
 #include <stdio.h>
+#include <regex>
 
 #include "types.hpp"
 #include "types_configuration.hpp"
@@ -353,6 +354,17 @@ namespace Utils {
 		r += "C";
 		r += (chans+'0');
 		return r  + " and should be accessed with " + a;
+	}
+
+	static std::vector<int> GetNumbersString(std::string s) {
+		std::regex r("(-?[0-9]*)"); 
+		std::vector<int> results;
+		for(std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r); i != std::sregex_iterator(); ++i)  { 
+			std::smatch m = *i; 
+			if (!m[1].str().empty())
+				results.push_back(std::stoi(m[1].str()));
+		} 
+		return results;
 	}
 };
 
