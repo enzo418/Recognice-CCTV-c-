@@ -355,7 +355,7 @@ cmake_install.cmake
 CMakeLists.bk
 Makefile
 
-Recognice.project
-Recognice.workspace
+*.project
+*.workspace
 
 command.txt
