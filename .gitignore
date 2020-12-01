@@ -346,6 +346,8 @@ healthchecksdb
 build/
 .vscode/*
 
+*.ods
+
 CMakeFiles/*
 .*
 CMakeCache.txt
