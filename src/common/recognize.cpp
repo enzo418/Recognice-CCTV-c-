@@ -19,11 +19,14 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	double totalArea = 0;
 	size_t overlappingFindings = 0;
 
+	cv::Point p1;
+	cv::Point p2;
+
 	FindingInfo* lastValidFind = nullptr;
 
 	cv::Rect roi(camera.config.roi.point1, camera.config.roi.point2);	
 
-	// First get all the frames in order
+	//// First get all the frames in order
 
 	size_t totalFrames = 0;
 	for (size_t i = camera.gifFrames.indexBefore;;) {	
@@ -40,44 +43,6 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 			if (totalFrames == 0) {
 				frameCero = &framesTransformed[0].frame;
-			} else {
-				cv::absdiff(*frameCero, framesTransformed[totalFrames].frame, diff);
-				cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
-
-				cv::threshold(diff, diff, camera.config.noiseThreshold, 255, cv::THRESH_BINARY);
-
-				cv::cvtColor(diff, diff, cv::COLOR_BGR2GRAY);
-	
-				FindingInfo finding = FindRect(diff);
-				framesTransformed[totalFrames].finding = finding;
-	
-				if (finding.isGoodMatch) {
-					cv::Point2f vertices[4];
-					finding.rect.points(vertices);
-					for (int j = 0; j < 4; j++) {			
-						vertices[j].x += camera.config.roi.point1.x;
-					}
-					
-					// check if finding is overlapping with a ignored area
-					for (auto &&i : camera.config.ignoredAreas) {					
-						cv::Rect inters = finding.rect.boundingRect() & i;
-						if (inters.area() >= finding.rect.boundingRect().area()) {
-							overlappingFindings += 1;
-						}
-					}								
-				
-					lastValidFind = &framesTransformed[totalFrames].finding;
-					
-					for (int j = 0; j < 4; j++) {			
-						cv::line(*frames[totalFrames], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 2);
-					}
-					
-					if (lastValidFind != nullptr) {
-						validFrames++;
-						totalDistance += euclideanDist(framesTransformed[totalFrames].finding.center, lastValidFind->center);
-						totalArea += abs(framesTransformed[totalFrames].finding.area - lastValidFind->area);
-					}
-				}
 			}
 
 			totalFrames++;
@@ -95,47 +60,64 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		}
 
 		if (camera.config.rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config.rotation);
+	}
 
-		cv::absdiff(*frameCero, framesTransformed[totalFrames].frame, diff);		
+	//// Process frames
 
+	bool p1Saved = false;
+	for (size_t i = 1; i < frames.size(); i++) {		
+		cv::absdiff(*frameCero, framesTransformed[i].frame, diff);
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
-		
+
 		cv::threshold(diff, diff, camera.config.noiseThreshold, 255, cv::THRESH_BINARY);
-		
+
 		cv::cvtColor(diff, diff, cv::COLOR_BGR2GRAY);
 
 		FindingInfo finding = FindRect(diff);
-		framesTransformed[totalFrames].finding = finding;
-
-		cv::Point2f vertices[4];
-		finding.rect.points(vertices);
-		for (int j = 0; j < 4; j++) {			
-			vertices[j].x += camera.config.roi.point1.x;
-		}
-
-		for (int j = 0; j < 4; j++) {			
-			cv::line(*frames[totalFrames], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 2);
-		}
-
-		lastValidFind = &framesTransformed[totalFrames].finding;
+		framesTransformed[i].finding = finding;
 
 		if (finding.isGoodMatch) {
+			if (!p1Saved) {
+				p1 = finding.center;
+				p1Saved = true;
+			}
+
+			cv::Point2f vertices[4];
+			finding.rect.points(vertices);
+			for (int j = 0; j < 4; j++) {			
+				vertices[j].x += camera.config.roi.point1.x;
+			}
+			
 			// check if finding is overlapping with a ignored area
 			for (auto &&i : camera.config.ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & i;
 				if (inters.area() >= finding.rect.boundingRect().area()) {
 					overlappingFindings += 1;
 				}
-			}	
-
-			if (lastValidFind != nullptr){ 
-				validFrames++;
-				totalDistance += euclideanDist(framesTransformed[totalFrames].finding.center, lastValidFind->center);
-				totalArea += abs(framesTransformed[totalFrames].finding.area - lastValidFind->area);
+			}								
+			
+			for (int j = 0; j < 4; j++) {			
+				cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
 			}
+			
+			if (lastValidFind != nullptr) {
+				validFrames++;
+				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
+				totalArea += abs(framesTransformed[i].finding.area - lastValidFind->area);
+			}
+		
+			lastValidFind = &framesTransformed[i].finding;
+
+			p2 = finding.center;
 		}
 	}
 
+	double displacementX = abs(p1.x - p2.x);
+	double displacementY = abs(p1.y - p2.y);
+
+	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
+
+	//// Check if it's valid
 	if (validFrames != 0 && overlappingFindings < validFrames * 0.15) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
@@ -191,7 +173,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		camera.gifFrames.debugMessage += "Cancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
 	}
 
-	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + " and average area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + " frames used: " + std::to_string(validFrames) + " overlapeds: " + std::to_string(overlappingFindings);
+	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n frames used: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
 	
 	std::cout << camera.gifFrames.debugMessage << std::endl;
 
