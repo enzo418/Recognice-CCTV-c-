@@ -41,8 +41,6 @@ class Recognize {
 private:
 	size_t indexMainThreadCameras;
 
-	std::vector<Camera> cameras;
-
 	ProgramConfiguration programConfig;
 	CamerasConfigurations camerasConfigs;
 
@@ -55,6 +53,8 @@ public:
 
 	// use this variable to join all the threads when want to destroy this instantiation
 	std::vector<std::thread> threads;
+
+	std::vector<Camera> cameras;
 
 	Recognize(void);
 
