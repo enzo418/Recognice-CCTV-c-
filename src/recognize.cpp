@@ -497,6 +497,7 @@ void Recognize::StartNotificationsSender() {
 				// ---
 				camera.gifFrames.indexBefore = 0;
 				camera.gifFrames.indexAfter = 0;
+				camera.gifFrames.totalFramesBefore = 0;
 
 				camera.gifFrames.debugMessage = "";
 				camera.gifFrames.state = State::Initial;

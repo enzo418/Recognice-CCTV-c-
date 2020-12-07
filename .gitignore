@@ -7,6 +7,8 @@
 !*.hpp
 !*.md
 
+!src/
+
 Makefile
 
 ## Ignore the backup files

@@ -16,7 +16,7 @@ find_package(CURL REQUIRED)
 # =========
 set(source_dir "${PROJECT_SOURCE_DIR}/src")
 
-file(GLOB COMMON_SRC "${source_dir}/common/*.cpp")
+file(GLOB COMMON_SRC "${source_dir}/*.cpp")
 file(GLOB CHANGEDESCRIPTOR_MODULE "ChangeDescriptor/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")

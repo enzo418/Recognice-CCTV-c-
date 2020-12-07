@@ -27,6 +27,8 @@ enum State {
 			};
 
 struct GifFrames {
+	size_t totalFramesBefore = 0;
+
 	bool updateBefore = true;
 	bool updateAfter = false;
 
@@ -117,9 +119,6 @@ private:
 	void ApplyBasicsTransformations();
 
 	void ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now);
-
-	void CheckForHumans();
-
 public:
 	CameraConfiguration config;
 
