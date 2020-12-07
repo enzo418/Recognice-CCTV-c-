@@ -353,7 +353,7 @@ void Recognize::StartPreviewCameras() {
 			std::cout << "resized all." << std::endl;
 		}
 
-		if (this->cameras.size() > 0) {
+		if (this->cameras.size() == amountCameras) {
 			// if all cameras are in sentry state
 			bool allCamerasInSentry = true;
 
