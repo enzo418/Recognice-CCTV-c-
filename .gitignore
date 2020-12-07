@@ -8,6 +8,7 @@
 !*.md
 
 !src/
+!sample/
 
 Makefile
 

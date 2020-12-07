@@ -336,6 +336,8 @@ void Recognize::StartPreviewCameras() {
 	//  Main loop 
 	// ============
 
+	cv::namedWindow("Preview Cameras");
+
 	while (!stop) {
 		if (this->camerasConfigs.size() != amountCameras) {
 			std::cout << "started resizing: last="<< amountCameras << " new=" << this->camerasConfigs.size() << std::endl;
@@ -447,7 +449,7 @@ void Recognize::StartPreviewCameras() {
 
 				cv::resize(res, res, cv::Size(scaleW, scaleH));
 
-				cv::imshow("Cameras", res);
+				cv::imshow("Preview Cameras", res);
 				cv::waitKey(1);            
 				programConfig.frameWithAllTheCameras = std::move(res);
 			}
@@ -455,6 +457,8 @@ void Recognize::StartPreviewCameras() {
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
 	}  
+
+	cv::destroyWindow("Preview Cameras");
 }
 
 void Recognize::StartNotificationsSender() {

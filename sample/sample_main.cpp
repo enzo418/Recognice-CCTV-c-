@@ -1,7 +1,7 @@
-#include "recognize.hpp"
+#include "../src/recognize.hpp"
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
-int sample_main(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	bool isUrl = false;
 	bool startConfiguration = false;
 	std::string pathConfig = "./config.ini";    

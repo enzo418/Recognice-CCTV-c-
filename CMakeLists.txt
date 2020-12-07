@@ -19,15 +19,11 @@ set(source_dir "${PROJECT_SOURCE_DIR}/src")
 file(GLOB COMMON_SRC "${source_dir}/*.cpp")
 file(GLOB CHANGEDESCRIPTOR_MODULE "ChangeDescriptor/*.cpp")
 
+file(GLOB MAIN_SRC "${PROJECT_SOURCE_DIR}/sample/sample_main.cpp")
+
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-# if(WIN32 OR MINGW OR MSYS OR CYGWIN)
-# 	file(GLOB PLATFORM_SRC "${source_dir}/windows/*.cpp") 
-# else()
-# 	file(GLOB PLATFORM_SRC "${source_dir}/unix/*.cpp")
-# endif()
-
-set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE})
+set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE} ${MAIN_SRC})
 
 # Print sources
 message(${SOURCES})
