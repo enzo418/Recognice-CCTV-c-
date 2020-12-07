@@ -221,12 +221,27 @@ void Camera::ReadFramesWithInterval() {
 			if (this->totalNonZeroPixels > this->config.changeThreshold) {				
 				std::cout << "Diff frame saved for later."  << std::endl;
 
-				// is valid, send an alert
-				this->ChangeTheStateAndAlert(now);
+				size_t overlappingFindings = 0;
+				// since gif does this for each frame...
+				if (!this->_programConfig->useGifInsteadImage){
+					this->lastFinding = FindRect(diff);
+					
+					for (auto &&i : this->config.ignoredAreas) {
+						cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
+						if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->minPercentageAreaNeededToIgnore) {
+							overlappingFindings += 1;
+						}
+					}
+				}
 
-				// Increment frames left
-				if (framesLeft < maxFramesLeft)
-					framesLeft += framesToRecognice;
+				if (overlappingFindings < this->thresholdFindingsOnIgnoredArea) {
+					// is valid, send an alert
+					this->ChangeTheStateAndAlert(now);
+
+					// Increment frames left
+					if (framesLeft < maxFramesLeft)
+						framesLeft += framesToRecognice;
+				}
 			}
 
 			// camera type sentry = no detection, only seeks for changes in the image

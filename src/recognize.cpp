@@ -91,10 +91,10 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			// check if finding is overlapping with a ignored area
 			for (auto &&i : camera.config.ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & i;
-				if (inters.area() >= finding.rect.boundingRect().area()) {
+				if (inters.area() >= finding.rect.boundingRect().area() * camera.minPercentageAreaNeededToIgnore) {
 					overlappingFindings += 1;
 				}
-			}								
+			}
 			
 			for (int j = 0; j < 4; j++) {			
 				cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
@@ -118,7 +118,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
 
 	//// Check if it's valid
-	if (validFrames != 0 && overlappingFindings < validFrames * 0.15) {
+	if (validFrames != 0 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
 
@@ -170,7 +170,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		camera.gifFrames.avrgDistanceFrames = 0;
 		camera.gifFrames.avrgAreaDifference = 0;
 		camera.gifFrames.state = State::Cancelled;
-		camera.gifFrames.debugMessage += "Cancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
+		camera.gifFrames.debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
 	}
 
 	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n frames used: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);

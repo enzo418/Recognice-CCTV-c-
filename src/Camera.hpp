@@ -106,6 +106,8 @@ private:
 	// saves the last time the threshold was updated
 	std::chrono::system_clock::time_point lastThresholdUpdate = std::chrono::high_resolution_clock::now();
 
+	FindingInfo lastFinding;
+
 	void UpdateThreshold();
 
 	// ==================
@@ -132,6 +134,12 @@ public:
 	std::vector<Register> registers;
 
 	GifFrames gifFrames;
+
+	// total frames to ignore a finding that the change is inside an ignored area
+	size_t thresholdFindingsOnIgnoredArea = 2;
+
+	// how much % of the finding needs to be inside the ignored area to ignore it
+	size_t minPercentageAreaNeededToIgnore = 100 / 95;
 
 	// that
 	// cv::Mat imageFrom10SecondsAgo;
