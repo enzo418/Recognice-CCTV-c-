@@ -99,10 +99,10 @@ void Configuration::ReadConfigurations() {
 void Configuration::PreprocessConfigurations() {
 	for (auto &&config : this->configurations.camerasConfigs) {
 		if (config.framesToAnalyze.framesBefore == nullptr)
-			config.framesToAnalyze.framesBefore = new size_t(this->configurations.programConfig.halfGifFrames);
+			config.framesToAnalyze.framesBefore = new size_t(*this->configurations.programConfig.numberGifFrames.framesBefore);
 		
 		if (config.framesToAnalyze.framesAfter == nullptr)
-			config.framesToAnalyze.framesAfter = new size_t(this->configurations.programConfig.halfGifFrames);
+			config.framesToAnalyze.framesAfter = new size_t(*this->configurations.programConfig.numberGifFrames.framesAfter);
 	}	
 }
 
@@ -230,16 +230,16 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 			config.gifResizePercentage = GifResizePercentage::VeryHigh;
 		}
 	} else if (id == "gifframes") {		
-		int val = std::stoi(value);
-
-		if (val < 2) {
-			std::cout << "Campo \"" << id << "\" tiene que ser >= 2." << std::endl;
-			std::exit(0);
+		std::vector<std::string> results = Utils::GetRange(value);
+		size_t sz = results.size();
+		if (sz == 3) {
+			config.numberGifFrames.framesBefore = new size_t(std::stol(results[0]));
+			config.numberGifFrames.framesAfter = new size_t(std::stol(results[2]));
+		} else {
+			std::cout << "Invalid field input \"gifframes\" in config.ini header PROGRAM. Expected format: totalFramesBefore..totalFramesAfter\n e.g. 5..60";
+			std::getchar();
+			std::exit(-1);
 		}
-
-		val = val % 2 != 0 ? (val + 1) : val;
-
-		config.halfGifFrames = val / 2;
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

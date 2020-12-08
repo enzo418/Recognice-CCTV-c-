@@ -6,10 +6,10 @@ Recognize::Recognize() {
 
 std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.state = State::Wait;
-
-	std::vector<FrameDescriptor> framesTransformed(this->programConfig.halfGifFrames*2);
-	std::vector<cv::Mat*> frames(this->programConfig.halfGifFrames*2);
-	const size_t gframes = programConfig.halfGifFrames;
+	
+	const size_t ammountOfFrames = *programConfig.numberGifFrames.framesBefore + *programConfig.numberGifFrames.framesAfter;
+	std::vector<FrameDescriptor> framesTransformed(ammountOfFrames);
+	std::vector<cv::Mat*> frames(ammountOfFrames);
 	
 	cv::Mat* frameCero;
 	cv::Mat diff;
@@ -17,6 +17,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	size_t validFrames = 0;
 	double totalDistance = 0;
 	double totalArea = 0;
+	double totalNonPixels = 0;
 	size_t overlappingFindings = 0;
 
 	cv::Point p1;
@@ -30,7 +31,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	size_t totalFrames = 0;
 	for (size_t i = camera.gifFrames.indexBefore;;) {	
-		if (totalFrames < gframes) {						
+		if (totalFrames < *programConfig.numberGifFrames.framesBefore) {						
 			frames[totalFrames] = &camera.gifFrames.before[i];
 
 			// Take the region of interes
@@ -46,13 +47,13 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			}
 
 			totalFrames++;
-			i = (i + 1) >= gframes ? 0 : (i + 1);
+			i = (i + 1) >= *programConfig.numberGifFrames.framesBefore ? 0 : (i + 1);
 		} else
 			break;
 	}
 	
-	for (; totalFrames < gframes*2; totalFrames++) {
-		frames[totalFrames] = &camera.gifFrames.after[totalFrames - gframes];
+	for (; totalFrames < ammountOfFrames; totalFrames++) {
+		frames[totalFrames] = &camera.gifFrames.after[totalFrames - *programConfig.numberGifFrames.framesBefore];
 		
 		if (!camera.config.roi.isEmpty()) {
 			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
@@ -75,6 +76,8 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 		FindingInfo finding = FindRect(diff);
 		framesTransformed[i].finding = finding;
+			
+		totalNonPixels += cv::countNonZero(diff);
 
 		if (finding.isGoodMatch) {
 			if (!p1Saved) {
@@ -99,7 +102,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			for (int j = 0; j < 4; j++) {			
 				cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
 			}
-			
+
 			if (lastValidFind != nullptr) {
 				validFrames++;
 				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
@@ -115,48 +118,53 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	double displacementX = abs(p1.x - p2.x);
 	double displacementY = abs(p1.y - p2.y);
 
+	if (camera.gifFrames.avrgDistanceFrames > 25)
+		camera.gifFrames.debugMessage += "\nIGNORED";
+
+	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalArea: " + std::to_string(totalArea) + " total area % of non zero: " + std::to_string(totalArea * 100 / totalNonPixels);
 	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
 
 	//// Check if it's valid
-	if (validFrames != 0 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
+	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
 
 		//// Recognize a person
 		bool personDetected = false;
-		size_t start = programConfig.halfGifFrames - *camera.config.framesToAnalyze.framesBefore;
+		size_t start = *programConfig.numberGifFrames.framesBefore - *camera.config.framesToAnalyze.framesBefore;
 		start = start < 0 ? 0 : start;
 
-		size_t end = programConfig.halfGifFrames + *camera.config.framesToAnalyze.framesAfter;
+		size_t end = *programConfig.numberGifFrames.framesAfter + *camera.config.framesToAnalyze.framesAfter;
 		end = end > frames.size() ? frames.size() : end;
 
-		// Iterate frames
-		for (size_t i = start; i < end; i++) {
-			std::vector<cv::Rect> detections;
-			std::vector<double> foundWeights;
+		if (camera.config.type == CAMERA_ACTIVE) {
+			for (size_t i = start; i < end; i++) {
+				std::vector<cv::Rect> detections;
+				std::vector<double> foundWeights;
 
-			// query descriptor with frame
-			this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-			size_t detectSz = detections.size();			
+				// query descriptor with frame
+				this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+				size_t detectSz = detections.size();			
 
-			if(detectSz > 0) {
-				// draw detections on frame
-				for (size_t i = 0; i < detectSz; i++) {
-					// detections[i].x += camera.config.roi.point1.x;
-					cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
-					cv::rectangle(framesTransformed[i].frame, detections[i], color);					
-					// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+				if(detectSz > 0) {
+					// draw detections on frame
+					for (size_t i = 0; i < detectSz; i++) {
+						// detections[i].x += camera.config.roi.point1.x;
+						cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
+						cv::rectangle(framesTransformed[i].frame, detections[i], color);					
+						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+					}
+
+					camera.config.state = NI_STATE_DETECTED;
+
+					// send a extra notification?
+					// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
+					// this->pendingNotifications.push_back(ntf);
+					camera.gifFrames.debugMessage += "\nA person was detected.";
+					
+					personDetected = true;
+					break;
 				}
-
-				camera.config.state = NI_STATE_DETECTED;
-
-				// send a extra notification?
-				// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
-				// this->pendingNotifications.push_back(ntf);
-				camera.gifFrames.debugMessage += "\nA person was detected.";
-				
-				personDetected = true;
-				break;
 			}
 		}
 
@@ -480,7 +488,7 @@ void Recognize::StartNotificationsSender() {
 				const std::string root = "./" + imageFolder + "/" + identifier;
 				const std::string gifPath = root + ".gif";
 				std::string location;
-				const size_t gframes = programConfig.halfGifFrames;
+				const size_t gframes = *programConfig.numberGifFrames.framesAfter + *programConfig.numberGifFrames.framesBefore;
 
 				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(camera);
 
@@ -492,7 +500,7 @@ void Recognize::StartNotificationsSender() {
 						cv::imwrite(location, *frames[i]);
 					}
 
-					std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes*2-1) + "}.jpg " + gifPath;
+					std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 					std::system(command.c_str());
 

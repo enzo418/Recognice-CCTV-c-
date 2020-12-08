@@ -6,7 +6,7 @@
 // 	   Types
 // ===============
 
-struct TotalFramesAnalyze {
+struct NumberFramesBeforeAfter {
 	size_t* framesBefore = nullptr;
 	size_t* framesAfter = nullptr;
 };
@@ -65,7 +65,7 @@ struct CameraConfiguration {
 
 	std::vector<cv::Rect> ignoredAreas;
 
-	TotalFramesAnalyze framesToAnalyze;
+	NumberFramesBeforeAfter framesToAnalyze;
 };
 
 // to be able to sort the array of configs
@@ -124,8 +124,7 @@ struct ProgramConfiguration {
 
 	GifResizePercentage gifResizePercentage = GifResizePercentage::Medium;
 
-	// Frame on each side (before, after)
-	size_t halfGifFrames = 10;
+	NumberFramesBeforeAfter numberGifFrames;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

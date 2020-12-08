@@ -1,8 +1,8 @@
 #include "Camera.hpp"
 
 Camera::Camera(CameraConfiguration cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
-	this->gifFrames.after.resize(programConfig->halfGifFrames);
-	this->gifFrames.before.resize(programConfig->halfGifFrames);
+	this->gifFrames.after.resize(*programConfig->numberGifFrames.framesAfter);
+	this->gifFrames.before.resize(*programConfig->numberGifFrames.framesBefore);
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.changeThreshold;
 }
@@ -183,15 +183,15 @@ void Camera::ReadFramesWithInterval() {
 			if (this->_programConfig->useGifInsteadImage) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
-				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < this->_programConfig->halfGifFrames) {
-					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= this->_programConfig->halfGifFrames ? 0 : 1;
+				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < *this->_programConfig->numberGifFrames.framesBefore) {
+					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
 
 					this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
 					size_t i = this->gifFrames.indexBefore;
-					this->gifFrames.indexBefore = (i + 1) >= this->_programConfig->halfGifFrames ? 0 : (i + 1);
+					this->gifFrames.indexBefore = (i + 1) >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
 				} else if (this->gifFrames.updateAfter) {
-					if (this->gifFrames.indexAfter < this->_programConfig->halfGifFrames) {
+					if (this->gifFrames.indexAfter < *this->_programConfig->numberGifFrames.framesAfter) {
 						this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
 						this->gifFrames.indexAfter++;
