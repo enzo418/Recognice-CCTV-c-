@@ -424,8 +424,11 @@ void Recognize::StartPreviewCameras() {
 			if (size == amountCameras || !isFirstIteration) {
 				res = ImageManipulation::StackImages(&frames[0], amountCameras, stackHSize);
 				size = 0;
-  
-				isFirstIteration = false;
+  				
+				if (isFirstIteration) {
+					cv::startWindowThread();
+					isFirstIteration = false;
+				}
 
 				/* Uncomment if want to record video
 				if (frameSize.width != res.cols) {
@@ -450,7 +453,7 @@ void Recognize::StartPreviewCameras() {
 				cv::resize(res, res, cv::Size(scaleW, scaleH));
 
 				cv::imshow("Preview Cameras", res);
-				cv::waitKey(1);            
+				cv::waitKey(20);            
 				programConfig.frameWithAllTheCameras = std::move(res);
 			}
 		}
