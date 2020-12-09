@@ -122,7 +122,7 @@ private:
 
 	void ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now);
 public:
-	CameraConfiguration config;
+	CameraConfiguration* config = nullptr;
 
 	// alerts created by this camera
 	std::vector<Notification::Notification> pendingNotifications;
@@ -144,7 +144,7 @@ public:
 	// that
 	// cv::Mat imageFrom10SecondsAgo;
 
-	Camera(CameraConfiguration cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog);
+	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog);
 
 	void Connect();
 

@@ -25,7 +25,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	FindingInfo* lastValidFind = nullptr;
 
-	cv::Rect roi(camera.config.roi.point1, camera.config.roi.point2);	
+	cv::Rect roi(camera.config->roi.point1, camera.config->roi.point2);	
 
 	//// First get all the frames in order
 
@@ -35,12 +35,12 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			frames[totalFrames] = &camera.gifFrames.before[i];
 
 			// Take the region of interes
-			if (!camera.config.roi.isEmpty()) {
+			if (!camera.config->roi.isEmpty()) {
 				framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone();
 				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(roi);
 			}
 
-			if (camera.config.rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config.rotation);
+			if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
 
 			if (totalFrames == 0) {
 				frameCero = &framesTransformed[0].frame;
@@ -55,12 +55,12 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	for (; totalFrames < ammountOfFrames; totalFrames++) {
 		frames[totalFrames] = &camera.gifFrames.after[totalFrames - *programConfig->numberGifFrames.framesBefore];
 		
-		if (!camera.config.roi.isEmpty()) {
+		if (!camera.config->roi.isEmpty()) {
 			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
 			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(roi); 
 		}
 
-		if (camera.config.rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config.rotation);
+		if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
 	}
 
 	//// Process frames
@@ -70,7 +70,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		cv::absdiff(*frameCero, framesTransformed[i].frame, diff);
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
 
-		cv::threshold(diff, diff, camera.config.noiseThreshold, 255, cv::THRESH_BINARY);
+		cv::threshold(diff, diff, camera.config->noiseThreshold, 255, cv::THRESH_BINARY);
 
 		cv::cvtColor(diff, diff, cv::COLOR_BGR2GRAY);
 
@@ -88,11 +88,11 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			cv::Point2f vertices[4];
 			finding.rect.points(vertices);
 			for (int j = 0; j < 4; j++) {			
-				vertices[j].x += camera.config.roi.point1.x;
+				vertices[j].x += camera.config->roi.point1.x;
 			}
 			
 			// check if finding is overlapping with a ignored area
-			for (auto &&i : camera.config.ignoredAreas) {					
+			for (auto &&i : camera.config->ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & i;
 				if (inters.area() >= finding.rect.boundingRect().area() * camera.minPercentageAreaNeededToIgnore) {
 					overlappingFindings += 1;
@@ -131,31 +131,31 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 		//// Recognize a person
 		bool personDetected = false;
-		size_t start = *programConfig->numberGifFrames.framesBefore - *camera.config.framesToAnalyze.framesBefore;
+		size_t start = *programConfig->numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;
 		start = start < 0 ? 0 : start;
 
-		size_t end = *programConfig->numberGifFrames.framesAfter + *camera.config.framesToAnalyze.framesAfter;
+		size_t end = *programConfig->numberGifFrames.framesAfter + *camera.config->framesToAnalyze.framesAfter;
 		end = end > frames.size() ? frames.size() : end;
 
-		if (camera.config.type == CAMERA_ACTIVE) {
+		if (camera.config->type == CAMERA_ACTIVE) {
 			for (size_t i = start; i < end; i++) {
 				std::vector<cv::Rect> detections;
 				std::vector<double> foundWeights;
 
 				// query descriptor with frame
-				this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+				this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
 				size_t detectSz = detections.size();			
 
 				if(detectSz > 0) {
 					// draw detections on frame
 					for (size_t i = 0; i < detectSz; i++) {
-						// detections[i].x += camera.config.roi.point1.x;
+						// detections[i].x += camera.config->roi.point1.x;
 						cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
 						cv::rectangle(framesTransformed[i].frame, detections[i], color);					
 						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
 					}
 
-					camera.config.state = NI_STATE_DETECTED;
+					camera.config->state = NI_STATE_DETECTED;
 
 					// send a extra notification?
 					// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
@@ -347,7 +347,6 @@ void Recognize::StartPreviewCameras() {
 	cv::namedWindow("Preview Cameras");
 
 	while (!stop && programConfig->showPreview) {
-		std::cout << "Recognize preview: " << programConfig->showPreview << std::endl;
 		if (this->camerasConfigs->size() != amountCameras) {
 			std::cout << "started resizing: last="<< amountCameras << " new=" << this->camerasConfigs->size() << std::endl;
 			amountCameras = this->camerasConfigs->size();
@@ -371,25 +370,25 @@ void Recognize::StartPreviewCameras() {
 			for (size_t i = 0; i < amountCameras; i++) {
 				if (cameras[i].frames.size() > 0) {
 					// if the vector pos i has no frame
-					if (!ready[cameras[i].config.order]) {
+					if (!ready[cameras[i].config->order]) {
 						// take the first frame and delete it
-						frames[cameras[i].config.order] = cameras[i].frames[0];
+						frames[cameras[i].config->order] = cameras[i].frames[0];
 
 						if (showAreaCameraSees && !showProcessedFrames) {
 							cv::Scalar color = cv::Scalar(255, 0, 0);
-							cv::rectangle(frames[cameras[i].config.order], cameras[i].config.roi.point1, cameras[i].config.roi.point2, color);
+							cv::rectangle(frames[cameras[i].config->order], cameras[i].config->roi.point1, cameras[i].config->roi.point2, color);
 						}
 
 						cameras[i].frames.erase(cameras[i].frames.begin());
 						
-						ready[cameras[i].config.order] = true;
+						ready[cameras[i].config->order] = true;
 						
 						size++;
 					}
 				}
 
 				// Check camera state
-				if (cameras[i].config.state == NI_STATE_DETECTED) {
+				if (cameras[i].config->state == NI_STATE_DETECTED) {
 					allCamerasInSentry = false;
 
 					// Send notification if the current state != to what the camera state is
@@ -399,11 +398,11 @@ void Recognize::StartPreviewCameras() {
 						currentState = NI_STATE_DETECTED;
 
 						// send the notification
-						//ChangeNotificationState(currentState, cameras[i].config.cameraName.c_str(), notificationTitle);
+						//ChangeNotificationState(currentState, cameras[i].config->cameraName.c_str(), notificationTitle);
 
-						std::cout << "[W] " << cameras[i].config.cameraName << " detected a person..." << std::endl;
+						std::cout << "[W] " << cameras[i].config->cameraName << " detected a person..." << std::endl;
 					}
-				} else if (cameras[i].config.state == NI_STATE_DETECTING) {
+				} else if (cameras[i].config->state == NI_STATE_DETECTING) {
 					allCamerasInSentry = false;
 					
 					// Send notification if the current state != to what the camera state is
@@ -415,9 +414,9 @@ void Recognize::StartPreviewCameras() {
 						// send the notification
 						//ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
 
-						std::cout << "[I] " << cameras[i].config.cameraName << " is trying to match a person in the frame..." << std::endl;
+						std::cout << "[I] " << cameras[i].config->cameraName << " is trying to match a person in the frame..." << std::endl;
 					}
-				} else if (cameras[i].config.state == NI_STATE_SENTRY) {
+				} else if (cameras[i].config->state == NI_STATE_SENTRY) {
 					allCamerasInSentry = allCamerasInSentry && true;
 				}     
 			}
