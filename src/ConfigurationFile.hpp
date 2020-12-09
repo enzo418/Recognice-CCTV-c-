@@ -77,4 +77,6 @@ public:
 	
 	/// <summary> Writes the configurations into the file </summary>
 	void SaveConfigurations();
+
+	void Read(const char* filePath);
 };

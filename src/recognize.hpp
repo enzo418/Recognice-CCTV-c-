@@ -42,8 +42,8 @@ class Recognize {
 private:
 	size_t indexMainThreadCameras;
 
-	ProgramConfiguration programConfig;
-	CamerasConfigurations camerasConfigs;
+	ProgramConfiguration* programConfig;
+	CamerasConfigurations* camerasConfigs;
 
 	cv::HOGDescriptor hogDescriptor;
 
@@ -59,7 +59,7 @@ public:
 
 	Recognize(void);
 
-	void Start(Configurations configs, bool startPreviewThread, bool startActionsThread);
+	void Start(Configurations& configs, bool startPreviewThread, bool startActionsThread);
 
 	void StartActionsBot();
 
@@ -68,4 +68,6 @@ public:
 	void StartPreviewCameras();
 	
 	void StartCamerasThreads();
+
+	void CloseAndJoin();
 };

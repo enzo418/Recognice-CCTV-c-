@@ -34,6 +34,12 @@ Configuration::Configuration(const char* filePath) : _fileName(filePath) {
 	this->OpenFile();
 };
 
+void Configuration::Read(const char* filePath) {
+	this->_fileName = filePath;
+	this->OpenFile();
+	this->ReadConfigurations();
+};
+
 template<typename T>
 T Configuration::ReadNextConfiguration(std::fstream& file, T& config) {
 	std::string line;
