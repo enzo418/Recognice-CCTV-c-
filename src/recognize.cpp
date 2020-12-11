@@ -189,6 +189,9 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 }
 
 void Recognize::Start(Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
+	this->close = false;
+	this->stop = false;
+	
 	this->programConfig = &configs.programConfig;
 	this->camerasConfigs = &configs.camerasConfigs;
 	
