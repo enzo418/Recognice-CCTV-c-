@@ -619,4 +619,7 @@ void Recognize::CloseAndJoin() {
 	for (size_t i = 0; i < this->threads.size(); i++) {
 		this->threads[i].join();
 	}
+
+	this->cameras.clear();
+	this->threads.clear();
 }
