@@ -379,5 +379,23 @@ namespace Utils {
 		
 		return results;
 	}
+
+	/**
+	 * @brief Generates a comma separeted string with the values of a vector
+	 * @param v vector of strings
+	 * @return a string
+	 */
+	static std::string VectorToCommaString(std::vector<std::string>&  v) {
+		std::string s;
+		
+		for (size_t i = 0; i < v.size(); i++) {
+			trim(v[i]);
+			s += v[i];
+			if (i != v.size() - 1)
+				s += ",";
+		}
+		
+		return s;
+	}
 };
 
