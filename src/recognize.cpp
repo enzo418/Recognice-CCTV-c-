@@ -124,11 +124,13 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalArea: " + std::to_string(totalArea) + " total area % of non zero: " + std::to_string(totalArea * 100 / totalNonPixels);
 	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
 
-	//// Check if it's valid
-	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
+	if (validFrames != 0) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
 		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
+	}
 
+	//// Check if it's valid
+	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
 		//// Recognize a person
 		bool personDetected = false;
 		size_t start = *programConfig->numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;
