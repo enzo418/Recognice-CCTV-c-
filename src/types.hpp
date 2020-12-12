@@ -91,22 +91,15 @@ public:
 
 typedef unsigned char CAMERATYPE;
 
-/*	CameraType
-	Sentry state means that the camera is only will compare the current frame to the last one
-	to see if there is a significant change. And if it's it only will send the notifications.
-*/
-#define CAMERA_SENTRY 1
+enum {
+	CAMERA_DISABLED = 0, 	// Disabled type is activated to disable a camera.
+	
+	CAMERA_SENTRY, 			// Sentry state means that the camera is only will compare the current frame to the last one
+							// to see if there is a significant change. And if it's it only will send the notifications.
 
-/*	CameraType
-	Active type is sentry + when it detects any significant change it tries to math a person
-	in the frame. If success we will send all the notifications.
-*/
-#define CAMERA_ACTIVE 2
-
-/*	CameraType
-	Disabled type is activated to disable a camera.
-*/
-#define CAMERA_DISABLED 0
+	CAMERA_ACTIVE 			// Active type is sentry + when it detects any significant change it tries to math a person
+							// in the frame. If success we will send all the notifications.
+};
 
 
 struct AreasDelimiters {
