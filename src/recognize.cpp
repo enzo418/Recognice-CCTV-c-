@@ -176,11 +176,18 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		// } else {
 		// 	camera.gifFrames.state = State::Cancelled;
 		// }
-	} else {
-		camera.gifFrames.avrgDistanceFrames = 0;
-		camera.gifFrames.avrgAreaDifference = 0;
+	} else {		
 		camera.gifFrames.state = State::Cancelled;
-		camera.gifFrames.debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of 30% of validFrames. ";
+		camera.gifFrames.debugMessage += "\n";
+
+		// This if is only for debuggin purposes
+		if (validFrames != 0) {
+			camera.gifFrames.avrgDistanceFrames = 0;
+			camera.gifFrames.avrgAreaDifference = 0;
+			camera.gifFrames.debugMessage += "\nCancelled due 0 valid frames found.";
+		} else {
+			camera.gifFrames.debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of " + std::to_string(camera.config->thresholdFindingsOnIgnoredArea) + " validFrames needed.";
+		}
 	}
 
 	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n frames used: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
