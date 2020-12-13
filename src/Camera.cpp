@@ -258,8 +258,17 @@ void Camera::ReadFramesWithInterval() {
 				shouldProcessFrame = false;
 				
 				// push a new frame to display.
-				if (showPreview && !showProcessedImages)
+				if (showPreview && !showProcessedImages) {
+					if (this->_programConfig->showIgnoredAreas) { 
+						// Draw ignored areas
+						for (auto i : this->config->ignoredAreas) {						
+							i.x += this->config->roi.point1.x;						
+							cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
+						}
+					}
+					
 					this->frames.push_back(this->frameToShow);					
+				}
 			} else {
 				// camera type active => tries to detect a person.
 
@@ -273,7 +282,7 @@ void Camera::ReadFramesWithInterval() {
 
 				// push a new frame to display.
 				if (showPreview && !showProcessedImages) {
-					if (this->_programConfig->showIgnoredAreas) {
+					if (this->_programConfig->showIgnoredAreas) { 
 						// Draw ignored areas
 						for (auto i : this->config->ignoredAreas) {						
 							i.x += this->config->roi.point1.x;						
