@@ -32,10 +32,10 @@ private:
 	const char* GetFilePath(const char* fileName);
 
 	void OpenFile();
+	inline void CloseFile();
 
-	void WriteProgramConfiguration();
-
-	void WriteCameraConfiguration(CameraConfiguration& cfg);
+	void WriteConfiguration(CameraConfiguration& cfg);
+	void WriteConfiguration(ProgramConfiguration& cfg);
 
 	template<typename T>
 	T ReadNextConfiguration(std::fstream& file, T& config);

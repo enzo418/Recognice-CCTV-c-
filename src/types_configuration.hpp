@@ -32,17 +32,8 @@ struct CameraConfiguration {
 	// pixels that must change to change state to detecting
 	int changeThreshold;
 
-	// Current state of the camera sentry, detecting or detected.
-	NISTATE state;
-
 	// The type of the camera. See definition.
 	CAMERATYPE type;
-
-	// List of frames captured
-	std::vector<cv::Mat> frames;
-
-	// Temporal list of registers of when someone did enter o leave a site.
-	std::vector<Register> registers;
 
 	// Time to wait from the time a person reaches the point of entry or exit until they reach the other point
 	int secondsWaitEntryExit;
@@ -57,7 +48,7 @@ struct CameraConfiguration {
 	int minimumThreshold;
 
 	// % to increase from the minimum threshold
-	float increaseTresholdFactor;
+	double increaseTresholdFactor;
 
 	uint32_t updateThresholdFrequency;
 
@@ -66,6 +57,17 @@ struct CameraConfiguration {
 	std::vector<cv::Rect> ignoredAreas;
 
 	NumberFramesBeforeAfter framesToAnalyze;
+	
+	/** Following members are not part of config... in the future all below will be on Camera.hpp **/
+
+	// Current state of the camera sentry, detecting or detected.
+	NISTATE state;
+
+	// List of frames captured
+	std::vector<cv::Mat> frames;
+
+	// Temporal list of registers of when someone did enter o leave a site.
+	std::vector<Register> registers;
 };
 
 // to be able to sort the array of configs
@@ -82,7 +84,7 @@ struct ProgramConfiguration {
 	ushort msBetweenFrame;
 
 	// seconds to wait until save a new frame to the fraesToUpload list of the camera.
-	float secondsBetweenImage;
+	int secondsBetweenImage;
 
 	// seconds to waait until send another message.
 	int secondsBetweenMessage;
@@ -108,9 +110,6 @@ struct ProgramConfiguration {
 	// if should send a image with all the cameras when something is detected.
 	bool sendImageOfAllCameras;
 
-	// Used to save a frame with all the cameras, is updated every
-	cv::Mat frameWithAllTheCameras;
-
 	// holds a vector of users that are allowed to send commands to the bot
 	std::vector<std::string> authUsersToSendActions;
 
@@ -125,6 +124,9 @@ struct ProgramConfiguration {
 	GifResizePercentage gifResizePercentage = GifResizePercentage::Medium;
 
 	NumberFramesBeforeAfter numberGifFrames;
+
+	// Used to save a frame with all the cameras, is updated every
+	cv::Mat frameWithAllTheCameras;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

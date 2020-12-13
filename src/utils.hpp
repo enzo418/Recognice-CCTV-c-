@@ -397,5 +397,19 @@ namespace Utils {
 		
 		return s;
 	}
+
+	static std::string IgnoredAreasToString(std::vector<cv::Rect>& ia) {
+		std::string s;
+		
+		for (size_t i = 0; i < ia.size(); i++) {
+			std::ostringstream ss;
+			ss << "[(" << ia[i].x << ia[i].y << "),(" << ia[i].width << "," << ia[i].height << ")]";
+			s += ss.str();
+			if (i != ia.size() - 1)
+				s += ",";
+		}
+		
+		return s;
+	}
 };
 

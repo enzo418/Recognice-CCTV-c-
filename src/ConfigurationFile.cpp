@@ -22,6 +22,8 @@ void Configuration::OpenFile(){
 	}
 }
 
+inline void Configuration::CloseFile() { this->_file.close(); }
+
 inline void Configuration::WriteLineInFile(const char* line){
 	_file.write(line, sizeof(char) * strlen(line));
 }
@@ -113,10 +115,9 @@ void Configuration::PreprocessConfigurations() {
 }
 
 // Writes a camera configuration to the file
-void Configuration::WriteCameraConfiguration(CameraConfiguration& cfg) {	
-	this->OpenFile();
-
+void Configuration::WriteConfiguration(CameraConfiguration& cfg) {
 	std::string tmp;
+	std::ostringstream ss;
 
 	// Write header
 	this->WriteLineInFile("\n[CAMERA]");
@@ -124,50 +125,128 @@ void Configuration::WriteCameraConfiguration(CameraConfiguration& cfg) {
 	tmp = "\ncameraName=" + cfg.cameraName;
 	this->WriteLineInFile(tmp.c_str());
 
-	tmp = "\norder=" + cfg.order;
-	this->WriteLineInFile(tmp.c_str());
-
 	tmp = "\nurl=" + cfg.url;
 	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nrotation=" + cfg.rotation;
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\ntype=" + cfg.type;
-	this->WriteLineInFile(tmp.c_str());
-
-	std::ostringstream strs;
-	strs << cfg.hitThreshold;
-	tmp = "\nhitThreshold=" + strs.str();                
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nchangeThreshold=" + cfg.changeThreshold;
-	this->WriteLineInFile(tmp.c_str());
-
+	
 	tmp = "\nroi=" + Utils::RoiToString(cfg.roi);
 	this->WriteLineInFile(tmp.c_str());
-
-	strs.clear();
-	strs << cfg.noiseThreshold;
-	tmp = "\nthresholdNoise=" + strs.str();  
+	
+	tmp = "\nhitThreshold=" + std::to_string(cfg.hitThreshold);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\norder=" + std::to_string(cfg.order);
 	this->WriteLineInFile(tmp.c_str());
 
-	tmp = "\nsecondsWaitEntryExit=" + cfg.secondsWaitEntryExit;
+	tmp = "\nrotation=" + std::to_string(cfg.rotation);
+	this->WriteLineInFile(tmp.c_str());
+
+	tmp = "\nchangeThreshold=" + std::to_string(cfg.changeThreshold);
+	this->WriteLineInFile(tmp.c_str());
+
+	tmp = "\ntype=" + std::to_string(cfg.type);
+	this->WriteLineInFile(tmp.c_str());
+
+	tmp = "\nsecondsWaitEntryExit=" + std::to_string(cfg.secondsWaitEntryExit);
+	this->WriteLineInFile(tmp.c_str());
+
+	tmp = "\nthresholdNoise=" +std::to_string(cfg.noiseThreshold);
 	this->WriteLineInFile(tmp.c_str());
 
 	tmp = "\nareasDelimiters=" + Utils::AreasDelimitersToString(cfg.areasDelimiters);
 	this->WriteLineInFile(tmp.c_str());	
-}
-
-void Configuration::WriteProgramConfiguration(){
 	
+	tmp = "\nminimumThreshold=" + std::to_string(cfg.minimumThreshold);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\nincreaseTresholdFactor=" + std::to_string(cfg.increaseTresholdFactor);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\nupdateThresholdFrequency=" + std::to_string(cfg.updateThresholdFrequency);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\nignoredAreas=" + Utils::IgnoredAreasToString(cfg.ignoredAreas);
+	this->WriteLineInFile(tmp.c_str());
+	
+	if (cfg.framesToAnalyze.framesBefore != nullptr && cfg.framesToAnalyze.framesAfter != nullptr) {
+		tmp = "\nframesToAnalyze=" + std::to_string(*cfg.framesToAnalyze.framesBefore) + ".." + std::to_string(*cfg.framesToAnalyze.framesAfter);
+		this->WriteLineInFile(tmp.c_str());
+	}
 }
 
-void Configuration::SaveConfigurations() {
-	this->WriteProgramConfiguration();
+void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
+	std::string tmp;
+	std::ostringstream ss;
+
+	// Write header
+	this->WriteLineInFile("\n[PROGRAM]");
+	
+	tmp = "\nmsBetweenFrame=" + std::to_string(cfg.msBetweenFrame);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\nsecondsBetweenImage=" + std::to_string(cfg.secondsBetweenImage);
+	this->WriteLineInFile(tmp.c_str());
+	
+	tmp = "\nsecondsBetweenMessage=" + std::to_string(cfg.secondsBetweenMessage);
+	this->WriteLineInFile(tmp.c_str());	
+	
+	ss.clear();
+	ss << "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());
+	
+	tmp = "\noutputResolution=" + std::to_string(cfg.outputResolution.width) + "," + std::to_string(cfg.outputResolution.height);
+	this->WriteLineInFile(tmp.c_str());	
+	
+	tmp = "\ntelegramBotApi=" + cfg.telegramConfig.apiKey;
+	this->WriteLineInFile(tmp.c_str());	
+	
+	tmp = "\ntelegramChatId=" + cfg.telegramConfig.chatId;
+	this->WriteLineInFile(tmp.c_str());	
+	
+	ss.clear();
+	ss << "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());	
+	
+	ss.clear();
+	ss << "\nshowPreviewCameras=" << (cfg.showPreview ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());	
+	
+	ss.clear();
+	ss << "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());
+	
+	ss.clear();
+	ss << "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());	
+	
+	ss.clear();
+	ss << "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());	
+	
+	tmp = "\nauthUsersToSendActions=" + Utils::VectorToCommaString(cfg.authUsersToSendActions);
+	this->WriteLineInFile(tmp.c_str());	
+	
+	tmp = "\nratioScaleOutput=" + std::to_string(cfg.ratioScaleOutput);
+	this->WriteLineInFile(tmp.c_str());	
+	
+	ss.clear();
+	ss << "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());	
+	
+	if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr) {
+		tmp = "\ngifFrames=" + std::to_string(*cfg.numberGifFrames.framesBefore) + ".." + std::to_string(*cfg.numberGifFrames.framesAfter);
+		this->WriteLineInFile(tmp.c_str());
+	}
+}
+
+void Configuration::SaveConfigurations() {	
+	this->OpenFile();
+
+	this->WriteConfiguration(this->configurations.programConfig);
 
 	for (auto &camera : this->configurations.camerasConfigs)	
-		this->WriteCameraConfiguration(camera);	
+		this->WriteConfiguration(camera);
+	
+	this->CloseFile();
 }
 
 /// <summary> Saves the given id and value into the corresponding member of the program config </summary>
@@ -178,7 +257,7 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 		config.msBetweenFrame = (ushort)std::stoi(value);
 	} else if (id == "secondsbetweenimage") {
 		std::replace(value.begin(), value.end(), ',', '.');
-		config.secondsBetweenImage = std::stof(value);
+		config.secondsBetweenImage = std::stoi(value);
 	} else if (id == "secondsbetweenmessage") {
 		config.secondsBetweenMessage = std::stoi(value);;
 	} else if (id == "outputresolution") {
@@ -389,7 +468,7 @@ void Configuration::ReadNewCamera() {
 
 	this->LoadConfigCamera(config, config, false);
 
-	this->WriteCameraConfiguration(config);
+	this->WriteConfiguration(config);
 
 	this->configurations.camerasConfigs.push_back(config);
 }
