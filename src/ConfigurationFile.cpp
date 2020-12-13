@@ -171,6 +171,12 @@ void Configuration::WriteConfiguration(CameraConfiguration& cfg) {
 		tmp = "\nframesToAnalyze=" + std::to_string(*cfg.framesToAnalyze.framesBefore) + ".." + std::to_string(*cfg.framesToAnalyze.framesAfter);
 		this->WriteLineInFile(tmp.c_str());
 	}
+
+	tmp = "\nthresholdFindingsOnIgnoredArea=" + std::to_string(cfg.thresholdFindingsOnIgnoredArea);
+	this->WriteLineInFile(tmp.c_str());
+
+	tmp = "\nminPercentageAreaNeededToIgnore=" + std::to_string(cfg.minPercentageAreaNeededToIgnore);
+	this->WriteLineInFile(tmp.c_str());
 }
 
 void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
@@ -416,6 +422,12 @@ void Configuration::SaveIdVal(CameraConfiguration& config, std::string id, std::
 					config.framesToAnalyze.framesAfter = new size_t(std::stol(results[2]));
 			}
 		}
+	} else if (id == "thresholdfindingsonignoredarea") {
+		int val = std::stoi(value);
+		config.thresholdFindingsOnIgnoredArea = val;
+	} else if (id == "minpercentageareaneededtoignore") {
+		double val = std::stod(value);
+		config.minPercentageAreaNeededToIgnore = val == 0 ? 0 : val / 100.0;
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}

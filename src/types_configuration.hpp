@@ -56,7 +56,14 @@ struct CameraConfiguration {
 
 	std::vector<cv::Rect> ignoredAreas;
 
+	// number of frames to run the algorith to detect a person
 	NumberFramesBeforeAfter framesToAnalyze;
+
+	// total frames to ignore a finding that the change is inside an ignored area
+	size_t thresholdFindingsOnIgnoredArea = 2;
+
+	// how much % of the finding needs to be inside the ignored area to ignore it
+	double minPercentageAreaNeededToIgnore = 95.0 / 100.0;
 };
 
 // to be able to sort the array of configs

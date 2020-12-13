@@ -138,15 +138,6 @@ public:
 	// Current state of the camera sentry, detecting or detected.
 	NISTATE state;
 
-	// total frames to ignore a finding that the change is inside an ignored area
-	size_t thresholdFindingsOnIgnoredArea = 2;
-
-	// how much % of the finding needs to be inside the ignored area to ignore it
-	size_t minPercentageAreaNeededToIgnore = 100 / 95;
-
-	// that
-	// cv::Mat imageFrom10SecondsAgo;
-
 	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog);
 
 	void Connect();

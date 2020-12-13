@@ -94,7 +94,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			// check if finding is overlapping with a ignored area
 			for (auto &&i : camera.config->ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & i;
-				if (inters.area() >= finding.rect.boundingRect().area() * camera.minPercentageAreaNeededToIgnore) {
+				if (inters.area() >= finding.rect.boundingRect().area() * camera.config->minPercentageAreaNeededToIgnore) {
 					overlappingFindings += 1;
 				}
 			}
@@ -130,7 +130,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	}
 
 	//// Check if it's valid
-	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.thresholdFindingsOnIgnoredArea) {
+	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
 		//// Recognize a person
 		bool personDetected = false;
 		size_t start = *programConfig->numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;

@@ -147,7 +147,7 @@ void Camera::ReadFramesWithInterval() {
 
 	auto timeLastframe = std::chrono::high_resolution_clock::now();
 	bool shouldProcessFrame = false;
-	
+
 	// -----------
 	//  Messages
 	// -----------
@@ -231,13 +231,13 @@ void Camera::ReadFramesWithInterval() {
 					
 					for (auto &&i : this->config->ignoredAreas) {
 						cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
-						if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->minPercentageAreaNeededToIgnore) {
+						if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->config->minPercentageAreaNeededToIgnore) {
 							overlappingFindings += 1;
 						}
 					}
 				}
 
-				if (overlappingFindings < this->thresholdFindingsOnIgnoredArea) {
+				if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
 					// is valid, send an alert
 					this->ChangeTheStateAndAlert(now);
 				}
