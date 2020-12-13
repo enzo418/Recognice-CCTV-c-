@@ -125,6 +125,8 @@ struct ProgramConfiguration {
 
 	NumberFramesBeforeAfter numberGifFrames;
 
+	bool showIgnoredAreas = false;
+
 	// Used to save a frame with all the cameras, is updated every
 	cv::Mat frameWithAllTheCameras;
 };

@@ -232,6 +232,14 @@ void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
 	ss << "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no");
 	this->WriteLineInFile(ss.str().c_str());	
 	
+	ss.clear();
+	ss << "\ngifResizePercentage=" << (int)cfg.gifResizePercentage;
+	this->WriteLineInFile(ss.str().c_str());
+
+	ss.clear();
+	ss << "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no");
+	this->WriteLineInFile(ss.str().c_str());
+	
 	if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr) {
 		tmp = "\ngifFrames=" + std::to_string(*cfg.numberGifFrames.framesBefore) + ".." + std::to_string(*cfg.numberGifFrames.framesAfter);
 		this->WriteLineInFile(tmp.c_str());
@@ -325,6 +333,9 @@ void Configuration::SaveIdVal(ProgramConfiguration& config, std::string id, std:
 			std::getchar();
 			std::exit(-1);
 		}
+	} else if (id == "showignoredareas") {
+		Utils::toLowerCase(value);
+		config.showIgnoredAreas = value == "no" ? false : true;
 	} else {
 		std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 	}
