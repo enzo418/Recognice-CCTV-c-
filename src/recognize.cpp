@@ -157,7 +157,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
 					}
 
-					camera.config->state = NI_STATE_DETECTED;
+					camera.state = NI_STATE_DETECTED;
 
 					// send a extra notification?
 					// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
@@ -304,9 +304,6 @@ void Recognize::StartPreviewCameras() {
 	std::vector<bool> ready;
 
 	// Windows notification alert message and title
-	//const char* notificationMsg = "";
-	const char* notificationTitle = "Camera alert! Someone Detected";
-
 	const bool showAreaCameraSees = programConfig->showAreaCameraSees;
 	const bool showProcessedFrames = programConfig->showProcessedFrames;
 	
@@ -332,14 +329,6 @@ void Recognize::StartPreviewCameras() {
 	}
 
 	ready.shrink_to_fit();
-	
-	/* Video writer */
-	/* Uncomment to use video recorder
-	cv::VideoWriter out;
-	ushort videosSaved = 0;
-	auto timeLastCheck = high_resolution_clock::now();
-	cv::Size frameSize;
-	*/
 
 	/* Image saver */
 	auto timeLastSavedImage = high_resolution_clock::now();
@@ -391,47 +380,6 @@ void Recognize::StartPreviewCameras() {
 						size++;
 					}
 				}
-
-				// Check camera state
-				if (cameras[i].config->state == NI_STATE_DETECTED) {
-					allCamerasInSentry = false;
-
-					// Send notification if the current state != to what the camera state is
-					if (currentState != NI_STATE_DETECTED) {
-
-						// change the current state
-						currentState = NI_STATE_DETECTED;
-
-						// send the notification
-						//ChangeNotificationState(currentState, cameras[i].config->cameraName.c_str(), notificationTitle);
-
-						std::cout << "[W] " << cameras[i].config->cameraName << " detected a person..." << std::endl;
-					}
-				} else if (cameras[i].config->state == NI_STATE_DETECTING) {
-					allCamerasInSentry = false;
-					
-					// Send notification if the current state != to what the camera state is
-					if (currentState != NI_STATE_DETECTING && currentState != NI_STATE_DETECTED) {
-						
-						// change the current state
-						currentState = NI_STATE_DETECTING;
-
-						// send the notification
-						//ChangeNotificationState(currentState, configs[i].cameraName.c_str(), notificationTitle, hwndl, g_hinst);
-
-						std::cout << "[I] " << cameras[i].config->cameraName << " is trying to match a person in the frame..." << std::endl;
-					}
-				} else if (cameras[i].config->state == NI_STATE_SENTRY) {
-					allCamerasInSentry = allCamerasInSentry && true;
-				}     
-			}
-
-			if (allCamerasInSentry && currentState != NI_STATE_SENTRY) {
-				currentState = NI_STATE_SENTRY;
-
-				//ChangeNotificationState(currentState, "Sentry camera has something.", notificationTitle, hwndl, g_hinst);
-
-				std::cout << "[I]" << " All the cameras are back to sentry mode." << std::endl;
 			}
 			
 			if (size == amountCameras || !isFirstIteration) {
@@ -442,13 +390,6 @@ void Recognize::StartPreviewCameras() {
 					cv::startWindowThread();
 					isFirstIteration = false;
 				}
-
-				/* Uncomment if want to record video
-				if (frameSize.width != res.cols) {
-					frameSize.width = res.cols;
-					frameSize.height = res.rows;
-				}
-				*/
 
 				for (size_t i = 0; i < amountCameras; i++)
 					ready[i] = false;  
@@ -538,80 +479,6 @@ void Recognize::StartNotificationsSender() {
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 	}
-}
-
-void CheckRegisters(CameraConfiguration* configs, const int amountCameras, bool& stop){    
-	static auto lastTimeCleaned = high_resolution_clock::now();
-	size_t lastCleanedSize = 0;
-	const int secondsIntervalClean = 120;
-	const int cleanRegistersThreshold = 120;
-	const size_t cleanItems = 50;
-
-	while (!stop) {
-		auto now = std::chrono::high_resolution_clock::now();
-
-		// run over cameras
-		for(size_t i = 0; i < amountCameras; i++){
-			// if the cameras has a register
-			if(configs[i].registers.size() > 0) 
-			{
-				// then run over the registers
-				for (size_t j = 0; j < configs[i].registers.size(); j++)
-				{
-					// if we find a register that is not finished
-					if(!configs[i].registers[j].finished)
-					{
-						// again, run over the register to find another that is not finished
-						for (size_t k = j+1; k < configs[i].registers.size(); k++)
-						{                         
-							// if this register is not finished and is different to the register of above
-							if(!configs[i].registers[k].finished && configs[i].registers[k].firstPoint != configs[i].registers[j].firstPoint)
-							{
-								double seconds = configs[i].registers[k].time_point->tm_sec - configs[i].registers[j].time_point->tm_sec;
-								// and we are within the time (timeout)
-								if(seconds <= configs[i].secondsWaitEntryExit){
-									configs[i].registers[k].partner = configs[i].registers[j].id;
-									configs[i].registers[j].partner = configs[i].registers[k].id;
-
-									configs[i].registers[k].finished = true;
-									configs[i].registers[j].finished = true;
-
-									configs[i].registers[k].lastPoint = configs[i].registers[k].firstPoint;
-									configs[i].registers[j].lastPoint = configs[i].registers[k].firstPoint;
-
-									std::cout << "[T] Time k = "; Utils::LogTime(configs[i].registers[k].time_point);
-									std::cout << "\n    Time j = "; Utils::LogTime(configs[i].registers[j].time_point);
-
-									std::cout << "\n [I] A person was found in " << configs[i].cameraName << " " 
-									<< seconds << " seconds ago  or "
-									<< " starting from the " << (configs[i].registers[j].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
-									<< " point and ending at the " << (configs[i].registers[k].firstPoint == RegisterPoint::entryPoint ? "entry":"exit")
-									<< " point" << std::endl;
-								}
-							}
-						}                        
-					}
-				}                  
-
-				// if needed clean the vector of registers
-				/// TODO: Insted of just delete them save all of them in a file.
-				// if((now - lastTimeCleaned).count() >= secondsIntervalClean && configs[i].registers.size() > cleanRegistersThreshold){
-				//     std::vector<size_t> listId;
-				//     size_t end = std::min(configs[i].registers.size(), cleanItems);
-				//     for (size_t x = 0; x < end; x++) {
-				//         if(configs[i].registers[x].finished && !ExistInVector(listId, configs[i].registers[x].partner)){
-				//             configs[i].registers.erase(configs[i].registers.begin()+x);
-				//             listId.push_back(configs[i].registers[x].id);
-				//         }
-				//     }
-
-				//     lastTimeCleaned = high_resolution_clock::now();
-				// }             
-			}
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}    
 }
 
 void Recognize::CloseAndJoin() {

@@ -134,6 +134,9 @@ public:
 	std::vector<Register> registers;
 
 	GifFrames gifFrames;
+	
+	// Current state of the camera sentry, detecting or detected.
+	NISTATE state;
 
 	// total frames to ignore a finding that the change is inside an ignored area
 	size_t thresholdFindingsOnIgnoredArea = 2;

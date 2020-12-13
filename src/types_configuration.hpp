@@ -57,17 +57,6 @@ struct CameraConfiguration {
 	std::vector<cv::Rect> ignoredAreas;
 
 	NumberFramesBeforeAfter framesToAnalyze;
-	
-	/** Following members are not part of config... in the future all below will be on Camera.hpp **/
-
-	// Current state of the camera sentry, detecting or detected.
-	NISTATE state;
-
-	// List of frames captured
-	std::vector<cv::Mat> frames;
-
-	// Temporal list of registers of when someone did enter o leave a site.
-	std::vector<Register> registers;
 };
 
 // to be able to sort the array of configs

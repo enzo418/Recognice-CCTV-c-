@@ -63,7 +63,7 @@ void Camera::CalculateNonZeroPixels() {
 	}
 }
 
-void Camera::UpdateThreshold(){
+void Camera::UpdateThreshold() {
 	if(this->totalNonZeroPixels > 0){
 		this->accumulatorThresholds += this->config->minimumThreshold + this->totalNonZeroPixels;
 		// std::cout << "+" << this->totalNonZeroPixels << " total=" << this->accumulatorThresholds << std::endl;
@@ -95,9 +95,6 @@ void Camera::UpdateThreshold(){
 }
 
 void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) {
-	if (this->config->state != NI_STATE_DETECTED && this->config->type != CAMERA_SENTRY && this->config->state != NI_STATE_DETECTING)
-		this->config->state = NI_STATE_DETECTING; // Change the state of the camera
-					
 	// every secondsBetweenMessages send a message to the telegram bot
 	auto intervalFrames = (now - this->lastMessageSended) / std::chrono::seconds(1);
 	if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {	
@@ -157,7 +154,7 @@ void Camera::ReadFramesWithInterval() {
 	const int secondsBetweenMessages = this->_programConfig->secondsBetweenMessage;
 
 	while (!*this->_stop_flag && capture.isOpened()) {
-		const NISTATE camState = this->config->state;
+		const NISTATE camState = this->state;
 
 		// Read a new frame from the capturer
 		this->now = std::chrono::high_resolution_clock::now();
@@ -179,23 +176,28 @@ void Camera::ReadFramesWithInterval() {
 				continue;
 			}
 
-			// Once a new frame is ready, update gif images
+			// Once a new frame is ready, update buffer frames
 			if (this->_programConfig->useGifInsteadImage) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
+				// if still doesn't detect something (or it maybe detected and we still didn't fill the frames before it needed)
 				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < *this->_programConfig->numberGifFrames.framesBefore) {
+					// increase total
 					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
 
+					// copy frame
 					this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
+					// update next frame index
 					size_t i = this->gifFrames.indexBefore;
 					this->gifFrames.indexBefore = (i + 1) >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
-				} else if (this->gifFrames.updateAfter) {
+				} else if (this->gifFrames.updateAfter) { // change detected... get the following frames					 
 					if (this->gifFrames.indexAfter < *this->_programConfig->numberGifFrames.framesAfter) {
 						this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
 						this->gifFrames.indexAfter++;
 					} else {
+						// once we have all the frames...
 						this->gifFrames.state = State::Ready;
 						this->gifFrames.updateAfter = false;
 					}
@@ -222,8 +224,9 @@ void Camera::ReadFramesWithInterval() {
 				std::cout << "Diff frame saved for later."  << std::endl;
 
 				size_t overlappingFindings = 0;
-				// since gif does this for each frame...
-				if (!this->_programConfig->useGifInsteadImage){
+				// since gif does this (check if change inside an ignored area) for each frame... 
+				// only do it if user wants a image				
+				if (!this->_programConfig->useGifInsteadImage) {
 					this->lastFinding = FindRect(diff);
 					
 					for (auto &&i : this->config->ignoredAreas) {
@@ -237,61 +240,20 @@ void Camera::ReadFramesWithInterval() {
 				if (overlappingFindings < this->thresholdFindingsOnIgnoredArea) {
 					// is valid, send an alert
 					this->ChangeTheStateAndAlert(now);
-
-					// Increment frames left
-					if (framesLeft < maxFramesLeft)
-						framesLeft += framesToRecognice;
 				}
 			}
-
-			// camera type sentry = no detection, only seeks for changes in the image
-			if (camType == CAMERA_SENTRY) {
-				if (framesLeft > 0) {
-					if (camState != NI_STATE_DETECTING) {
-						this->config->state = NI_STATE_DETECTING;
+			
+			// push a new frame to display.
+			if (showPreview && !showProcessedImages) {
+				if (this->_programConfig->showIgnoredAreas) { 
+					// Draw ignored areas
+					for (auto i : this->config->ignoredAreas) {						
+						i.x += this->config->roi.point1.x;						
+						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}
-					framesLeft--;
-				} else {
-					this->config->state = NI_STATE_SENTRY;					
 				}
-
-				shouldProcessFrame = false;
 				
-				// push a new frame to display.
-				if (showPreview && !showProcessedImages) {
-					if (this->_programConfig->showIgnoredAreas) { 
-						// Draw ignored areas
-						for (auto i : this->config->ignoredAreas) {						
-							i.x += this->config->roi.point1.x;						
-							cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
-						}
-					}
-					
-					this->frames.push_back(this->frameToShow);					
-				}
-			} else {
-				// camera type active => tries to detect a person.
-
-				if (framesLeft > 0) {					
-					framesLeft--;
-				}
-
-				if (framesLeft == 0) {
-					this->config->state = NI_STATE_SENTRY;
-				}
-
-				// push a new frame to display.
-				if (showPreview && !showProcessedImages) {
-					if (this->_programConfig->showIgnoredAreas) { 
-						// Draw ignored areas
-						for (auto i : this->config->ignoredAreas) {						
-							i.x += this->config->roi.point1.x;						
-							cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
-						}
-					}
-					
-					this->frames.push_back(std::move(this->frameToShow));
-				}
+				this->frames.push_back(std::move(this->frameToShow));
 			}
 
 			shouldProcessFrame = false;
