@@ -15,9 +15,9 @@ const char* Configuration::GetFilePath(const char* fileName) {
 void Configuration::OpenFile(){
 	if (!_file.is_open()){ 
 		char filename[MAX_PATH] = {};
-		strcpy_s(filename, this->GetFilePath(_fileName));			
+		strcpy_s(filename, this->GetFilePath(_fileName));
 		if (Utils::FileExist(filename)) {
-			_file.open(filename, std::fstream::in | std::fstream::out | std::ios::app);
+			_file.open(filename, std::fstream::in | std::fstream::out /**| std::ios::app*/);
 		}
 	}
 }
@@ -116,65 +116,36 @@ void Configuration::PreprocessConfigurations() {
 void Configuration::WriteConfiguration(CameraConfiguration& cfg) {
 	std::string tmp;
 	std::ostringstream ss;
-
+	
 	// Write header
 	this->WriteLineInFile("\n[CAMERA]");
-
-	tmp = "\ncameraName=" + cfg.cameraName;
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nurl=" + cfg.url;
-	this->WriteLineInFile(tmp.c_str());
 	
-	tmp = "\nroi=" + Utils::RoiToString(cfg.roi);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nhitThreshold=" + std::to_string(cfg.hitThreshold);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\norder=" + std::to_string(cfg.order);
-	this->WriteLineInFile(tmp.c_str());
+	ss 	<< "\ncameraName=" << cfg.cameraName
+			<< "\nurl=" << cfg.url
+			<< "\nroi=" <<  Utils::RoiToString(cfg.roi)
+			<< "\nhitThreshold=" <<  std::fixed << std::setprecision(2) << cfg.hitThreshold
+			<< "\norder=" << cfg.order
+			<< "\nrotation=" << cfg.rotation
+			<< "\nchangeThreshold=" << cfg.changeThreshold
+			<< "\ntype=" << (int)cfg.type
+			<< "\nsecondsWaitEntryExit=" << cfg.secondsWaitEntryExit
+			<< "\nthresholdNoise=" <<  std::fixed << std::setprecision(2) << cfg.noiseThreshold
+			<< "\nminimumThreshold=" << cfg.minimumThreshold
+			<< "\nincreaseTresholdFactor=" <<  std::fixed << std::setprecision(2) << cfg.increaseTresholdFactor
+			<< "\nupdateThresholdFrequency=" << cfg.updateThresholdFrequency
+			<< "\nthresholdFindingsOnIgnoredArea=" << cfg.thresholdFindingsOnIgnoredArea
+			<< "\nminPercentageAreaNeededToIgnore=" << cfg.minPercentageAreaNeededToIgnore;
 
-	tmp = "\nrotation=" + std::to_string(cfg.rotation);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nchangeThreshold=" + std::to_string(cfg.changeThreshold);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\ntype=" + std::to_string(cfg.type);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nsecondsWaitEntryExit=" + std::to_string(cfg.secondsWaitEntryExit);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nthresholdNoise=" +std::to_string(cfg.noiseThreshold);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nareasDelimiters=" + Utils::AreasDelimitersToString(cfg.areasDelimiters);
-	this->WriteLineInFile(tmp.c_str());	
-	
-	tmp = "\nminimumThreshold=" + std::to_string(cfg.minimumThreshold);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nincreaseTresholdFactor=" + std::to_string(cfg.increaseTresholdFactor);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nupdateThresholdFrequency=" + std::to_string(cfg.updateThresholdFrequency);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nignoredAreas=" + Utils::IgnoredAreasToString(cfg.ignoredAreas);
-	this->WriteLineInFile(tmp.c_str());
-	
-	if (cfg.framesToAnalyze.framesBefore != nullptr && cfg.framesToAnalyze.framesAfter != nullptr) {
-		tmp = "\nframesToAnalyze=" + std::to_string(*cfg.framesToAnalyze.framesBefore) + ".." + std::to_string(*cfg.framesToAnalyze.framesAfter);
-		this->WriteLineInFile(tmp.c_str());
-	}
-
-	tmp = "\nthresholdFindingsOnIgnoredArea=" + std::to_string(cfg.thresholdFindingsOnIgnoredArea);
-	this->WriteLineInFile(tmp.c_str());
-
-	tmp = "\nminPercentageAreaNeededToIgnore=" + std::to_string(cfg.minPercentageAreaNeededToIgnore);
-	this->WriteLineInFile(tmp.c_str());
+	if (!cfg.areasDelimiters.rectEntry.empty() || !cfg.areasDelimiters.rectExit.empty())
+		ss << "\nareasDelimiters=" << Utils::AreasDelimitersToString(cfg.areasDelimiters);
+		
+	if (cfg.ignoredAreas.size() > 0)
+		ss << "\nignoredAreas=" << Utils::IgnoredAreasToString(cfg.ignoredAreas);
+		
+	if (cfg.framesToAnalyze.framesBefore != nullptr && cfg.framesToAnalyze.framesAfter != nullptr)
+		ss << "\nframesToAnalyze=" << *cfg.framesToAnalyze.framesBefore << ".." << *cfg.framesToAnalyze.framesAfter;
+		
+	this->WriteLineInFile(ss.str().c_str());
 }
 
 void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
@@ -184,70 +155,28 @@ void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
 	// Write header
 	this->WriteLineInFile("\n[PROGRAM]");
 	
-	tmp = "\nmsBetweenFrame=" + std::to_string(cfg.msBetweenFrame);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nsecondsBetweenImage=" + std::to_string(cfg.secondsBetweenImage);
-	this->WriteLineInFile(tmp.c_str());
-	
-	tmp = "\nsecondsBetweenMessage=" + std::to_string(cfg.secondsBetweenMessage);
-	this->WriteLineInFile(tmp.c_str());	
-	
-	ss.clear();
-	ss << "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());
-	
-	tmp = "\noutputResolution=" + std::to_string(cfg.outputResolution.width) + "," + std::to_string(cfg.outputResolution.height);
-	this->WriteLineInFile(tmp.c_str());	
-	
-	tmp = "\ntelegramBotApi=" + cfg.telegramConfig.apiKey;
-	this->WriteLineInFile(tmp.c_str());	
-	
-	tmp = "\ntelegramChatId=" + cfg.telegramConfig.chatId;
-	this->WriteLineInFile(tmp.c_str());	
-	
-	ss.clear();
-	ss << "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());	
-	
-	ss.clear();
-	ss << "\nshowPreviewCameras=" << (cfg.showPreview ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());	
-	
-	ss.clear();
-	ss << "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());
-	
-	ss.clear();
-	ss << "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());	
-	
-	ss.clear();
-	ss << "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());	
-	
-	tmp = "\nauthUsersToSendActions=" + Utils::VectorToCommaString(cfg.authUsersToSendActions);
-	this->WriteLineInFile(tmp.c_str());	
-	
-	tmp = "\nratioScaleOutput=" + std::to_string(cfg.ratioScaleOutput);
-	this->WriteLineInFile(tmp.c_str());	
-	
-	ss.clear();
-	ss << "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());	
-	
-	ss.clear();
-	ss << "\ngifResizePercentage=" << (int)cfg.gifResizePercentage;
-	this->WriteLineInFile(ss.str().c_str());
+	ss 	<< "\nmsBetweenFrame=" << cfg.msBetweenFrame
+			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
+			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
+			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no")
+			<< "\noutputResolution=" << cfg.outputResolution.width << "," << cfg.outputResolution.height
+			<< "\ntelegramBotApi=" << cfg.telegramConfig.apiKey
+			<< "\ntelegramChatId=" << cfg.telegramConfig.chatId
+			<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
+			<< "\nshowPreviewCameras=" << (cfg.showPreview ?  "yes" : "no")
+			<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no")
+			<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no")
+			<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no")
+			<< "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions)
+			<< "\nratioScaleOutput=" << std::fixed << std::setprecision(2) << cfg.ratioScaleOutput
+			<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no")
+			<< "\ngifResizePercentage=" << (int)cfg.gifResizePercentage
+			<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no");
 
-	ss.clear();
-	ss << "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no");
-	this->WriteLineInFile(ss.str().c_str());
+	if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr)
+		ss << "\ngifFrames=" << *cfg.numberGifFrames.framesBefore << ".."  << *cfg.numberGifFrames.framesAfter;
 	
-	if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr) {
-		tmp = "\ngifFrames=" + std::to_string(*cfg.numberGifFrames.framesBefore) + ".." + std::to_string(*cfg.numberGifFrames.framesAfter);
-		this->WriteLineInFile(tmp.c_str());
-	}
+	this->WriteLineInFile(ss.str().c_str());
 }
 
 void Configuration::SaveConfigurations() {	
@@ -255,9 +184,10 @@ void Configuration::SaveConfigurations() {
 
 	this->WriteConfiguration(this->configurations.programConfig);
 
-	for (auto &camera : this->configurations.camerasConfigs)	
+	for (auto &camera : this->configurations.camerasConfigs)
 		this->WriteConfiguration(camera);
-	
+
+	std::cout << "saved, ms: " << this->configurations.programConfig.msBetweenFrame << std::endl;
 	this->CloseFile();
 }
 
