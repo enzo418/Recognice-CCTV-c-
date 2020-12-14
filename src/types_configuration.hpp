@@ -12,7 +12,7 @@ struct NumberFramesBeforeAfter {
 };
 
 struct CameraConfiguration {
-	std::string cameraName;
+	std::string cameraName = "NEW CAMERA";
 
 	// url or path to the camera / video
 	std::string url;
