@@ -112,82 +112,174 @@ void Configuration::PreprocessConfigurations() {
 	}	
 }
 
+void Configuration::WriteConfigurationFileHeader() {
+	std::ostringstream ss;
+	
+	ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the sintaxis."
+		<< "\n; The variables are defined with the following sintaxis: <id>=<value>"
+		<< "\n; You can use lowercase, uppercase, mixed, it doesn't mind."
+		<< "\n; The program configuration is  declared with [PROGRAM]."
+		<< "\n; Each camera configuration begins with a [CAMERA] header and end where another [CAMERA] is found or EOF.\n\n";
+		
+	this->WriteLineInFile(ss.str().c_str());
+}
+
 // Writes a camera configuration to the file
 void Configuration::WriteConfiguration(CameraConfiguration& cfg) {
-	std::string tmp;
 	std::ostringstream ss;
 	
 	// Write header
-	this->WriteLineInFile("\n[CAMERA]");
+	this->WriteLineInFile("\n\n[CAMERA]");
 	
 	ss 	<< "\ncameraName=" << cfg.cameraName
-			<< "\nurl=" << cfg.url
-			<< "\nroi=" <<  Utils::RoiToString(cfg.roi)
-			<< "\nhitThreshold=" <<  std::fixed << std::setprecision(2) << cfg.hitThreshold
-			<< "\norder=" << cfg.order
-			<< "\nrotation=" << cfg.rotation
-			<< "\nchangeThreshold=" << cfg.changeThreshold
-			<< "\ntype=" << (int)cfg.type
-			<< "\nsecondsWaitEntryExit=" << cfg.secondsWaitEntryExit
-			<< "\nthresholdNoise=" <<  std::fixed << std::setprecision(2) << cfg.noiseThreshold
-			<< "\nminimumThreshold=" << cfg.minimumThreshold
-			<< "\nincreaseTresholdFactor=" <<  std::fixed << std::setprecision(2) << cfg.increaseTresholdFactor
-			<< "\nupdateThresholdFrequency=" << cfg.updateThresholdFrequency
-			<< "\nthresholdFindingsOnIgnoredArea=" << cfg.thresholdFindingsOnIgnoredArea
-			<< "\nminPercentageAreaNeededToIgnore=" << cfg.minPercentageAreaNeededToIgnore;
-
-	if (!cfg.areasDelimiters.rectEntry.empty() || !cfg.areasDelimiters.rectExit.empty())
-		ss << "\nareasDelimiters=" << Utils::AreasDelimitersToString(cfg.areasDelimiters);
 		
-	if (cfg.ignoredAreas.size() > 0)
-		ss << "\nignoredAreas=" << Utils::IgnoredAreasToString(cfg.ignoredAreas);
+		<< "\n\n; "
+		<< "\nurl=" << cfg.url
 		
+		<< "\n\n; ROI (Regin of interest) crop each image that the camera sends. Sintaxis is: [(<p_x>,<p_y>),(<widht>,<height>)]"
+		<< "\nroi=" <<  Utils::RoiToString(cfg.roi)
+		
+		<< "\n\n; "
+		<< "\nhitThreshold=" <<  std::fixed << std::setprecision(2) << cfg.hitThreshold
+			
+		<< "\n\n; Order of the camera in the preview"
+		<< "\norder=" << cfg.order
+		
+		<< "\n\n; Rotation (degrees)"
+		<< "\nrotation=" << cfg.rotation;
+		
+	// frames to analyze
+	ss << "\n\n; Selects the frame to search a person on. The sintaxis is: <nframesBefore>..<nframesAfter>."
+		<< "\n; \"..\" denotes the frame where the change was detected (initial).";
 	if (cfg.framesToAnalyze.framesBefore != nullptr && cfg.framesToAnalyze.framesAfter != nullptr)
 		ss << "\nframesToAnalyze=" << *cfg.framesToAnalyze.framesBefore << ".." << *cfg.framesToAnalyze.framesAfter;
+	else 
+		ss << "\n;framesToAnalyze=<nframesBefore>..<nframesAfter>";
+			
+	ss	<< "\n\n; Disabled: Camera is disabled, doesn't show or process frames."
+		<< "\n; Sentry: Only sends notifications."
+		<< "\n; Active: Same as Sentry but try to recognize a person in the frames selected on \"framesToAnalyze\"."
+		<< "\ntype=" << (cfg.type == CAMERA_DISABLED ? "Disabled" : (cfg.type == CAMERA_SENTRY ? "Sentry"  : "Active")) 
 		
+		<< "\n\n# == Change (ammount of pixels between the last two frames) section"
+		
+		<< "\n\n; Initial change threshold, will be updated after <updateThresholdFrequency> seconds."
+		<< "\nchangeThreshold=" << cfg.changeThreshold
+		
+		<< "\n\n; Used to remove noise (single scattered pixels). Between 30 and 50 is a general good value."
+		<< "\nthresholdNoise=" <<  std::fixed << std::setprecision(2) << cfg.noiseThreshold
+		
+		<< "\n\n; Minimum number of different pixels between the last 2 frames. Is used to leave a margin of \"error\"."
+		<< "\n; Is recommended to set it at a low number, like 10."
+		<< "You maybe will have to change it if you change the theshold noise or update Frequency"
+		<< "\nminimumThreshold=" << cfg.minimumThreshold
+		
+		<< "\n\n; Since the app is calculating the average change of pixels between the last two images you need to leave a margin"
+		<< "\n; to avoid sending notifications over small or insignificant changes."
+		<< " A general good value is between 1.04 (4%) and 1.30 (30%) of the average change."
+		<< "\nincreaseTresholdFactor=" <<  std::fixed << std::setprecision(2) << cfg.increaseTresholdFactor
+		
+		<< "\n\n; This tells the app how frequent (seconds) to update the average pixels change between the last two frames."
+		<< "\n; On camera where there is fast changing objects is good to leave this value low, e.g. 5."
+		<< "\nupdateThresholdFrequency=" << cfg.updateThresholdFrequency
+		
+		<< "\n\n# == Ignored areas section"
+		
+		<< "\n\n; How many objects or changes on ignored areas are needed in order to not send a notification about the change?"
+		<< "\nthresholdFindingsOnIgnoredArea=" << cfg.thresholdFindingsOnIgnoredArea
+		
+		<< "\n\n; Maybe the object didn't match with all the ignored area, so is better to leave a margin for \"errors\"."
+		<< "\n; Recommended value: between 90 and 100."
+		<< "\nminPercentageAreaNeededToIgnore=" << cfg.minPercentageAreaNeededToIgnore;
+	
+	// ignored areas
+	ss << "\n\n; List of ignored areas. Sintaxis: <p_x>,<p_y>,<widht>,<height>"
+		<< "\n; Also you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]";
+	if (cfg.ignoredAreas.size() > 0)
+		ss << "\nignoredAreas=" << Utils::IgnoredAreasToString(cfg.ignoredAreas);
+	else 
+		ss << "\n;ignoredAreas=";
+		
+		
+	ss 	<< "\n\n# == Areas delimiters (NOT IN USE RIGHT NOW)."
+		<< "\n\n; "
+		<< "\nsecondsWaitEntryExit=" << cfg.secondsWaitEntryExit
+		<< "\n\n; ";
+		
+	// area delimites (not in use)
+	if (!cfg.areasDelimiters.rectEntry.empty() || !cfg.areasDelimiters.rectExit.empty())
+		ss << "\nareasDelimiters=" << Utils::AreasDelimitersToString(cfg.areasDelimiters);
+					
 	this->WriteLineInFile(ss.str().c_str());
 }
 
 void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
-	std::string tmp;
 	std::ostringstream ss;
 
 	// Write header
-	this->WriteLineInFile("\n[PROGRAM]");
+	this->WriteLineInFile("[PROGRAM]");
 	
-	ss 	<< "\nmsBetweenFrame=" << cfg.msBetweenFrame
-			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
-			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
-			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no")
-			<< "\noutputResolution=" << cfg.outputResolution.width << "," << cfg.outputResolution.height
-			<< "\ntelegramBotApi=" << cfg.telegramConfig.apiKey
-			<< "\ntelegramChatId=" << cfg.telegramConfig.chatId
-			<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
+	ss 	<< "\n; Milliseconds between each frame. Greater <msBetweenFrame> = Lower CPU usage."
+			<< "\n; FPS = 1000 / <msBetweenFrame>. Try different values and determine the efficiency vs effectiveness."
+			<< "\nmsBetweenFrame=" << cfg.msBetweenFrame
+			
+			<< "\n\n# == Output-preview section\n"
+			
+			<< "\n; Comment the line below to let the program calculate the output res automatically"
+			<< "\n;outputResolution=" << cfg.outputResolution.width << "," << cfg.outputResolution.height
+			
+			<< "\nratioScaleOutput=" << std::fixed << std::setprecision(2) << cfg.ratioScaleOutput
+			<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no")
 			<< "\nshowPreviewCameras=" << (cfg.showPreview ?  "yes" : "no")
 			<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no")
 			<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no")
+			
+			<< "\n\n# == Telegram and notifications section\n"
+			
+			<< "\ntelegramBotApi=" << cfg.telegramConfig.apiKey
+			<< "\ntelegramChatId=" << cfg.telegramConfig.chatId
+			<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
 			<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no")
+			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
+			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
+			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no")
+			
+			<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n."
 			<< "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions)
-			<< "\nratioScaleOutput=" << std::fixed << std::setprecision(2) << cfg.ratioScaleOutput
+			
+			<< "\n\n; This tells the app if send a image or a gif."
 			<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no")
-			<< "\ngifResizePercentage=" << (int)cfg.gifResizePercentage
-			<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no");
-
+			
+			<< "\n\n; Selects the Quality of the gif. Values are:"
+			<< "\n; Value : Meaning" 
+			<< "\n;  100  : NONE. Do not resize the frames."
+			<< "\n;  80   : LOW. Lowers 20% the resolution."
+			<< "\n;  60   : MEDIUM. Lowers 40% the resolution."
+			<< "\n;  40   : HIGH. Lowers 60% the resolution."
+			<< "\n;  20   : VERYHIGH. Lowers 80% the resolution."
+			<< "\ngifResizePercentage=" << (int)cfg.gifResizePercentage;
+			
+	ss << "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
+		<< "\n; \"..\" denotes the frame where the change was detected (initial)."
+		<< "\n; Have in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time).";
 	if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr)
 		ss << "\ngifFrames=" << *cfg.numberGifFrames.framesBefore << ".."  << *cfg.numberGifFrames.framesAfter;
-	
+	else
+		ss << "\n;gifFrames=<nframesBefore>..<nframesAfter>";
+		
 	this->WriteLineInFile(ss.str().c_str());
 }
 
-void Configuration::SaveConfigurations() {	
+void Configuration::SaveConfigurations() {
 	this->OpenFile();
+
+	this->WriteConfigurationFileHeader();
 
 	this->WriteConfiguration(this->configurations.programConfig);
 
 	for (auto &camera : this->configurations.camerasConfigs)
 		this->WriteConfiguration(camera);
 
-	std::cout << "saved, ms: " << this->configurations.programConfig.msBetweenFrame << std::endl;
 	this->CloseFile();
 }
 

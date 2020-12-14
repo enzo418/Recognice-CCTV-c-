@@ -21,36 +21,36 @@ struct CameraConfiguration {
 	ROI roi;
 
 	// Threshold to recognice that a match/detection is valid
-	double hitThreshold;
+	double hitThreshold = 0.05;
 
 	// Used to show the cameras sorted by order
-	int order;
+	int order = 0;
 
 	// rotation of the camera
-	int rotation;
+	int rotation = 0;
 
 	// pixels that must change to change state to detecting
-	int changeThreshold;
+	int changeThreshold = 1000;
 
 	// The type of the camera. See definition.
 	CAMERATYPE type;
 
 	// Time to wait from the time a person reaches the point of entry or exit until they reach the other point
-	int secondsWaitEntryExit;
+	int secondsWaitEntryExit = 1;
 
 	// threshold to use when removing the noise of the frame
-	double noiseThreshold;
+	double noiseThreshold = 45;
 
 	// Delimiters to the entry vs exit area.
 	AreasDelimiters areasDelimiters;
 
 	// used as minimun value of threshold (to avoid noise)
-	int minimumThreshold;
+	int minimumThreshold = 2;
 
 	// % to increase from the minimum threshold
-	double increaseTresholdFactor;
+	double increaseTresholdFactor = 1.2;
 
-	uint32_t updateThresholdFrequency;
+	uint32_t updateThresholdFrequency = 15;
 
 	bool useHighConstrast = false;
 
@@ -77,13 +77,13 @@ enum GifResizePercentage {None = 100, Low = 80, Medium = 60, High = 40, VeryHigh
 
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
-	ushort msBetweenFrame;
+	ushort msBetweenFrame = 25;
 
 	// seconds to wait until save a new frame to the fraesToUpload list of the camera.
-	int secondsBetweenImage;
+	int secondsBetweenImage = 15;
 
 	// seconds to waait until send another message.
-	int secondsBetweenMessage;
+	int secondsBetweenMessage = 15;
 
 	// if should send a image when the threshold change was passed.
 	bool sendImageWhenDetectChange;
@@ -110,7 +110,7 @@ struct ProgramConfiguration {
 	std::vector<std::string> authUsersToSendActions;
 
 	// % used to scale the output image
-	double ratioScaleOutput;
+	double ratioScaleOutput = 1.0;
 
 	// relative folder to save the imgs of the changes / detections
 	std::string imagesFolder = "saved_imgs";

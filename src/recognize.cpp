@@ -363,22 +363,6 @@ void Recognize::StartPreviewCameras() {
 	cv::namedWindow("Preview Cameras");
 
 	while (!stop && programConfig.showPreview) {
-		if (this->camerasConfigs.size() != amountCameras) {
-			std::cout << "started resizing: last="<< amountCameras << " new=" << this->camerasConfigs.size() << std::endl;
-			amountCameras = this->camerasConfigs.size();
-			stackHSize = amountCameras > 1 ? 2 : 1;
-			frames.resize(amountCameras);
-			ready.resize(amountCameras);
-
-			// init vector of cameras ready
-			for (size_t i = 0; i < amountCameras; i++) {
-				ready.push_back(false);
-			}
-
-			ready.shrink_to_fit();
-			std::cout << "resized all." << std::endl;
-		}
-
 		if (this->cameras.size() == amountCameras) {
 			// if all cameras are in sentry state
 			bool allCamerasInSentry = true;

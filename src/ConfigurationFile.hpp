@@ -34,6 +34,7 @@ private:
 	void OpenFile();
 	inline void CloseFile();
 
+	void WriteConfigurationFileHeader();
 	void WriteConfiguration(CameraConfiguration& cfg);
 	void WriteConfiguration(ProgramConfiguration& cfg);
 
