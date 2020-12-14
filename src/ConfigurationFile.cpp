@@ -85,10 +85,8 @@ void Configuration::ReadConfigurations() {
 					this->ReadNextConfiguration(_file, config);
 
 					// validate config
-					if (config.type == CAMERA_DISABLED) {
-						std::cout << config.cameraName << " skiped because its type is disabled" << std::endl;
-					} else if (config.url.empty() /* check if is a valid url*/) {
-						std::cout << config.cameraName << " skiped because its url is not valid" << std::endl;
+					if (config.url.empty() /* check if is a valid url*/) {
+						std::cout << config.cameraName << " skiped because it's url is empty." << std::endl;
 					} else {
 						if (config.noiseThreshold == 0) {
 							std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;

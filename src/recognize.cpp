@@ -7,7 +7,7 @@ Recognize::Recognize() {
 std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.state = State::Wait;
 	
-	const size_t ammountOfFrames = *programConfig->numberGifFrames.framesBefore + *programConfig->numberGifFrames.framesAfter;
+	const size_t ammountOfFrames = *programConfig.numberGifFrames.framesBefore + *programConfig.numberGifFrames.framesAfter;
 	std::vector<FrameDescriptor> framesTransformed(ammountOfFrames);
 	std::vector<cv::Mat*> frames(ammountOfFrames);
 	
@@ -31,7 +31,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	size_t totalFrames = 0;
 	for (size_t i = camera.gifFrames.indexBefore;;) {	
-		if (totalFrames < *programConfig->numberGifFrames.framesBefore) {						
+		if (totalFrames < *programConfig.numberGifFrames.framesBefore) {						
 			frames[totalFrames] = &camera.gifFrames.before[i];
 
 			// Take the region of interes
@@ -47,13 +47,13 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			}
 
 			totalFrames++;
-			i = (i + 1) >= *programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
+			i = (i + 1) >= *programConfig.numberGifFrames.framesBefore ? 0 : (i + 1);
 		} else
 			break;
 	}
 	
 	for (; totalFrames < ammountOfFrames; totalFrames++) {
-		frames[totalFrames] = &camera.gifFrames.after[totalFrames - *programConfig->numberGifFrames.framesBefore];
+		frames[totalFrames] = &camera.gifFrames.after[totalFrames - *programConfig.numberGifFrames.framesBefore];
 		
 		if (!camera.config->roi.isEmpty()) {
 			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
@@ -133,10 +133,10 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
 		//// Recognize a person
 		bool personDetected = false;
-		size_t start = *programConfig->numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;
+		size_t start = *programConfig.numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;
 		start = start < 0 ? 0 : start;
 
-		size_t end = *programConfig->numberGifFrames.framesAfter + *camera.config->framesToAnalyze.framesAfter;
+		size_t end = *programConfig.numberGifFrames.framesAfter + *camera.config->framesToAnalyze.framesAfter;
 		end = end > frames.size() ? frames.size() : end;
 
 		if (camera.config->type == CAMERA_ACTIVE) {
@@ -201,8 +201,23 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 	this->close = false;
 	this->stop = false;
 	
-	this->programConfig = &configs.programConfig;
-	this->camerasConfigs = &configs.camerasConfigs;
+	this->programConfig = configs.programConfig;
+	this->camerasConfigs = configs.camerasConfigs;
+
+	// Remove disabled cameras
+	size_t sz = this->camerasConfigs.size();
+	for (size_t i = 0; i < sz; i++)
+		if (this->camerasConfigs[i].type == CAMERA_DISABLED) {
+			this->camerasConfigs.erase(this->camerasConfigs.begin() + i);
+			i--;
+			sz--;
+		}
+	
+	if (this->camerasConfigs.size() == 0) {
+		/// TODO: throw custom exception
+		std::cout << "Cameras size 0. Exiting." << std::endl;
+		std::exit(-1);
+	}
 	
 	this->indexMainThreadCameras = this->threads.size();
 	std::cout << "pushed thread of cameras in " << this->threads.size() << std::endl;
@@ -219,7 +234,7 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
 	}
 
-	if (programConfig->telegramConfig.useTelegramBot) {
+	if (programConfig.telegramConfig.useTelegramBot) {
 		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;		
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
@@ -229,11 +244,11 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 void Recognize::StartCamerasThreads() {
 	bool somethingDetected = false;
 
-	Utils::FixOrderCameras(*this->camerasConfigs);
+	Utils::FixOrderCameras(this->camerasConfigs);
 	
 	// Create the cameras objs
-	for (auto &config : *this->camerasConfigs) {
-		this->cameras.push_back(Camera(config, programConfig, &this->stop, &this->hogDescriptor));
+	for (auto &config : this->camerasConfigs) {
+		this->cameras.push_back(Camera(config, &programConfig, &this->stop, &this->hogDescriptor));
 	}
 
 	// Start a thread for each camera
@@ -254,7 +269,7 @@ void Recognize::StartActionsBot() {
 		auto diff = (now - lastCheck) / std::chrono::seconds(1);
 		if(diff >= 9) {
 			std::time_t unix_time = 0;
-			std::string fromId = TelegramBot::GetLastMessageFromBot(programConfig->telegramConfig.apiKey, message, unix_time, programConfig->authUsersToSendActions);
+			std::string fromId = TelegramBot::GetLastMessageFromBot(programConfig.telegramConfig.apiKey, message, unix_time, programConfig.authUsersToSendActions);
 			std::string reply = "Comando no reconocido.";
 
 			if(unix_time > unix_time_start) {
@@ -283,7 +298,7 @@ void Recognize::StartActionsBot() {
 						reply = "Reconocedor reanudado.";
 					}
 
-					TelegramBot::SendMessageToChat(reply, fromId, programConfig->telegramConfig.apiKey);
+					TelegramBot::SendMessageToChat(reply, fromId, programConfig.telegramConfig.apiKey);
 					lastMessage = message;
 				}
 			}
@@ -300,19 +315,19 @@ void Recognize::StartPreviewCameras() {
 	//  Variables 
 	// ============
 	  
-	size_t amountCameras = this->camerasConfigs->size();
+	size_t amountCameras = this->camerasConfigs.size();
 
 	// saves the frames to show in a iteration
 	std::vector<cv::Mat> frames;
 
-	const ushort interval = programConfig->msBetweenFrame;
+	const ushort interval = programConfig.msBetweenFrame;
 	
 	// saves the cameras that are ready to be displayed
 	std::vector<bool> ready;
 
 	// Windows notification alert message and title
-	const bool showAreaCameraSees = programConfig->showAreaCameraSees;
-	const bool showProcessedFrames = programConfig->showProcessedFrames;
+	const bool showAreaCameraSees = programConfig.showAreaCameraSees;
+	const bool showProcessedFrames = programConfig.showProcessedFrames;
 	
 	// counts the cameras displayed
 	uint8_t size = 0; 
@@ -347,10 +362,10 @@ void Recognize::StartPreviewCameras() {
 
 	cv::namedWindow("Preview Cameras");
 
-	while (!stop && programConfig->showPreview) {
-		if (this->camerasConfigs->size() != amountCameras) {
-			std::cout << "started resizing: last="<< amountCameras << " new=" << this->camerasConfigs->size() << std::endl;
-			amountCameras = this->camerasConfigs->size();
+	while (!stop && programConfig.showPreview) {
+		if (this->camerasConfigs.size() != amountCameras) {
+			std::cout << "started resizing: last="<< amountCameras << " new=" << this->camerasConfigs.size() << std::endl;
+			amountCameras = this->camerasConfigs.size();
 			stackHSize = amountCameras > 1 ? 2 : 1;
 			frames.resize(amountCameras);
 			ready.resize(amountCameras);
@@ -401,21 +416,21 @@ void Recognize::StartPreviewCameras() {
 				for (size_t i = 0; i < amountCameras; i++)
 					ready[i] = false;  
 
-				double scaleW = programConfig->outputResolution.width * programConfig->ratioScaleOutput;
-				double scaleH = programConfig->outputResolution.height * programConfig->ratioScaleOutput;
-				if (!programConfig->outputResolution.empty()){
-					scaleW = programConfig->outputResolution.width * programConfig->ratioScaleOutput;
-					scaleH = programConfig->outputResolution.height * programConfig->ratioScaleOutput;
+				double scaleW = programConfig.outputResolution.width * programConfig.ratioScaleOutput;
+				double scaleH = programConfig.outputResolution.height * programConfig.ratioScaleOutput;
+				if (!programConfig.outputResolution.empty()){
+					scaleW = programConfig.outputResolution.width * programConfig.ratioScaleOutput;
+					scaleH = programConfig.outputResolution.height * programConfig.ratioScaleOutput;
 				} else {
-					scaleW = res.cols * programConfig->ratioScaleOutput;
-					scaleH = res.rows * programConfig->ratioScaleOutput;
+					scaleW = res.cols * programConfig.ratioScaleOutput;
+					scaleH = res.rows * programConfig.ratioScaleOutput;
 				}
 
 				cv::resize(res, res, cv::Size(scaleW, scaleH));
 
 				cv::imshow("Preview Cameras", res);
 				cv::waitKey(20);            
-				programConfig->frameWithAllTheCameras = std::move(res);
+				programConfig.frameWithAllTheCameras = std::move(res);
 			}
 		}
 
@@ -432,16 +447,16 @@ void Recognize::StartNotificationsSender() {
 	while (!stop) {
 		for (auto &&camera : cameras) {			
 			// Send gif
-			if (programConfig->useGifInsteadImage && camera.gifFrames.state == State::Ready) {
+			if (programConfig.useGifInsteadImage && camera.gifFrames.state == State::Ready) {
 				// -----------------------------------------------------------
 				// Take before and after frames and combine them into a .gif
 				// -----------------------------------------------------------
 				const std::string identifier = std::to_string(clock());
-				const std::string imageFolder = programConfig->imagesFolder;
+				const std::string imageFolder = programConfig.imagesFolder;
 				const std::string root = "./" + imageFolder + "/" + identifier;
 				const std::string gifPath = root + ".gif";
 				std::string location;
-				const size_t gframes = *programConfig->numberGifFrames.framesAfter + *programConfig->numberGifFrames.framesBefore;
+				const size_t gframes = *programConfig.numberGifFrames.framesAfter + *programConfig.numberGifFrames.framesBefore;
 
 				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(camera);
 
@@ -453,11 +468,11 @@ void Recognize::StartNotificationsSender() {
 						cv::imwrite(location, *frames[i]);
 					}
 
-					std::string command = "convert -resize " + std::to_string(programConfig->gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
+					std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 					std::system(command.c_str());
 
-					TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + camera.gifFrames.debugMessage, programConfig->telegramConfig.chatId, programConfig->telegramConfig.apiKey, true);
+					TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + camera.gifFrames.debugMessage, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 				}
 				
 				// ---
@@ -477,7 +492,7 @@ void Recognize::StartNotificationsSender() {
 			for (size_t i = 0; i < size; i++) {	
 				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
 
-				camera.pendingNotifications[i].send(*programConfig);
+				camera.pendingNotifications[i].send(programConfig);
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p

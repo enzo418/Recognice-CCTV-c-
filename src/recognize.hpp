@@ -42,8 +42,8 @@ class Recognize {
 private:
 	size_t indexMainThreadCameras;
 
-	ProgramConfiguration* programConfig;
-	CamerasConfigurations* camerasConfigs;
+	ProgramConfiguration programConfig;
+	CamerasConfigurations camerasConfigs;
 
 	cv::HOGDescriptor hogDescriptor;
 
