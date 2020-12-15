@@ -12,10 +12,10 @@ find_package(CURL REQUIRED)
 
 set(source_dir "${PROJECT_SOURCE_DIR}")
 
-file(GLOB COMMON_SRC "${source_dir}/*.cpp")
+file(GLOB COMMON_SRC "${source_dir}/src/*.cpp")
 
-file(GLOB RECOG_SRC "${source_dir}/Recognice-CCTV-c-/ChangeDescriptor/*.cpp")
-file(GLOB ChangeDescriptor_SRC "${source_dir}/Recognice-CCTV-c-/src/*.cpp")
+file(GLOB RECOG_SRC "${source_dir}/recognize/ChangeDescriptor/*.cpp")
+file(GLOB ChangeDescriptor_SRC "${source_dir}/recognize/src/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 

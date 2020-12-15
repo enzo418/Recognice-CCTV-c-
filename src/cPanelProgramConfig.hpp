@@ -13,10 +13,10 @@
 #include <wx/msgdlg.h>
 #include <wx/msgdlg.h>
 
-#include "Recognice-CCTV-c-/src/recognize.hpp"
-#include "Recognice-CCTV-c-/src/types_configuration.hpp"
-#include "Recognice-CCTV-c-/src/types.hpp"
-#include "Recognice-CCTV-c-/src/utils.hpp"
+#include "../recognize/src/recognize.hpp"
+#include "../recognize/src/types_configuration.hpp"
+#include "../recognize/src/types.hpp"
+#include "../recognize/src/utils.hpp"
 
 #include "types.hpp"
 

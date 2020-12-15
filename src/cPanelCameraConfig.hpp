@@ -8,8 +8,8 @@
 #include <wx/button.h>
 #include <wx/stattext.h>
 
-#include "Recognice-CCTV-c-/src/types_configuration.hpp"
-#include "Recognice-CCTV-c-/src/types.hpp"
+#include "../recognize/src/types_configuration.hpp"
+#include "../recognize/src/types.hpp"
 
 #include "types.hpp"
 

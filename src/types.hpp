@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Recognice-CCTV-c-/src/types.hpp"
-#include "Recognice-CCTV-c-/src/ConfigurationFile.hpp"
-#include "Recognice-CCTV-c-/src/recognize.hpp"
+#include "../recognize/src/types.hpp"
+#include "../recognize/src/configuration_file.hpp"
+#include "../recognize/src/recognize.hpp"
 
 #include <wx/checkbox.h>
 
