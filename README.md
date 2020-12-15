@@ -1,17 +1,11 @@
-# Recognize people on CCTV
+# Recognize
+## **What is this?**
+It started as a multi-platform program to alert about movement and people on cameras. And now it is the same but with several configurations to achieve that goal. These settings are made from a configuration file or from the graphical interface.
 
-# Requeriments	
-	- Opencv >= 4.5 (was 3.0 before implementing yolov4 nn)
+## **Content**
+The repository includes both the program that performs the recognition alerts and others, which is located in the folder "recognize". But it also has in the /src folder the files for the graphics configuration program.
+You can compile "recognize" alone and run it with its parameters and it will work, that folder includes a CMakeLists.txt for that purpose. Although you can also compile the whole repository with the CMakeLists.txt from the root folder and use it from there.
 
-	## Compiling
-	- jsoncpp-devel (To decode incoming messages from the telegram api)
-
-
-# Todo
-## Comment the code :(
-
-## Configuration:
-    - Allow the user to set a messaging service like dweet.io
-
-## Others
-- Add a flag that, if enabled, will make log every 30m the average change of pixels. Also the maximun and minimum. With this the user will be able to set the perfect threshold for each hor/time of the day.
+# Libs/headers requerired	
+1. Same as "recognize"
+2. wxWidgets

@@ -1,18 +1,9 @@
+*
 *.*
-## Ignore all dirs
-*/ 
 
-## Unignore .py files
+!recognize
+!.gitignore
+!src
 !*.cpp
 !*.hpp
-!*.md
 
-!src/
-!sample/
-
-Makefile
-
-## Ignore the backup files
-*.~
-
-!CMakeLists.txt
