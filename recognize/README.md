@@ -1,15 +1,15 @@
 # Recognize people on CCTV
 
 # Requeriments	
-	- Opencv >= 4.5 (was 3.0 before implementing yolov4 nn)
+- Opencv >= 4.5 (was 3.0 before implementing yolov4 nn)
 
-	## Compiling
-	- jsoncpp-devel (To decode incoming messages from the telegram api)
+## Compiling
+- jsoncpp-devel (To decode incoming messages from the telegram api)
 
 
 # Todo
 **1. Comment the code**
-	
+
 **2. Configuration:**
 - Allow the user to set a messaging service like dweet.io
 
