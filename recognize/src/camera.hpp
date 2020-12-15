@@ -3,7 +3,7 @@
 
 #include "types.hpp"
 #include "types_configuration.hpp"
-#include "ImageManipulation.hpp"
+#include "image_manipulation.hpp"
 #include "utils.hpp"
 
 #include <iostream>

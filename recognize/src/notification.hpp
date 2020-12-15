@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include "utils.hpp"
 #include "types_configuration.hpp"
-#include "TelegramBot.hpp"
+#include "telegram_bot.hpp"
 
 namespace Notification {
 	enum Type {SOUND = 0, TEXT, IMAGE};

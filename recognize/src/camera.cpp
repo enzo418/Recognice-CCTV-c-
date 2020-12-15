@@ -1,4 +1,4 @@
-#include "Camera.hpp"
+#include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
 	this->gifFrames.after.resize(*programConfig->numberGifFrames.framesAfter);

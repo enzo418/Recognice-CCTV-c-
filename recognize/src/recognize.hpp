@@ -15,17 +15,17 @@
 #include <unordered_map> // To get a unique file id from a camera url
 #include <signal.h> // to catch ctrl c signal
 
-#include "ImageManipulation.hpp"
+#include "image_manipulation.hpp"
 #include "utils.hpp"
-#include "ConfigurationFile.hpp"
+#include "configuration_file.hpp"
 
-#include "TelegramBot.hpp"
+#include "telegram_bot.hpp"
 
 #ifdef WINDOWS
 #else
 #define sprintf_s sprintf
 #endif
-#include "Camera.hpp"
+#include "camera.hpp"
 
 #define RECOGNICEALWAYS false
 #define SHOWFRAMEINSCREEN true

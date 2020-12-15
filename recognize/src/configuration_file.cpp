@@ -1,4 +1,4 @@
-#include "ConfigurationFile.hpp"
+#include "configuration_file.hpp"
 
 const char* Configuration::GetFilePath(const char* fileName) {
 	#ifdef WINDOWS

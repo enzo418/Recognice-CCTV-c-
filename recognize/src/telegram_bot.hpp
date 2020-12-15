@@ -10,7 +10,7 @@
 #include <chrono>
 
 #include "types_configuration.hpp"
-#include "ConfigurationFile.hpp"
+#include "configuration_file.hpp"
 #include "utils.hpp"
 
 namespace TelegramBot { 
