@@ -31,7 +31,8 @@ private:
 
 	const char* GetFilePath(const char* fileName);
 
-	void OpenFile();
+	void OpenFileWrite();
+	void OpenFileRead();
 	inline void CloseFile();
 
 	void WriteConfigurationFileHeader();

@@ -12,12 +12,22 @@ const char* Configuration::GetFilePath(const char* fileName) {
 	#endif
 }
 
-void Configuration::OpenFile(){
+void Configuration::OpenFileRead(){
 	if (!_file.is_open()){ 
 		char filename[MAX_PATH] = {};
 		strcpy_s(filename, this->GetFilePath(_fileName));
 		if (Utils::FileExist(filename)) {
-			_file.open(filename, std::fstream::in | std::fstream::out /**| std::ios::app*/);
+			_file.open(filename, std::fstream::in);
+		}
+	}
+}
+
+void Configuration::OpenFileWrite(){
+	if (!_file.is_open()){ 
+		char filename[MAX_PATH] = {};
+		strcpy_s(filename, this->GetFilePath(_fileName));
+		if (Utils::FileExist(filename)) {
+			_file.open(filename, std::ofstream::out | std::ofstream::trunc);
 		}
 	}
 }
@@ -29,16 +39,16 @@ inline void Configuration::WriteLineInFile(const char* line){
 }
 
 Configuration::Configuration() {
-	this->OpenFile();
+	this->OpenFileRead();
 };
 
 Configuration::Configuration(const char* filePath) : _fileName(filePath) {
-	this->OpenFile();
+	this->OpenFileRead();
 };
 
 void Configuration::Read(const char* filePath) {
 	this->_fileName = filePath;
-	this->OpenFile();
+	this->OpenFileRead();
 	this->ReadConfigurations();
 };
 
@@ -84,16 +94,11 @@ void Configuration::ReadConfigurations() {
 					CameraConfiguration config;
 					this->ReadNextConfiguration(_file, config);
 
-					// validate config
-					if (config.url.empty() /* check if is a valid url*/) {
-						std::cout << config.cameraName << " skiped because it's url is empty." << std::endl;
-					} else {
-						if (config.noiseThreshold == 0) {
-							std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
-						}
-
-						this->configurations.camerasConfigs.push_back(config);
+					if (config.noiseThreshold == 0) {
+						std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
 					}
+
+					this->configurations.camerasConfigs.push_back(config);
 				}
 			}
 		}
@@ -133,10 +138,13 @@ void Configuration::WriteConfiguration(CameraConfiguration& cfg) {
 	
 	ss 	<< "\ncameraName=" << cfg.cameraName
 		
-		<< "\n\n; "
-		<< "\nurl=" << cfg.url
+		<< "\n\n; ";
+		if (!cfg.url.empty())
+			ss << "\nurl=" << cfg.url;
+		else
+			ss << "\n;url=" << cfg.url;
 		
-		<< "\n\n; ROI (Regin of interest) crop each image that the camera sends. Sintaxis is: [(<p_x>,<p_y>),(<widht>,<height>)]"
+	ss	<< "\n\n; ROI (Regin of interest) crop each image that the camera sends. Sintaxis is: [(<p_x>,<p_y>),(<widht>,<height>)]"
 		<< "\nroi=" <<  Utils::RoiToString(cfg.roi)
 		
 		<< "\n\n; "
@@ -271,12 +279,12 @@ void Configuration::WriteConfiguration(ProgramConfiguration& cfg){
 }
 
 void Configuration::SaveConfigurations() {
-	this->OpenFile();
+	this->OpenFileWrite();
 
 	this->WriteConfigurationFileHeader();
 
 	this->WriteConfiguration(this->configurations.programConfig);
-
+	
 	for (auto &camera : this->configurations.camerasConfigs)
 		this->WriteConfiguration(camera);
 

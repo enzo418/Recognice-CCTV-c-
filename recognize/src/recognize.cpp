@@ -207,7 +207,7 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 	// Remove disabled cameras
 	size_t sz = this->camerasConfigs.size();
 	for (size_t i = 0; i < sz; i++)
-		if (this->camerasConfigs[i].type == CAMERA_DISABLED) {
+		if (this->camerasConfigs[i].type == CAMERA_DISABLED || this->camerasConfigs[i].url.empty()) {
 			this->camerasConfigs.erase(this->camerasConfigs.begin() + i);
 			i--;
 			sz--;
