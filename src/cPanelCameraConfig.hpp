@@ -27,7 +27,8 @@ enum CAMERA_ids {
 	COMBO_type,
 	SPIN_hitThreshold,
 	SPIN_noiseThresh,
-	BTN_selectRoi
+	BTN_selectRoi,
+	BTN_selectIgnoredAreas
 };
 
 class cPanelCameraConfig : public wxPanel {
@@ -35,7 +36,7 @@ class cPanelCameraConfig : public wxPanel {
 		cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfiguration* camConfig, SharedData* sharedData);
 		~cPanelCameraConfig();
 
-	protected:		
+	protected:
 		void spinOrder_Change(wxSpinEvent& ev);
 		void spinRotation_Change(wxSpinEvent& ev);
 		void spinChangeThreshold_Change(wxSpinEvent& ev);
@@ -48,6 +49,7 @@ class cPanelCameraConfig : public wxPanel {
 		void spinNoiseThreshold_Change(wxSpinDoubleEvent& ev);
 		void comboType_Select(wxCommandEvent& ev);
 		void btnSelectRoi_Click(wxCommandEvent& ev);
+		void btnSelectIgnoredAreas_Click(wxCommandEvent& ev);
 		
 private:
 		SharedData* m_sharedData;
@@ -72,6 +74,7 @@ private:
 		wxSpinCtrlDouble* m_spinNoise;
 		
 		wxButton* m_btnSelectRoi;
+		wxButton* m_btnSelectIgnoredAreas;
 
 		wxDECLARE_EVENT_TABLE();
 };
