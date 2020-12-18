@@ -50,8 +50,6 @@ class cPanelCameraConfig : public wxPanel {
 		void btnSelectRoi_Click(wxCommandEvent& ev);
 		
 private:
-		AreaSelector m_areaSelector;
-
 		SharedData* m_sharedData;
 	
 		CameraConfiguration* m_config;

@@ -172,5 +172,5 @@ void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
 }
 
 void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {
-	this->m_areaSelector.SelectCameraROI(this->m_config->url, this->m_config->roi);
+	AreaSelector::SelectCameraROI(this->m_config->url, this->m_config->roi);
 }
