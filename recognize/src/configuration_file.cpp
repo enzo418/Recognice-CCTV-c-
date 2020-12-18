@@ -101,11 +101,11 @@ namespace ConfigurationFile {
 
 	void PreprocessConfigurations(Configurations& cfgs) {
 		for (auto &&config : cfgs.camerasConfigs) {
-			if (config.framesToAnalyze.framesBefore == nullptr)
-				config.framesToAnalyze.framesBefore = new size_t(*cfgs.programConfig.numberGifFrames.framesBefore);
+			if (config.framesToAnalyze.framesBefore == -1)
+				config.framesToAnalyze.framesBefore = cfgs.programConfig.numberGifFrames.framesBefore;
 			
-			if (config.framesToAnalyze.framesAfter == nullptr)
-				config.framesToAnalyze.framesAfter = new size_t(*cfgs.programConfig.numberGifFrames.framesAfter);
+			if (config.framesToAnalyze.framesAfter == -1)
+				config.framesToAnalyze.framesAfter = cfgs.programConfig.numberGifFrames.framesAfter;
 		}	
 	}
 
@@ -151,8 +151,8 @@ namespace ConfigurationFile {
 		// frames to analyze
 		ss << "\n\n; Selects the frame to search a person on. The sintaxis is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial).";
-		if (cfg.framesToAnalyze.framesBefore != nullptr && cfg.framesToAnalyze.framesAfter != nullptr)
-			ss << "\nframesToAnalyze=" << *cfg.framesToAnalyze.framesBefore << ".." << *cfg.framesToAnalyze.framesAfter;
+		if (cfg.framesToAnalyze.framesBefore != -1 && cfg.framesToAnalyze.framesAfter != -1)
+			ss << "\nframesToAnalyze=" << cfg.framesToAnalyze.framesBefore << ".." << cfg.framesToAnalyze.framesAfter;
 		else 
 			ss << "\n;framesToAnalyze=<nframesBefore>..<nframesAfter>";
 				
@@ -262,8 +262,8 @@ namespace ConfigurationFile {
 		ss << "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n; Have in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time).";
-		if (cfg.numberGifFrames.framesBefore != nullptr && cfg.numberGifFrames.framesAfter != nullptr)
-			ss << "\ngifFrames=" << *cfg.numberGifFrames.framesBefore << ".."  << *cfg.numberGifFrames.framesAfter;
+		if (cfg.numberGifFrames.framesBefore != -1 && cfg.numberGifFrames.framesAfter != -1)
+			ss << "\ngifFrames=" << cfg.numberGifFrames.framesBefore << ".."  << cfg.numberGifFrames.framesAfter;
 		else
 			ss << "\n;gifFrames=<nframesBefore>..<nframesAfter>";
 			
@@ -354,8 +354,8 @@ namespace ConfigurationFile {
 			std::vector<std::string> results = Utils::GetRange(value);
 			size_t sz = results.size();
 			if (sz == 3) {
-				config.numberGifFrames.framesBefore = new size_t(std::stol(results[0]));
-				config.numberGifFrames.framesAfter = new size_t(std::stol(results[2]));
+				config.numberGifFrames.framesBefore = size_t(std::stol(results[0]));
+				config.numberGifFrames.framesAfter = size_t(std::stol(results[2]));
 			} else {
 				std::cout << "Invalid field input \"gifframes\" in config.ini header PROGRAM. Expected format: totalFramesBefore..totalFramesAfter\n e.g. 5..60";
 				std::getchar();
@@ -436,12 +436,12 @@ namespace ConfigurationFile {
 			if (sz >= 1) {
 				if (results[0] == "..") {
 					if (sz >= 2)
-						config.framesToAnalyze.framesAfter = new size_t(std::stol(results[1]));
+						config.framesToAnalyze.framesAfter = size_t(std::stol(results[1]));
 				} else {
-					config.framesToAnalyze.framesBefore = new size_t(std::stol(results[0]));
+					config.framesToAnalyze.framesBefore = size_t(std::stol(results[0]));
 
 					if (sz >= 3)
-						config.framesToAnalyze.framesAfter = new size_t(std::stol(results[2]));
+						config.framesToAnalyze.framesAfter = size_t(std::stol(results[2]));
 				}
 			}
 		} else if (id == "thresholdfindingsonignoredarea") {

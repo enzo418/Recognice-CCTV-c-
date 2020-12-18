@@ -92,8 +92,8 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	wxStaticText* labelFramesBefore = new wxStaticText(this, wxID_ANY, "Frames Before", wxDefaultPosition, wxDefaultSize);
 	wxStaticText* labelFramesAfter = new wxStaticText(this, wxID_ANY, "Frames After", wxDefaultPosition, wxDefaultSize);
 //	wxStaticText* labelFrameDetection = new wxStaticText(this, wxID_ANY, "..", wxDefaultPosition, wxDefaultSize);
-	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, *this->m_config->numberGifFrames.framesBefore);
-	this->m_spinFramesAfter = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, *this->m_config->numberGifFrames.framesAfter);
+	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesBefore);
+	this->m_spinFramesAfter = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesAfter);
 	
 	wxBoxSizer* sizerFramesBefore = new wxBoxSizer(wxVERTICAL);
 	sizerFramesBefore->Add(labelFramesBefore, 0, wxGROW);
@@ -256,11 +256,11 @@ void cPanelProgramConfig::comboGifQuality_Select(wxCommandEvent& ev) {
 }
 
 void cPanelProgramConfig::spinFramesBefore_SpinChange(wxSpinEvent& ev) {
-	*this->m_config->numberGifFrames.framesBefore = ev.GetValue();
+	this->m_config->numberGifFrames.framesBefore = ev.GetValue();
 	ev.Skip();
 }
 
 void cPanelProgramConfig::spinFramesAfter_SpinChange(wxSpinEvent& ev) {
-	*this->m_config->numberGifFrames.framesAfter = ev.GetValue();
+	this->m_config->numberGifFrames.framesAfter = ev.GetValue();
 	ev.Skip();
 }

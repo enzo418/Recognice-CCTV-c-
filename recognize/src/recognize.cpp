@@ -7,7 +7,7 @@ Recognize::Recognize() {
 std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.state = State::Wait;
 	
-	const size_t ammountOfFrames = *programConfig.numberGifFrames.framesBefore + *programConfig.numberGifFrames.framesAfter;
+	const size_t ammountOfFrames = programConfig.numberGifFrames.framesBefore + programConfig.numberGifFrames.framesAfter;
 	std::vector<FrameDescriptor> framesTransformed(ammountOfFrames);
 	std::vector<cv::Mat*> frames(ammountOfFrames);
 	
@@ -31,7 +31,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	size_t totalFrames = 0;
 	for (size_t i = camera.gifFrames.indexBefore;;) {	
-		if (totalFrames < *programConfig.numberGifFrames.framesBefore) {						
+		if (totalFrames < programConfig.numberGifFrames.framesBefore) {						
 			frames[totalFrames] = &camera.gifFrames.before[i];
 
 			// Take the region of interes
@@ -47,13 +47,13 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			}
 
 			totalFrames++;
-			i = (i + 1) >= *programConfig.numberGifFrames.framesBefore ? 0 : (i + 1);
+			i = (i + 1) >= programConfig.numberGifFrames.framesBefore ? 0 : (i + 1);
 		} else
 			break;
 	}
 	
 	for (; totalFrames < ammountOfFrames; totalFrames++) {
-		frames[totalFrames] = &camera.gifFrames.after[totalFrames - *programConfig.numberGifFrames.framesBefore];
+		frames[totalFrames] = &camera.gifFrames.after[totalFrames - programConfig.numberGifFrames.framesBefore];
 		
 		if (!camera.config->roi.isEmpty()) {
 			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
@@ -133,10 +133,10 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
 		//// Recognize a person
 		bool personDetected = false;
-		size_t start = *programConfig.numberGifFrames.framesBefore - *camera.config->framesToAnalyze.framesBefore;
+		size_t start = programConfig.numberGifFrames.framesBefore - camera.config->framesToAnalyze.framesBefore;
 		start = start < 0 ? 0 : start;
 
-		size_t end = *programConfig.numberGifFrames.framesAfter + *camera.config->framesToAnalyze.framesAfter;
+		size_t end = programConfig.numberGifFrames.framesAfter + camera.config->framesToAnalyze.framesAfter;
 		end = end > frames.size() ? frames.size() : end;
 
 		if (camera.config->type == CAMERA_ACTIVE) {
@@ -440,7 +440,7 @@ void Recognize::StartNotificationsSender() {
 				const std::string root = "./" + imageFolder + "/" + identifier;
 				const std::string gifPath = root + ".gif";
 				std::string location;
-				const size_t gframes = *programConfig.numberGifFrames.framesAfter + *programConfig.numberGifFrames.framesBefore;
+				const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
 
 				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(camera);
 

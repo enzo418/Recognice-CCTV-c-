@@ -1,8 +1,8 @@
 #include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
-	this->gifFrames.after.resize(*programConfig->numberGifFrames.framesAfter);
-	this->gifFrames.before.resize(*programConfig->numberGifFrames.framesBefore);
+	this->gifFrames.after.resize(programConfig->numberGifFrames.framesAfter);
+	this->gifFrames.before.resize(programConfig->numberGifFrames.framesBefore);
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.changeThreshold;
 }
@@ -181,18 +181,18 @@ void Camera::ReadFramesWithInterval() {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if still doesn't detect something (or it maybe detected and we still didn't fill the frames before it needed)
-				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < *this->_programConfig->numberGifFrames.framesBefore) {
+				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < this->_programConfig->numberGifFrames.framesBefore) {
 					// increase total
-					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
+					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
 
 					// copy frame
 					this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
 
 					// update next frame index
 					size_t i = this->gifFrames.indexBefore;
-					this->gifFrames.indexBefore = (i + 1) >= *this->_programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
+					this->gifFrames.indexBefore = (i + 1) >= this->_programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
 				} else if (this->gifFrames.updateAfter) { // change detected... get the following frames					 
-					if (this->gifFrames.indexAfter < *this->_programConfig->numberGifFrames.framesAfter) {
+					if (this->gifFrames.indexAfter < this->_programConfig->numberGifFrames.framesAfter) {
 						this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
 
 						this->gifFrames.indexAfter++;

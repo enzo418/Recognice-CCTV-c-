@@ -7,8 +7,8 @@
 // ===============
 
 struct NumberFramesBeforeAfter {
-	size_t* framesBefore = nullptr;
-	size_t* framesAfter = nullptr;
+	size_t framesBefore = -1;
+	size_t framesAfter = -1;
 };
 
 struct CameraConfiguration {
