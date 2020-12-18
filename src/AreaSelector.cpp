@@ -61,14 +61,14 @@ namespace AreaSelector {
 		cv::Point point(x, y);
 		bool updateImg = false;
 
-		if (event == cv::EVENT_LBUTTONDOWN){
+		if (event == cv::EVENT_LBUTTONDOWN) {
 			areaSelector->lastEvent = cv::EVENT_LBUTTONDOWN;
 			areaSelector->startPoint = point;
-		} else if (event == cv::EVENT_RBUTTONDOWN){
+		} else if (event == cv::EVENT_RBUTTONDOWN) {
 			areaSelector->lastEvent = cv::EVENT_RBUTTONDOWN;
 		} else if (event == cv::EVENT_LBUTTONUP || event == cv::EVENT_RBUTTONUP){
 			areaSelector->lastEvent = -1;
-		} else if (event == cv::EVENT_MOUSEMOVE){
+		} else if (event == cv::EVENT_MOUSEMOVE) {
 			if (areaSelector->lastEvent != -1){
 				cv::Point point1 = areaSelector->startPoint;
 				cv::Scalar color(255, 25, 255);
@@ -81,7 +81,7 @@ namespace AreaSelector {
 			}
 		}
 
-		if(updateImg){
+		if(updateImg) {
 			cv::imshow("Press a key to exit", areaSelector->show);
 		}
 	}
@@ -145,6 +145,7 @@ namespace AreaSelector {
 			for (size_t i = 0; i < sz; i++) {
 				if ((*data->areas)[i].contains(point)) {
 					data->areas->erase(data->areas->begin() + i);
+					data->colors.erase(data->colors.begin() + i);
 					sz--;
 					i--;
 					updateImg = true;
@@ -160,7 +161,7 @@ namespace AreaSelector {
 			}
 		}
 
-		if(updateImg){
+		if(updateImg) {
 			// clear drawed rectangles
 			data->frame.copyTo(data->show);
 			

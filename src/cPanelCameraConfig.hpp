@@ -28,7 +28,9 @@ enum CAMERA_ids {
 	SPIN_hitThreshold,
 	SPIN_noiseThresh,
 	BTN_selectRoi,
-	BTN_selectIgnoredAreas
+	BTN_selectIgnoredAreas,
+	SPIN_FramesAnalyzeBefore,
+	SPIN_FramesAnalyzeAfter
 };
 
 class cPanelCameraConfig : public wxPanel {
@@ -51,6 +53,8 @@ class cPanelCameraConfig : public wxPanel {
 		void btnSelectRoi_Click(wxCommandEvent& ev);
 		void btnSelectIgnoredAreas_Click(wxCommandEvent& ev);
 		
+		void spinFramesAnalyzeBefore_Change(wxSpinEvent& ev);
+		void spinFramesAnalyzeAfter_Change(wxSpinEvent& ev);
 private:
 		SharedData* m_sharedData;
 	
@@ -75,6 +79,9 @@ private:
 		
 		wxButton* m_btnSelectRoi;
 		wxButton* m_btnSelectIgnoredAreas;
+		
+		wxSpinCtrl* m_spinFramesAnalyzeBefore;
+		wxSpinCtrl* m_spinFramesAnalyzeAfter;
 
 		wxDECLARE_EVENT_TABLE();
 };

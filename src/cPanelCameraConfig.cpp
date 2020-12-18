@@ -11,7 +11,9 @@ wxBEGIN_EVENT_TABLE(cPanelCameraConfig, wxPanel)
 	EVT_SPINCTRLDOUBLE(CAMERA_ids::SPIN_hitThreshold, cPanelCameraConfig::spinHitThreshold_Change)
 	EVT_SPINCTRLDOUBLE(CAMERA_ids::SPIN_noiseThresh, cPanelCameraConfig::spinNoiseThreshold_Change)
 	EVT_BUTTON(CAMERA_ids::BTN_selectRoi, cPanelCameraConfig::btnSelectRoi_Click)
-	EVT_BUTTON(CAMERA_ids::BTN_selectIgnoredAreas, cPanelCameraConfig::btnSelectIgnoredAreas_Click)	
+	EVT_BUTTON(CAMERA_ids::BTN_selectIgnoredAreas, cPanelCameraConfig::btnSelectIgnoredAreas_Click)
+	EVT_SPINCTRL(CAMERA_ids::SPIN_FramesAnalyzeBefore, cPanelCameraConfig::spinFramesAnalyzeBefore_Change)
+	EVT_SPINCTRL(CAMERA_ids::SPIN_FramesAnalyzeAfter, cPanelCameraConfig::spinFramesAnalyzeAfter_Change)
 wxEND_EVENT_TABLE()
 
 cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfiguration* camConfig, SharedData* sharedData) 
@@ -71,6 +73,27 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	
 	m_btnSelectIgnoredAreas = new wxButton(this, CAMERA_ids::BTN_selectIgnoredAreas, "Select ignored areas");
 	
+	// Sizer frames to analyze
+	wxBoxSizer* sizerAnalyzeFrames = new wxBoxSizer(wxHORIZONTAL);
+
+	wxStaticText* labelFramesBefore = new wxStaticText(this, wxID_ANY, "Frames Analyze Before", wxDefaultPosition, wxDefaultSize);
+	wxStaticText* labelFramesAfter = new wxStaticText(this, wxID_ANY, "Frames Analyze After", wxDefaultPosition, wxDefaultSize);
+//	wxStaticText* labelFrameDetection = new wxStaticText(this, wxID_ANY, "..", wxDefaultPosition, wxDefaultSize);
+	this->m_spinFramesAnalyzeBefore = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesBefore);
+	this->m_spinFramesAnalyzeAfter = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesAfter);
+	
+	wxBoxSizer* sizerFramesBefore = new wxBoxSizer(wxVERTICAL);
+	sizerFramesBefore->Add(labelFramesBefore, 0, wxGROW);
+	sizerFramesBefore->Add(m_spinFramesAnalyzeBefore, 0, wxGROW);
+	
+	wxBoxSizer* sizerFramesAfter = new wxBoxSizer(wxVERTICAL);
+	sizerFramesAfter->Add(labelFramesAfter, 0, wxGROW);
+	sizerFramesAfter->Add(m_spinFramesAnalyzeAfter, 0, wxGROW);
+	
+	sizerAnalyzeFrames->Add(sizerFramesBefore, 1, wxGROW);
+//	sizerAnalyzeFrames->Add(labelFrameDetection, 0, wxGROW);
+	sizerAnalyzeFrames->Add(sizerFramesAfter, 1, wxGROW);
+		
 	// Add widgets to sizer
 	sizerLeft->Add(labelName, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(m_txtName, 0, wxALL | wxGROW, 0);
@@ -120,6 +143,8 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	sizerRight->Add(labelNoise, 0, wxALL | wxGROW, 0);
 	sizerRight->Add(m_spinNoise, 0, wxALL | wxGROW, 0);
 	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	
+	sizerRight->Add(sizerAnalyzeFrames, 0, wxALL | wxGROW, 0);
 	
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
@@ -183,4 +208,12 @@ void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {
 
 void cPanelCameraConfig::btnSelectIgnoredAreas_Click(wxCommandEvent& ev) {
 	AreaSelector::SelectCameraIgnoredAreas(*this->m_config);
+}
+
+void cPanelCameraConfig::spinFramesAnalyzeBefore_Change(wxSpinEvent& ev) {
+	this->m_config->framesToAnalyze.framesBefore = this->m_spinFramesAnalyzeBefore->GetValue();
+}
+
+void cPanelCameraConfig::spinFramesAnalyzeAfter_Change(wxSpinEvent& ev) {
+	this->m_config->framesToAnalyze.framesAfter = this->m_spinFramesAnalyzeAfter->GetValue();
 }

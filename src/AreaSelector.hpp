@@ -15,6 +15,7 @@ namespace AreaSelector {
 		cv::Point startPoint;
 		cv::Mat frame;
 		cv::Mat show;
+		
 		cv::Rect roi;
 	};
 	
