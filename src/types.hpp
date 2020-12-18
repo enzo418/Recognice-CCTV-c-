@@ -8,7 +8,7 @@
 
 struct SharedData {
 	Recognize* recognize = nullptr;
-	Configuration* configuration = nullptr;
+	Configurations* configurations = nullptr;
 
 	wxCheckBox* chckRecognizeActive = nullptr;
 	bool* recognizeActive;

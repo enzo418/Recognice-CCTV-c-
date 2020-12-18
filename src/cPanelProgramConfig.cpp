@@ -13,7 +13,8 @@ wxBEGIN_EVENT_TABLE(cPanelProgramConfig, wxPanel)
 	EVT_CHECKBOX(PROGRAM_ids::CHK_SendImageOfAllCameras, cPanelProgramConfig::chkSendImageOfAllCameras_CheckBoxClick)
 	EVT_CHECKBOX(PROGRAM_ids::CHK_UseGifInsteadOfImage, cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick)	
 	EVT_COMBOBOX(PROGRAM_ids::COMBO_GifQuality, cPanelProgramConfig::comboGifQuality_Select)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_MaxGifFrames, cPanelProgramConfig::spinMaxGifFrames_SpinChange)	
+	EVT_SPINCTRL(PROGRAM_ids::SPIN_FramesBefore, cPanelProgramConfig::spinFramesBefore_SpinChange)
+	EVT_SPINCTRL(PROGRAM_ids::SPIN_FramesAfter, cPanelProgramConfig::spinFramesAfter_SpinChange)
 wxEND_EVENT_TABLE()
 
 cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfiguration& progConfig, SharedData* sharedData) 
@@ -74,16 +75,40 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkUseGifInsteadOfImage = new wxCheckBox(this, PROGRAM_ids::CHK_UseGifInsteadOfImage, wxT("Use gif instead of image"));
 	this->m_chkUseGifInsteadOfImage->SetValue(m_config->useGifInsteadImage);
 
-	wxStaticText* labelGifQuality = new wxStaticText(this, wxID_ANY, "Gif quality", wxDefaultPosition, wxDefaultSize);
+	wxStaticText* labelGifQuality = new wxStaticText(this, wxID_ANY, "Gif resize level (higher = lower quality)", wxDefaultPosition, wxDefaultSize);
 	this->m_comboGifQuality = new wxComboBox(this, PROGRAM_ids::COMBO_GifQuality, wxString("High"), wxDefaultPosition, wxDefaultSize);
+	m_comboGifQuality->Append(wxString("Very High"));
 	m_comboGifQuality->Append(wxString("High"));
 	m_comboGifQuality->Append(wxString("Medium"));
 	m_comboGifQuality->Append(wxString("Low"));
+	m_comboGifQuality->Append(wxString("None"));
+	
+	m_comboGifQuality->SetValue(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage));
 
-	wxStaticText* labelMaxGifFrames = new wxStaticText(this, wxID_ANY, "Max gif frames", wxDefaultPosition, wxDefaultSize);
-	this->m_spinMaxGifFrames = new wxSpinCtrl(this, PROGRAM_ids::SPIN_MaxGifFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, 50);
+	// -- Widgets GIF FRAMES
 
-	// Add widgets to sizer
+	wxBoxSizer* sizerGifFrames = new wxBoxSizer(wxHORIZONTAL);
+
+	wxStaticText* labelFramesBefore = new wxStaticText(this, wxID_ANY, "Frames Before", wxDefaultPosition, wxDefaultSize);
+	wxStaticText* labelFramesAfter = new wxStaticText(this, wxID_ANY, "Frames After", wxDefaultPosition, wxDefaultSize);
+//	wxStaticText* labelFrameDetection = new wxStaticText(this, wxID_ANY, "..", wxDefaultPosition, wxDefaultSize);
+	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, *this->m_config->numberGifFrames.framesBefore);
+	this->m_spinFramesAfter = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, *this->m_config->numberGifFrames.framesAfter);
+	
+	wxBoxSizer* sizerFramesBefore = new wxBoxSizer(wxVERTICAL);
+	sizerFramesBefore->Add(labelFramesBefore, 0, wxGROW);
+	sizerFramesBefore->Add(m_spinFramesBefore, 0, wxGROW);
+	
+	wxBoxSizer* sizerFramesAfter = new wxBoxSizer(wxVERTICAL);
+	sizerFramesAfter->Add(labelFramesAfter, 0, wxGROW);
+	sizerFramesAfter->Add(m_spinFramesAfter, 0, wxGROW);
+	
+	sizerGifFrames->Add(sizerFramesBefore, 1, wxGROW);
+//	sizerGifFrames->Add(labelFrameDetection, 0, wxGROW);
+	sizerGifFrames->Add(sizerFramesAfter, 1, wxGROW);
+	
+
+	// -- Add widgets to sizer
 	sizerLeft->Add(labelMsBetweenFrames, 0, wxALL | wxGROW, 0);		
 	sizerLeft->Add(m_spinMsBetweenFrames, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
@@ -137,9 +162,9 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	sizerRight->Add(m_comboGifQuality, 0, wxALL | wxGROW, 0);
 	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
 
-	sizerRight->Add(labelMaxGifFrames, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinMaxGifFrames, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
+//	sizerRight->Add(labelMaxGifFrames, 0, wxALL | wxGROW, 0);
+	sizerRight->Add(sizerGifFrames, 0, wxALL | wxGROW, 0);
+//	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
 	
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
@@ -224,12 +249,18 @@ void cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& 
 }
 
 void cPanelProgramConfig::comboGifQuality_Select(wxCommandEvent& ev) {
-	/// TODO: This
-	// this->m_config->gifResizePercentage = GifResizePercentage
+	wxString val = ev.GetString();
+	this->m_config->gifResizePercentage = Utils::GifResizePercentageFromString(val.ToStdString());
+	std::cout << "gif: " << this->m_config->gifResizePercentage << std::endl;
 	ev.Skip();
 }
 
-void cPanelProgramConfig::spinMaxGifFrames_SpinChange(wxSpinEvent& ev) {
-	/// TODO: This
+void cPanelProgramConfig::spinFramesBefore_SpinChange(wxSpinEvent& ev) {
+	*this->m_config->numberGifFrames.framesBefore = ev.GetValue();
+	ev.Skip();
+}
+
+void cPanelProgramConfig::spinFramesAfter_SpinChange(wxSpinEvent& ev) {
+	*this->m_config->numberGifFrames.framesAfter = ev.GetValue();
 	ev.Skip();
 }

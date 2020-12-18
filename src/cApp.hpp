@@ -24,7 +24,7 @@ class cApp : public wxApp {
 		cMain* m_main = nullptr;
 		
 		cPreviewCameras* m_preview = nullptr;
-		Configuration* m_configurationFile = nullptr;
+		Configurations configurations;
 		Recognize* m_recognize = nullptr;
 
 		bool m_startRecognizeOnStart;

@@ -3,14 +3,12 @@
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(int argc, char* argv[]){
 	bool isUrl = false;
-	bool startConfiguration = false;
 	std::string pathConfig = "./config.ini";    
 
 	const std::string keys = 
 		"{help h       |            | show help message}"
 		"{url          |            | url of the camera to obtain a image}"
-		"{config_path  | config.ini | path of the configuration file}"
-		"{start_config | no         | start the configuration of the cameras}";
+		"{config_path  | config.ini | path of the configuration file}";
 
 	cv::CommandLineParser parser (argc, argv, keys);
 
@@ -55,25 +53,16 @@ int main(int argc, char* argv[]){
 
 	if (parser.has("config_path")) {
 		pathConfig = parser.get<std::string>("config_path");
-	}	
-
-	if(parser.has("start_config")){
-		startConfiguration = parser.get<std::string>("start_config") != "no";
 	}
 
 	// Get the cameras and program configurations
-	Configuration fhelper(pathConfig.c_str());
-	fhelper.ReadConfigurations();
+	Configurations cfgs = ConfigurationFile::ReadConfigurations(pathConfig);
 
-	if (fhelper.configurations.camerasConfigs.size() == 0 || startConfiguration){
-		if(!startConfiguration)
-			std::cout << "Couldn't find the configuration file. \n";        
-		fhelper.StartConfiguration();
-	}    
+	assert(cfgs.camerasConfigs.size() != 0);
 
 	Recognize recognize;
 
-	recognize.Start(std::ref(fhelper.configurations), fhelper.configurations.programConfig.showPreview, fhelper.configurations.programConfig.telegramConfig.useTelegramBot);
+	recognize.Start(std::ref(cfgs), cfgs.programConfig.showPreview, cfgs.programConfig.telegramConfig.useTelegramBot);
 
 	// signal(SIGINT, signal_callback_handler);
 

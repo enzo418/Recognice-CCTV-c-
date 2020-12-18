@@ -37,7 +37,7 @@ enum MAIN_ids {
 
 class cMain : public wxFrame {
 	public:
-		cMain(Recognize* recognize, Configuration* configFile, bool& recognizeActive, wxConfig* appConfig, bool& mainClosed);
+		cMain(Recognize* recognize, Configurations& configs, bool& recognizeActive, wxConfig* appConfig, bool& mainClosed, std::string filePath);
 		~cMain();
 
 	protected:
@@ -55,7 +55,7 @@ class cMain : public wxFrame {
 
 		wxConfig* m_appConfig = nullptr;
 		
-		Configuration* m_configFile;
+		std::string m_filePath;
 
 		wxPanel* m_root = nullptr;
 		
@@ -64,7 +64,7 @@ class cMain : public wxFrame {
 		cPreviewCameras* m_preview = nullptr;
 		
 		wxCheckBox* m_chkRecognizeActive = nullptr;
-		wxCheckBox* m_chkStartRecognizeOnStart = nullptr;		
+		wxCheckBox* m_chkStartRecognizeOnStart = nullptr;
 
 		SharedData m_sharedData;
 

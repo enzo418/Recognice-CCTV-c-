@@ -11,9 +11,14 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MAIN_ids::BTN_RemoveCamera, cMain::btnRemoveCamera_Click)
 wxEND_EVENT_TABLE()
 
-cMain::cMain(Recognize* recognize, Configuration* configFile, bool& recognizeActive, wxConfig* appConfig, bool& mainClosed) 
+cMain::cMain(	Recognize* recognize, 
+				Configurations& configs, 
+				bool& recognizeActive, 
+				wxConfig* appConfig, 
+				bool& mainClosed,
+				std::string filePath)
 		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(840, 840)), 
-		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_configFile(configFile) {
+		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath) {
 	/**
 	 * m_root
 	 *    |-- netbook
@@ -23,12 +28,12 @@ cMain::cMain(Recognize* recognize, Configuration* configFile, bool& recognizeAct
 	this->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(cMain::OnQuitter));
 
 	this->m_sharedData.recognize = recognize;
-	this->m_sharedData.configuration = configFile;
+	this->m_sharedData.configurations = &configs;
 	this->m_sharedData.recognizeActive = &recognizeActive;
 	this->m_startRecognizeOnStart = recognizeActive;
 	
-	this->m_tempConfig.camerasConfigs = configFile->configurations.camerasConfigs;
-	this->m_tempConfig.programConfig = configFile->configurations.programConfig;
+	this->m_tempConfig.camerasConfigs = configs.camerasConfigs;
+	this->m_tempConfig.programConfig = configs.programConfig;
 
 	// root panel
 	this->m_root = new wxPanel(this, wxID_ANY);
@@ -117,11 +122,11 @@ void cMain::chkToggleRecognize_Checked(wxCommandEvent& ev) {
 		*this->m_sharedData.recognizeActive = false;
 		this->m_sharedData.recognize->CloseAndJoin();
 	} else {
-		for (size_t i = 0; i < this->m_sharedData.configuration->configurations.camerasConfigs.size(); i++) {
-			std::cout << "\t" << this->m_sharedData.configuration->configurations.camerasConfigs[i].cameraName  << std::endl;
+		for (size_t i = 0; i < this->m_sharedData.configurations->camerasConfigs.size(); i++) {
+			std::cout << "\t" << this->m_sharedData.configurations->camerasConfigs[i].cameraName  << std::endl;
 		}
 		
-		this->m_sharedData.recognize->Start(std::ref(this->m_sharedData.configuration->configurations), false, this->m_sharedData.configuration->configurations.programConfig.telegramConfig.useTelegramBot);
+		this->m_sharedData.recognize->Start(std::ref(*this->m_sharedData.configurations), false, this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		*this->m_sharedData.recognizeActive = true;
 	}
 }
@@ -164,17 +169,17 @@ void cMain::btnApplyChanges_Click(wxCommandEvent& ev) {
 		*this->m_sharedData.recognizeActive = false;
 		
 		// copy temp configs
-		this->m_sharedData.configuration->configurations.programConfig = this->m_tempConfig.programConfig;
-		this->m_sharedData.configuration->configurations.camerasConfigs = this->m_tempConfig.camerasConfigs;
+		this->m_sharedData.configurations->programConfig = this->m_tempConfig.programConfig;
+		this->m_sharedData.configurations->camerasConfigs = this->m_tempConfig.camerasConfigs;
 		
 		// Start recognize
-		this->m_sharedData.recognize->Start(this->m_sharedData.configuration->configurations, false, this->m_sharedData.configuration->configurations.programConfig.telegramConfig.useTelegramBot);
+		this->m_sharedData.recognize->Start(*this->m_sharedData.configurations, false,this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		
 		*this->m_sharedData.recognizeActive = true;
 	} else {
 		// copy temp configs
-		this->m_sharedData.configuration->configurations.programConfig = this->m_tempConfig.programConfig;
-		this->m_sharedData.configuration->configurations.camerasConfigs = this->m_tempConfig.camerasConfigs;
+		this->m_sharedData.configurations->programConfig = this->m_tempConfig.programConfig;
+		this->m_sharedData.configurations->camerasConfigs = this->m_tempConfig.camerasConfigs;
 	}
 		
 	ev.Skip();
@@ -184,8 +189,8 @@ void cMain::btnUndoChanges_Click(wxCommandEvent& ev) {
 	size_t lastSelection = this->m_book->GetSelection();
 	
 	// restore configs to original
-	this->m_tempConfig.programConfig = this->m_sharedData.configuration->configurations.programConfig;
-	this->m_tempConfig.camerasConfigs = this->m_sharedData.configuration->configurations.camerasConfigs;
+	this->m_tempConfig.programConfig = this->m_sharedData.configurations->programConfig;
+	this->m_tempConfig.camerasConfigs = this->m_sharedData.configurations->camerasConfigs;
 	
 	this->m_book->DeleteAllPages();
 	
@@ -198,7 +203,7 @@ void cMain::btnUndoChanges_Click(wxCommandEvent& ev) {
 }
 
 void cMain::btnSaveToFile_Click(wxCommandEvent& ev) {	
-	this->m_configFile->SaveConfigurations();
+	ConfigurationFile::SaveConfigurations(*this->m_sharedData.configurations, this->m_filePath);
 	ev.Skip();
 }
 
@@ -217,7 +222,7 @@ void cMain::btnRemoveCamera_Click(wxCommandEvent& ev) {
 		wxMessageBox("Cannot delete the program configuration.", "Couldn't delete the camera");
 	} else {
 		this->m_book->RemovePage(s);
-		this->m_sharedData.configuration->configurations.camerasConfigs.erase(this->m_sharedData.configuration->configurations.camerasConfigs.begin() + s - 1);
+		this->m_sharedData.configurations->camerasConfigs.erase(this->m_sharedData.configurations->camerasConfigs.begin() + s - 1);
 		this->m_tempConfig.camerasConfigs.erase(this->m_tempConfig.camerasConfigs.begin() + s - 1);
 	}
 }

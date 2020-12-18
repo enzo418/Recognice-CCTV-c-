@@ -36,7 +36,8 @@ enum PROGRAM_ids {
 	CHK_SendImageOfAllCameras,
 	CHK_UseGifInsteadOfImage,
 	COMBO_GifQuality,
-	SPIN_MaxGifFrames
+	SPIN_FramesBefore,
+	SPIN_FramesAfter
 };
 
 class cPanelProgramConfig : public wxPanel {
@@ -67,7 +68,8 @@ class cPanelProgramConfig : public wxPanel {
 		wxCheckBox* m_chkSendImageOfAllCameras;
 		wxCheckBox* m_chkUseGifInsteadOfImage;
 		wxComboBox* m_comboGifQuality;
-		wxSpinCtrl* m_spinMaxGifFrames;
+		wxSpinCtrl* m_spinFramesBefore;
+		wxSpinCtrl* m_spinFramesAfter;
 
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
@@ -85,8 +87,8 @@ class cPanelProgramConfig : public wxPanel {
 		void chkSendImageOfAllCameras_CheckBoxClick(wxCommandEvent& ev);
 		void chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& ev);
 		void comboGifQuality_Select(wxCommandEvent& ev);
-		void spinMaxGifFrames_SpinChange(wxSpinEvent& ev);
-
+		void spinFramesBefore_SpinChange(wxSpinEvent& ev);
+		void spinFramesAfter_SpinChange(wxSpinEvent& ev);
 	private:
 		wxDECLARE_EVENT_TABLE();
 };
