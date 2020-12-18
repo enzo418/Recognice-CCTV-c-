@@ -11,6 +11,8 @@
 #include "../recognize/src/types_configuration.hpp"
 #include "../recognize/src/types.hpp"
 
+#include "AreaSelector.hpp"
+
 #include "types.hpp"
 
 enum CAMERA_ids {
@@ -24,7 +26,8 @@ enum CAMERA_ids {
 	SPIN_updateThresFreq,
 	COMBO_type,
 	SPIN_hitThreshold,
-	SPIN_noiseThresh
+	SPIN_noiseThresh,
+	BTN_selectRoi
 };
 
 class cPanelCameraConfig : public wxPanel {
@@ -44,7 +47,11 @@ class cPanelCameraConfig : public wxPanel {
 		void spinHitThreshold_Change(wxSpinDoubleEvent& ev);
 		void spinNoiseThreshold_Change(wxSpinDoubleEvent& ev);
 		void comboType_Select(wxCommandEvent& ev);
+		void btnSelectRoi_Click(wxCommandEvent& ev);
+		
 private:
+		AreaSelector m_areaSelector;
+
 		SharedData* m_sharedData;
 	
 		CameraConfiguration* m_config;
@@ -65,6 +72,8 @@ private:
 		wxSpinCtrlDouble* m_spinHitThreshold;
 
 		wxSpinCtrlDouble* m_spinNoise;
+		
+		wxButton* m_btnSelectRoi;
 
 		wxDECLARE_EVENT_TABLE();
 };

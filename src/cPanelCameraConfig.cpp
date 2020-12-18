@@ -10,6 +10,7 @@ wxBEGIN_EVENT_TABLE(cPanelCameraConfig, wxPanel)
 	EVT_COMBOBOX(CAMERA_ids::COMBO_type, cPanelCameraConfig::comboType_Select)
 	EVT_SPINCTRLDOUBLE(CAMERA_ids::SPIN_hitThreshold, cPanelCameraConfig::spinHitThreshold_Change)
 	EVT_SPINCTRLDOUBLE(CAMERA_ids::SPIN_noiseThresh, cPanelCameraConfig::spinNoiseThreshold_Change)
+	EVT_BUTTON(CAMERA_ids::BTN_selectRoi, cPanelCameraConfig::btnSelectRoi_Click)
 wxEND_EVENT_TABLE()
 
 cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfiguration* camConfig, SharedData* sharedData) 
@@ -65,8 +66,10 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	m_spinNoise = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_noiseThresh, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->noiseThreshold);
 	m_spinNoise->SetDigits(2);
 	
+	m_btnSelectRoi = new wxButton(this, CAMERA_ids::BTN_selectRoi, "Select Region of interest");
+	
 	// Add widgets to sizer
-	sizerLeft->Add(labelName, 0, wxALL | wxGROW, 0);		
+	sizerLeft->Add(labelName, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(m_txtName, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
 
@@ -89,6 +92,8 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	sizerLeft->Add(labelChangeThreshold, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(m_spinChangeThreshold, 0, wxALL | wxGROW, 0);
 	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+	
+	sizerLeft->Add(m_btnSelectRoi, 0, wxALL | wxGROW, 0);
 
 	sizerRight->Add(labelMinimumThreshold, 0, wxALL | wxGROW, 0);
 	sizerRight->Add(m_spinMinimumThreshold, 0, wxALL | wxGROW, 0);
@@ -164,4 +169,8 @@ void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
 	wxString t = this->m_comboType->GetValue();
 	this->m_config->type = (t == "Disabled" ? 0 : (t == wxT("Sentry")  ? 1 : 2));
 	std::cout << this->m_comboType->GetValue()  << (int)this->m_config->type << std::endl;
+}
+
+void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {
+	this->m_areaSelector.SelectCameraROI(this->m_config->url, this->m_config->roi);
 }
