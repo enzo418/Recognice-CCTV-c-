@@ -18,7 +18,7 @@ struct CameraConfiguration {
 	std::string url;
 
 	// Region of interest
-	ROI roi;
+	cv::Rect roi;
 
 	// Threshold to recognice that a match/detection is valid
 	double hitThreshold = 0.05;

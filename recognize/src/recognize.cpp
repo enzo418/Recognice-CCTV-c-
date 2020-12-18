@@ -25,8 +25,6 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	FindingInfo* lastValidFind = nullptr;
 
-	cv::Rect roi(camera.config->roi.point1, camera.config->roi.point2);	
-
 	//// First get all the frames in order
 
 	size_t totalFrames = 0;
@@ -35,9 +33,9 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			frames[totalFrames] = &camera.gifFrames.before[i];
 
 			// Take the region of interes
-			if (!camera.config->roi.isEmpty()) {
+			if (!camera.config->roi.empty()) {
 				framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone();
-				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(roi);
+				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi);
 			}
 
 			if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
@@ -55,9 +53,9 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	for (; totalFrames < ammountOfFrames; totalFrames++) {
 		frames[totalFrames] = &camera.gifFrames.after[totalFrames - programConfig.numberGifFrames.framesBefore];
 		
-		if (!camera.config->roi.isEmpty()) {
+		if (!camera.config->roi.empty()) {
 			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
-			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(roi); 
+			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi); 
 		}
 
 		if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
@@ -88,7 +86,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			cv::Point2f vertices[4];
 			finding.rect.points(vertices);
 			for (int j = 0; j < 4; j++) {			
-				vertices[j].x += camera.config->roi.point1.x;
+				vertices[j].x += camera.config->roi.x;
 			}
 			
 			// check if finding is overlapping with a ignored area
@@ -151,7 +149,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 				if(detectSz > 0) {
 					// draw detections on frame
 					for (size_t i = 0; i < detectSz; i++) {
-						// detections[i].x += camera.config->roi.point1.x;
+						// detections[i].x += camera.config->roi.x;
 						cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
 						cv::rectangle(framesTransformed[i].frame, detections[i], color);					
 						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
@@ -376,7 +374,7 @@ void Recognize::StartPreviewCameras() {
 
 						if (showAreaCameraSees && !showProcessedFrames) {
 							cv::Scalar color = cv::Scalar(255, 0, 0);
-							cv::rectangle(frames[cameras[i].config->order], cameras[i].config->roi.point1, cameras[i].config->roi.point2, color);
+							cv::rectangle(frames[cameras[i].config->order], cameras[i].config->roi, color);
 						}
 
 						cameras[i].frames.erase(cameras[i].frames.begin());

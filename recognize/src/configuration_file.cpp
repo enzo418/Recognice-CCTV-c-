@@ -38,6 +38,7 @@ namespace ConfigurationFile {
 	template<typename T>
 	T ReadNextConfiguration(std::fstream& file, T& config) {
 		std::string line;
+		size_t lineNumber = 0;
 
 		while (!Utils::nextLineIsHeader(file) && std::getline(file, line)) {
 			if (line.size() > 3 && line[0] != '#' && line[0] != ';') {
@@ -54,9 +55,15 @@ namespace ConfigurationFile {
 				val = line.substr(indx + 1, line.size() - 1);
 
 				if (id.size() > 0 && val.size() > 0) {
-					ConfigurationFile::SaveIdVal(config, id, val);
+					if (!ConfigurationFile::SaveIdVal(config, id, val)) {
+						std::cout 	<< "Invalid field of value in line: " << lineNumber 
+									<< ". Field: \"" << id << "\" value: \"" << val << "\"" << std::endl;
+						std::getchar();
+						exit(-1);
+					}
 				}
 			}
+			lineNumber++;
 		}
 
 		return config;
@@ -134,8 +141,8 @@ namespace ConfigurationFile {
 			else
 				ss << "\n;url=" << cfg.url;
 			
-		ss	<< "\n\n; ROI (Regin of interest) crop each image that the camera sends. Sintaxis is: [(<p_x>,<p_y>),(<widht>,<height>)]"
-			<< "\nroi=" <<  Utils::RoiToString(cfg.roi)
+		ss	<< "\n\n; ROI (Region of interest) crop each image that the camera sends. Sintaxis is: <p_x>,<p_y>,<widht>,<height>"
+			<< "\nroi=" << Utils::RectToCommaString(cfg.roi)
 			
 			<< "\n\n; "
 			<< "\nhitThreshold=" <<  std::fixed << std::setprecision(2) << cfg.hitThreshold
@@ -205,8 +212,8 @@ namespace ConfigurationFile {
 			<< "\n\n; ";
 			
 		// area delimites (not in use)
-		if (!cfg.areasDelimiters.rectEntry.empty() || !cfg.areasDelimiters.rectExit.empty())
-			ss << "\nareasDelimiters=" << Utils::AreasDelimitersToString(cfg.areasDelimiters);
+//		if (!cfg.areasDelimiters.rectEntry.empty() || !cfg.areasDelimiters.rectExit.empty())
+//			ss << "\nareasDelimiters=" << Utils::AreasDelimitersToString(cfg.areasDelimiters);
 						
 		ConfigurationFile::WriteLineInFile(file, ss.str().c_str());
 	}
@@ -262,12 +269,12 @@ namespace ConfigurationFile {
 				
 				<< "\n\n; Selects the Quality of the gif. Values are:"
 				<< "\n; Value : Meaning" 
-				<< "\n;  100  : NONE. Do not resize the frames."
-				<< "\n;  80   : LOW. Lowers 20% the resolution."
-				<< "\n;  60   : MEDIUM. Lowers 40% the resolution."
-				<< "\n;  40   : HIGH. Lowers 60% the resolution."
-				<< "\n;  20   : VERYHIGH. Lowers 80% the resolution."
-				<< "\ngifResizePercentage=" << (int)cfg.gifResizePercentage;
+				<< "\n;  NONE  : Do not resize the frames."
+				<< "\n;  LOW   : Lowers 20% the resolution."
+				<< "\n;  MEDIUM   : Lowers 40% the resolution."
+				<< "\n;  HIGH   : Lowers 60% the resolution."
+				<< "\n;  VERYHIGH   : Lowers 80% the resolution."
+				<< "\ngifResizePercentage=" << Utils::GifResizePercentageToString(cfg.gifResizePercentage);
 				
 		ss << "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
@@ -296,7 +303,8 @@ namespace ConfigurationFile {
 	}
 
 	/// <summary> Saves the given id and value into the corresponding member of the program config </summary>
-	void SaveIdVal(ProgramConfiguration& config, std::string id, std::string value) {
+	bool SaveIdVal(ProgramConfiguration& config, std::string id, std::string value) {
+		bool sucess = true;
 		Utils::toLowerCase(id);
 
 		if (id == "msbetweenframe" || id == "millisbetweenframe") {
@@ -313,9 +321,7 @@ namespace ConfigurationFile {
 					config.outputResolution.width = std::stoi(value.substr(0, indx));
 					config.outputResolution.height = std::stoi(value.substr(indx + 1, value.size() - 1));
 				} catch (std::invalid_argument e) {
-					std::cout << "Invalid input at option \"outputResolution\" in config.ini header PROGRAM. Expected format: width,height.\n";
-					std::getchar();
-					std::exit(-1);
+					sucess = false;
 				}
 			}
 		} else if (id == "telegram_bot_api" || id == "telegram_api"
@@ -349,16 +355,19 @@ namespace ConfigurationFile {
 			Utils::toLowerCase(value);
 			config.useGifInsteadImage = value == "no" ? false : true;
 		} else if (id == "gifresizepercentage" || id == "gifresize") {
-			if (value == "None") {
+			Utils::toLowerCase(value);
+			if (value == "none") {
 				config.gifResizePercentage = GifResizePercentage::None;
-			} else if (value == "Low") {
+			} else if (value == "low") {
 				config.gifResizePercentage = GifResizePercentage::Low;
-			} else if (value == "Medium") {
+			} else if (value == "medium") {
 				config.gifResizePercentage = GifResizePercentage::Medium;
-			} else if (value == "High") {
+			} else if (value == "high") {
 				config.gifResizePercentage = GifResizePercentage::High;
-			} else if (value == "VeryHigh") {
+			} else if (value == "veryhigh" || value == "very high") {
 				config.gifResizePercentage = GifResizePercentage::VeryHigh;
+			} else {
+				sucess = false;
 			}
 		} else if (id == "gifframes") {
 			std::vector<std::string> results = Utils::GetRange(value);
@@ -367,21 +376,19 @@ namespace ConfigurationFile {
 				config.numberGifFrames.framesBefore = size_t(std::stol(results[0]));
 				config.numberGifFrames.framesAfter = size_t(std::stol(results[2]));
 			} else {
-				std::cout << "Invalid field input \"gifframes\" in config.ini header PROGRAM. Expected format: totalFramesBefore..totalFramesAfter\n e.g. 5..60";
-				std::getchar();
-				std::exit(-1);
+				sucess = false;
 			}
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
 			config.showIgnoredAreas = value == "no" ? false : true;
-		} else {
-			std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 		}
+		
+		return sucess;
 	}
 
-
 	/// <summary> Saves the given id and value into the corresponding member of the camera config </summary>
-	void SaveIdVal(CameraConfiguration& config, std::string id, std::string value) {
+	bool SaveIdVal(CameraConfiguration& config, std::string id, std::string value) {
+		bool sucess = true;
 		Utils::toLowerCase(id);
 
 		if (id == "cameraname" || id == "name") {
@@ -402,6 +409,8 @@ namespace ConfigurationFile {
 				config.type = CAMERA_SENTRY;
 			} else if (value == "disabled") {
 				config.type = CAMERA_DISABLED;
+			} else {
+				sucess = false;
 			}
 		} else if (id == "hitthreshold") {
 			std::replace(value.begin(), value.end(), ',', '.');
@@ -411,8 +420,12 @@ namespace ConfigurationFile {
 			int val = std::stoi(value);
 			config.changeThreshold = val;
 		} else if (id == "roi") {
-			// convert [(x1,y1), (x2,y2)] to roi struct
-			config.roi = Utils::GetROI(value);
+			std::vector<int> results = Utils::GetNumbersString(value);
+			if (results.size() == 4) {
+				config.roi = cv::Rect(cv::Point(results[0], results[1]), cv::Size(results[2], results[3]));
+			} else {
+				sucess = false;
+			}
 		} else if (id == "thresholdnoise" || id == "noisethreshold") {
 			std::replace(value.begin(), value.end(), ',', '.');
 			double val = std::stof(value);
@@ -420,9 +433,11 @@ namespace ConfigurationFile {
 		} else if (id == "secondswaitentryexit") {
 			int val = std::stoi(value);
 			config.secondsWaitEntryExit = val;
-		} else if (id == "areasdelimiters" || id == "areadelimiters"){
-			config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
-		} else if (id == "minimumthreshold") {
+		} 
+//		else if (id == "areasdelimiters" || id == "areadelimiters"){
+//			config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
+//		} 
+		else if (id == "minimumthreshold") {
 			int val = std::stoi(value);
 			config.minimumThreshold = val;
 		} else if (id == "increasetresholdfactor" || id == "increaseTreshold") {
@@ -436,10 +451,15 @@ namespace ConfigurationFile {
 			config.useHighConstrast = value == "yes";
 		} else if (id == "ignoredareas"){
 			std::vector<int> results = Utils::GetNumbersString(value);
-			for (size_t i = 0; i < results.size() / 4; i++) {
-				int base = i * 4;
-				config.ignoredAreas.push_back(cv::Rect(cv::Point(results[base], results[base+1]), cv::Size(results[base+2], results[base+3])));			
-			}	
+			
+			if (results.size() % 4 == 0) {
+				for (size_t i = 0; i < results.size() / 4; i++) {
+					int base = i * 4;
+					config.ignoredAreas.push_back(cv::Rect(cv::Point(results[base], results[base+1]), cv::Size(results[base+2], results[base+3])));			
+				}
+			} else {
+				sucess = false;
+			}
 		} else if (id == "framestoanalyze") {
 			std::vector<std::string> results = Utils::GetRange(value);
 			size_t sz = results.size();
@@ -453,6 +473,8 @@ namespace ConfigurationFile {
 					if (sz >= 3)
 						config.framesToAnalyze.framesAfter = size_t(std::stol(results[2]));
 				}
+			} else {
+				sucess = false;
 			}
 		} else if (id == "thresholdfindingsonignoredarea") {
 			int val = std::stoi(value);
@@ -460,8 +482,8 @@ namespace ConfigurationFile {
 		} else if (id == "minpercentageareaneededtoignore") {
 			double val = std::stod(value);
 			config.minPercentageAreaNeededToIgnore = val == 0 ? 0 : val / 100.0;
-		} else {
-			std::cout << "Campo: \"" <<  id << "\" no reconocido" << std::endl; 
 		}
+		
+		return sucess;
 	}
 }

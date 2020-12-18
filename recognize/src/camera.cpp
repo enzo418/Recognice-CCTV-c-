@@ -30,9 +30,8 @@ void Camera::ApplyBasicsTransformations() {
 	// }
 
 	// Take the region of interes
-	if (!this->config->roi.isEmpty()) {
-		cv::Rect roi(this->config->roi.point1, this->config->roi.point2);
-		this->frame = this->frame(roi);
+	if (!this->config->roi.empty()) {
+		this->frame = this->frame(this->config->roi);
 	}
 
 	// Then rotate it
@@ -247,8 +246,8 @@ void Camera::ReadFramesWithInterval() {
 			if (showPreview && !showProcessedImages) {
 				if (this->_programConfig->showIgnoredAreas) { 
 					// Draw ignored areas
-					for (auto i : this->config->ignoredAreas) {						
-						i.x += this->config->roi.point1.x;						
+					for (auto i : this->config->ignoredAreas) {
+						i.x += this->config->roi.x;
 						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}
 				}

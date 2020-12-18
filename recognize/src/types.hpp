@@ -73,22 +73,6 @@ struct Register{
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 
-// Region of interest
-class ROI {
-public:
-	cv::Point point1;
-	cv::Point point2;
-
-	ROI() {
-		point1 = cv::Point(0, 0);
-		point2 = cv::Point(RES_WIDTH, RES_HEIGHT);
-	};
-
-	bool isEmpty() {
-		return (point1.x == 0 && point1.y == 0 && point2.x == 0 && point2.y == 0);
-	};
-};
-
 typedef unsigned char CAMERATYPE;
 
 enum {

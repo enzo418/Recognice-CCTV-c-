@@ -39,10 +39,10 @@ namespace ConfigurationFile {
 	 T ReadNextConfiguration(std::fstream& file, T& config);
 
 	// writes the value in the field id
-	 void SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
+	 bool SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
 
 	// writes the value in the field id
-	 void SaveIdVal(ProgramConfiguration& config, std::string id, std::string value);
+	 bool SaveIdVal(ProgramConfiguration& config, std::string id, std::string value);
 
 	 inline void WriteLineInFile(std::fstream& file, const char* line);
 

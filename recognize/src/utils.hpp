@@ -10,6 +10,7 @@
 #include <ctime>
 #include <stdio.h>
 #include <regex>
+#include <opencv2/opencv.hpp>
 
 #include "types.hpp"
 #include "types_configuration.hpp"
@@ -80,51 +81,6 @@ namespace Utils {
 		
 		//struct stat buffer;
 		//return (stat(name.c_str(), &buffer) == 0);
-	}
-	#pragma endregion
-
-	#pragma region RegionOfInteres
-	static ROI GetROI(std::string roi_str) {
-		ROI roi;
-
-		const char* delimiters = " [],()";
-		
-		#ifdef WINDOWS
-		char* next_token;
-		char* res = strtok_s(&roi_str[0], delimiters, &next_token);
-		#else
-		char* res = strtok(&roi_str[0], delimiters);
-		#endif
-		
-		uint8_t control = 0;
-		while (res != NULL) {
-			int fnd = std::stoi(res);
-			if (control == 0)
-				roi.point1.x = fnd;
-			else if (control == 1)
-				roi.point1.y = fnd;
-			else if (control == 2)
-				roi.point2.x = fnd;
-			else if (control == 3)
-				roi.point2.y = fnd;
-				
-			#ifdef WINDOWS
-			res = strtok_s(NULL, delimiters, &next_token);
-			#else
-			res = strtok(NULL, delimiters);
-			#endif
-			
-			control++;
-		}
-
-		return roi;
-	}
-
-	static std::string RoiToString(const ROI& roi) {
-		std::ostringstream ss;
-		ss << "[(" << roi.point1.x << "," << roi.point1.y
-			<< "),(" << roi.point2.x << "," << roi.point2.y << ")]";
-		return std::move(ss).str();
 	}
 	#pragma endregion
 
@@ -262,64 +218,8 @@ namespace Utils {
 			// << std::endl;
 			return 0;
 		}
-	} 
-
-	static AreasDelimiters StringToAreaDelimiters(const char* str, ROI& roi){
-		const char* delimiters = " [],()";
-		AreasDelimiters adel;
-
-		char* copy = strdup(str);
-		
-		#ifdef WINDOWS
-		char* next_token;
-		char* res = strtok_s(&copy[0], delimiters, &next_token);
-		#else
-		char* res = strtok(&copy[0], delimiters);
-		#endif
-		
-		uint8_t control = 0;
-		while (res != NULL) {
-			int fnd = std::stoi(res);
-			if (control == 0)
-				adel.rectEntry.x = fnd + roi.point1.x;
-			else if (control == 1)
-				adel.rectEntry.y = fnd + roi.point1.y;
-			else if (control == 2)
-				adel.rectEntry.width = fnd;
-			else if (control == 3)
-				adel.rectEntry.height = fnd;
-			else if (control == 4)
-				adel.rectExit.x = fnd + roi.point1.x;
-			else if (control == 5)
-				adel.rectExit.y = fnd + roi.point1.y;
-			else if (control == 6)
-				adel.rectExit.width = fnd;
-			else if (control == 7)
-				adel.rectExit.height = fnd;
-
-			#ifdef WINDOWS
-			res = strtok_s(NULL, delimiters, &next_token);
-			#else
-			res = strtok(NULL, delimiters);
-			#endif
-			
-			control++;
-		}
-
-		free(copy);
-
-		return adel;
 	}
 	
-	static std::string AreasDelimitersToString(const AreasDelimiters& adel) {
-		std::ostringstream ss;
-		ss << "[(" << adel.rectEntry.x << "," << adel.rectEntry.y
-			<< "),(" << adel.rectEntry.width << "," << adel.rectEntry.height << ")]" 
-			<< "[(" << adel.rectExit.x << "," << adel.rectExit.y
-			<< "),(" << adel.rectExit.width << "," << adel.rectExit.height << ")]" ;
-		return std::move(ss).str();
-	}
-
 	static std::vector<std::string> SplitString(const std::string& str, const std::string& delim) {
 		std::vector<std::string> tokens;
 		size_t prev = 0, pos = 0;
@@ -403,7 +303,7 @@ namespace Utils {
 		
 		for (size_t i = 0; i < ia.size(); i++) {
 			std::ostringstream ss;
-			ss << "[(" << ia[i].x << ia[i].y << "),(" << ia[i].width << "," << ia[i].height << ")]";
+			ss << "[(" << ia[i].x << ", " << ia[i].y << "),(" << ia[i].width << ", " << ia[i].height << ")]";
 			s += ss.str();
 			if (i != ia.size() - 1)
 				s += ",";
@@ -454,6 +354,12 @@ namespace Utils {
 			assert(0);
 			
 		return r;
+	}
+	
+	static std::string RectToCommaString(const cv::Rect & roi) {
+		std::ostringstream ss;
+		ss << roi.x << "," << roi.y << "," << roi.width << "," << roi.height;
+		return ss.str();
 	}
 };
 
