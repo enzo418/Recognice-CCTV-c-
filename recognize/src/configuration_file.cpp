@@ -27,9 +27,7 @@ namespace ConfigurationFile {
 		if (!file.is_open()){ 
 			char filename[MAX_PATH] = {};
 			strcpy_s(filename, GetFilePath(fn.c_str()));
-			if (Utils::FileExist(filename)) {
-				file.open(filename, std::ofstream::out | std::ofstream::trunc);
-			}
+			file.open(filename, std::ofstream::out | std::ofstream::trunc);
 		}
 	}
 
@@ -234,20 +232,32 @@ namespace ConfigurationFile {
 				<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no")
 				<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no")
 				
-				<< "\n\n# == Telegram and notifications section\n"
+				<< "\n\n# == Telegram and notifications section\n";
 				
-				<< "\ntelegramBotApi=" << cfg.telegramConfig.apiKey
-				<< "\ntelegramChatId=" << cfg.telegramConfig.chatId
-				<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
+				if (!cfg.telegramConfig.apiKey.empty())
+					ss << "\ntelegramBotApi=" << cfg.telegramConfig.apiKey;
+				else
+					ss << "\n;telegramBotApi=";
+
+				if (!cfg.telegramConfig.chatId.empty())
+					ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
+				else
+					ss << "\n;telegramChatId=";
+					
+		ss 		<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
 				<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no")
 				<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 				<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
 				<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no")
 				
-				<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n."
-				<< "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions)
+				<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n.";
 				
-				<< "\n\n; This tells the app if send a image or a gif."
+			if (!cfg.authUsersToSendActions.empty())
+				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);
+			else
+				ss << "\n;authUsersToSendActions=";
+				
+			ss 	<< "\n\n; This tells the app if send a image or a gif."
 				<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no")
 				
 				<< "\n\n; Selects the Quality of the gif. Values are:"
