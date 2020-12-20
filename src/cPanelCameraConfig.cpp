@@ -23,49 +23,38 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	int imax = std::numeric_limits<int>::max();
 	double dmax = std::numeric_limits<double>::max();
 	
-	wxSizer* sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, "Tweak configuration");
-	wxSizer* sizerLeft = new wxStaticBoxSizer(wxVERTICAL, this, "");
-	wxSizer* sizerRight = new wxStaticBoxSizer(wxVERTICAL, this, "");
+	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizerLeft = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizerRight = new wxBoxSizer(wxVERTICAL);
 	
-	wxStaticText* labelName = new wxStaticText(this, wxID_ANY, "Name", wxDefaultPosition, wxDefaultSize);	
 	m_txtName = new wxTextCtrl(this, CAMERA_ids::TXT_name, m_config->cameraName, wxDefaultPosition, wxDefaultSize);
 	this->m_txtName->Bind(wxEVT_KILL_FOCUS, &cPanelCameraConfig::txtName_KillFocus, this);
 
-	wxStaticText* labelUrl = new wxStaticText(this, wxID_ANY, "Url", wxDefaultPosition, wxDefaultSize);
 	m_txtUrl = new wxTextCtrl(this, CAMERA_ids::TXT_url, m_config->url, wxDefaultPosition, wxDefaultSize);
 	this->m_txtUrl->Bind(wxEVT_KILL_FOCUS, &cPanelCameraConfig::txtUrl_KillFocus, this);
 	
-	wxStaticText* labelOrder = new wxStaticText(this, wxID_ANY, "Order", wxDefaultPosition, wxDefaultSize);
 	m_spinOrder = new wxSpinCtrl(this, CAMERA_ids::SPIN_order, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->order);
 
-	wxStaticText* labelRotation = new wxStaticText(this, wxID_ANY, "Rotation", wxDefaultPosition, wxDefaultSize);
 	m_spinRotation = new wxSpinCtrl(this, CAMERA_ids::SPIN_rotation, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -360, 360, m_config->rotation);
 
-	wxStaticText* labelChangeThreshold = new wxStaticText(this, wxID_ANY, "Change threshold", wxDefaultPosition, wxDefaultSize);
 	m_spinChangeThreshold = new wxSpinCtrl(this, CAMERA_ids::SPIN_changeThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->changeThreshold);
 	
-	wxStaticText* labelMinimumThreshold = new wxStaticText(this, wxID_ANY, "Minimum threshold", wxDefaultPosition, wxDefaultSize);
 	m_spinMinimumThreshold = new wxSpinCtrl(this, CAMERA_ids::SPIN_minThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->minimumThreshold);
 	
-	wxStaticText* labelIncreaseThresholdFactor = new wxStaticText(this, wxID_ANY, "Increase threshold factor", wxDefaultPosition, wxDefaultSize);
 	m_spinIncreaseThresholdFactor = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_increaseThreshFactor, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->increaseTresholdFactor);
 	m_spinIncreaseThresholdFactor->SetDigits(2);
 	
-	wxStaticText* labelUpdateThresholdFreq = new wxStaticText(this, wxID_ANY, "Update threshold frequency (seconds)", wxDefaultPosition, wxDefaultSize);
 	m_spinUpdateThresholdFreq = new wxSpinCtrl(this, CAMERA_ids::SPIN_updateThresFreq, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->updateThresholdFrequency);
 
-	wxStaticText* labelComboType = new wxStaticText(this, wxID_ANY, "Camera type", wxDefaultPosition, wxDefaultSize);
 	m_comboType = new wxComboBox(this, CAMERA_ids::COMBO_type, wxEmptyString, wxDefaultPosition, wxDefaultSize);
 	m_comboType->Append(wxString("Active"));
 	m_comboType->Append(wxString("Disabled"));
 	m_comboType->Append(wxString("Sentry"));
 	m_comboType->SetValue((this->m_config->type == CAMERA_DISABLED ? "Disabled" : (this->m_config->type == CAMERA_SENTRY ? "Sentry"  : "Active")));
 
-	wxStaticText* labelHitThreshold = new wxStaticText(this, wxID_ANY, "Hit threshold", wxDefaultPosition, wxDefaultSize);
 	m_spinHitThreshold = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_hitThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->hitThreshold);
 	m_spinHitThreshold->SetDigits(2);
 
-	wxStaticText* labelNoise  = new wxStaticText(this, wxID_ANY, "Noise Threshold", wxDefaultPosition, wxDefaultSize);
 	m_spinNoise = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_noiseThresh, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->noiseThreshold);
 	m_spinNoise->SetDigits(2);
 	
@@ -73,79 +62,54 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	
 	m_btnSelectIgnoredAreas = new wxButton(this, CAMERA_ids::BTN_selectIgnoredAreas, "Select ignored areas");
 	
-	// Sizer frames to analyze
-	wxBoxSizer* sizerAnalyzeFrames = new wxBoxSizer(wxHORIZONTAL);
-
-	wxStaticText* labelFramesBefore = new wxStaticText(this, wxID_ANY, "Frames Analyze Before", wxDefaultPosition, wxDefaultSize);
-	wxStaticText* labelFramesAfter = new wxStaticText(this, wxID_ANY, "Frames Analyze After", wxDefaultPosition, wxDefaultSize);
-//	wxStaticText* labelFrameDetection = new wxStaticText(this, wxID_ANY, "..", wxDefaultPosition, wxDefaultSize);
 	this->m_spinFramesAnalyzeBefore = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesBefore);
 	this->m_spinFramesAnalyzeAfter = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesAfter);
 	
-	wxBoxSizer* sizerFramesBefore = new wxBoxSizer(wxVERTICAL);
-	sizerFramesBefore->Add(labelFramesBefore, 0, wxGROW);
-	sizerFramesBefore->Add(m_spinFramesAnalyzeBefore, 0, wxGROW);
+	// --------------- Sizers
+	const int flags = wxALL | wxEXPAND;
+	const int border = 10;
 	
-	wxBoxSizer* sizerFramesAfter = new wxBoxSizer(wxVERTICAL);
-	sizerFramesAfter->Add(labelFramesAfter, 0, wxGROW);
-	sizerFramesAfter->Add(m_spinFramesAnalyzeAfter, 0, wxGROW);
-	
-	sizerAnalyzeFrames->Add(sizerFramesBefore, 1, wxGROW);
-//	sizerAnalyzeFrames->Add(labelFrameDetection, 0, wxGROW);
-	sizerAnalyzeFrames->Add(sizerFramesAfter, 1, wxGROW);
-		
 	// Add widgets to sizer
-	sizerLeft->Add(labelName, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_txtName, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtName, "Name"), 0, flags, border);
 
-	sizerRight->Add(labelComboType, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_comboType, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, "Url"), 0, flags, border);
 
-	sizerLeft->Add(labelUrl, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_txtUrl, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
-	
-	sizerLeft->Add(labelOrder, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_spinOrder, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, "Camera type"), 0, flags, border);
 
-	sizerLeft->Add(labelRotation, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_spinRotation, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+//	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, "Url"), 0, flags, border);
 	
-	sizerLeft->Add(labelChangeThreshold, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_spinChangeThreshold, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, "Order"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, "Rotation"),
+						5
+					), 0, flags, border);
 	
-	sizerLeft->Add(m_btnSelectRoi, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, "Change Threshold"), 0, flags, border);
 	
-	sizerLeft->Add(m_btnSelectIgnoredAreas, 0, wxALL | wxGROW, 0);
+	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						m_btnSelectRoi,
+						m_btnSelectIgnoredAreas,
+						5
+					), 0, flags, border);
 
-	sizerRight->Add(labelMinimumThreshold, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinMinimumThreshold, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinimumThreshold, "Minimum Threshold"), 0, flags, border);
 
-	sizerRight->Add(labelIncreaseThresholdFactor, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinIncreaseThresholdFactor, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinIncreaseThresholdFactor, "Increase threshold factor"), 0, flags, border);
 
-	sizerRight->Add(labelUpdateThresholdFreq, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinUpdateThresholdFreq, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinUpdateThresholdFreq, "Update threshold frequency"), 0, flags, border);
 
-	sizerRight->Add(labelHitThreshold, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinHitThreshold, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
+	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						WidgetsHelper::GetSizerItemLabel(this, m_spinHitThreshold, "Hit threshold"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinNoise, "Noise threshold"),
+						5
+					), 0, flags, border);
 	
-	sizerRight->Add(labelNoise, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinNoise, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxALL | wxGROW, 5);
-	
-	sizerRight->Add(sizerAnalyzeFrames, 0, wxALL | wxGROW, 0);
-	
+	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeBefore, "Frames Analyze Before"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, "Frames Analyze After"),
+						5
+					), 0, flags, border);
+		
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
 
@@ -199,7 +163,6 @@ void cPanelCameraConfig::spinNoiseThreshold_Change(wxSpinDoubleEvent& ev) {
 void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
 	wxString t = this->m_comboType->GetValue();
 	this->m_config->type = (t == "Disabled" ? 0 : (t == wxT("Sentry")  ? 1 : 2));
-	std::cout << this->m_comboType->GetValue()  << (int)this->m_config->type << std::endl;
 }
 
 void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {

@@ -21,17 +21,16 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 		: 	wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SUNKEN),
 			m_config(&progConfig), m_sharedData(sharedData) {
 	
-	wxSizer* sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, "Tweak configuration");
-	wxSizer* sizerLeft = new wxStaticBoxSizer(wxVERTICAL, this, "");
-	wxSizer* sizerRight = new wxStaticBoxSizer(wxVERTICAL, this, "");
+	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizerLeft = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizerRight = new wxBoxSizer(wxVERTICAL);
 
 	int imax = std::numeric_limits<int>::max();
 	double dmax = std::numeric_limits<double>::max();
 
-	wxStaticText* labelMsBetweenFrames = new wxStaticText(this, wxID_ANY, "ms Between Frame", wxDefaultPosition, wxDefaultSize);
+//	wxStaticText* labelMsBetweenFrames = new wxStaticText(this, wxID_ANY, "ms Between Frame", wxDefaultPosition, wxDefaultSize);
 	this->m_spinMsBetweenFrames = new wxSpinCtrl(this, PROGRAM_ids::SPIN_MsBetweenFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->msBetweenFrame);;
 
-	wxStaticText* labelRatioScaleOutput = new wxStaticText(this, wxID_ANY, "Scale of preview", wxDefaultPosition, wxDefaultSize);
 	this->m_spinRatioScaleOutput = new wxSpinCtrlDouble(this, PROGRAM_ids::SPIN_RatioScaleOutput, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->ratioScaleOutput);
 	this->m_spinRatioScaleOutput->SetDigits(2);
 
@@ -48,22 +47,17 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkUseTelegramBot = new wxCheckBox(this, PROGRAM_ids::CHK_UseTelegramBot, wxT("Use telegram bot"));
 	this->m_chkUseTelegramBot->SetValue(m_config->telegramConfig.useTelegramBot);
 
-	wxStaticText* labelTelegramBotApiKey = new wxStaticText(this, wxID_ANY, "Telegram API key", wxDefaultPosition, wxDefaultSize);
 	this->m_txtTelegramBotApiKey = new wxTextCtrl(this, PROGRAM_ids::TXT_TelegramBotApiKey, m_config->telegramConfig.apiKey, wxDefaultPosition, wxDefaultSize);
 	this->m_txtTelegramBotApiKey->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtTelegramBotApiKey_KillFocus, this);
 
-	wxStaticText* labelTelegramChatId = new wxStaticText(this, wxID_ANY, "Telegram CHAT id", wxDefaultPosition, wxDefaultSize);
 	this->m_txtTelegramChatId = new wxTextCtrl(this, PROGRAM_ids::TXT_TelegramChatId, m_config->telegramConfig.chatId, wxDefaultPosition, wxDefaultSize);
 	this->m_txtTelegramChatId->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtTelegramChatId_KillFocus, this);
 
-	wxStaticText* labelAuthUsersToSendActions = new wxStaticText(this, wxID_ANY, "Authorized users to send actions", wxDefaultPosition, wxDefaultSize);
 	this->m_txtAuthUsersToSendActions = new wxTextCtrl(this, PROGRAM_ids::TXT_AuthUsersToSendActions, Utils::VectorToCommaString(this->m_config->authUsersToSendActions), wxDefaultPosition, wxDefaultSize);
 	this->m_txtAuthUsersToSendActions->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtAuthUsersToSendActions_KillFocus, this);
 	
-	wxStaticText* labelSecondsBetweenImage = new wxStaticText(this, wxID_ANY, "Seconds between image message", wxDefaultPosition, wxDefaultSize);
 	this->m_spinSecondsBetweenImage = new wxSpinCtrl(this, PROGRAM_ids::SPIN_SecondsBetweenImage, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->secondsBetweenImage);
 	
-	wxStaticText* labelSecondsBetweenMessage = new wxStaticText(this, wxID_ANY, "Seconds between text message", wxDefaultPosition, wxDefaultSize);
 	this->m_spinSecondsBetweenMessage = new wxSpinCtrl(this, PROGRAM_ids::SPIN_SecondsBetweenMessage, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->secondsBetweenMessage);
 	
 	this->m_chkSendImageAfterDetectigChange = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageAfterDetectigChange, wxT("Send image after detectig change"));
@@ -75,7 +69,6 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkUseGifInsteadOfImage = new wxCheckBox(this, PROGRAM_ids::CHK_UseGifInsteadOfImage, wxT("Use gif instead of image"));
 	this->m_chkUseGifInsteadOfImage->SetValue(m_config->useGifInsteadImage);
 
-	wxStaticText* labelGifQuality = new wxStaticText(this, wxID_ANY, "Gif resize level (higher = lower quality)", wxDefaultPosition, wxDefaultSize);
 	this->m_comboGifQuality = new wxComboBox(this, PROGRAM_ids::COMBO_GifQuality, wxString("High"), wxDefaultPosition, wxDefaultSize);
 	m_comboGifQuality->Append(wxString("Very High"));
 	m_comboGifQuality->Append(wxString("High"));
@@ -84,87 +77,52 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	m_comboGifQuality->Append(wxString("None"));
 	
 	m_comboGifQuality->SetValue(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage));
-
-	// -- Widgets GIF FRAMES
-
-	wxBoxSizer* sizerGifFrames = new wxBoxSizer(wxHORIZONTAL);
-
-	wxStaticText* labelFramesBefore = new wxStaticText(this, wxID_ANY, "Frames Before", wxDefaultPosition, wxDefaultSize);
-	wxStaticText* labelFramesAfter = new wxStaticText(this, wxID_ANY, "Frames After", wxDefaultPosition, wxDefaultSize);
-//	wxStaticText* labelFrameDetection = new wxStaticText(this, wxID_ANY, "..", wxDefaultPosition, wxDefaultSize);
+	
 	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesBefore);
 	this->m_spinFramesAfter = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesAfter);
+
 	
-	wxBoxSizer* sizerFramesBefore = new wxBoxSizer(wxVERTICAL);
-	sizerFramesBefore->Add(labelFramesBefore, 0, wxGROW);
-	sizerFramesBefore->Add(m_spinFramesBefore, 0, wxGROW);
+	// --------------- Sizers
+	const int flags = wxALL | wxGROW;
+	const int border = 10;
 	
-	wxBoxSizer* sizerFramesAfter = new wxBoxSizer(wxVERTICAL);
-	sizerFramesAfter->Add(labelFramesAfter, 0, wxGROW);
-	sizerFramesAfter->Add(m_spinFramesAfter, 0, wxGROW);
+	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						WidgetsHelper::GetSizerItemLabel(this, m_spinMsBetweenFrames, wxT("Milliseconds between frame")), 
+						WidgetsHelper::GetSizerItemLabel(this, m_spinRatioScaleOutput, wxT("Ratio Scale output")), 
+						5
+					), 0, flags, border);
 	
-	sizerGifFrames->Add(sizerFramesBefore, 1, wxGROW);
-//	sizerGifFrames->Add(labelFrameDetection, 0, wxGROW);
-	sizerGifFrames->Add(sizerFramesAfter, 1, wxGROW);
+	sizerLeft->Add(m_chkShowPreviewCameras, 0, flags, border);
+
+	sizerLeft->Add(m_chkShowAreaCameraSees, 0, flags, border);
 	
+	sizerLeft->Add(m_chkShowProcessedImages, 0, flags, border);
 
-	// -- Add widgets to sizer
-	sizerLeft->Add(labelMsBetweenFrames, 0, wxALL | wxGROW, 0);		
-	sizerLeft->Add(m_spinMsBetweenFrames, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerLeft->Add(m_chkUseTelegramBot, 0, flags, border);
 
-	sizerLeft->Add(labelRatioScaleOutput, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(m_spinRatioScaleOutput, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
-	
-	sizerLeft->Add(m_chkShowPreviewCameras, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerLeft->Add(m_chkSendImageAfterDetectigChange, 0, flags, border);
 
-	sizerLeft->Add(m_chkShowAreaCameraSees, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
-	
-	sizerLeft->Add(m_chkShowProcessedImages, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerLeft->Add(m_chkSendImageOfAllCameras, 0, flags, border);
 
-	sizerLeft->Add(m_chkUseTelegramBot, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerLeft->Add(m_chkUseGifInsteadOfImage, 0, flags, border);
 
-	sizerLeft->Add(m_chkSendImageAfterDetectigChange, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtTelegramBotApiKey, wxT("Telegram bot api key")), 0, flags, border);
 
-	sizerLeft->Add(m_chkSendImageOfAllCameras, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtTelegramChatId, wxT("Telegram bot chat id")), 0, flags, border);
 
-	sizerLeft->Add(m_chkUseGifInsteadOfImage, 0, wxALL | wxGROW, 0);
-	sizerLeft->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtAuthUsersToSendActions, wxT("Users athorized to send actions")), 0, flags, border);
 
-	sizerRight->Add(labelTelegramBotApiKey, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_txtTelegramBotApiKey, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinSecondsBetweenImage, wxT("Seconds between message with image")), 0, flags, border);
 
-	sizerRight->Add(labelTelegramChatId, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_txtTelegramChatId, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinSecondsBetweenMessage, wxT("Seconds between message with text")), 0, flags, border);
 
-	sizerRight->Add(labelAuthUsersToSendActions, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_txtAuthUsersToSendActions, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboGifQuality, wxT("Gif resize level (higher = lower quality)")), 0, flags, border);
 
-	sizerRight->Add(labelSecondsBetweenImage, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinSecondsBetweenImage, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
-
-	sizerRight->Add(labelSecondsBetweenMessage, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_spinSecondsBetweenMessage, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
-
-	sizerRight->Add(labelGifQuality, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(m_comboGifQuality, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
-
-//	sizerRight->Add(labelMaxGifFrames, 0, wxALL | wxGROW, 0);
-	sizerRight->Add(sizerGifFrames, 0, wxALL | wxGROW, 0);
-//	sizerRight->Add(5, 5, 0, wxGROW | wxALL, 5);
+	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesBefore, wxT("Frames Before")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAfter, wxT("Frames After")),
+						5
+					), 0, flags, border);
 	
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);

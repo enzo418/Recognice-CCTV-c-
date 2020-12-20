@@ -17,13 +17,15 @@ cMain::cMain(	Recognize* recognize,
 				wxConfig* appConfig, 
 				bool& mainClosed,
 				std::string filePath)
-		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(840, 840)), 
+		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(840, 640)), 
 		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath) {
 	/**
 	 * m_root
 	 *    |-- netbook
 	 * 			|-- cameraPanel
 	**/	
+	
+	this->SetMinSize(wxSize(480, 640));
 
 	this->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(cMain::OnQuitter));
 
@@ -89,7 +91,7 @@ cMain::cMain(	Recognize* recognize,
 	hbox->Add(sizerTop, 1, wxGROW);
 
 	// add netbook to sizer
-	hbox->Add(this->m_book, 1, wxGROW);
+	hbox->Add(this->m_book, 1, wxEXPAND | wxALIGN_TOP);
 
 	// set sizer of panel
 	this->m_root->SetSizer(hbox);
