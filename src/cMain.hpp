@@ -1,5 +1,8 @@
 #pragma once
 
+#include <wx/log.h>
+#include <wx/filedlg.h>
+#include <wx/filename.h>
 #include <wx/bookctrl.h>
 #include <wx/frame.h>
 #include "wx/textctrl.h"
@@ -35,7 +38,8 @@ enum MAIN_ids {
 	BTN_SaveToFile,
 	BTN_AddCamera,
 	BTN_RemoveCamera,
-	TXT_FilePathInput
+	TXT_FilePathInput,
+	BTN_SearchFile
 };
 
 class cMain : public wxFrame {
@@ -44,6 +48,8 @@ class cMain : public wxFrame {
 		~cMain();
 
 	protected:
+		void OnQuitter(wxCloseEvent& event);
+		
 		void chkToggleRecognize_Checked(wxCommandEvent& ev);
 		void chkToggleRecognizeOnStart_Checked(wxCommandEvent& ev);
 		void btnApplyChanges_Click(wxCommandEvent& ev);
@@ -51,7 +57,7 @@ class cMain : public wxFrame {
 		void btnSaveToFile_Click(wxCommandEvent& ev);
 		void btnAddCamera_Click(wxCommandEvent& ev);
 		void btnRemoveCamera_Click(wxCommandEvent& ev);
-		void OnQuitter(wxCloseEvent& event);
+		void btnSearchFile_Click(wxCommandEvent& ev);
 		
 	private:
 		bool m_startRecognizeOnStart; // used to change the appConfig

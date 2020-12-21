@@ -9,6 +9,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MAIN_ids::BTN_SaveToFile, cMain::btnSaveToFile_Click)
 	EVT_BUTTON(MAIN_ids::BTN_AddCamera, cMain::btnAddCamera_Click)
 	EVT_BUTTON(MAIN_ids::BTN_RemoveCamera, cMain::btnRemoveCamera_Click)
+	EVT_BUTTON(MAIN_ids::BTN_SearchFile, cMain::btnSearchFile_Click)
 wxEND_EVENT_TABLE()
 
 cMain::cMain(	Recognize* recognize, 
@@ -56,11 +57,13 @@ cMain::cMain(	Recognize* recognize,
 
 	this->m_chkRecognizeActive = new wxCheckBox(m_root, MAIN_ids::CHK_Recognize, wxT("Recognize active"));
 	this->m_chkRecognizeActive->SetValue(*this->m_sharedData.recognizeActive);
-	this->m_sharedData.chckRecognizeActive = this->m_chkRecognizeActive;
 
 	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, "Apply Changes", wxDefaultPosition, wxDefaultSize);		
+	this->m_btnApplyChanges->Enable(false);
 	this->m_btnUndoChanges = new wxButton(this->m_root, MAIN_ids::BTN_UndoChanges, "Undo Changes", wxDefaultPosition, wxDefaultSize);
 	this->m_btnSaveToFile = new wxButton(this->m_root, MAIN_ids::BTN_SaveToFile, "Save to file", wxDefaultPosition, wxDefaultSize);
+
+	this->m_sharedData.btnApplyChanges = this->m_btnApplyChanges;
 
 	sizerCheck->Add(this->m_chkStartRecognizeOnStart, 0, wxGROW, 0);
 	sizerCheck->Add(this->m_chkRecognizeActive, 0, wxGROW, 0);
@@ -69,6 +72,7 @@ cMain::cMain(	Recognize* recognize,
 	this->m_btnRemoveCamera = new wxButton(this->m_root, MAIN_ids::BTN_RemoveCamera, "Remove selected camera", wxDefaultPosition, wxDefaultSize);
 		
 	this->m_txtFilePathInput = new wxTextCtrl(this->m_root, MAIN_ids::TXT_FilePathInput, m_filePath);
+	this->m_btnSearchFile = new wxButton(this->m_root, MAIN_ids::BTN_SearchFile, "Search file");
 		
 	sizerButtons->Add(m_btnApplyChanges, 0, wxGROW, 0);
 	sizerButtons->Add(m_btnUndoChanges, 0, wxGROW, 0);
@@ -76,9 +80,9 @@ cMain::cMain(	Recognize* recognize,
 		
 	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT, 10);
 	sizerTop->AddStretchSpacer();
-	sizerTop->Add(this->m_txtFilePathInput, wxTOP, 10);
+	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_txtFilePathInput, this->m_btnSearchFile, 5), wxTOP, 10);
 	sizerTop->AddStretchSpacer();
-	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerH(this->m_btnAddCamera, this->m_btnRemoveCamera) , wxTOP, 10);	
+	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5) , wxTOP, 10);	
 	sizerTop->AddStretchSpacer();
 	sizerTop->Add(sizerButtons, 1, wxTOP | wxRIGHT, 10);
 	
@@ -120,11 +124,7 @@ void cMain::chkToggleRecognize_Checked(wxCommandEvent& ev) {
 	if (*this->m_sharedData.recognizeActive) {
 		*this->m_sharedData.recognizeActive = false;
 		this->m_sharedData.recognize->CloseAndJoin();
-	} else {
-		for (size_t i = 0; i < this->m_sharedData.configurations->camerasConfigs.size(); i++) {
-			std::cout << "\t" << this->m_sharedData.configurations->camerasConfigs[i].cameraName  << std::endl;
-		}
-		
+	} else {		
 		this->m_sharedData.recognize->Start(std::ref(*this->m_sharedData.configurations), false, this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		*this->m_sharedData.recognizeActive = true;
 	}
@@ -133,9 +133,6 @@ void cMain::chkToggleRecognize_Checked(wxCommandEvent& ev) {
 void cMain::chkToggleRecognizeOnStart_Checked(wxCommandEvent& ev) {
 	this->m_startRecognizeOnStart = !this->m_startRecognizeOnStart;
 	this->m_appConfig->Write("StartRecognizeOnStart", this->m_startRecognizeOnStart);
-	std::cout << "startOnStart writed to config: " << this->m_startRecognizeOnStart << std::endl;
-
-	std::cout << "readed from config after that: " << this->m_appConfig->Read("StartRecognizeOnStart", false) << std::endl;
 }
 
 void cMain::OnQuitter(wxCloseEvent& event) {
@@ -181,6 +178,8 @@ void cMain::btnApplyChanges_Click(wxCommandEvent& ev) {
 		this->m_sharedData.configurations->camerasConfigs = this->m_tempConfig.camerasConfigs;
 	}
 		
+	this->m_btnApplyChanges->Enable(false);
+	
 	ev.Skip();
 }
 
@@ -223,5 +222,26 @@ void cMain::btnRemoveCamera_Click(wxCommandEvent& ev) {
 		this->m_book->RemovePage(s);
 		this->m_sharedData.configurations->camerasConfigs.erase(this->m_sharedData.configurations->camerasConfigs.begin() + s - 1);
 		this->m_tempConfig.camerasConfigs.erase(this->m_tempConfig.camerasConfigs.begin() + s - 1);
+	}
+}
+
+void cMain::btnSearchFile_Click(wxCommandEvent& ev) {
+	static wxString s_extDef;
+	wxString path = wxFileSelector(
+						wxT("Select the file to load"),
+						wxEmptyString, wxEmptyString,
+						s_extDef,
+						wxString::Format
+						(
+							wxT("Configuration file (*.ini)|*.ini|Plain text (*.txt)|*.txt|All files (%s)|%s"),
+							wxFileSelectorDefaultWildcardStr,
+							wxFileSelectorDefaultWildcardStr
+						),
+						wxFD_OPEN|wxFD_CHANGE_DIR|wxFD_PREVIEW,
+						this
+					   );
+
+	if (!path.empty()) {
+		wxMessageBox("asd", "xd");
 	}
 }

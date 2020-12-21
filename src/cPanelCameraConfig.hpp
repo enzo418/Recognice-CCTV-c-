@@ -84,6 +84,4 @@ private:
 		
 		wxSpinCtrl* m_spinFramesAnalyzeBefore;
 		wxSpinCtrl* m_spinFramesAnalyzeAfter;
-
-		wxDECLARE_EVENT_TABLE();
 };

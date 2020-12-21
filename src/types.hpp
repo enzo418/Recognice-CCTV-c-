@@ -10,6 +10,6 @@ struct SharedData {
 	Recognize* recognize = nullptr;
 	Configurations* configurations = nullptr;
 
-	wxCheckBox* chckRecognizeActive = nullptr;
+	wxButton* btnApplyChanges;
 	bool* recognizeActive;
 };
