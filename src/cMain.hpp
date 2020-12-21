@@ -2,6 +2,16 @@
 
 #include <wx/bookctrl.h>
 #include <wx/frame.h>
+#include "wx/textctrl.h"
+#include <wx/thread.h>
+#include <wx/event.h>
+
+#include <wx/config.h>
+#include <wx/confbase.h>
+#include <wx/fileconf.h>
+#ifdef _WIN32 
+#include <wx/msw/regconf.h>
+#endif
 
 #include "cPanelCameraConfig.hpp"
 #include "cPanelProgramConfig.hpp"
@@ -14,15 +24,7 @@
 
 #include "types.hpp"
 
-#include <wx/thread.h>
-#include <wx/event.h>
-
-#include <wx/config.h>
-#include <wx/confbase.h>
-#include <wx/fileconf.h>
-#ifdef _WIN32 
-#include <wx/msw/regconf.h>
-#endif
+#include "widgets_helper.hpp"
 
 enum MAIN_ids {
 	BUTTON_TOGGLEPREVIEW = 1001,
@@ -32,7 +34,8 @@ enum MAIN_ids {
 	BTN_UndoChanges,
 	BTN_SaveToFile,
 	BTN_AddCamera,
-	BTN_RemoveCamera
+	BTN_RemoveCamera,
+	TXT_FilePathInput
 };
 
 class cMain : public wxFrame {
@@ -74,6 +77,9 @@ class cMain : public wxFrame {
 		
 		wxButton* m_btnAddCamera;
 		wxButton* m_btnRemoveCamera;
+		
+		wxTextCtrl* m_txtFilePathInput;
+		wxButton* m_btnSearchFile;
 		
 		Configurations m_tempConfig;
 		

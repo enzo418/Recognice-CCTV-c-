@@ -19,6 +19,7 @@
 #include "../recognize/src/utils.hpp"
 
 #include "types.hpp"
+
 #include "widgets_helper.hpp"
 
 enum PROGRAM_ids {

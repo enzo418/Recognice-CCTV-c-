@@ -14,6 +14,7 @@
 #include "AreaSelector.hpp"
 
 #include "types.hpp"
+
 #include "widgets_helper.hpp"
 
 enum CAMERA_ids {

@@ -22,7 +22,7 @@ set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE})
 
 # Print sources
-# message(${SOURCES})
+#message(${SOURCES})
 
 include(${wxWidgets_USE_FILE})
 

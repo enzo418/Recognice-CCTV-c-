@@ -19,7 +19,7 @@ wxEND_EVENT_TABLE()
 cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfiguration* camConfig, SharedData* sharedData) 
 		: 	wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SUNKEN),
 			m_config(camConfig), m_sharedData(sharedData) {
-	
+		
 	int imax = std::numeric_limits<int>::max();
 	double dmax = std::numeric_limits<double>::max();
 	
@@ -75,8 +75,6 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, "Url"), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, "Camera type"), 0, flags, border);
-
-//	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, "Url"), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, "Order"),

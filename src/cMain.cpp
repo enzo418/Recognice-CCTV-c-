@@ -45,7 +45,6 @@ cMain::cMain(	Recognize* recognize,
 	wxBoxSizer* sizerTop = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* sizerButtons = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerCheck = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* sizerAddRemoveCamera = new wxBoxSizer(wxVERTICAL);
 	
 	// create notebook
 	m_book = new wxNotebook(this->m_root, wxID_ANY);
@@ -64,24 +63,22 @@ cMain::cMain(	Recognize* recognize,
 	this->m_btnSaveToFile = new wxButton(this->m_root, MAIN_ids::BTN_SaveToFile, "Save to file", wxDefaultPosition, wxDefaultSize);
 
 	sizerCheck->Add(this->m_chkStartRecognizeOnStart, 0, wxGROW, 0);
-//	hbox->Add(5, 5, 0, wxALL | wxGROW, 5);
-
 	sizerCheck->Add(this->m_chkRecognizeActive, 0, wxGROW, 0);
-//	hbox->Add(5, 5, 0, wxALL | wxGROW, 5);
 
 	this->m_btnAddCamera = new wxButton(this->m_root, MAIN_ids::BTN_AddCamera, "Add camera", wxDefaultPosition, wxDefaultSize);
 	this->m_btnRemoveCamera = new wxButton(this->m_root, MAIN_ids::BTN_RemoveCamera, "Remove selected camera", wxDefaultPosition, wxDefaultSize);
-	
-	sizerAddRemoveCamera->Add(this->m_btnAddCamera, 0, wxGROW, 0);
-	sizerAddRemoveCamera->Add(this->m_btnRemoveCamera, 0, wxGROW, 0);
-	
+		
+	this->m_txtFilePathInput = new wxTextCtrl(this->m_root, MAIN_ids::TXT_FilePathInput, m_filePath);
+		
 	sizerButtons->Add(m_btnApplyChanges, 0, wxGROW, 0);
 	sizerButtons->Add(m_btnUndoChanges, 0, wxGROW, 0);
 	sizerButtons->Add(m_btnSaveToFile, 0, wxGROW, 0);
 		
 	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT, 10);
 	sizerTop->AddStretchSpacer();
-	sizerTop->Add(sizerAddRemoveCamera, wxTOP, 10);
+	sizerTop->Add(this->m_txtFilePathInput, wxTOP, 10);
+	sizerTop->AddStretchSpacer();
+	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerH(this->m_btnAddCamera, this->m_btnRemoveCamera) , wxTOP, 10);	
 	sizerTop->AddStretchSpacer();
 	sizerTop->Add(sizerButtons, 1, wxTOP | wxRIGHT, 10);
 	
