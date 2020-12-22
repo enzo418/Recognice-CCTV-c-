@@ -18,7 +18,7 @@ cMain::cMain(	Recognize* recognize,
 				wxConfig* appConfig, 
 				bool& mainClosed,
 				std::string filePath)
-		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(840, 640)), 
+		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(860, 700)), 
 		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath) {
 	/**
 	 * m_root
@@ -44,7 +44,7 @@ cMain::cMain(	Recognize* recognize,
 	// sizer of root panel
 	wxBoxSizer* hbox = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerTop = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizerButtons = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* sizerCheck = new wxBoxSizer(wxVERTICAL);
 	
 	// create notebook
@@ -58,7 +58,7 @@ cMain::cMain(	Recognize* recognize,
 	this->m_chkRecognizeActive = new wxCheckBox(m_root, MAIN_ids::CHK_Recognize, wxT("Recognize active"));
 	this->m_chkRecognizeActive->SetValue(*this->m_sharedData.recognizeActive);
 
-	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, "Apply Changes", wxDefaultPosition, wxDefaultSize);		
+	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, "Apply Changes", wxDefaultPosition, wxDefaultSize);
 	this->m_btnApplyChanges->Enable(false);
 	this->m_btnUndoChanges = new wxButton(this->m_root, MAIN_ids::BTN_UndoChanges, "Undo Changes", wxDefaultPosition, wxDefaultSize);
 	this->m_btnSaveToFile = new wxButton(this->m_root, MAIN_ids::BTN_SaveToFile, "Save to file", wxDefaultPosition, wxDefaultSize);
@@ -74,30 +74,25 @@ cMain::cMain(	Recognize* recognize,
 	this->m_txtFilePathInput = new wxTextCtrl(this->m_root, MAIN_ids::TXT_FilePathInput, m_filePath);
 	this->m_btnSearchFile = new wxButton(this->m_root, MAIN_ids::BTN_SearchFile, "Search file");
 
-	sizerButtons->Add(m_btnApplyChanges, 0, wxGROW, 0);
-	sizerButtons->Add(m_btnUndoChanges, 0, wxGROW, 0);
-	sizerButtons->Add(m_btnSaveToFile, 0, wxGROW, 0);
+	sizerButtons->Add(m_btnApplyChanges, 1, wxGROW | wxALL, 5);
+	sizerButtons->Add(m_btnUndoChanges, 1, wxGROW | wxALL, 5);
+	sizerButtons->Add(m_btnSaveToFile, 1, wxGROW | wxALL, 5);
 		
-	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT, 10);
-	sizerTop->AddStretchSpacer();
+	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT | wxRIGHT | wxGROW, 10);
 	
-	wxSizer* ss = new wxBoxSizer(wxVERTICAL);
-	ss->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, "File"), 2, wxGROW);
-	ss->Add(this->m_btnSearchFile, 1, wxGROW);
-	sizerTop->Add(ss, wxTOP, 10);
+	wxSizer* sizerInputFile = new wxBoxSizer(wxVERTICAL);
+	sizerInputFile->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, "File"), 2, wxGROW);
+	sizerInputFile->Add(this->m_btnSearchFile, 1, wxGROW);
+	sizerTop->Add(sizerInputFile, 3, wxTOP | wxRIGHT, 10);
 				  
-	sizerTop->AddStretchSpacer();
-	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5) , wxTOP, 10);	
-	sizerTop->AddStretchSpacer();
-	sizerTop->Add(sizerButtons, 1, wxTOP | wxRIGHT, 10);
-	
-//	hbox->Add(sizerButtons, 1, wxALL | wxGROW, 0);
-//	hbox->Add(5, 5, 0, wxALL | wxGROW, 5);
-	
-	hbox->Add(sizerTop, 1, wxGROW);
+	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5), 1, wxTOP, 30);
+		
+	hbox->Add(sizerTop, 1, wxGROW | wxBOTTOM, 5);
 
 	// add netbook to sizer
-	hbox->Add(this->m_book, 1, wxGROW | wxALIGN_TOP);
+	hbox->Add(this->m_book, 1, wxGROW | wxALIGN_TOP | wxBOTTOM, 5);
+	
+	hbox->Add(sizerButtons, 1, wxGROW);
 
 	// set sizer of panel
 	this->m_root->SetSizer(hbox);
@@ -114,7 +109,7 @@ void cMain::AddProgramCamerasPages() {
 	cPanelProgramConfig* programPanel = new cPanelProgramConfig(this->m_book, this->m_tempConfig.programConfig, &this->m_sharedData);
 
 	// add program config to netbook
-	m_book->AddPage(programPanel, wxT("program"), false);
+	m_book->AddPage(programPanel, wxT("Program"), false);
 
 	for (size_t i = 0; i < this->m_tempConfig.camerasConfigs.size(); i++) {	
 		// create camera panel		
@@ -202,6 +197,8 @@ void cMain::btnUndoChanges_Click(wxCommandEvent& ev) {
 	if (lastSelection < this->m_book->GetPageCount())
 		this->m_book->ChangeSelection(lastSelection);
 	
+	this->m_btnApplyChanges->Enable(false);
+	
 	ev.Skip();
 }
 
@@ -279,6 +276,9 @@ void cMain::btnSearchFile_Click(wxCommandEvent& ev) {
 			*this->m_sharedData.configurations = this->m_tempConfig;
 	
 			this->AddProgramCamerasPages();
+			
+			this->m_appConfig->Write("LastConfigFile", path);
+			this->m_txtFilePathInput->SetValue(path);
 		}
 	}
 }

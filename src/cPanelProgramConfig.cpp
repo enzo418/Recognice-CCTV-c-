@@ -215,7 +215,6 @@ void cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& 
 void cPanelProgramConfig::comboGifQuality_Select(wxCommandEvent& ev) {
 	wxString val = ev.GetString();
 	this->m_config->gifResizePercentage = Utils::GifResizePercentageFromString(val.ToStdString());
-	std::cout << "gif: " << this->m_config->gifResizePercentage << std::endl;
 	ev.Skip();
 }
 
