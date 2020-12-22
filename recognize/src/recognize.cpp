@@ -174,7 +174,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		// } else {
 		// 	camera.gifFrames.state = State::Cancelled;
 		// }
-	} else {		
+	} else {
 		camera.gifFrames.state = State::Cancelled;
 		camera.gifFrames.debugMessage += "\n";
 

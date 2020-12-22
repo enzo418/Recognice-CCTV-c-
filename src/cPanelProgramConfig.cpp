@@ -1,21 +1,10 @@
 #include "cPanelProgramConfig.hpp"
 
-wxBEGIN_EVENT_TABLE(cPanelProgramConfig, wxPanel)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_MsBetweenFrames, cPanelProgramConfig::spinMsBetweenFrames_SpinChange)
-	EVT_SPINCTRLDOUBLE(PROGRAM_ids::SPIN_RatioScaleOutput, cPanelProgramConfig::spinRatioScaleOutput_SpinChange)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_ShowPreviewCameras, cPanelProgramConfig::chkShowPreviewCameras_CheckBoxClick)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_ShowAreaCameraSees, cPanelProgramConfig::chkShowAreaCameraSees_CheckBoxClick)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_ShowProcessedImages, cPanelProgramConfig::chkShowProcessedImages_CheckBoxClick)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_UseTelegramBot, cPanelProgramConfig::chkUseTelegramBot_CheckBoxClick)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_SecondsBetweenImage, cPanelProgramConfig::spinSecondsBetweenImage_SpinChange)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_SecondsBetweenMessage, cPanelProgramConfig::spinSecondsBetweenMessage_SpinChange)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_SendImageAfterDetectigChange, cPanelProgramConfig::chkSendImageAfterDetectigChange_CheckBoxClick)	
-	EVT_CHECKBOX(PROGRAM_ids::CHK_SendImageOfAllCameras, cPanelProgramConfig::chkSendImageOfAllCameras_CheckBoxClick)
-	EVT_CHECKBOX(PROGRAM_ids::CHK_UseGifInsteadOfImage, cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick)	
-	EVT_COMBOBOX(PROGRAM_ids::COMBO_GifQuality, cPanelProgramConfig::comboGifQuality_Select)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_FramesBefore, cPanelProgramConfig::spinFramesBefore_SpinChange)
-	EVT_SPINCTRL(PROGRAM_ids::SPIN_FramesAfter, cPanelProgramConfig::spinFramesAfter_SpinChange)
-wxEND_EVENT_TABLE()
+#define BIND(Widget_, EventTag_, EventHandler_, Function_) Widget_->Bind(EventTag_, \
+																			[this](EventHandler_& ev) { \
+																				this->m_sharedData->btnApplyChanges->Enable(true); \
+																				Function_(ev); \
+																			})
 
 cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfiguration& progConfig, SharedData* sharedData) 
 		: 	wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SUNKEN),
@@ -30,44 +19,57 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 
 //	wxStaticText* labelMsBetweenFrames = new wxStaticText(this, wxID_ANY, "ms Between Frame", wxDefaultPosition, wxDefaultSize);
 	this->m_spinMsBetweenFrames = new wxSpinCtrl(this, PROGRAM_ids::SPIN_MsBetweenFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->msBetweenFrame);;
-
+	BIND(m_spinMsBetweenFrames, wxEVT_SPINCTRL, wxSpinEvent, spinMsBetweenFrames_SpinChange);
+	
 	this->m_spinRatioScaleOutput = new wxSpinCtrlDouble(this, PROGRAM_ids::SPIN_RatioScaleOutput, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->ratioScaleOutput);
 	this->m_spinRatioScaleOutput->SetDigits(2);
+	BIND(m_spinRatioScaleOutput, wxEVT_SPINCTRLDOUBLE, wxSpinDoubleEvent, spinRatioScaleOutput_SpinChange);
 
 	this->m_chkShowPreviewCameras = new wxCheckBox(this, PROGRAM_ids::CHK_ShowPreviewCameras, wxT("Show preview of the cameras"));
 	this->m_chkShowPreviewCameras->SetValue(m_config->showPreview);
+	BIND(m_chkShowPreviewCameras, wxEVT_CHECKBOX, wxCommandEvent, chkShowPreviewCameras_CheckBoxClick);
 
 	this->m_chkShowAreaCameraSees = new wxCheckBox(this, PROGRAM_ids::CHK_ShowAreaCameraSees, wxT("Show only the camera ROI"));
 	this->m_chkShowAreaCameraSees->SetValue(m_config->showAreaCameraSees);
-
+	BIND(m_chkShowAreaCameraSees, wxEVT_CHECKBOX, wxCommandEvent, chkShowAreaCameraSees_CheckBoxClick);
+	
 	this->m_chkShowProcessedImages = new wxCheckBox(this, PROGRAM_ids::CHK_ShowProcessedImages, wxT("Show processed images"));
 	this->m_chkShowProcessedImages->SetValue(m_config->showProcessedFrames);
+	BIND(m_chkShowProcessedImages, wxEVT_CHECKBOX, wxCommandEvent, chkShowProcessedImages_CheckBoxClick);
 
 	// -- Telegram Bot config
 	this->m_chkUseTelegramBot = new wxCheckBox(this, PROGRAM_ids::CHK_UseTelegramBot, wxT("Use telegram bot"));
 	this->m_chkUseTelegramBot->SetValue(m_config->telegramConfig.useTelegramBot);
+	BIND(m_chkUseTelegramBot, wxEVT_CHECKBOX, wxCommandEvent, chkUseTelegramBot_CheckBoxClick);
 
 	this->m_txtTelegramBotApiKey = new wxTextCtrl(this, PROGRAM_ids::TXT_TelegramBotApiKey, m_config->telegramConfig.apiKey, wxDefaultPosition, wxDefaultSize);
 	this->m_txtTelegramBotApiKey->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtTelegramBotApiKey_KillFocus, this);
+	BIND(m_txtTelegramBotApiKey, wxEVT_KILL_FOCUS, wxFocusEvent, txtTelegramBotApiKey_KillFocus);
 
 	this->m_txtTelegramChatId = new wxTextCtrl(this, PROGRAM_ids::TXT_TelegramChatId, m_config->telegramConfig.chatId, wxDefaultPosition, wxDefaultSize);
-	this->m_txtTelegramChatId->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtTelegramChatId_KillFocus, this);
-
+	BIND(m_txtTelegramChatId, wxEVT_KILL_FOCUS, wxFocusEvent, txtTelegramChatId_KillFocus);
+	
 	this->m_txtAuthUsersToSendActions = new wxTextCtrl(this, PROGRAM_ids::TXT_AuthUsersToSendActions, Utils::VectorToCommaString(this->m_config->authUsersToSendActions), wxDefaultPosition, wxDefaultSize);
 	this->m_txtAuthUsersToSendActions->Bind(wxEVT_KILL_FOCUS, &cPanelProgramConfig::txtAuthUsersToSendActions_KillFocus, this);
+	BIND(m_txtAuthUsersToSendActions, wxEVT_KILL_FOCUS, wxFocusEvent, txtAuthUsersToSendActions_KillFocus);
 	
 	this->m_spinSecondsBetweenImage = new wxSpinCtrl(this, PROGRAM_ids::SPIN_SecondsBetweenImage, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->secondsBetweenImage);
+	BIND(m_spinSecondsBetweenImage, wxEVT_SPINCTRL, wxSpinEvent, spinSecondsBetweenImage_SpinChange);
 	
 	this->m_spinSecondsBetweenMessage = new wxSpinCtrl(this, PROGRAM_ids::SPIN_SecondsBetweenMessage, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->secondsBetweenMessage);
+	BIND(m_spinSecondsBetweenMessage, wxEVT_SPINCTRL, wxSpinEvent, spinSecondsBetweenMessage_SpinChange);
 	
 	this->m_chkSendImageAfterDetectigChange = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageAfterDetectigChange, wxT("Send image after detectig change"));
 	this->m_chkSendImageAfterDetectigChange->SetValue(m_config->sendImageWhenDetectChange);
+	BIND(m_chkSendImageAfterDetectigChange, wxEVT_CHECKBOX, wxCommandEvent, chkSendImageAfterDetectigChange_CheckBoxClick);
 
 	this->m_chkSendImageOfAllCameras = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageOfAllCameras, wxT("Send image of all cameras"));
 	this->m_chkSendImageOfAllCameras->SetValue(m_config->sendImageOfAllCameras);
+	BIND(m_chkSendImageOfAllCameras, wxEVT_CHECKBOX, wxCommandEvent, chkSendImageOfAllCameras_CheckBoxClick);
 	
 	this->m_chkUseGifInsteadOfImage = new wxCheckBox(this, PROGRAM_ids::CHK_UseGifInsteadOfImage, wxT("Use gif instead of image"));
 	this->m_chkUseGifInsteadOfImage->SetValue(m_config->useGifInsteadImage);
+	BIND(m_chkUseGifInsteadOfImage, wxEVT_CHECKBOX, wxCommandEvent, chkUseGifInsteadOfImage_CheckBoxClick);
 
 	this->m_comboGifQuality = new wxComboBox(this, PROGRAM_ids::COMBO_GifQuality, wxString("High"), wxDefaultPosition, wxDefaultSize);
 	m_comboGifQuality->Append(wxString("Very High"));
@@ -75,12 +77,18 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	m_comboGifQuality->Append(wxString("Medium"));
 	m_comboGifQuality->Append(wxString("Low"));
 	m_comboGifQuality->Append(wxString("None"));
-	
 	m_comboGifQuality->SetValue(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage));
-	
+	BIND(m_comboGifQuality, wxEVT_COMBOBOX, wxCommandEvent, comboGifQuality_Select);
+		
 	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesBefore);
+	BIND(m_spinFramesBefore, wxEVT_SPINCTRL, wxSpinEvent, spinFramesBefore_SpinChange);
+	
 	this->m_spinFramesAfter = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesAfter);
-
+	BIND(m_spinFramesAfter, wxEVT_SPINCTRL, wxSpinEvent, spinFramesAfter_SpinChange);
+	
+	this->m_chkShowIgnoredAreas = new wxCheckBox(this, wxID_ANY, wxT("Show ignored areas"));
+	this->m_chkShowIgnoredAreas->SetValue(m_config->showIgnoredAreas);
+	BIND(m_chkShowIgnoredAreas, wxEVT_CHECKBOX, wxCommandEvent, chkShowIgnoredAreas_CheckBoxClick);
 	
 	// --------------- Sizers
 	const int flags = wxALL | wxGROW;
@@ -105,6 +113,8 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	sizerLeft->Add(m_chkSendImageOfAllCameras, 0, flags, border);
 
 	sizerLeft->Add(m_chkUseGifInsteadOfImage, 0, flags, border);
+	
+	sizerLeft->Add(m_chkShowIgnoredAreas, 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtTelegramBotApiKey, wxT("Telegram bot api key")), 0, flags, border);
 
@@ -130,19 +140,15 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->SetSizer(sizer);
 }
 
-cPanelProgramConfig::~cPanelProgramConfig() {
-
-}
+cPanelProgramConfig::~cPanelProgramConfig() { }
 
 void cPanelProgramConfig::spinMsBetweenFrames_SpinChange(wxSpinEvent& ev) {
-	std::cout << "ms: " << this->m_spinMsBetweenFrames->GetValue() << std::endl;
-	 this->m_config->msBetweenFrame = this->m_spinMsBetweenFrames->GetValue();
+	this->m_config->msBetweenFrame = this->m_spinMsBetweenFrames->GetValue();
 	ev.Skip();
 }
 
 void cPanelProgramConfig::spinRatioScaleOutput_SpinChange(wxSpinDoubleEvent& ev) {
 	this->m_config->ratioScaleOutput = this->m_spinRatioScaleOutput->GetValue();
-	std::cout << "ratio: " <<  this->m_spinRatioScaleOutput->GetValue() << std::endl;
 	ev.Skip();
 }
 
@@ -220,5 +226,10 @@ void cPanelProgramConfig::spinFramesBefore_SpinChange(wxSpinEvent& ev) {
 
 void cPanelProgramConfig::spinFramesAfter_SpinChange(wxSpinEvent& ev) {
 	this->m_config->numberGifFrames.framesAfter = ev.GetValue();
+	ev.Skip();
+}
+
+void cPanelProgramConfig::chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev) {
+	this->m_config->showIgnoredAreas = !this->m_config->showIgnoredAreas;
 	ev.Skip();
 }

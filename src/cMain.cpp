@@ -73,14 +73,19 @@ cMain::cMain(	Recognize* recognize,
 		
 	this->m_txtFilePathInput = new wxTextCtrl(this->m_root, MAIN_ids::TXT_FilePathInput, m_filePath);
 	this->m_btnSearchFile = new wxButton(this->m_root, MAIN_ids::BTN_SearchFile, "Search file");
-		
+
 	sizerButtons->Add(m_btnApplyChanges, 0, wxGROW, 0);
 	sizerButtons->Add(m_btnUndoChanges, 0, wxGROW, 0);
 	sizerButtons->Add(m_btnSaveToFile, 0, wxGROW, 0);
 		
 	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT, 10);
 	sizerTop->AddStretchSpacer();
-	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_txtFilePathInput, this->m_btnSearchFile, 5), wxTOP, 10);
+	
+	wxSizer* ss = new wxBoxSizer(wxVERTICAL);
+	ss->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, "File"), 2, wxGROW);
+	ss->Add(this->m_btnSearchFile, 1, wxGROW);
+	sizerTop->Add(ss, wxTOP, 10);
+				  
 	sizerTop->AddStretchSpacer();
 	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5) , wxTOP, 10);	
 	sizerTop->AddStretchSpacer();
@@ -92,7 +97,7 @@ cMain::cMain(	Recognize* recognize,
 	hbox->Add(sizerTop, 1, wxGROW);
 
 	// add netbook to sizer
-	hbox->Add(this->m_book, 1, wxEXPAND | wxALIGN_TOP);
+	hbox->Add(this->m_book, 1, wxGROW | wxALIGN_TOP);
 
 	// set sizer of panel
 	this->m_root->SetSizer(hbox);
@@ -225,23 +230,55 @@ void cMain::btnRemoveCamera_Click(wxCommandEvent& ev) {
 	}
 }
 
-void cMain::btnSearchFile_Click(wxCommandEvent& ev) {
-	static wxString s_extDef;
-	wxString path = wxFileSelector(
-						wxT("Select the file to load"),
-						wxEmptyString, wxEmptyString,
-						s_extDef,
-						wxString::Format
-						(
-							wxT("Configuration file (*.ini)|*.ini|Plain text (*.txt)|*.txt|All files (%s)|%s"),
-							wxFileSelectorDefaultWildcardStr,
-							wxFileSelectorDefaultWildcardStr
-						),
-						wxFD_OPEN|wxFD_CHANGE_DIR|wxFD_PREVIEW,
-						this
-					   );
+void cMain::btnSearchFile_Click(wxCommandEvent& ev) {	
+	bool proceed = true;
+	if (this->m_btnApplyChanges->IsEnabled()) {
+		wxMessageDialog dialog(this,
+							   "There are unsaved changes, do you want to apply the changes and save them to the file?",
+							   "Warning",
+							   wxCENTER |
+							   wxNO_DEFAULT | wxYES_NO | wxCANCEL |
+							   wxICON_EXCLAMATION);
 
-	if (!path.empty()) {
-		wxMessageBox("asd", "xd");
+		wxCommandEvent* ev = new wxCommandEvent(wxEVT_BUTTON, wxID_ANY);
+		switch (dialog.ShowModal()) {
+			case wxID_YES:
+				this->btnApplyChanges_Click(*ev);
+				this->btnSaveToFile_Click(*ev);
+				break;
+
+//			case wxID_NO:
+//				break;
+
+			case wxID_CANCEL:
+				proceed = false;
+				break;
+		}
+	}
+	
+	if (proceed) {
+		static wxString s_extDef;
+		wxString path = wxFileSelector(
+							wxT("Select the file to load"),
+							wxEmptyString, wxEmptyString,
+							s_extDef,
+							wxString::Format (
+								wxT("Configuration file (*.ini)|*.ini|Plain text (*.txt)|*.txt|All files (%s)|%s"),
+								wxFileSelectorDefaultWildcardStr,
+								wxFileSelectorDefaultWildcardStr
+							),
+							wxFD_OPEN|wxFD_CHANGE_DIR|wxFD_PREVIEW,
+							this
+					   );
+		
+		if (!path.empty()) {
+			this->m_book->DeleteAllPages();
+			
+			this->m_tempConfig = ConfigurationFile::ReadConfigurations(path.ToStdString());
+	
+			*this->m_sharedData.configurations = this->m_tempConfig;
+	
+			this->AddProgramCamerasPages();
+		}
 	}
 }

@@ -72,7 +72,8 @@ class cPanelProgramConfig : public wxPanel {
 		wxComboBox* m_comboGifQuality;
 		wxSpinCtrl* m_spinFramesBefore;
 		wxSpinCtrl* m_spinFramesAfter;
-
+		wxCheckBox* m_chkShowIgnoredAreas;
+		
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
 		void spinRatioScaleOutput_SpinChange(wxSpinDoubleEvent& ev);
@@ -91,6 +92,5 @@ class cPanelProgramConfig : public wxPanel {
 		void comboGifQuality_Select(wxCommandEvent& ev);
 		void spinFramesBefore_SpinChange(wxSpinEvent& ev);
 		void spinFramesAfter_SpinChange(wxSpinEvent& ev);
-	private:
-		wxDECLARE_EVENT_TABLE();
+		void chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev);
 };
