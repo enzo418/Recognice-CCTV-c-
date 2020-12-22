@@ -2,7 +2,7 @@
 #include "cApp.hpp"
 
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
-	EVT_CHECKBOX(MAIN_ids::CHK_Recognize, cMain::chkToggleRecognize_Checked)
+	EVT_BUTTON(MAIN_ids::BTN_Recognize, cMain::btnToggleRecognize_Clicked)
 	EVT_CHECKBOX(MAIN_ids::CHK_RecognizeOnStart, cMain::chkToggleRecognizeOnStart_Checked)	
 	EVT_BUTTON(MAIN_ids::BTN_ApplyChanges, cMain::btnApplyChanges_Click)
 	EVT_BUTTON(MAIN_ids::BTN_UndoChanges, cMain::btnUndoChanges_Click)
@@ -55,9 +55,9 @@ cMain::cMain(	Recognize* recognize,
 	this->m_chkStartRecognizeOnStart = new wxCheckBox(m_root, MAIN_ids::CHK_RecognizeOnStart, wxT("Start recognize on Start"));
 	this->m_chkStartRecognizeOnStart->SetValue(this->m_startRecognizeOnStart);
 
-	this->m_chkRecognizeActive = new wxCheckBox(m_root, MAIN_ids::CHK_Recognize, wxT("Recognize active"));
-	this->m_chkRecognizeActive->SetValue(*this->m_sharedData.recognizeActive);
-
+	this->m_btnToggleRecogznie = new wxButton(m_root, MAIN_ids::BTN_Recognize, recognizeActive ? wxT("Stop Recognize") : wxT("Start Recognize"));
+	this->m_btnToggleRecogznie->SetBackgroundColour(wxColor(200, 50, 50));
+	
 	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, "Apply Changes", wxDefaultPosition, wxDefaultSize);
 	this->m_btnApplyChanges->Enable(false);
 	this->m_btnUndoChanges = new wxButton(this->m_root, MAIN_ids::BTN_UndoChanges, "Undo Changes", wxDefaultPosition, wxDefaultSize);
@@ -66,7 +66,8 @@ cMain::cMain(	Recognize* recognize,
 	this->m_sharedData.btnApplyChanges = this->m_btnApplyChanges;
 
 	sizerCheck->Add(this->m_chkStartRecognizeOnStart, 0, wxGROW, 0);
-	sizerCheck->Add(this->m_chkRecognizeActive, 0, wxGROW, 0);
+	sizerCheck->AddStretchSpacer();
+	sizerCheck->Add(this->m_btnToggleRecogznie, 0, wxGROW, 0);
 
 	this->m_btnAddCamera = new wxButton(this->m_root, MAIN_ids::BTN_AddCamera, "Add camera", wxDefaultPosition, wxDefaultSize);
 	this->m_btnRemoveCamera = new wxButton(this->m_root, MAIN_ids::BTN_RemoveCamera, "Remove selected camera", wxDefaultPosition, wxDefaultSize);
@@ -82,10 +83,14 @@ cMain::cMain(	Recognize* recognize,
 	
 	wxSizer* sizerInputFile = new wxBoxSizer(wxVERTICAL);
 	sizerInputFile->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, "File"), 2, wxGROW);
-	sizerInputFile->Add(this->m_btnSearchFile, 1, wxGROW);
+	sizerInputFile->Add(this->m_btnSearchFile, 1, wxGROW | wxTOP, 2);
 	sizerTop->Add(sizerInputFile, 3, wxTOP | wxRIGHT, 10);
-				  
-	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5), 1, wxTOP, 30);
+	
+	wxSizer* sizerAddRemove = new wxBoxSizer(wxVERTICAL);
+	sizerAddRemove->Add(this->m_btnAddCamera, 2, wxGROW);
+	sizerAddRemove->AddStretchSpacer();
+	sizerAddRemove->Add(this->m_btnRemoveCamera, 2, wxGROW);
+	sizerTop->Add(sizerAddRemove, 1, wxTOP, 30);
 		
 	hbox->Add(sizerTop, 1, wxGROW | wxBOTTOM, 5);
 
@@ -120,13 +125,15 @@ void cMain::AddProgramCamerasPages() {
 	}
 }
 
-void cMain::chkToggleRecognize_Checked(wxCommandEvent& ev) {
+void cMain::btnToggleRecognize_Clicked(wxCommandEvent& ev) {
 	if (*this->m_sharedData.recognizeActive) {
 		*this->m_sharedData.recognizeActive = false;
 		this->m_sharedData.recognize->CloseAndJoin();
-	} else {		
+		this->m_btnToggleRecogznie->SetLabel("Start Recognize");
+	} else {
 		this->m_sharedData.recognize->Start(std::ref(*this->m_sharedData.configurations), false, this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		*this->m_sharedData.recognizeActive = true;
+		this->m_btnToggleRecogznie->SetLabel("Stop Recognize");
 	}
 }
 

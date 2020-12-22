@@ -31,7 +31,7 @@
 
 enum MAIN_ids {
 	BUTTON_TOGGLEPREVIEW = 1001,
-	CHK_Recognize,
+	BTN_Recognize,
 	CHK_RecognizeOnStart,
 	BTN_ApplyChanges,
 	BTN_UndoChanges,
@@ -50,7 +50,7 @@ class cMain : public wxFrame {
 	protected:
 		void OnQuitter(wxCloseEvent& event);
 		
-		void chkToggleRecognize_Checked(wxCommandEvent& ev);
+		void btnToggleRecognize_Clicked(wxCommandEvent& ev);
 		void chkToggleRecognizeOnStart_Checked(wxCommandEvent& ev);
 		void btnApplyChanges_Click(wxCommandEvent& ev);
 		void btnUndoChanges_Click(wxCommandEvent& ev);
@@ -72,7 +72,7 @@ class cMain : public wxFrame {
 
 		cPreviewCameras* m_preview = nullptr;
 		
-		wxCheckBox* m_chkRecognizeActive = nullptr;
+		wxButton* m_btnToggleRecogznie = nullptr;
 		wxCheckBox* m_chkStartRecognizeOnStart = nullptr;
 
 		SharedData m_sharedData;
