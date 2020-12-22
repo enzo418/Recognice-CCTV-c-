@@ -208,7 +208,7 @@ void cPanelProgramConfig::chkSendImageOfAllCameras_CheckBoxClick(wxCommandEvent&
 }
 
 void cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& ev) {
-	this->m_config->useGifInsteadImage = !this->m_config->sendImageOfAllCameras;
+	this->m_config->useGifInsteadImage = !this->m_config->useGifInsteadImage;
 	ev.Skip();
 }
 

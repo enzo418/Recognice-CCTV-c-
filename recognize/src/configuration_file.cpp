@@ -120,6 +120,7 @@ namespace ConfigurationFile {
 		ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the sintaxis."
 			<< "\n; The variables are defined with the following sintaxis: <id>=<value>"
 			<< "\n; You can use lowercase, uppercase, mixed, it doesn't mind."
+			<< "\n; Some variables need boolean values, 1 is true and 0 is false."
 			<< "\n; The program configuration is  declared with [PROGRAM]."
 			<< "\n; Each camera configuration begins with a [CAMERA] header and end where another [CAMERA] is found or EOF.\n\n";
 			
@@ -234,10 +235,10 @@ namespace ConfigurationFile {
 				<< "\n;outputResolution=" << cfg.outputResolution.width << "," << cfg.outputResolution.height
 				
 				<< "\nratioScaleOutput=" << std::fixed << std::setprecision(2) << cfg.ratioScaleOutput
-				<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "yes" : "no")
-				<< "\nshowPreviewCameras=" << (cfg.showPreview ?  "yes" : "no")
-				<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "yes" : "no")
-				<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "yes" : "no")
+				<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "1" : "0")
+				<< "\nshowPreviewCameras=" << (cfg.showPreview ?  "1" : "0")
+				<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "1" : "0")
+				<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "1" : "0")
 				
 				<< "\n\n# == Telegram and notifications section\n";
 				
@@ -251,11 +252,11 @@ namespace ConfigurationFile {
 				else
 					ss << "\n;telegramChatId=";
 					
-		ss 		<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "yes" : "no")
-				<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "yes" : "no")
+		ss 		<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
+				<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 				<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 				<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
-				<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "yes" : "no")
+				<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "1" : "0")
 				
 				<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n.";
 				
@@ -265,7 +266,7 @@ namespace ConfigurationFile {
 				ss << "\n;authUsersToSendActions=";
 				
 			ss 	<< "\n\n; This tells the app if send a image or a gif."
-				<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "yes" : "no")
+				<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "1" : "0")
 				
 				<< "\n\n; Selects the Quality of the gif. Values are:"
 				<< "\n; Value : Meaning" 
@@ -332,28 +333,28 @@ namespace ConfigurationFile {
 			config.telegramConfig.chatId = value;
 		} else if (id == "showpreviewcameras" || id == "showpreviewofcameras") {
 			Utils::toLowerCase(value);
-			config.showPreview = value == "no" ? false : true;
+			config.showPreview = value == "0" ? false : true;
 		} else if (id == "showareacamerasees" || id == "showareacamera") {
 			Utils::toLowerCase(value);
-			config.showAreaCameraSees = value == "no" ? false : true;
+			config.showAreaCameraSees = value == "0" ? false : true;
 		} else if (id == "showprocessedframes" || id == "showprocessedimages") {
 			Utils::toLowerCase(value);
-			config.showProcessedFrames = value == "no" ? false : true;
+			config.showProcessedFrames = value == "0" ? false : true;
 		} else if (id == "sendimagewhendetectchange" || id == "sendimageafterdetectigchange"){
-			config.sendImageWhenDetectChange = value == "no" ? false : true;
+			config.sendImageWhenDetectChange = value == "0" ? false : true;
 		} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 			Utils::toLowerCase(value);
-			config.telegramConfig.useTelegramBot = value == "no" ? false : true;
+			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
 		} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
 			Utils::toLowerCase(value);
-			config.sendImageOfAllCameras = value == "no" ? false : true;		
+			config.sendImageOfAllCameras = value == "0" ? false : true;		
 		} else if(id == "authuserstosendactions" || id == "authserssendactions"){
 			config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 		} else if (id == "ratioscaleoutput") {
 			config.ratioScaleOutput = std::stod(value);
 		} else if (id == "usegifinsteadofimage" || id == "usegif") {
 			Utils::toLowerCase(value);
-			config.useGifInsteadImage = value == "no" ? false : true;
+			config.useGifInsteadImage = value == "0" ? false : true;
 		} else if (id == "gifresizepercentage" || id == "gifresize") {
 			Utils::toLowerCase(value);
 			if (value == "none") {
@@ -380,7 +381,7 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
-			config.showIgnoredAreas = value == "no" ? false : true;
+			config.showIgnoredAreas = value == "0" ? false : true;
 		}
 		
 		return sucess;
@@ -448,7 +449,7 @@ namespace ConfigurationFile {
 			uint32_t val = std::stoi(value);
 			config.updateThresholdFrequency = val;
 		} else if (id == "usehighconstrast") {
-			config.useHighConstrast = value == "yes";
+			config.useHighConstrast = value == "1";
 		} else if (id == "ignoredareas"){
 			std::vector<int> results = Utils::GetNumbersString(value);
 			
