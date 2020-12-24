@@ -68,6 +68,9 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	
 	this->m_spinFramesAnalyzeAfter = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeAfter, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesAfter);
 	BIND(m_spinFramesAnalyzeAfter, wxEVT_SPINCTRL, wxSpinEvent, spinFramesAnalyzeAfter_Change);
+			
+	this->m_spinMinPercentageAreaIgnored = new wxSpinCtrlDouble(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, this->m_config->minPercentageAreaNeededToIgnore);
+	BIND(m_spinMinPercentageAreaIgnored, wxEVT_SPINCTRLDOUBLE, wxSpinDoubleEvent, spinMinPercentageAreaIgnored_Change);
 	
 	// --------------- Sizers
 	const int flags = wxALL | wxEXPAND;
@@ -111,6 +114,8 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, _("Frames Analyze After")),
 						5
 					), 0, flags, border);
+	
+	sizerRight->Add(m_spinMinPercentageAreaIgnored, 0, flags, border);
 		
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
@@ -168,7 +173,7 @@ void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
 }
 
 void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {
-	AreaSelector::SelectCameraROI(this->m_config->url, this->m_config->roi);
+	AreaSelector::SelectCameraROI(*this->m_config);
 }
 
 void cPanelCameraConfig::btnSelectIgnoredAreas_Click(wxCommandEvent& ev) {
@@ -181,4 +186,8 @@ void cPanelCameraConfig::spinFramesAnalyzeBefore_Change(wxSpinEvent& ev) {
 
 void cPanelCameraConfig::spinFramesAnalyzeAfter_Change(wxSpinEvent& ev) {
 	this->m_config->framesToAnalyze.framesAfter = this->m_spinFramesAnalyzeAfter->GetValue();
+}
+
+void cPanelCameraConfig::spinMinPercentageAreaIgnored_Change(wxSpinDoubleEvent& ev) {
+	this->m_config->minPercentageAreaNeededToIgnore = this->m_spinMinPercentageAreaIgnored->GetValue();
 }

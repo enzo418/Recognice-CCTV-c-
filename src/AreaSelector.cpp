@@ -21,22 +21,23 @@ namespace AreaSelector {
 		return sucess;
 	}
 
-	void SelectCameraROI(const std::string& url, cv::Rect& roi) {
+	void SelectCameraROI(CameraConfiguration& cfg) {
 		AreaDataROI data;
 		
-		if (GetFrame(url, data.frame)) {
+		if (GetFrame(cfg.url, data.frame)) {
 			// setup window
 			cv::namedWindow("Press a key to exit");
 			cv::setMouseCallback("Press a key to exit", onMouseROI, &data);
 			
-			data.roi = roi;
+			data.roi = cfg.roi;
 			
-			data.startPoint = roi.tl();
+			data.startPoint = cfg.roi.tl();
 			
 			// resize frame and draw current roi
 			cv::resize(data.frame, data.frame, RESIZERESOLUTION);
+			ImageManipulation::RotateImage(data.frame, cfg.rotation);
 			data.frame.copyTo(data.show);
-			cv::rectangle(data.show, roi, cv::Scalar(255, 25, 255), 2);
+			cv::rectangle(data.show, cfg.roi, cv::Scalar(255, 25, 255), 2);
 			
 			cv::imshow("Press a key to exit", data.show);
 			cv::waitKey(0);
@@ -49,7 +50,7 @@ namespace AreaSelector {
 			if (data.roi.height > RESIZERESOLUTION.height)
 				data.roi.height = RESIZERESOLUTION.height;
 			
-			roi = data.roi;
+			cfg.roi = data.roi;
 		} else {
 			wxMessageBox("Couldn't open the camera", "Error");
 		}

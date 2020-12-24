@@ -4,7 +4,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	this->gifFrames.after.resize(programConfig->numberGifFrames.framesAfter);
 	this->gifFrames.before.resize(programConfig->numberGifFrames.framesBefore);
 	this->Connect();
-	this->accumulatorThresholds = cameraConfig.changeThreshold;
+	this->accumulatorThresholds = cameraConfig.minimumThreshold;
 }
 
 void Camera::Connect() {
@@ -29,13 +29,13 @@ void Camera::ApplyBasicsTransformations() {
 	// 	this->lastBackupImageStored = std::chrono::high_resolution_clock::now();
 	// }
 
+	// Then rotate it
+	if (this->config->rotation != 0) ImageManipulation::RotateImage(this->frame, this->config->rotation);
+
 	// Take the region of interes
 	if (!this->config->roi.empty()) {
 		this->frame = this->frame(this->config->roi);
 	}
-
-	// Then rotate it
-	if (this->config->rotation != 0) ImageManipulation::RotateImage(this->frame, this->config->rotation);
 
 	cv::cvtColor(this->frame, this->frame, cv::COLOR_RGB2GRAY);
 
@@ -63,13 +63,10 @@ void Camera::CalculateNonZeroPixels() {
 }
 
 void Camera::UpdateThreshold() {
-	if(this->totalNonZeroPixels > 0){
-		this->accumulatorThresholds += this->config->minimumThreshold + this->totalNonZeroPixels;
-		// std::cout << "+" << this->totalNonZeroPixels << " total=" << this->accumulatorThresholds << std::endl;
-		this->thresholdSamples++;
-	}
+	this->accumulatorThresholds += this->config->minimumThreshold + this->totalNonZeroPixels;
+	this->thresholdSamples++;
 		
-	if(this->thresholdSamples == 0 || this->accumulatorThresholds == 0) return;
+	if(this->thresholdSamples == 0 /*|| this->accumulatorThresholds == 0*/) return;
 
 	auto time = (this->now - this->lastThresholdUpdate) / std::chrono::seconds(1);
 	if(time >= this->config->updateThresholdFrequency) {
@@ -181,7 +178,7 @@ void Camera::ReadFramesWithInterval() {
 
 				// if still doesn't detect something (or it maybe detected and we still didn't fill the frames before it needed)
 				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < this->_programConfig->numberGifFrames.framesBefore) {
-					// increase total
+					// increase total (if it's max then just leave it there)
 					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
 
 					// copy frame
@@ -214,13 +211,14 @@ void Camera::ReadFramesWithInterval() {
 				std::cout << this->config->cameraName
 					<< " Non zero pixels=" << totalNonZeroPixels
 					<< " Configured threshold=" << this->config->changeThreshold
+					<< " State=" << (int)this->gifFrames.state
 					<< std::endl;
 			}
 
 			this->lastFrame = this->frame;
 
-			if (this->totalNonZeroPixels > this->config->changeThreshold) {				
-				std::cout << "Diff frame saved for later."  << std::endl;
+			if (this->totalNonZeroPixels > this->config->changeThreshold && this->gifFrames.state == State::Initial) {
+				std::cout << "Change detected. Checking..."  << std::endl;
 
 				size_t overlappingFindings = 0;
 				// since gif does this (check if change inside an ignored area) for each frame... 
@@ -234,6 +232,8 @@ void Camera::ReadFramesWithInterval() {
 							overlappingFindings += 1;
 						}
 					}
+				} else {
+					this->gifFrames.state = State::Collecting;
 				}
 
 				if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {

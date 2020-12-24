@@ -51,7 +51,7 @@ namespace AreaSelector {
 	 * @param url source
 	 * @param roi reference param
 	 */
-	void SelectCameraROI(const std::string& url, cv::Rect& roi);
+	void SelectCameraROI(CameraConfiguration& cfg);
 			
 	/**
 	 * @brief Callback for SelectCameraIgnoredAreas

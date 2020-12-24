@@ -206,8 +206,10 @@ void cMain::btnUndoChanges_Click(wxCommandEvent& ev) {
 	ev.Skip();
 }
 
-void cMain::btnSaveToFile_Click(wxCommandEvent& ev) {	
-	ConfigurationFile::SaveConfigurations(*this->m_sharedData.configurations, this->m_filePath);
+void cMain::btnSaveToFile_Click(wxCommandEvent& ev) {
+	std::string p = this->m_txtFilePathInput->GetValue().ToStdString();
+	std::cout << "Writing to: " << p << std::endl;
+	ConfigurationFile::SaveConfigurations(*this->m_sharedData.configurations, p);
 	ev.Skip();
 }
 
