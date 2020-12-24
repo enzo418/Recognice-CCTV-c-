@@ -12,20 +12,21 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MAIN_ids::BTN_SearchFile, cMain::btnSearchFile_Click)
 wxEND_EVENT_TABLE()
 
-cMain::cMain(	Recognize* recognize, 
+cMain::cMain(	wxLocale& locale,
+				Recognize* recognize, 
 				Configurations& configs, 
 				bool& recognizeActive, 
 				wxConfig* appConfig, 
 				bool& mainClosed,
 				std::string filePath)
-		: wxFrame(nullptr, wxID_ANY, "Recognize", wxPoint(30, 30), wxSize(860, 700)), 
-		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath) {
+		: wxFrame(nullptr, wxID_ANY, _("Recognize"), wxPoint(30, 30), wxSize(860, 700)), 
+		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath), m_locale(locale) {
 	/**
 	 * m_root
 	 *    |-- netbook
 	 * 			|-- cameraPanel
-	**/	
-	
+	**/
+		
 	this->SetMinSize(wxSize(480, 640));
 
 	this->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(cMain::OnQuitter));
@@ -52,16 +53,16 @@ cMain::cMain(	Recognize* recognize,
 
 	this->AddProgramCamerasPages();
 
-	this->m_chkStartRecognizeOnStart = new wxCheckBox(m_root, MAIN_ids::CHK_RecognizeOnStart, wxT("Start recognize on Start"));
+	this->m_chkStartRecognizeOnStart = new wxCheckBox(m_root, MAIN_ids::CHK_RecognizeOnStart, _("Start recognize on Start"));
 	this->m_chkStartRecognizeOnStart->SetValue(this->m_startRecognizeOnStart);
 
-	this->m_btnToggleRecogznie = new wxButton(m_root, MAIN_ids::BTN_Recognize, recognizeActive ? wxT("Stop Recognize") : wxT("Start Recognize"));
+	this->m_btnToggleRecogznie = new wxButton(m_root, MAIN_ids::BTN_Recognize, recognizeActive ? _("Stop Recognize") : _("Start Recognize"));
 	this->m_btnToggleRecogznie->SetBackgroundColour(wxColor(200, 50, 50));
 	
-	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, "Apply Changes", wxDefaultPosition, wxDefaultSize);
+	this->m_btnApplyChanges = new wxButton(this->m_root, MAIN_ids::BTN_ApplyChanges, _("Apply Changes"), wxDefaultPosition, wxDefaultSize);
 	this->m_btnApplyChanges->Enable(false);
-	this->m_btnUndoChanges = new wxButton(this->m_root, MAIN_ids::BTN_UndoChanges, "Undo Changes", wxDefaultPosition, wxDefaultSize);
-	this->m_btnSaveToFile = new wxButton(this->m_root, MAIN_ids::BTN_SaveToFile, "Save to file", wxDefaultPosition, wxDefaultSize);
+	this->m_btnUndoChanges = new wxButton(this->m_root, MAIN_ids::BTN_UndoChanges, _("Undo Changes"), wxDefaultPosition, wxDefaultSize);
+	this->m_btnSaveToFile = new wxButton(this->m_root, MAIN_ids::BTN_SaveToFile, _("Save to file"), wxDefaultPosition, wxDefaultSize);
 
 	this->m_sharedData.btnApplyChanges = this->m_btnApplyChanges;
 
@@ -69,11 +70,11 @@ cMain::cMain(	Recognize* recognize,
 	sizerCheck->AddStretchSpacer();
 	sizerCheck->Add(this->m_btnToggleRecogznie, 0, wxGROW, 0);
 
-	this->m_btnAddCamera = new wxButton(this->m_root, MAIN_ids::BTN_AddCamera, "Add camera", wxDefaultPosition, wxDefaultSize);
-	this->m_btnRemoveCamera = new wxButton(this->m_root, MAIN_ids::BTN_RemoveCamera, "Remove selected camera", wxDefaultPosition, wxDefaultSize);
+	this->m_btnAddCamera = new wxButton(this->m_root, MAIN_ids::BTN_AddCamera, _("Add camera"), wxDefaultPosition, wxDefaultSize);
+	this->m_btnRemoveCamera = new wxButton(this->m_root, MAIN_ids::BTN_RemoveCamera, _("Remove selected camera"), wxDefaultPosition, wxDefaultSize);
 		
 	this->m_txtFilePathInput = new wxTextCtrl(this->m_root, MAIN_ids::TXT_FilePathInput, m_filePath);
-	this->m_btnSearchFile = new wxButton(this->m_root, MAIN_ids::BTN_SearchFile, "Search file");
+	this->m_btnSearchFile = new wxButton(this->m_root, MAIN_ids::BTN_SearchFile, _("Search file"));
 
 	sizerButtons->Add(m_btnApplyChanges, 1, wxGROW | wxALL, 5);
 	sizerButtons->Add(m_btnUndoChanges, 1, wxGROW | wxALL, 5);
@@ -82,15 +83,11 @@ cMain::cMain(	Recognize* recognize,
 	sizerTop->Add(sizerCheck, 1, wxTOP | wxLEFT | wxRIGHT | wxGROW, 10);
 	
 	wxSizer* sizerInputFile = new wxBoxSizer(wxVERTICAL);
-	sizerInputFile->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, "File"), 2, wxGROW);
-	sizerInputFile->Add(this->m_btnSearchFile, 1, wxGROW | wxTOP, 2);
+	sizerInputFile->Add(WidgetsHelper::GetSizerItemLabel(this->m_root, this->m_txtFilePathInput, _("File")), 2, wxGROW);
+	sizerInputFile->Add(this->m_btnSearchFile, 1, wxGROW);
 	sizerTop->Add(sizerInputFile, 3, wxTOP | wxRIGHT, 10);
-	
-	wxSizer* sizerAddRemove = new wxBoxSizer(wxVERTICAL);
-	sizerAddRemove->Add(this->m_btnAddCamera, 2, wxGROW);
-	sizerAddRemove->AddStretchSpacer();
-	sizerAddRemove->Add(this->m_btnRemoveCamera, 2, wxGROW);
-	sizerTop->Add(sizerAddRemove, 1, wxTOP, 30);
+				  
+	sizerTop->Add(WidgetsHelper::JoinWidgetsOnSizerV(this->m_btnAddCamera, this->m_btnRemoveCamera, 5), 1, wxTOP, 30);
 		
 	hbox->Add(sizerTop, 1, wxGROW | wxBOTTOM, 5);
 
@@ -114,7 +111,7 @@ void cMain::AddProgramCamerasPages() {
 	cPanelProgramConfig* programPanel = new cPanelProgramConfig(this->m_book, this->m_tempConfig.programConfig, &this->m_sharedData);
 
 	// add program config to netbook
-	m_book->AddPage(programPanel, wxT("Program"), false);
+	m_book->AddPage(programPanel, _("Program"), false);
 
 	for (size_t i = 0; i < this->m_tempConfig.camerasConfigs.size(); i++) {	
 		// create camera panel		
@@ -129,11 +126,11 @@ void cMain::btnToggleRecognize_Clicked(wxCommandEvent& ev) {
 	if (*this->m_sharedData.recognizeActive) {
 		*this->m_sharedData.recognizeActive = false;
 		this->m_sharedData.recognize->CloseAndJoin();
-		this->m_btnToggleRecogznie->SetLabel("Start Recognize");
+		this->m_btnToggleRecogznie->SetLabel(_("Start Recognize"));
 	} else {
 		this->m_sharedData.recognize->Start(std::ref(*this->m_sharedData.configurations), false, this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		*this->m_sharedData.recognizeActive = true;
-		this->m_btnToggleRecogznie->SetLabel("Stop Recognize");
+		this->m_btnToggleRecogznie->SetLabel(_("Stop Recognize"));
 	}
 }
 
@@ -226,7 +223,7 @@ void cMain::btnRemoveCamera_Click(wxCommandEvent& ev) {
 	int s = this->m_book->GetSelection();
 	
 	if (s == 0) {
-		wxMessageBox("Cannot delete the program configuration.", "Couldn't delete the camera");
+		wxMessageBox(_("Cannot delete the program configuration."), _("Couldn't delete the camera"));
 	} else {
 		this->m_book->RemovePage(s);
 		this->m_sharedData.configurations->camerasConfigs.erase(this->m_sharedData.configurations->camerasConfigs.begin() + s - 1);
@@ -238,8 +235,8 @@ void cMain::btnSearchFile_Click(wxCommandEvent& ev) {
 	bool proceed = true;
 	if (this->m_btnApplyChanges->IsEnabled()) {
 		wxMessageDialog dialog(this,
-							   "There are unsaved changes, do you want to apply the changes and save them to the file?",
-							   "Warning",
+							   _("There are unsaved changes, do you want to apply the changes and save them to the file?"),
+							   _("Warning"),
 							   wxCENTER |
 							   wxNO_DEFAULT | wxYES_NO | wxCANCEL |
 							   wxICON_EXCLAMATION);
@@ -263,11 +260,11 @@ void cMain::btnSearchFile_Click(wxCommandEvent& ev) {
 	if (proceed) {
 		static wxString s_extDef;
 		wxString path = wxFileSelector(
-							wxT("Select the file to load"),
+							_("Select the file to load"),
 							wxEmptyString, wxEmptyString,
 							s_extDef,
 							wxString::Format (
-								wxT("Configuration file (*.ini)|*.ini|Plain text (*.txt)|*.txt|All files (%s)|%s"),
+								_("Configuration file (*.ini)|*.ini|Plain text (*.txt)|*.txt|All files (%s)|%s"),
 								wxFileSelectorDefaultWildcardStr,
 								wxFileSelectorDefaultWildcardStr
 							),

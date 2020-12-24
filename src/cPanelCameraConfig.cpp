@@ -43,10 +43,10 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	BIND(m_spinUpdateThresholdFreq, wxEVT_SPINCTRL, wxSpinEvent, spinUpdateThresholdFrequency_Change);
 	
 	m_comboType = new wxComboBox(this, CAMERA_ids::COMBO_type, wxEmptyString, wxDefaultPosition, wxDefaultSize);
-	m_comboType->Append(wxString("Active"));
-	m_comboType->Append(wxString("Disabled"));
-	m_comboType->Append(wxString("Sentry"));
-	m_comboType->SetValue((this->m_config->type == CAMERA_DISABLED ? "Disabled" : (this->m_config->type == CAMERA_SENTRY ? "Sentry"  : "Active")));
+	m_comboType->Append(wxString(_("Active")));
+	m_comboType->Append(wxString(_("Disabled")));
+	m_comboType->Append(wxString(_("Sentry")));
+	m_comboType->SetValue((this->m_config->type == CAMERA_DISABLED ? _("Disabled") : (this->m_config->type == CAMERA_SENTRY ? _("Sentry") : _("Active"))));
 	BIND(m_comboType, wxEVT_COMBOBOX, wxCommandEvent, comboType_Select);
 
 	m_spinHitThreshold = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_hitThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->hitThreshold);
@@ -57,10 +57,10 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	m_spinNoise->SetDigits(2);
 	BIND(m_spinNoise, wxEVT_SPINCTRLDOUBLE, wxSpinDoubleEvent, spinNoiseThreshold_Change);
 	
-	m_btnSelectRoi = new wxButton(this, CAMERA_ids::BTN_selectRoi, "Select Region of interest");
+	m_btnSelectRoi = new wxButton(this, CAMERA_ids::BTN_selectRoi, _("Select Region of interest"));
 	BIND(m_btnSelectRoi, wxEVT_BUTTON, wxCommandEvent, btnSelectRoi_Click);
 	
-	m_btnSelectIgnoredAreas = new wxButton(this, CAMERA_ids::BTN_selectIgnoredAreas, "Select ignored areas");
+	m_btnSelectIgnoredAreas = new wxButton(this, CAMERA_ids::BTN_selectIgnoredAreas, _("Select ignored areas"));
 	BIND(m_btnSelectIgnoredAreas, wxEVT_BUTTON, wxCommandEvent, btnSelectIgnoredAreas_Click);
 	
 	this->m_spinFramesAnalyzeBefore = new wxSpinCtrl(this, CAMERA_ids::SPIN_FramesAnalyzeBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->framesToAnalyze.framesBefore);
@@ -74,19 +74,19 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	const int border = 10;
 	
 	// Add widgets to sizer
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtName, "Name"), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtName, _("Name")), 0, flags, border);
 
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, "Url"), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, _("Url")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, "Camera type"), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, _("Camera type")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, "Order"),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, "Rotation"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, _("Order")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, _("Rotation")),
 						5
 					), 0, flags, border);
 	
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, "Change Threshold"), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, _("Change Threshold")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						m_btnSelectRoi,
@@ -94,21 +94,21 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 						5
 					), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinimumThreshold, "Minimum Threshold"), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinimumThreshold, _("Minimum Threshold")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinIncreaseThresholdFactor, "Increase threshold factor"), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinIncreaseThresholdFactor, _("Increase threshold factor")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinUpdateThresholdFreq, "Update threshold frequency"), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinUpdateThresholdFreq, _("Update threshold frequency")), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinHitThreshold, "Hit threshold"),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinNoise, "Noise threshold"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinHitThreshold, _("Hit threshold")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinNoise, _("Noise threshold")),
 						5
 					), 0, flags, border);
 	
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeBefore, "Frames Analyze Before"),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, "Frames Analyze After"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeBefore, _("Frames Analyze Before")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, _("Frames Analyze After")),
 						5
 					), 0, flags, border);
 		
@@ -164,7 +164,7 @@ void cPanelCameraConfig::spinNoiseThreshold_Change(wxSpinDoubleEvent& ev) {
 
 void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
 	wxString t = this->m_comboType->GetValue();
-	this->m_config->type = (t == "Disabled" ? 0 : (t == wxT("Sentry")  ? 1 : 2));
+	this->m_config->type = (t == _("Disabled") ? 0 : (t == _("Sentry") ? 1 : 2));
 }
 
 void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {

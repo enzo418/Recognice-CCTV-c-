@@ -10,6 +10,7 @@
 #ifdef _WIN32 
 #include <wx/msw/regconf.h>
 #endif
+#include <wx/intl.h>
 
 class cApp : public wxApp {
 	public:
@@ -29,4 +30,7 @@ class cApp : public wxApp {
 
 		bool m_startRecognizeOnStart;
 		bool m_mainClosed = false;
+	
+	protected:
+		wxLocale m_locale;
 };

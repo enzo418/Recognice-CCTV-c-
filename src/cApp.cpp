@@ -15,6 +15,14 @@ bool cApp::OnInit(){
 	this->m_startRecognizeOnStart = this->m_appConfig->Read("StartRecognizeOnStart", false);
 	
 	wxString lastConfigFile = this->m_appConfig->Read("LastConfigFile", "config.ini");
+			
+	m_locale.AddCatalog("recognize");
+		
+	if (!m_locale.Init(wxLANGUAGE_SPANISH)) {
+		
+	}
+	
+//	wxMessageBox(_("Apply Changes"), _("Name"));
 
 	// Recognize will live as long as the app is live
 	this->m_recognize = new Recognize();
@@ -26,7 +34,7 @@ bool cApp::OnInit(){
 		this->m_recognize->Start(std::ref(this->configurations), false, this->configurations.programConfig.telegramConfig.useTelegramBot);
 	
 	// Main frame, also loads the file with the config and starts recognize
-	this->m_main = new cMain(this->m_recognize, this->configurations, this->m_startRecognizeOnStart, this->m_appConfig, this->m_mainClosed, lastConfigFile.ToStdString());
+	this->m_main = new cMain(m_locale, this->m_recognize, this->configurations, this->m_startRecognizeOnStart, this->m_appConfig, this->m_mainClosed, lastConfigFile.ToStdString());
 	this->m_main->Show();
 
 	// Window (thread) that never is shown. Leaves all the window (thread) to a cv::imshow window

@@ -44,9 +44,15 @@ enum MAIN_ids {
 
 class cMain : public wxFrame {
 	public:
-		cMain(Recognize* recognize, Configurations& configs, bool& recognizeActive, wxConfig* appConfig, bool& mainClosed, std::string filePath);
+		cMain(	wxLocale& locale, Recognize* recognize, 
+				Configurations& configs, bool& recognizeActive, 
+				wxConfig* appConfig, bool& mainClosed, 
+				std::string filePath);
+				
 		~cMain();
-
+		
+		wxLocale& m_locale;
+		
 	protected:
 		void OnQuitter(wxCloseEvent& event);
 		

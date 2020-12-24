@@ -3,7 +3,7 @@
 
 cPreviewCameras::cPreviewCameras(Recognize& rRecognize, Configurations& config, bool& recognizeActive, bool& mainClosed) 
 	: 	wxFrame(nullptr, wxID_ANY, "Preview", wxPoint(30, 30), wxSize(840, 480)),
-		pRecognize(&rRecognize) {	
+		pRecognize(&rRecognize) {
 	bool f = false;
 	while (!mainClosed) {
 		if (recognizeActive && config.programConfig.showPreview) {
