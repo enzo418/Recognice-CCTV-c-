@@ -10,7 +10,8 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	const size_t ammountOfFrames = programConfig.numberGifFrames.framesBefore + programConfig.numberGifFrames.framesAfter;
 	std::vector<FrameDescriptor> framesTransformed(ammountOfFrames);
 	std::vector<cv::Mat*> frames(ammountOfFrames);
-	
+	const double minPercentageAreaIgnore = camera.config->minPercentageAreaNeededToIgnore / 100;
+
 	cv::Mat* frameCero;
 	cv::Mat diff;
 	
@@ -31,14 +32,15 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	for (size_t i = camera.gifFrames.indexBefore;;) {	
 		if (totalFrames < programConfig.numberGifFrames.framesBefore) {						
 			frames[totalFrames] = &camera.gifFrames.before[i];
-
-			// Take the region of interes
-			if (!camera.config->roi.empty()) {
-				framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone();
-				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi);
-			}
+			
+			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone();
 
 			if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
+
+			// Take the region of interes
+			if (!camera.config->roi.empty()) {				
+				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi);
+			}
 
 			if (totalFrames == 0) {
 				frameCero = &framesTransformed[0].frame;
@@ -53,18 +55,19 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	for (; totalFrames < ammountOfFrames; totalFrames++) {
 		frames[totalFrames] = &camera.gifFrames.after[totalFrames - programConfig.numberGifFrames.framesBefore];
 		
-		if (!camera.config->roi.empty()) {
-			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
-			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi); 
-		}
+		framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
 
 		if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
+
+		if (!camera.config->roi.empty()) {			
+			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi); 
+		}
 	}
 
 	//// Process frames
 
 	bool p1Saved = false;
-	for (size_t i = 1; i < frames.size(); i++) {		
+	for (size_t i = 1; i < frames.size(); i++) {
 		cv::absdiff(*frameCero, framesTransformed[i].frame, diff);
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
 
@@ -90,16 +93,23 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			}
 			
 			// check if finding is overlapping with a ignored area
-			for (auto &&i : camera.config->ignoredAreas) {					
-				cv::Rect inters = finding.rect.boundingRect() & i;
-				if (inters.area() >= finding.rect.boundingRect().area() * camera.config->minPercentageAreaNeededToIgnore) {
+			for (auto &&j : camera.config->ignoredAreas) {					
+				cv::Rect inters = finding.rect.boundingRect() & j;
+				if (inters.area() >= finding.rect.boundingRect().area() * minPercentageAreaIgnore) {
 					overlappingFindings += 1;
+					
+					inters.x += camera.config->roi.x;					
+					cv::rectangle(*frames[i], inters, cv::Scalar(255, 0, 0), 1);					
 				}
 			}
 			
-			for (int j = 0; j < 4; j++) {			
-				cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
-			}
+			cv::Rect bnd = finding.rect.boundingRect();
+			bnd.x += camera.config->roi.x;
+			cv::rectangle(*frames[i], bnd, cv::Scalar(255,255,170), 1);
+
+			// for (int j = 0; j < 4; j++) {			
+			// 	cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
+			// }
 
 			if (lastValidFind != nullptr) {
 				validFrames++;
@@ -116,7 +126,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	double displacementX = abs(p1.x - p2.x);
 	double displacementY = abs(p1.y - p2.y);
 
-	if (camera.gifFrames.avrgDistanceFrames > 25)
+	if (camera.gifFrames.avrgDistanceFrames > 120)
 		camera.gifFrames.debugMessage += "\nIGNORED";
 
 	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalArea: " + std::to_string(totalArea) + " total area % of non zero: " + std::to_string(totalArea * 100 / totalNonPixels);
@@ -128,7 +138,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	}
 
 	//// Check if it's valid
-	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 25 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
+	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 120 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
 		//// Recognize a person
 		bool personDetected = false;
 		size_t start = programConfig.numberGifFrames.framesBefore - camera.config->framesToAnalyze.framesBefore;
@@ -176,19 +186,21 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 		// }
 	} else {
 		camera.gifFrames.state = State::Cancelled;
-		camera.gifFrames.debugMessage += "\n";
+		// camera.gifFrames.state = State::Send; // uncomment to send it any way
 
 		// This if is only for debuggin purposes
-		if (validFrames != 0) {
+		if (validFrames == 0) {
 			camera.gifFrames.avrgDistanceFrames = 0;
 			camera.gifFrames.avrgAreaDifference = 0;
 			camera.gifFrames.debugMessage += "\nCancelled due 0 valid frames found.";
+		} else if (camera.gifFrames.avrgDistanceFrames > 120) {
+			camera.gifFrames.debugMessage += "\nCancelled due avrg distance: " + std::to_string(camera.gifFrames.avrgDistanceFrames);
 		} else {
 			camera.gifFrames.debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of " + std::to_string(camera.config->thresholdFindingsOnIgnoredArea) + " validFrames needed.";
 		}
 	}
 
-	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n frames used: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
+	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n Valid frames: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
 	
 	std::cout << camera.gifFrames.debugMessage << std::endl;
 

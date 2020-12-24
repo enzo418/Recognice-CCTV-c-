@@ -63,7 +63,7 @@ struct CameraConfiguration {
 	size_t thresholdFindingsOnIgnoredArea = 2;
 
 	// how much % of the finding needs to be inside the ignored area to ignore it
-	double minPercentageAreaNeededToIgnore = 95.0 / 100.0;
+	double minPercentageAreaNeededToIgnore = 95.0;
 };
 
 // to be able to sort the array of configs

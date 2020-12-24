@@ -20,6 +20,7 @@
 
 enum State { 	
 				Initial, /** Initial state: updating "before" frames **/
+				Collecting, /** collecting frames */
 				Ready, /** filled "after" frames, ready to send **/
 				Wait, /** Do not send... yet **/
 				Send, /** green flag to continue **/

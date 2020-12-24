@@ -482,7 +482,7 @@ namespace ConfigurationFile {
 			config.thresholdFindingsOnIgnoredArea = val;
 		} else if (id == "minpercentageareaneededtoignore") {
 			double val = std::stod(value);
-			config.minPercentageAreaNeededToIgnore = val == 0 ? 0 : val / 100.0;
+			config.minPercentageAreaNeededToIgnore = val;
 		}
 		
 		return sucess;
