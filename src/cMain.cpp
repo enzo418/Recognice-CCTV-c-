@@ -215,10 +215,13 @@ void cMain::btnSaveToFile_Click(wxCommandEvent& ev) {
 
 void cMain::btnAddCamera_Click(wxCommandEvent& ev) {
 	this->m_tempConfig.camerasConfigs.push_back(CameraConfiguration());
+	
+	this->m_tempConfig.camerasConfigs.back().cameraName = _("new camera");
+	
 	cPanelCameraConfig* cameraPanel = new cPanelCameraConfig(this->m_book, &this->m_tempConfig.camerasConfigs.back(), &this->m_sharedData);
 
 	// add camera panel to netbook
-	m_book->AddPage(cameraPanel,this->m_tempConfig.camerasConfigs.back().cameraName, false);
+	m_book->AddPage(cameraPanel, this->m_tempConfig.camerasConfigs.back().cameraName, false);
 }
 
 void cMain::btnRemoveCamera_Click(wxCommandEvent& ev) {

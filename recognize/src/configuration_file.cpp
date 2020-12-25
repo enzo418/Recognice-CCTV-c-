@@ -257,6 +257,7 @@ namespace ConfigurationFile {
 				<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 				<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
 				<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "1" : "0")
+				<< "\nsendTextWhenDetectChange=" << (cfg.sendTextWhenDetectChange ?  "1" : "0")
 				
 				<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n.";
 				
@@ -347,7 +348,7 @@ namespace ConfigurationFile {
 			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
 		} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
 			Utils::toLowerCase(value);
-			config.sendImageOfAllCameras = value == "0" ? false : true;		
+			config.sendImageOfAllCameras = value == "0" ? false : true;
 		} else if(id == "authuserstosendactions" || id == "authserssendactions"){
 			config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 		} else if (id == "ratioscaleoutput") {
@@ -382,6 +383,9 @@ namespace ConfigurationFile {
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
 			config.showIgnoredAreas = value == "0" ? false : true;
+		} else if (id == "sendtextwhendetectchange" || id == "sendtextafterchange") {
+			Utils::toLowerCase(value);
+			config.sendTextWhenDetectChange = value == "0" ? false : true;
 		}
 		
 		return sucess;

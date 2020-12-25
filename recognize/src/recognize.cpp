@@ -68,7 +68,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 	bool p1Saved = false;
 	for (size_t i = 1; i < frames.size(); i++) {
-		cv::absdiff(*frameCero, framesTransformed[i].frame, diff);
+		cv::absdiff(/** *frameCero*/ framesTransformed[i-1].frame, framesTransformed[i].frame, diff);
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
 
 		cv::threshold(diff, diff, camera.config->noiseThreshold, 255, cv::THRESH_BINARY);

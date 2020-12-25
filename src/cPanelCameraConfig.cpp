@@ -77,19 +77,19 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	const int border = 10;
 	
 	// Add widgets to sizer
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtName, _("Name")), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtName, _("Name"), _("Name of the camera")), 0, flags, border);
 
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, _("Url")), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, _("Url"), _("Url of the camera")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, _("Camera type")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, _("Camera type"), _("Acti...")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, _("Order")),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, _("Rotation")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, _("Order"), _("Position of the camera in the preview. Starts at 0")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, _("Rotation"), _("Rotation of the camera, helps to detect objects correctly")),
 						5
 					), 0, flags, border);
 	
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, _("Change Threshold")), 0, flags, border);
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, _("Change Threshold"), _("Delete this pls")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						m_btnSelectRoi,
@@ -97,21 +97,21 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 						5
 					), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinimumThreshold, _("Minimum Threshold")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinimumThreshold, _("Minimum Threshold"), _("Minimum number of different pixels between the last 2 frames. Is used to leave a margin to not trigger the alert constantly.\nIs recommended to set it at a low number, like 10. You may will have to change it if you change the theshold noise or update Frequency")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinIncreaseThresholdFactor, _("Increase threshold factor")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinIncreaseThresholdFactor, _("Increase threshold factor"), _("Since the program is calculating the average change of pixels between the last two frames you need to leave a margin\n to avoid sending notifications over small or insignificant changes. \nA general good value is between 1.04 (4%) and 1.30 (30%) of the average change.\nAlso you could leave this to 1 if with 'minimun theshold' it's working fine.")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinUpdateThresholdFreq, _("Update threshold frequency")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinUpdateThresholdFreq, _("Update threshold frequency (seconds)"), _("This tells the program how frequent (seconds) to update the ammount of pixels changed between the last two frames needed to trigger to alert. On camera where there is fast changing objects is good to leave this value low, e.g. 5.")), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinHitThreshold, _("Hit threshold")),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinNoise, _("Noise threshold")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinHitThreshold, _("Hit threshold"), "?"),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinNoise, _("Noise threshold"), _("This value helps deleting noise from the image, so more noise in each frame higher this value should be. Average values goes from 30 to 45.")),
 						5
 					), 0, flags, border);
 	
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeBefore, _("Frames Analyze Before")),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, _("Frames Analyze After")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeBefore, _("Frames Analyze Before"), _("Used to know how much frames search for a person in the frames of the 'before' buffer. Used only if 'use gif instead of image' is cheked.\nShould be a number less than or equal than 'frames before' from the Program Configuration.")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAnalyzeAfter, _("Frames Analyze After"), _("Used to know how much frames search for a person in the frames of the 'after' buffer. Used only if 'use gif instead of image' is cheked.\nShould be a number less than or equal than 'frames after' from the Program Configuration.")),
 						5
 					), 0, flags, border);
 	

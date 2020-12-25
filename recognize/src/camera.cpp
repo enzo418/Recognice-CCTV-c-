@@ -91,25 +91,34 @@ void Camera::UpdateThreshold() {
 }
 
 void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) {
-	// every secondsBetweenMessages send a message to the telegram bot
-	auto intervalFrames = (now - this->lastMessageSended) / std::chrono::seconds(1);
-	if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {	
 		// Play a sound
 		this->pendingNotifications.push_back(Notification::Notification());
-
-		if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
-			Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
-			this->pendingNotifications.push_back(imn);
-		} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {			
-			this->gifFrames.updateBefore = false;
-			this->gifFrames.updateAfter = true;
-		} else {
-			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
-			this->pendingNotifications.push_back(imn);
+		
+		// Send message with image
+		auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
+		if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
+			if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
+				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
+				this->pendingNotifications.push_back(imn);
+			} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {			
+				this->gifFrames.updateBefore = false;
+				this->gifFrames.updateAfter = true;
+				this->gifFrames.state = State::Collecting;
+			}
+			
+			this->lastImageSended = std::chrono::high_resolution_clock::now();
+		}
+		
+		// Send text message
+		intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
+		if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {
+			if (this->_programConfig->sendTextWhenDetectChange){
+				Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
+				this->pendingNotifications.push_back(imn);
+				this->lastTextSended = std::chrono::high_resolution_clock::now();
+			}
 		}
 
-		this->lastMessageSended = std::chrono::high_resolution_clock::now();
-	}
 }
 
 void Camera::ReadFramesWithInterval() {
@@ -232,8 +241,6 @@ void Camera::ReadFramesWithInterval() {
 							overlappingFindings += 1;
 						}
 					}
-				} else {
-					this->gifFrames.state = State::Collecting;
 				}
 
 				if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {

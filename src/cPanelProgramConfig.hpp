@@ -66,13 +66,16 @@ class cPanelProgramConfig : public wxPanel {
 		wxTextCtrl* m_txtAuthUsersToSendActions;
 		wxSpinCtrl* m_spinSecondsBetweenImage;
 		wxSpinCtrl* m_spinSecondsBetweenMessage;
-		wxCheckBox* m_chkSendImageAfterDetectigChange;
+		wxCheckBox* m_chkSendImageMessageAfterChange;
+		wxCheckBox* m_chkSendTextMessageAfterChange;
 		wxCheckBox* m_chkSendImageOfAllCameras;
 		wxCheckBox* m_chkUseGifInsteadOfImage;
 		wxComboBox* m_comboGifQuality;
 		wxSpinCtrl* m_spinFramesBefore;
 		wxSpinCtrl* m_spinFramesAfter;
 		wxCheckBox* m_chkShowIgnoredAreas;
+		
+		void EnableDisableControlsBotGif();
 		
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
@@ -93,4 +96,5 @@ class cPanelProgramConfig : public wxPanel {
 		void spinFramesBefore_SpinChange(wxSpinEvent& ev);
 		void spinFramesAfter_SpinChange(wxSpinEvent& ev);
 		void chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev);
+		void chkSendTextMessageAfterChange_CheckBoxClick(wxCommandEvent& ev);
 };

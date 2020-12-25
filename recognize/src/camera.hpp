@@ -82,7 +82,8 @@ private:
 
 	std::chrono::system_clock::time_point now = std::chrono::high_resolution_clock::now(), 
 								lastSavedImage = std::chrono::high_resolution_clock::now(),
-								lastMessageSended = std::chrono::high_resolution_clock::now();
+								lastImageSended = std::chrono::high_resolution_clock::now(),
+								lastTextSended = std::chrono::high_resolution_clock::now();
 								// lastBackupImageStored = std::chrono::high_resolution_clock::now();
 
 	// ==================

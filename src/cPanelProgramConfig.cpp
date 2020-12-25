@@ -29,16 +29,19 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkShowPreviewCameras->SetValue(m_config->showPreview);
 	BIND(m_chkShowPreviewCameras, wxEVT_CHECKBOX, wxCommandEvent, chkShowPreviewCameras_CheckBoxClick);
 
-	this->m_chkShowAreaCameraSees = new wxCheckBox(this, PROGRAM_ids::CHK_ShowAreaCameraSees, _("Show only the camera ROI"));
+	this->m_chkShowAreaCameraSees = new wxCheckBox(this, PROGRAM_ids::CHK_ShowAreaCameraSees, _("Show the cameras ROI"));
+	this->m_chkShowAreaCameraSees->SetToolTip(_("Draws the rectangle cooresponding to the region of interest of each camera."));
 	this->m_chkShowAreaCameraSees->SetValue(m_config->showAreaCameraSees);
 	BIND(m_chkShowAreaCameraSees, wxEVT_CHECKBOX, wxCommandEvent, chkShowAreaCameraSees_CheckBoxClick);
 	
 	this->m_chkShowProcessedImages = new wxCheckBox(this, PROGRAM_ids::CHK_ShowProcessedImages, _("Show processed images"));
+	this->m_chkShowProcessedImages->SetToolTip(_("Shows frames cropped rotated and with the change between them."));
 	this->m_chkShowProcessedImages->SetValue(m_config->showProcessedFrames);
 	BIND(m_chkShowProcessedImages, wxEVT_CHECKBOX, wxCommandEvent, chkShowProcessedImages_CheckBoxClick);
 
 	// -- Telegram Bot config
 	this->m_chkUseTelegramBot = new wxCheckBox(this, PROGRAM_ids::CHK_UseTelegramBot, _("Use telegram bot"));
+	this->m_chkUseTelegramBot->SetToolTip(_("Disabling this the program will not send notifications."));
 	this->m_chkUseTelegramBot->SetValue(m_config->telegramConfig.useTelegramBot);
 	BIND(m_chkUseTelegramBot, wxEVT_CHECKBOX, wxCommandEvent, chkUseTelegramBot_CheckBoxClick);
 
@@ -59,15 +62,21 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_spinSecondsBetweenMessage = new wxSpinCtrl(this, PROGRAM_ids::SPIN_SecondsBetweenMessage, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->secondsBetweenMessage);
 	BIND(m_spinSecondsBetweenMessage, wxEVT_SPINCTRL, wxSpinEvent, spinSecondsBetweenMessage_SpinChange);
 	
-	this->m_chkSendImageAfterDetectigChange = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageAfterDetectigChange, _("Send image after detectig change"));
-	this->m_chkSendImageAfterDetectigChange->SetValue(m_config->sendImageWhenDetectChange);
-	BIND(m_chkSendImageAfterDetectigChange, wxEVT_CHECKBOX, wxCommandEvent, chkSendImageAfterDetectigChange_CheckBoxClick);
+	this->m_chkSendImageMessageAfterChange = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageAfterDetectigChange, _("Send image message after detectig change"));
+	this->m_chkSendImageMessageAfterChange->SetValue(m_config->sendImageWhenDetectChange);
+	BIND(m_chkSendImageMessageAfterChange, wxEVT_CHECKBOX, wxCommandEvent, chkSendImageAfterDetectigChange_CheckBoxClick);
+	
+	this->m_chkSendTextMessageAfterChange = new wxCheckBox(this, wxID_ANY, _("Send text message after detectig change"));
+	this->m_chkSendTextMessageAfterChange->SetValue(m_config->sendTextWhenDetectChange);
+	BIND(m_chkSendTextMessageAfterChange, wxEVT_CHECKBOX, wxCommandEvent, chkSendTextMessageAfterChange_CheckBoxClick);
 
 	this->m_chkSendImageOfAllCameras = new wxCheckBox(this, PROGRAM_ids::CHK_SendImageOfAllCameras, _("Send image of all cameras"));
+	this->m_chkSendImageOfAllCameras->SetToolTip(_("Sends a image of all the cameras after detecting a change. Does not replace send image or send text after change."));
 	this->m_chkSendImageOfAllCameras->SetValue(m_config->sendImageOfAllCameras);
 	BIND(m_chkSendImageOfAllCameras, wxEVT_CHECKBOX, wxCommandEvent, chkSendImageOfAllCameras_CheckBoxClick);
 	
 	this->m_chkUseGifInsteadOfImage = new wxCheckBox(this, PROGRAM_ids::CHK_UseGifInsteadOfImage, _("Use gif instead of image"));
+	this->m_chkUseGifInsteadOfImage->SetToolTip(_("If not cheked, the program will send a image (if send image after change is cheked).\nElse it'll send a gif with the ammount of frames that you specify in framesBefore, framesAfter"));
 	this->m_chkUseGifInsteadOfImage->SetValue(m_config->useGifInsteadImage);
 	BIND(m_chkUseGifInsteadOfImage, wxEVT_CHECKBOX, wxCommandEvent, chkUseGifInsteadOfImage_CheckBoxClick);
 
@@ -77,9 +86,10 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	m_comboGifQuality->Append(wxString(_("Medium")));
 	m_comboGifQuality->Append(wxString(_("Low")));
 	m_comboGifQuality->Append(wxString(_("None")));
-	m_comboGifQuality->SetValue(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage));
+	m_comboGifQuality->SetValue(_(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage)));
+	this->m_comboGifQuality->SetToolTip(_("Sets the resize level of the gif. While higher, more lightweigth the gif.\nSet to none leaves the original size."));
 	BIND(m_comboGifQuality, wxEVT_COMBOBOX, wxCommandEvent, comboGifQuality_Select);
-		
+
 	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesBefore);
 	BIND(m_spinFramesBefore, wxEVT_SPINCTRL, wxSpinEvent, spinFramesBefore_SpinChange);
 	
@@ -87,6 +97,7 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	BIND(m_spinFramesAfter, wxEVT_SPINCTRL, wxSpinEvent, spinFramesAfter_SpinChange);
 	
 	this->m_chkShowIgnoredAreas = new wxCheckBox(this, wxID_ANY, _("Show ignored areas"));
+	this->m_chkShowIgnoredAreas->SetToolTip(_("Draws the ignored area for each camera"));
 	this->m_chkShowIgnoredAreas->SetValue(m_config->showIgnoredAreas);
 	BIND(m_chkShowIgnoredAreas, wxEVT_CHECKBOX, wxCommandEvent, chkShowIgnoredAreas_CheckBoxClick);
 	
@@ -95,8 +106,8 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	const int border = 10;
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinMsBetweenFrames, _("Milliseconds between frame")), 
-						WidgetsHelper::GetSizerItemLabel(this, m_spinRatioScaleOutput, _("Ratio Scale output")), 
+						WidgetsHelper::GetSizerItemLabel(this, m_spinMsBetweenFrames, _("Milliseconds between frame"), _("Greater this value = Lower CPU usage.\n FPS = 1000 / ms, e.g. 25 ms = 40 FPS.\n Try different values and determine the efficiency vs effectiveness.")), 
+						WidgetsHelper::GetSizerItemLabel(this, m_spinRatioScaleOutput, _("Ratio Scale output"), _("Scales the output")), 
 						5
 					), 0, flags, border);
 	
@@ -108,7 +119,9 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 
 	sizerLeft->Add(m_chkUseTelegramBot, 0, flags, border);
 
-	sizerLeft->Add(m_chkSendImageAfterDetectigChange, 0, flags, border);
+	sizerLeft->Add(m_chkSendImageMessageAfterChange, 0, flags, border);
+	
+	sizerLeft->Add(m_chkSendTextMessageAfterChange, 0, flags, border);
 
 	sizerLeft->Add(m_chkSendImageOfAllCameras, 0, flags, border);
 
@@ -126,16 +139,18 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinSecondsBetweenMessage, _("Seconds between message with text")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboGifQuality, _("Gif resize level (higher = lower quality)")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboGifQuality, _("Gif resize level")), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesBefore, _("Frames Before")),
-						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAfter, _("Frames After")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesBefore, _("Frames Before"), _("Ammount of frames to store before the change.")),
+						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesAfter, _("Frames After"), _("Ammount of frames to store after the change.")),
 						5
 					), 0, flags, border);
 	
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
+	
+	this->EnableDisableControlsBotGif();
 
 	this->SetSizer(sizer);
 }
@@ -169,6 +184,9 @@ void cPanelProgramConfig::chkShowProcessedImages_CheckBoxClick(wxCommandEvent& e
 
 void cPanelProgramConfig::chkUseTelegramBot_CheckBoxClick(wxCommandEvent& ev) {
 	this->m_config->telegramConfig.useTelegramBot = !this->m_config->telegramConfig.useTelegramBot;
+	
+	this->EnableDisableControlsBotGif();
+	
 	ev.Skip();
 }
 
@@ -209,6 +227,9 @@ void cPanelProgramConfig::chkSendImageOfAllCameras_CheckBoxClick(wxCommandEvent&
 
 void cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& ev) {
 	this->m_config->useGifInsteadImage = !this->m_config->useGifInsteadImage;
+	
+	this->EnableDisableControlsBotGif();
+	
 	ev.Skip();
 }
 
@@ -231,4 +252,22 @@ void cPanelProgramConfig::spinFramesAfter_SpinChange(wxSpinEvent& ev) {
 void cPanelProgramConfig::chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev) {
 	this->m_config->showIgnoredAreas = !this->m_config->showIgnoredAreas;
 	ev.Skip();
+}
+
+void cPanelProgramConfig::chkSendTextMessageAfterChange_CheckBoxClick(wxCommandEvent& ev) {
+	this->m_config->sendTextWhenDetectChange = !this->m_config->sendTextWhenDetectChange;
+	ev.Skip();
+}
+
+void cPanelProgramConfig::EnableDisableControlsBotGif() {
+	this->m_spinFramesBefore->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
+	this->m_spinFramesAfter->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
+	this->m_comboGifQuality->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
+	
+	this->m_txtAuthUsersToSendActions->Enable(this->m_config->telegramConfig.useTelegramBot);
+	this->m_txtTelegramBotApiKey->Enable(this->m_config->telegramConfig.useTelegramBot);
+	this->m_txtTelegramChatId->Enable(this->m_config->telegramConfig.useTelegramBot);
+	
+	this->m_spinSecondsBetweenImage->Enable(this->m_config->telegramConfig.useTelegramBot);
+	this->m_spinSecondsBetweenMessage->Enable(this->m_config->telegramConfig.useTelegramBot);
 }

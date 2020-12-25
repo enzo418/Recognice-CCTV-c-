@@ -7,5 +7,5 @@
 #include "wx/string.h"
 
 namespace WidgetsHelper {
-	wxSizer* GetSizerItemLabel(wxWindow* parent, wxControl* control, const wxString& label);
+	wxSizer* GetSizerItemLabel(wxWindow* parent, wxControl* control, const wxString& label, const wxString& tooltipText = wxEmptyString);
 }

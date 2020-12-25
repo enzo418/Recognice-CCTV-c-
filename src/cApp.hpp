@@ -32,5 +32,5 @@ class cApp : public wxApp {
 		bool m_mainClosed = false;
 	
 	protected:
-		wxLocale m_locale;
+		wxLocale* m_locale;
 };
