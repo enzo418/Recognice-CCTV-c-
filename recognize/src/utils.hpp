@@ -311,51 +311,7 @@ namespace Utils {
 		
 		return s;
 	}
-	
-	static std::string GifResizePercentageToString(GifResizePercentage rz) {
-		std::string r;
-		switch (rz) {
-			case GifResizePercentage::None:
-				r = "None";
-				break;
-			case GifResizePercentage::Low:
-				r = "Low";
-				break;
-			case GifResizePercentage::Medium:
-				r = "Medium";
-				break;
-			case GifResizePercentage::High:
-				r = "High";
-				break;
-			case GifResizePercentage::VeryHigh:
-				r = "Very High";
-				break;
-			default:
-				assert(0);
-				break;
-		}
-		return r;
-	}
-	
-	static GifResizePercentage GifResizePercentageFromString(std::string rz) {
-		GifResizePercentage r;
 		
-		if (rz == "None")
-			r = GifResizePercentage::None;
-		else if (rz == "Low")
-			r = GifResizePercentage::Low;
-		else if (rz == "Medium")
-			r = GifResizePercentage::Medium;
-		else if (rz == "High")
-			r = GifResizePercentage::High;
-		else if (rz == "Very High")
-			r = GifResizePercentage::VeryHigh;
-		else
-			assert(0);
-			
-		return r;
-	}
-	
 	static std::string RectToCommaString(const cv::Rect & roi) {
 		std::ostringstream ss;
 		ss << roi.x << "," << roi.y << "," << roi.width << "," << roi.height;

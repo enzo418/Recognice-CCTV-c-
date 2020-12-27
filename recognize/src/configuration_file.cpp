@@ -169,9 +169,6 @@ namespace ConfigurationFile {
 			
 			<< "\n\n# == Change (ammount of pixels between the last two frames) section"
 			
-			<< "\n\n; Initial change threshold, will be updated after <updateThresholdFrequency> seconds."
-			<< "\nchangeThreshold=" << cfg.changeThreshold
-			
 			<< "\n\n; Used to remove noise (single scattered pixels). Between 30 and 50 is a general good value."
 			<< "\nthresholdNoise=" <<  std::fixed << std::setprecision(2) << cfg.noiseThreshold
 			
@@ -276,7 +273,12 @@ namespace ConfigurationFile {
 				<< "\n;  MEDIUM   : Lowers 40% the resolution."
 				<< "\n;  HIGH   : Lowers 60% the resolution."
 				<< "\n;  VERYHIGH   : Lowers 80% the resolution."
-				<< "\ngifResizePercentage=" << Utils::GifResizePercentageToString(cfg.gifResizePercentage);
+				<< "\ngifResizePercentage=" << cfg.gifResizePercentage
+				
+				<< "\n\n; Select the detection method"
+				<< "\n; 0: HOG Descriptor, uses built in opencv HOG Descriptor."
+				<< "\n; 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG."
+				<< "\ndetectionMethod=" << cfg.detectionMethod;
 				
 		ss << "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
@@ -352,31 +354,36 @@ namespace ConfigurationFile {
 		} else if(id == "authuserstosendactions" || id == "authserssendactions"){
 			config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 		} else if (id == "ratioscaleoutput") {
-			config.ratioScaleOutput = std::stod(value);
+			try {
+				config.ratioScaleOutput = std::stod(value);
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "usegifinsteadofimage" || id == "usegif") {
 			Utils::toLowerCase(value);
 			config.useGifInsteadImage = value == "0" ? false : true;
 		} else if (id == "gifresizepercentage" || id == "gifresize") {
-			Utils::toLowerCase(value);
-			if (value == "none") {
-				config.gifResizePercentage = GifResizePercentage::None;
-			} else if (value == "low") {
-				config.gifResizePercentage = GifResizePercentage::Low;
-			} else if (value == "medium") {
-				config.gifResizePercentage = GifResizePercentage::Medium;
-			} else if (value == "high") {
-				config.gifResizePercentage = GifResizePercentage::High;
-			} else if (value == "veryhigh" || value == "very high") {
-				config.gifResizePercentage = GifResizePercentage::VeryHigh;
-			} else {
+			try {
+				ulong val = std::stoi(value);
+				
+				if (val >= 0 && val <= 100) {
+					config.gifResizePercentage = val;
+				} else {
+					sucess = false;
+				}
+			} catch (std::invalid_argument e) {
 				sucess = false;
 			}
 		} else if (id == "gifframes") {
 			std::vector<std::string> results = Utils::GetRange(value);
 			size_t sz = results.size();
 			if (sz == 3) {
-				config.numberGifFrames.framesBefore = size_t(std::stol(results[0]));
-				config.numberGifFrames.framesAfter = size_t(std::stol(results[2]));
+				try {
+					config.numberGifFrames.framesBefore = size_t(std::stol(results[0]));
+					config.numberGifFrames.framesAfter = size_t(std::stol(results[2]));
+				} catch (std::invalid_argument e) {
+					sucess = false;
+				}
 			} else {
 				sucess = false;
 			}
@@ -386,6 +393,12 @@ namespace ConfigurationFile {
 		} else if (id == "sendtextwhendetectchange" || id == "sendtextafterchange") {
 			Utils::toLowerCase(value);
 			config.sendTextWhenDetectChange = value == "0" ? false : true;
+		} else if (id == "detectionmethod") {
+			try {
+				config.detectionMethod = (DetectionMethod)std::stoi(value);
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		}
 		
 		return sucess;
@@ -399,13 +412,21 @@ namespace ConfigurationFile {
 		if (id == "cameraname" || id == "name") {
 			config.cameraName = value;
 		} else if (id == "order") {
-			int val = std::stoi(value);
-			config.order = val;
+			try {
+				int val = std::stoi(value);
+				config.order = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "url") {
 			config.url = value;
 		} else if (id == "rotation") {
-			int val = std::stoi(value);
-			config.rotation = val;
+			try {
+				int val = std::stoi(value);
+				config.rotation = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "type") {
 			Utils::toLowerCase(value);
 			if (value == "active" || value == "activated" || value == "enabled") {
@@ -419,11 +440,12 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "hitthreshold") {
 			std::replace(value.begin(), value.end(), ',', '.');
-			float val = std::stof(value);
-			config.hitThreshold = val;
-		} else if (id == "changethreshold") {
-			int val = std::stoi(value);
-			config.changeThreshold = val;
+			try {
+				float val = std::stof(value);
+				config.hitThreshold = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "roi") {
 			std::vector<int> results = Utils::GetNumbersString(value);
 			if (results.size() == 4) {
@@ -433,25 +455,42 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "thresholdnoise" || id == "noisethreshold") {
 			std::replace(value.begin(), value.end(), ',', '.');
-			double val = std::stof(value);
-			config.noiseThreshold = val;
+			try {
+				double val = std::stof(value);
+				config.noiseThreshold = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "secondswaitentryexit") {
-			int val = std::stoi(value);
-			config.secondsWaitEntryExit = val;
+			try {
+				int val = std::stoi(value);
+				config.secondsWaitEntryExit = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} 
-//		else if (id == "areasdelimiters" || id == "areadelimiters"){
-//			config.areasDelimiters = Utils::StringToAreaDelimiters(value.c_str(), config.roi);
-//		} 
 		else if (id == "minimumthreshold") {
-			int val = std::stoi(value);
-			config.minimumThreshold = val;
+			try {
+				int val = std::stoi(value);
+				config.minimumThreshold = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "increasetresholdfactor" || id == "increaseTreshold") {
 			std::replace(value.begin(), value.end(), ',', '.');
-			double val = std::stof(value);
-			config.increaseTresholdFactor = val;
+			try {
+				double val = std::stof(value);
+				config.increaseTresholdFactor = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "updatethresholdfrequency") {
-			uint32_t val = std::stoi(value);
-			config.updateThresholdFrequency = val;
+			try {
+				uint32_t val = std::stoi(value);
+				config.updateThresholdFrequency = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "usehighconstrast") {
 			config.useHighConstrast = value == "1";
 		} else if (id == "ignoredareas"){
@@ -469,24 +508,36 @@ namespace ConfigurationFile {
 			std::vector<std::string> results = Utils::GetRange(value);
 			size_t sz = results.size();
 			if (sz >= 1) {
-				if (results[0] == "..") {
-					if (sz >= 2)
-						config.framesToAnalyze.framesAfter = size_t(std::stol(results[1]));
-				} else {
-					config.framesToAnalyze.framesBefore = size_t(std::stol(results[0]));
+				try {
+					if (results[0] == "..") {
+						if (sz >= 2)
+							config.framesToAnalyze.framesAfter = size_t(std::stol(results[1]));
+					} else {
+						config.framesToAnalyze.framesBefore = size_t(std::stol(results[0]));
 
-					if (sz >= 3)
-						config.framesToAnalyze.framesAfter = size_t(std::stol(results[2]));
+						if (sz >= 3)
+							config.framesToAnalyze.framesAfter = size_t(std::stol(results[2]));
+					}
+				} catch (std::invalid_argument e) {
+					sucess = false;
 				}
 			} else {
 				sucess = false;
 			}
 		} else if (id == "thresholdfindingsonignoredarea") {
-			int val = std::stoi(value);
-			config.thresholdFindingsOnIgnoredArea = val;
+			try {
+				int val = std::stoi(value);
+				config.thresholdFindingsOnIgnoredArea = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else if (id == "minpercentageareaneededtoignore") {
-			double val = std::stod(value);
-			config.minPercentageAreaNeededToIgnore = val;
+			try {
+				double val = std::stod(value);
+				config.minPercentageAreaNeededToIgnore = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		}
 		
 		return sucess;

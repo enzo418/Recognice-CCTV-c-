@@ -73,7 +73,7 @@ struct {
 	}
 }less_than_order;
 
-enum GifResizePercentage {None = 100, Low = 80, Medium = 60, High = 40, VeryHigh = 20};
+enum DetectionMethod {HogDescriptor = 0, YoloDNN_V4};
 
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
@@ -120,7 +120,7 @@ struct ProgramConfiguration {
 
 	bool useGifInsteadImage = true;
 
-	GifResizePercentage gifResizePercentage = GifResizePercentage::Medium;
+	ushort gifResizePercentage = 60;
 
 	NumberFramesBeforeAfter numberGifFrames;
 
@@ -128,6 +128,8 @@ struct ProgramConfiguration {
 
 	// Used to save a frame with all the cameras, is updated every
 	cv::Mat frameWithAllTheCameras;
+	
+	DetectionMethod detectionMethod = DetectionMethod::HogDescriptor;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

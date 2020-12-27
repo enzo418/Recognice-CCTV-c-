@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/dnn.hpp>
+#include <opencv2/dnn/all_layers.hpp>
 
 #include <iostream>
 #include <vector>
@@ -48,6 +50,15 @@ private:
 	cv::HOGDescriptor hogDescriptor;
 
 	std::vector<cv::Mat*> AnalizeLastFramesSearchBugs(Camera& camera);
+	
+	cv::dnn::Net net;
+	std::vector<std::string> output_names;
+	std::vector<std::string> class_names;
+	int num_classes;
+	const float CONFIDENCE_THRESHOLD = 0;
+	const float NMS_THRESHOLD = 0.4;
+	
+	std::vector<std::tuple<cv::Rect, double, std::string>> Detect(cv::Mat& frame, CameraConfiguration& cfg);
 public:
 	bool stop = false;
 	bool close = false;

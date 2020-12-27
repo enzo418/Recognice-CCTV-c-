@@ -1,7 +1,31 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->hogDescriptor.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+	if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor) {
+		this->hogDescriptor.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4) {
+		net = cv::dnn::readNetFromDarknet("yolov4.cfg", "yolov4.weights");
+		net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+		net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		output_names = net.getUnconnectedOutLayersNames();
+		
+		{
+			std::ifstream class_file("classes.txt");
+			if (!class_file)
+			{
+				std::cerr << "failed to open classes.txt\n";
+				std::exit(-1);
+			}
+
+			std::string line;
+			while (std::getline(class_file, line)) {
+				if (!line.empty()) {
+					class_names.push_back(line);
+					this->num_classes++;
+				}
+			}
+		}
+	}
 }
 
 std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
@@ -38,7 +62,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
 
 			// Take the region of interes
-			if (!camera.config->roi.empty()) {				
+			if (!camera.config->roi.empty()) {
 				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi);
 			}
 
@@ -86,11 +110,11 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 				p1Saved = true;
 			}
 
-			cv::Point2f vertices[4];
-			finding.rect.points(vertices);
-			for (int j = 0; j < 4; j++) {			
-				vertices[j].x += camera.config->roi.x;
-			}
+//			cv::Point2f vertices[4];
+//			finding.rect.points(vertices);
+//			for (int j = 0; j < 4; j++) {
+//				vertices[j].x += camera.config->roi.x;
+//			}
 			
 			// check if finding is overlapping with a ignored area
 			for (auto &&j : camera.config->ignoredAreas) {					
@@ -98,13 +122,15 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 				if (inters.area() >= finding.rect.boundingRect().area() * minPercentageAreaIgnore) {
 					overlappingFindings += 1;
 					
-					inters.x += camera.config->roi.x;					
-					cv::rectangle(*frames[i], inters, cv::Scalar(255, 0, 0), 1);					
+					inters.x += camera.config->roi.x;
+					inters.y += camera.config->roi.y;
+					cv::rectangle(*frames[i], inters, cv::Scalar(255, 0, 0), 1);
 				}
 			}
 			
 			cv::Rect bnd = finding.rect.boundingRect();
 			bnd.x += camera.config->roi.x;
+			bnd.y += camera.config->roi.y;
 			cv::rectangle(*frames[i], bnd, cv::Scalar(255,255,170), 1);
 
 			// for (int j = 0; j < 4; j++) {			
@@ -149,19 +175,17 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 
 		if (camera.config->type == CAMERA_ACTIVE) {
 			for (size_t i = start; i < end; i++) {
-				std::vector<cv::Rect> detections;
-				std::vector<double> foundWeights;
-
 				// query descriptor with frame
-				this->hogDescriptor.detectMultiScale(framesTransformed[i].frame, detections, foundWeights, camera.config->hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
-				size_t detectSz = detections.size();			
+				std::vector<std::tuple<cv::Rect, double, std::string>> results = this->Detect(framesTransformed[i].frame, *camera.config);
+				
+				size_t detectSz = results.size();
 
 				if(detectSz > 0) {
 					// draw detections on frame
 					for (size_t i = 0; i < detectSz; i++) {
 						// detections[i].x += camera.config->roi.x;
-						cv::Scalar color = cv::Scalar(0, foundWeights[i] * foundWeights[i] * 200, 0);					
-						cv::rectangle(framesTransformed[i].frame, detections[i], color);					
+						cv::Scalar color = cv::Scalar(0, std::get<1>(results[i]) * 200, 0);
+						cv::rectangle(framesTransformed[i].frame, std::get<0>(results[i]), color);
 						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
 					}
 
@@ -507,4 +531,60 @@ void Recognize::CloseAndJoin() {
 
 	this->cameras.clear();
 	this->threads.clear();
+}
+
+std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat& frame, CameraConfiguration& cfg) {
+	std::vector<std::tuple<cv::Rect, double, std::string>> results;	
+	
+	if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor) {
+		std::vector<cv::Rect> detections;
+		std::vector<double> foundWeights;
+		
+		this->hogDescriptor.detectMultiScale(frame, detections, foundWeights, cfg.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+		
+		for (size_t i = 0; i < detections.size(); i++) {
+			results.push_back(std::make_tuple(detections[i], foundWeights[i], ""));
+		}
+	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4) {
+		cv::Mat blob;
+		std::vector<cv::Mat> detectionsFrames;
+		cv::dnn::blobFromImage(frame, blob, 0.006921, cv::Size(608,608), cv::Scalar(), true, false, CV_32F);
+		net.setInput(blob);
+		net.forward(detectionsFrames, this->output_names);
+		
+		std::vector<int> indices[num_classes];
+		std::vector<cv::Rect> boxes[num_classes];
+		std::vector<float> scores[num_classes];
+
+		for (auto& output : detectionsFrames) {
+			const auto num_boxes = output.rows;
+			for (int i = 0; i < num_boxes; i++) {
+				auto x = output.at<float>(i, 0) * frame.cols;
+				auto y = output.at<float>(i, 1) * frame.rows;
+				auto width = output.at<float>(i, 2) * frame.cols;
+				auto height = output.at<float>(i, 3) * frame.rows;
+				cv::Rect rect(x - width/2, y - height/2, width, height);
+
+				for (int c = 0; c < num_classes; c++) {
+					auto confidence = *output.ptr<float>(i, 5 + c);
+					if (confidence >= CONFIDENCE_THRESHOLD) {
+						boxes[c].push_back(rect);
+						scores[c].push_back(confidence);
+					}
+				}
+			}
+		}
+					
+		for (int c= 0; c < num_classes; c++) {
+			cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, NMS_THRESHOLD, indices[c]);
+			
+			for (size_t i = 0; i < indices[c].size(); ++i) {
+				int idx = indices[c][i];
+				
+				results.push_back(std::make_tuple(boxes[c][idx], scores[c][idx], class_names[c]));
+			}
+		}
+	}
+	
+	return results;
 }
