@@ -73,9 +73,7 @@ struct Register{
 
 #define RESIZERESOLUTION cv::Size(RES_WIDTH, RES_HEIGHT)
 
-typedef unsigned char CAMERATYPE;
-
-enum {
+enum CAMERATYPE {
 	CAMERA_DISABLED = 0, 	// Disabled type is activated to disable a camera.
 	
 	CAMERA_SENTRY, 			// Sentry state means that the camera is only will compare the current frame to the last one

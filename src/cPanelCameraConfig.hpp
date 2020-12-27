@@ -73,6 +73,7 @@ private:
 		wxSpinCtrlDouble* m_spinIncreaseThresholdFactor;
 		wxSpinCtrl* m_spinUpdateThresholdFreq;
 
+		wxArrayString m_comboTypeChoices;
 		wxComboBox* m_comboType;
 
 		wxSpinCtrlDouble* m_spinHitThreshold;

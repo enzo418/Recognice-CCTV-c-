@@ -9,7 +9,11 @@
 cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfiguration* camConfig, SharedData* sharedData) 
 		: 	wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SUNKEN),
 			m_config(camConfig), m_sharedData(sharedData) {
-		
+	
+	m_comboTypeChoices.Add(_("Disabled"));
+	m_comboTypeChoices.Add(_("Sentry"));
+	m_comboTypeChoices.Add(_("Active"));
+
 	int imax = std::numeric_limits<int>::max();
 	double dmax = std::numeric_limits<double>::max();
 	
@@ -39,11 +43,8 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	m_spinUpdateThresholdFreq = new wxSpinCtrl(this, CAMERA_ids::SPIN_updateThresFreq, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->updateThresholdFrequency);
 	BIND(m_spinUpdateThresholdFreq, wxEVT_SPINCTRL, wxSpinEvent, spinUpdateThresholdFrequency_Change);
 	
-	m_comboType = new wxComboBox(this, CAMERA_ids::COMBO_type, wxEmptyString, wxDefaultPosition, wxDefaultSize);
-	m_comboType->Append(wxString(_("Active")));
-	m_comboType->Append(wxString(_("Disabled")));
-	m_comboType->Append(wxString(_("Sentry")));
-	m_comboType->SetValue((this->m_config->type == CAMERA_DISABLED ? _("Disabled") : (this->m_config->type == CAMERA_SENTRY ? _("Sentry") : _("Active"))));
+	m_comboType = new wxComboBox(this, CAMERA_ids::COMBO_type, wxEmptyString, wxDefaultPosition, wxDefaultSize, m_comboTypeChoices);
+	m_comboType->SetValue(m_comboTypeChoices[this->m_config->type]);
 	BIND(m_comboType, wxEVT_COMBOBOX, wxCommandEvent, comboType_Select);
 
 	m_spinHitThreshold = new wxSpinCtrlDouble(this, CAMERA_ids::SPIN_hitThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->hitThreshold);
@@ -159,8 +160,7 @@ void cPanelCameraConfig::spinNoiseThreshold_Change(wxSpinDoubleEvent& ev) {
 }
 
 void cPanelCameraConfig::comboType_Select(wxCommandEvent& ev) {
-	wxString t = this->m_comboType->GetValue();
-	this->m_config->type = (t == _("Disabled") ? 0 : (t == _("Sentry") ? 1 : 2));
+	this->m_config->type = (CAMERATYPE) this->m_comboType->GetSelection();
 }
 
 void cPanelCameraConfig::btnSelectRoi_Click(wxCommandEvent& ev) {
