@@ -47,11 +47,13 @@ private:
 	ProgramConfiguration programConfig;
 	CamerasConfigurations camerasConfigs;
 
-	cv::HOGDescriptor hogDescriptor;
+	cv::HOGDescriptor* hogDescriptor;
 
 	std::vector<cv::Mat*> AnalizeLastFramesSearchBugs(Camera& camera);
 	
-	cv::dnn::Net net;
+	DetectionMethod lastDetectionMethod = DetectionMethod::None;
+	
+	cv::dnn::Net* net;
 	std::vector<std::string> output_names;
 	std::vector<std::string> class_names;
 	int num_classes;

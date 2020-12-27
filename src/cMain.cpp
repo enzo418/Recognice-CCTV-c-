@@ -128,6 +128,11 @@ void cMain::btnToggleRecognize_Clicked(wxCommandEvent& ev) {
 		this->m_sharedData.recognize->CloseAndJoin();
 		this->m_btnToggleRecogznie->SetLabel(_("Start Recognize"));
 	} else {
+		if (this->m_sharedData.configurations->programConfig.detectionMethod == DetectionMethod::HogDescriptor)
+			std::cout << "HOG!" << std::endl;
+		else if (this->m_sharedData.configurations->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4)
+			std::cout << "Yolo!" << std::endl;
+			
 		this->m_sharedData.recognize->Start(std::ref(*this->m_sharedData.configurations), false, this->m_sharedData.configurations->programConfig.telegramConfig.useTelegramBot);
 		*this->m_sharedData.recognizeActive = true;
 		this->m_btnToggleRecogznie->SetLabel(_("Stop Recognize"));

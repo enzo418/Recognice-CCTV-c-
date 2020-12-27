@@ -1,32 +1,6 @@
 #include "recognize.hpp"
 
-Recognize::Recognize() {
-	if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor) {
-		this->hogDescriptor.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4) {
-		net = cv::dnn::readNetFromDarknet("yolov4.cfg", "yolov4.weights");
-		net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-		output_names = net.getUnconnectedOutLayersNames();
-		
-		{
-			std::ifstream class_file("classes.txt");
-			if (!class_file)
-			{
-				std::cerr << "failed to open classes.txt\n";
-				std::exit(-1);
-			}
-
-			std::string line;
-			while (std::getline(class_file, line)) {
-				if (!line.empty()) {
-					class_names.push_back(line);
-					this->num_classes++;
-				}
-			}
-		}
-	}
-}
+Recognize::Recognize() { }
 
 std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	camera.gifFrames.state = State::Wait;
@@ -253,6 +227,44 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 		std::exit(-1);
 	}
 	
+	if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor && lastDetectionMethod != DetectionMethod::HogDescriptor) {
+		if (lastDetectionMethod == DetectionMethod::YoloDNN_V4)
+			delete this->net;
+		
+		this->hogDescriptor = new cv::HOGDescriptor();
+		this->hogDescriptor->setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+		
+		lastDetectionMethod = DetectionMethod::HogDescriptor;
+	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4 && lastDetectionMethod != DetectionMethod::YoloDNN_V4) {
+		if (lastDetectionMethod == DetectionMethod::HogDescriptor)
+			delete this->hogDescriptor;
+			
+		lastDetectionMethod = DetectionMethod::YoloDNN_V4;
+		
+		this->net = new cv::dnn::Net();
+		*this->net = cv::dnn::readNetFromDarknet("yolov4.cfg", "yolov4.weights");
+		this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+		this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		output_names = this->net->getUnconnectedOutLayersNames();
+		
+		{
+			std::ifstream class_file("classes.txt");
+			if (!class_file)
+			{
+				std::cerr << "failed to open classes.txt\n";
+				std::exit(-1);
+			}
+
+			std::string line;
+			while (std::getline(class_file, line)) {
+				if (!line.empty()) {
+					class_names.push_back(line);
+					this->num_classes++;
+				}
+			}
+		}
+	}
+	
 	this->indexMainThreadCameras = this->threads.size();
 	std::cout << "pushed thread of cameras in " << this->threads.size() << std::endl;
 	this->threads.push_back(std::thread(&Recognize::StartCamerasThreads, this));
@@ -282,7 +294,7 @@ void Recognize::StartCamerasThreads() {
 	
 	// Create the cameras objs
 	for (auto &config : this->camerasConfigs) {
-		this->cameras.push_back(Camera(config, &programConfig, &this->stop, &this->hogDescriptor));
+		this->cameras.push_back(Camera(config, &programConfig, &this->stop, this->hogDescriptor));
 	}
 
 	// Start a thread for each camera
@@ -540,7 +552,7 @@ std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat
 		std::vector<cv::Rect> detections;
 		std::vector<double> foundWeights;
 		
-		this->hogDescriptor.detectMultiScale(frame, detections, foundWeights, cfg.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
+		this->hogDescriptor->detectMultiScale(frame, detections, foundWeights, cfg.hitThreshold, cv::Size(8, 8), cv::Size(4, 4), 1.05);
 		
 		for (size_t i = 0; i < detections.size(); i++) {
 			results.push_back(std::make_tuple(detections[i], foundWeights[i], ""));
@@ -549,8 +561,8 @@ std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat
 		cv::Mat blob;
 		std::vector<cv::Mat> detectionsFrames;
 		cv::dnn::blobFromImage(frame, blob, 0.006921, cv::Size(608,608), cv::Scalar(), true, false, CV_32F);
-		net.setInput(blob);
-		net.forward(detectionsFrames, this->output_names);
+		this->net->setInput(blob);
+		this->net->forward(detectionsFrames, this->output_names);
 		
 		std::vector<int> indices[num_classes];
 		std::vector<cv::Rect> boxes[num_classes];

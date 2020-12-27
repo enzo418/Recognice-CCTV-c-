@@ -73,7 +73,7 @@ struct {
 	}
 }less_than_order;
 
-enum DetectionMethod {HogDescriptor = 0, YoloDNN_V4};
+enum DetectionMethod {None = -1, HogDescriptor = 0, YoloDNN_V4};
 
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
