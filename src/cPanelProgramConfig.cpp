@@ -103,6 +103,9 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_comboDetectionMethod->SetValue(m_detectionsMethods[this->m_config->detectionMethod]);
 	BIND(m_comboDetectionMethod, wxEVT_COMBOBOX, wxCommandEvent, comboDetectionMethod_Select);
 	
+	this->m_btnOpenSettingsMethod = new wxButton(this, wxID_ANY, _("Settings"), wxDefaultPosition, wxSize(10, 25));
+	BIND(m_btnOpenSettingsMethod, wxEVT_BUTTON, wxCommandEvent, btnOpenSettingsMethod_Click);
+	
 	// --------------- Sizers
 	const int flags = wxALL | wxGROW;
 	const int border = 7;
@@ -131,7 +134,11 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	
 	sizerLeft->Add(m_chkShowIgnoredAreas, 0, flags, border);
 	
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboDetectionMethod, _("Detection method")), 0, flags, border);
+	wxSizer* szDetectionMethod = new wxBoxSizer(wxHORIZONTAL);
+	szDetectionMethod->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboDetectionMethod, _("Detection method")),  3, wxRIGHT | wxGROW, 5);
+	szDetectionMethod->Add(m_btnOpenSettingsMethod, 1, wxTOP | wxGROW, 15);
+	
+	sizerLeft->Add(szDetectionMethod, 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtTelegramBotApiKey, _("Telegram bot api key")), 0, flags, border);
 
@@ -278,4 +285,12 @@ void cPanelProgramConfig::EnableDisableControlsBotGif() {
 void cPanelProgramConfig::comboDetectionMethod_Select(wxCommandEvent& ev) {
 	this->m_config->detectionMethod = (DetectionMethod)this->m_comboDetectionMethod->GetSelection();
 	ev.Skip();
+}
+
+void cPanelProgramConfig::btnOpenSettingsMethod_Click(wxCommandEvent& ev) {
+//	wxSize sz = this->GetSize();
+//	sz.SetWidth(sz.GetWidth() / 2);
+//	
+//	cDialogConfigureDetection* dialog = new cDialogConfigureDetection(this, wxID_ANY, _("Settings"), wxDefaultPosition, sz);
+//	dialog->Show(true);
 }

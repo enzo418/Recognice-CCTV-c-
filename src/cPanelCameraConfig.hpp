@@ -57,7 +57,7 @@ class cPanelCameraConfig : public wxPanel {
 		void spinFramesAnalyzeBefore_Change(wxSpinEvent& ev);
 		void spinFramesAnalyzeAfter_Change(wxSpinEvent& ev);
 		
-		void spinMinPercentageAreaIgnored_Change(wxSpinDoubleEvent& ev);
+		void spinMinPercentageAreaIgnored_Change(wxSpinDoubleEvent& ev);		
 private:
 		SharedData* m_sharedData;
 	

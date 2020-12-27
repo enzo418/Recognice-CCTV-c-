@@ -18,6 +18,8 @@
 #include "../recognize/src/types.hpp"
 #include "../recognize/src/utils.hpp"
 
+#include "cDialogConfigureDetection.hpp"
+
 #include "types.hpp"
 
 #include "widgets_helper.hpp"
@@ -79,6 +81,8 @@ class cPanelProgramConfig : public wxPanel {
 		wxArrayString m_detectionsMethods;
 		wxComboBox* m_comboDetectionMethod;
 		
+		wxButton* m_btnOpenSettingsMethod;
+		
 		void EnableDisableControlsBotGif();
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
@@ -101,4 +105,5 @@ class cPanelProgramConfig : public wxPanel {
 		void chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev);
 		void chkSendTextMessageAfterChange_CheckBoxClick(wxCommandEvent& ev);
 		void comboDetectionMethod_Select(wxCommandEvent& ev);
+		void btnOpenSettingsMethod_Click(wxCommandEvent& ev);
 };
