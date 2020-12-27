@@ -29,9 +29,6 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 	m_spinRotation = new wxSpinCtrl(this, CAMERA_ids::SPIN_rotation, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -360, 360, m_config->rotation);
 	BIND(m_spinRotation, wxEVT_SPINCTRL, wxSpinEvent, spinRotation_Change);
 
-	m_spinChangeThreshold = new wxSpinCtrl(this, CAMERA_ids::SPIN_changeThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->changeThreshold);
-	BIND(m_spinChangeThreshold, wxEVT_SPINCTRL, wxSpinEvent, spinChangeThreshold_Change);
-	
 	m_spinMinimumThreshold = new wxSpinCtrl(this, CAMERA_ids::SPIN_minThreshold, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->minimumThreshold);
 	BIND(m_spinMinimumThreshold, wxEVT_SPINCTRL, wxSpinEvent, spinMinThreshold_Change);
 	
@@ -81,15 +78,13 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 
 	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtUrl, _("Url"), _("Url of the camera")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, _("Camera type"), _("Acti...")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboType, _("Camera type"), _("Disabled: Camera is disabled, doesn't show or process frames.\nSentry: Only sends notifications.\nActive: Same as Sentry but try to recognize a person in the frames selected on 'framesToAnalyze'.")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						WidgetsHelper::GetSizerItemLabel(this, m_spinOrder, _("Order"), _("Position of the camera in the preview. Starts at 0")),
 						WidgetsHelper::GetSizerItemLabel(this, m_spinRotation, _("Rotation"), _("Rotation of the camera, helps to detect objects correctly")),
 						5
 					), 0, flags, border);
-	
-	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinChangeThreshold, _("Change Threshold"), _("Delete this pls")), 0, flags, border);
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						m_btnSelectRoi,
@@ -115,7 +110,7 @@ cPanelCameraConfig::cPanelCameraConfig(wxBookCtrlBase* parent, CameraConfigurati
 						5
 					), 0, flags, border);
 	
-	sizerRight->Add(m_spinMinPercentageAreaIgnored, 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinMinPercentageAreaIgnored, _("Minimum percentage of area"), _("Percentage of the area of the rectangle that describes the change from the resulting area of the intersection of that rectangle with each ignored area.\nUsed to leave a margin of error when detecting changes that occur within the ignored areas.")), 0, flags, border);
 		
 	sizer->Add(sizerLeft, 2, wxGROW, 0);
 	sizer->Add(sizerRight, 2, wxGROW, 0);
@@ -133,10 +128,6 @@ void cPanelCameraConfig::spinOrder_Change(wxSpinEvent& ev) {
 
 void cPanelCameraConfig::spinRotation_Change(wxSpinEvent& ev) {
 	this->m_config->rotation = this->m_spinRotation->GetValue();
-}
-
-void cPanelCameraConfig::spinChangeThreshold_Change(wxSpinEvent& ev) {
-	this->m_config->changeThreshold = this->m_spinChangeThreshold->GetValue();
 }
 
 void cPanelCameraConfig::spinMinThreshold_Change(wxSpinEvent& ev) {

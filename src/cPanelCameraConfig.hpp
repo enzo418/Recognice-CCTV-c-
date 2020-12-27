@@ -43,7 +43,6 @@ class cPanelCameraConfig : public wxPanel {
 	protected:
 		void spinOrder_Change(wxSpinEvent& ev);
 		void spinRotation_Change(wxSpinEvent& ev);
-		void spinChangeThreshold_Change(wxSpinEvent& ev);
 		void spinMinThreshold_Change(wxSpinEvent& ev);
 		void spinIncreaseThreshold_Change(wxSpinDoubleEvent& ev);
 		void spinUpdateThresholdFrequency_Change(wxSpinEvent& ev);
@@ -70,7 +69,6 @@ private:
 		wxSpinCtrl* m_spinOrder;
 		wxSpinCtrl* m_spinRotation;
 
-		wxSpinCtrl* m_spinChangeThreshold;
 		wxSpinCtrl* m_spinMinimumThreshold;
 		wxSpinCtrlDouble* m_spinIncreaseThresholdFactor;
 		wxSpinCtrl* m_spinUpdateThresholdFreq;

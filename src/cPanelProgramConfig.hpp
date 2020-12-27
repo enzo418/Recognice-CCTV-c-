@@ -70,13 +70,16 @@ class cPanelProgramConfig : public wxPanel {
 		wxCheckBox* m_chkSendTextMessageAfterChange;
 		wxCheckBox* m_chkSendImageOfAllCameras;
 		wxCheckBox* m_chkUseGifInsteadOfImage;
-		wxComboBox* m_comboGifQuality;
+		wxSpinCtrl* m_spinGifResizeLevel;
 		wxSpinCtrl* m_spinFramesBefore;
 		wxSpinCtrl* m_spinFramesAfter;
 		wxCheckBox* m_chkShowIgnoredAreas;
 		
-		void EnableDisableControlsBotGif();
+				
+		wxArrayString m_detectionsMethods;
+		wxComboBox* m_comboDetectionMethod;
 		
+		void EnableDisableControlsBotGif();
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
 		void spinRatioScaleOutput_SpinChange(wxSpinDoubleEvent& ev);
@@ -92,9 +95,10 @@ class cPanelProgramConfig : public wxPanel {
 		void chkSendImageAfterDetectigChange_CheckBoxClick(wxCommandEvent& ev);
 		void chkSendImageOfAllCameras_CheckBoxClick(wxCommandEvent& ev);
 		void chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& ev);
-		void comboGifQuality_Select(wxCommandEvent& ev);
+		void spinGifQuality_SpinChange(wxSpinEvent& ev);
 		void spinFramesBefore_SpinChange(wxSpinEvent& ev);
 		void spinFramesAfter_SpinChange(wxSpinEvent& ev);
 		void chkShowIgnoredAreas_CheckBoxClick(wxCommandEvent& ev);
 		void chkSendTextMessageAfterChange_CheckBoxClick(wxCommandEvent& ev);
+		void comboDetectionMethod_Select(wxCommandEvent& ev);
 };

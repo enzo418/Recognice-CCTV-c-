@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include "../recognize/src/types.hpp"
 #include "../recognize/src/configuration_file.hpp"
 #include "../recognize/src/recognize.hpp"

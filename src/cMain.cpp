@@ -19,7 +19,7 @@ cMain::cMain(	wxLocale& locale,
 				wxConfig* appConfig, 
 				bool& mainClosed,
 				std::string filePath)
-		: wxFrame(nullptr, wxID_ANY, _("Recognize"), wxPoint(30, 30), wxSize(860, 700)), 
+		: wxFrame(nullptr, wxID_ANY, _("Recognize"), wxPoint(30, 30), wxSize(1000, 700)), 
 		m_appConfig(appConfig), m_mainClosed(&mainClosed), m_filePath(filePath), m_locale(locale) {
 	/**
 	 * m_root

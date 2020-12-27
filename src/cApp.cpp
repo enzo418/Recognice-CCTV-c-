@@ -20,14 +20,7 @@ bool cApp::OnInit(){
 	 
 	m_locale->AddCatalogLookupPathPrefix(wxT("."));
 	m_locale->AddCatalog("recognize");
-		
-//	if (!m_locale.Init(wxLANGUAGE_SPANISH)) {
-//		
-//	}
 	
-//	wxString s = _("Url");
-//	wxMessageBox(s, _("Name"));
-
 	// Recognize will live as long as the app is live
 	this->m_recognize = new Recognize();
 

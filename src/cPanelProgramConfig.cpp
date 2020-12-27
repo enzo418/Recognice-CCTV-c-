@@ -9,6 +9,9 @@
 cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfiguration& progConfig, SharedData* sharedData) 
 		: 	wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SUNKEN),
 			m_config(&progConfig), m_sharedData(sharedData) {
+				
+	this->m_detectionsMethods.Add(_("HOG Descriptor (opencv) person only"));
+	this->m_detectionsMethods.Add(_("Yolo DarkNet V4 (AlexeyAB) objects detections"));
 	
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* sizerLeft = new wxBoxSizer(wxVERTICAL);
@@ -80,15 +83,9 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkUseGifInsteadOfImage->SetValue(m_config->useGifInsteadImage);
 	BIND(m_chkUseGifInsteadOfImage, wxEVT_CHECKBOX, wxCommandEvent, chkUseGifInsteadOfImage_CheckBoxClick);
 
-	this->m_comboGifQuality = new wxComboBox(this, PROGRAM_ids::COMBO_GifQuality, wxString(_("High")), wxDefaultPosition, wxDefaultSize);
-	m_comboGifQuality->Append(wxString(_("Very High")));
-	m_comboGifQuality->Append(wxString(_("High")));
-	m_comboGifQuality->Append(wxString(_("Medium")));
-	m_comboGifQuality->Append(wxString(_("Low")));
-	m_comboGifQuality->Append(wxString(_("None")));
-	m_comboGifQuality->SetValue(_(Utils::GifResizePercentageToString(this->m_config->gifResizePercentage)));
-	this->m_comboGifQuality->SetToolTip(_("Sets the resize level of the gif. While higher, more lightweigth the gif.\nSet to none leaves the original size."));
-	BIND(m_comboGifQuality, wxEVT_COMBOBOX, wxCommandEvent, comboGifQuality_Select);
+	this->m_spinGifResizeLevel = new wxSpinCtrl(this, PROGRAM_ids::COMBO_GifQuality, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 100, this->m_config->gifResizePercentage);
+	this->m_spinGifResizeLevel->SetToolTip(_("Sets the resize level of the gif. While higher, more lightweigth the gif.\nSet to 0 leaves the original size and at 50 it resizes it in half the size."));
+	BIND(m_spinGifResizeLevel, wxEVT_SPINCTRL, wxSpinEvent, spinGifQuality_SpinChange);
 
 	this->m_spinFramesBefore = new wxSpinCtrl(this, PROGRAM_ids::SPIN_FramesBefore, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, this->m_config->numberGifFrames.framesBefore);
 	BIND(m_spinFramesBefore, wxEVT_SPINCTRL, wxSpinEvent, spinFramesBefore_SpinChange);
@@ -101,9 +98,14 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	this->m_chkShowIgnoredAreas->SetValue(m_config->showIgnoredAreas);
 	BIND(m_chkShowIgnoredAreas, wxEVT_CHECKBOX, wxCommandEvent, chkShowIgnoredAreas_CheckBoxClick);
 	
+	this->m_comboDetectionMethod = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, m_detectionsMethods);
+	this->m_comboDetectionMethod->SetToolTip(_("Selects the method or algorithm wich will be used to detect objects in the images after a change."));
+	this->m_comboDetectionMethod->SetValue(m_detectionsMethods[this->m_config->detectionMethod]);
+	BIND(m_comboDetectionMethod, wxEVT_COMBOBOX, wxCommandEvent, comboDetectionMethod_Select);
+	
 	// --------------- Sizers
 	const int flags = wxALL | wxGROW;
-	const int border = 10;
+	const int border = 7;
 	
 	sizerLeft->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						WidgetsHelper::GetSizerItemLabel(this, m_spinMsBetweenFrames, _("Milliseconds between frame"), _("Greater this value = Lower CPU usage.\n FPS = 1000 / ms, e.g. 25 ms = 40 FPS.\n Try different values and determine the efficiency vs effectiveness.")), 
@@ -128,6 +130,8 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	sizerLeft->Add(m_chkUseGifInsteadOfImage, 0, flags, border);
 	
 	sizerLeft->Add(m_chkShowIgnoredAreas, 0, flags, border);
+	
+	sizerLeft->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboDetectionMethod, _("Detection method")), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_txtTelegramBotApiKey, _("Telegram bot api key")), 0, flags, border);
 
@@ -139,7 +143,7 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 
 	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinSecondsBetweenMessage, _("Seconds between message with text")), 0, flags, border);
 
-	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_comboGifQuality, _("Gif resize level")), 0, flags, border);
+	sizerRight->Add(WidgetsHelper::GetSizerItemLabel(this, m_spinGifResizeLevel, _("Gif resize level")), 0, flags, border);
 
 	sizerRight->Add(WidgetsHelper::JoinWidgetsOnSizerH(
 						WidgetsHelper::GetSizerItemLabel(this, m_spinFramesBefore, _("Frames Before"), _("Ammount of frames to store before the change.")),
@@ -233,9 +237,8 @@ void cPanelProgramConfig::chkUseGifInsteadOfImage_CheckBoxClick(wxCommandEvent& 
 	ev.Skip();
 }
 
-void cPanelProgramConfig::comboGifQuality_Select(wxCommandEvent& ev) {
-	wxString val = ev.GetString();
-	this->m_config->gifResizePercentage = Utils::GifResizePercentageFromString(val.ToStdString());
+void cPanelProgramConfig::spinGifQuality_SpinChange(wxSpinEvent& ev) {
+	this->m_config->gifResizePercentage = this->m_spinGifResizeLevel->GetValue();
 	ev.Skip();
 }
 
@@ -262,7 +265,7 @@ void cPanelProgramConfig::chkSendTextMessageAfterChange_CheckBoxClick(wxCommandE
 void cPanelProgramConfig::EnableDisableControlsBotGif() {
 	this->m_spinFramesBefore->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
 	this->m_spinFramesAfter->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
-	this->m_comboGifQuality->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
+	this->m_spinGifResizeLevel->Enable(this->m_config->telegramConfig.useTelegramBot && this->m_config->useGifInsteadImage);
 	
 	this->m_txtAuthUsersToSendActions->Enable(this->m_config->telegramConfig.useTelegramBot);
 	this->m_txtTelegramBotApiKey->Enable(this->m_config->telegramConfig.useTelegramBot);
@@ -270,4 +273,9 @@ void cPanelProgramConfig::EnableDisableControlsBotGif() {
 	
 	this->m_spinSecondsBetweenImage->Enable(this->m_config->telegramConfig.useTelegramBot);
 	this->m_spinSecondsBetweenMessage->Enable(this->m_config->telegramConfig.useTelegramBot);
+}
+
+void cPanelProgramConfig::comboDetectionMethod_Select(wxCommandEvent& ev) {
+	this->m_config->detectionMethod = (DetectionMethod)this->m_comboDetectionMethod->GetSelection();
+	ev.Skip();
 }
