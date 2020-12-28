@@ -17,13 +17,12 @@ find_package(CURL REQUIRED)
 set(source_dir "${PROJECT_SOURCE_DIR}/src")
 
 file(GLOB COMMON_SRC "${source_dir}/*.cpp")
-file(GLOB CHANGEDESCRIPTOR_MODULE "ChangeDescriptor/*.cpp")
 
 file(GLOB MAIN_SRC "${PROJECT_SOURCE_DIR}/sample/sample_main.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC} ${CHANGEDESCRIPTOR_MODULE} ${MAIN_SRC})
+set(SOURCES ${COMMON_SRC} ${MAIN_SRC})
 
 # Print sources
 message(${SOURCES})

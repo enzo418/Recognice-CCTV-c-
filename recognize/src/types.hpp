@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ChangeDescriptor/ChangeDescriptor.hpp"
+#include "change_descriptor.hpp"
 
 #include <opencv2/core/base.hpp>
 #include <opencv2/core/types.hpp>
