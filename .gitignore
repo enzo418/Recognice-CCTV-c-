@@ -2,6 +2,7 @@
 *.*
 
 !recognize
+!recognize/src
 !.gitignore
 !src
 !*.cpp
