@@ -475,7 +475,7 @@ void Recognize::StartNotificationsSender() {
 	std::string date;
 
 	while (!stop) {
-		for (auto &&camera : cameras) {			
+		for (auto &&camera : cameras) {
 			// Send gif
 			if (programConfig.useGifInsteadImage && camera.gifFrames.state == State::Ready) {
 				// -----------------------------------------------------------
@@ -491,6 +491,11 @@ void Recognize::StartNotificationsSender() {
 				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(camera);
 
 				if (camera.gifFrames.state == State::Send) {
+					if (this->programConfig.sendTextWhenDetectChange) {
+						Notification::Notification imn("Movimiento detectado en la camara " + camera.config->cameraName);
+						imn.send(this->programConfig);
+					}
+					
 					// if (frames.avrgDistanceFrames > 70) {
 					for (size_t i = 0; i < frames.size(); i++) {
 						location = root + "_" + std::to_string((int)i) + ".jpg";

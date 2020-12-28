@@ -100,7 +100,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
 				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 				this->pendingNotifications.push_back(imn);
-			} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {			
+			} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
 				this->gifFrames.updateBefore = false;
 				this->gifFrames.updateAfter = true;
 				this->gifFrames.state = State::Collecting;
@@ -111,7 +111,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		
 		// Send text message
 		intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
-		if (intervalFrames >= this->_programConfig->secondsBetweenMessage) {
+		if (intervalFrames >= this->_programConfig->secondsBetweenMessage && !(this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage)) {
 			if (this->_programConfig->sendTextWhenDetectChange){
 				Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
 				this->pendingNotifications.push_back(imn);
