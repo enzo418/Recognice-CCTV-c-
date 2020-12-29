@@ -57,6 +57,8 @@ class cPanelProgramConfig : public wxPanel {
 		wxSpinCtrl* m_spinMsBetweenFrames;
 		wxSpinCtrlDouble* m_spinRatioScaleOutput;
 
+		wxBookCtrlBase *m_book;
+
 		wxCheckBox *m_chkShowPreviewCameras;
 		wxCheckBox *m_chkShowAreaCameraSees;
 		wxCheckBox *m_chkShowProcessedImages;
