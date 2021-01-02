@@ -52,8 +52,7 @@ private:
 	// ============================
 	//  Pointers to externals vars
 	// =============================
-	bool* _stop_flag = nullptr;
-	ProgramConfiguration* _programConfig = nullptr;	
+	ProgramConfiguration* _programConfig = nullptr;
 	cv::HOGDescriptor* _descriptor = nullptr;
 
 	// ============
@@ -69,18 +68,18 @@ private:
 
 	// frame to send to the display.
 	cv::Mat frameToShow;
-	
+		
 	// used to store the diff frame between lastFrame and frame.
 	cv::Mat diff; 
 
 	// Rectangle that causes incorrect detections
 	std::vector<FindingInfo> untFindings;
 	
-	std::chrono::system_clock::time_point lastPersonDetected = std::chrono::high_resolution_clock::now();
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastPersonDetected = std::chrono::high_resolution_clock::now();
 
 	int totalNonZeroPixels = 0;
 
-	std::chrono::system_clock::time_point now = std::chrono::high_resolution_clock::now(), 
+	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now(), 
 								lastSavedImage = std::chrono::high_resolution_clock::now(),
 								lastImageSended = std::chrono::high_resolution_clock::now(),
 								lastTextSended = std::chrono::high_resolution_clock::now();
@@ -106,7 +105,7 @@ private:
 	const double abovePercentage = 1.2;
 
 	// saves the last time the threshold was updated
-	std::chrono::system_clock::time_point lastThresholdUpdate = std::chrono::high_resolution_clock::now();
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastThresholdUpdate = std::chrono::high_resolution_clock::now();
 
 	FindingInfo lastFinding;
 
@@ -122,8 +121,17 @@ private:
 
 	void ApplyBasicsTransformations();
 
-	void ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now);
+	void ChangeTheStateAndAlert(std::chrono::time_point<std::chrono::high_resolution_clock>& now);
+
 public:
+	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog);
+	~Camera();
+	
+public:
+	bool close = false;
+	
+	std::thread* cameraThread;
+
 	CameraConfiguration* config = nullptr;
 
 	// alerts created by this camera
@@ -140,11 +148,10 @@ public:
 	// Current state of the camera sentry, detecting or detected.
 	NISTATE state;
 
-	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog);
 
 	void Connect();
 
 	// Creates a thread which calls to a internal method and then return the thread.
-	std::thread StartDetection();
+//	std::thread StartDetection();
 	
 };

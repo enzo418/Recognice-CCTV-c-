@@ -68,9 +68,10 @@ public:
 	// use this variable to join all the threads when want to destroy this instantiation
 	std::vector<std::thread> threads;
 
-	std::vector<Camera> cameras;
+	std::vector<std::unique_ptr<Camera>> cameras;
 
 	Recognize(void);
+	~Recognize() = default;
 
 	void Start(Configurations& configs, bool startPreviewThread, bool startActionsThread);
 

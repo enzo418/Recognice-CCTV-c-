@@ -1,19 +1,27 @@
 #include "camera.hpp"
 
-Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, bool* stopFlag, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _stop_flag(stopFlag), _descriptor(hog) {
+Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
 	this->gifFrames.after.resize(programConfig->numberGifFrames.framesAfter);
 	this->gifFrames.before.resize(programConfig->numberGifFrames.framesBefore);
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
+		
+	this->cameraThread = new std::thread(&Camera::ReadFramesWithInterval, this);
+}
+
+Camera::~Camera() {
+	std::cout << "Deleting camera " << this->config->cameraName << std::endl;
+	delete this->cameraThread;
+	std::cout << "Deleted camera 1 members... destroing it now..." << std::endl;
 }
 
 void Camera::Connect() {
 	this->capturer.open(this->config->url);
 }
 
-std::thread Camera::StartDetection() {
-	return std::thread(&Camera::ReadFramesWithInterval, this);
-}
+//std::thread Camera::StartDetection() {
+//	return ;
+//}
 
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
@@ -158,7 +166,7 @@ void Camera::ReadFramesWithInterval() {
 	// -----------
 	const int secondsBetweenMessages = this->_programConfig->secondsBetweenMessage;
 
-	while (!*this->_stop_flag && capture.isOpened()) {
+	while (!this->close && capture.isOpened()) {
 		const NISTATE camState = this->state;
 
 		// Read a new frame from the capturer

@@ -15,6 +15,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	
 	size_t validFrames = 0;
 	double totalDistance = 0;
+	double totalAreaDifference = 0;
 	double totalArea = 0;
 	double totalNonPixels = 0;
 	size_t overlappingFindings = 0;
@@ -83,6 +84,8 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 				p1 = finding.center;
 				p1Saved = true;
 			}
+			
+			totalArea += finding.area;
 
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
@@ -114,7 +117,7 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 			if (lastValidFind != nullptr) {
 				validFrames++;
 				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
-				totalArea += abs(framesTransformed[i].finding.area - lastValidFind->area);
+				totalAreaDifference += abs(framesTransformed[i].finding.area - lastValidFind->area);
 			}
 		
 			lastValidFind = &framesTransformed[i].finding;
@@ -129,12 +132,12 @@ std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
 	if (camera.gifFrames.avrgDistanceFrames > 120)
 		camera.gifFrames.debugMessage += "\nIGNORED";
 
-	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalArea: " + std::to_string(totalArea) + " total area % of non zero: " + std::to_string(totalArea * 100 / totalNonPixels);
+	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
-
+	camera.gifFrames.debugMessage += "\nAverage area: " + std::to_string(totalArea / validFrames);
 	if (validFrames != 0) {
 		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
-		camera.gifFrames.avrgAreaDifference = totalArea / validFrames;
+		camera.gifFrames.avrgAreaDifference = totalAreaDifference / validFrames;
 	}
 
 	//// Check if it's valid
@@ -266,8 +269,7 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 	}
 	
 	this->indexMainThreadCameras = this->threads.size();
-	std::cout << "pushed thread of cameras in " << this->threads.size() << std::endl;
-	this->threads.push_back(std::thread(&Recognize::StartCamerasThreads, this));
+	this->StartCamerasThreads();
 
 	if (startPreviewThread) {
 		std::cout << "pushed thread of preview in " << this->threads.size() << std::endl;
@@ -275,13 +277,13 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 		this->threads.push_back(std::thread(&Recognize::StartPreviewCameras, this));
 	}
 
-	if (startActionsThread) {
-		std::cout << "pushed thread of actions bot in " << this->threads.size() << std::endl;
-		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
-	}
+//	if (startActionsThread) {
+//		std::cout << "pushed thread of actions bot in " << this->threads.size() << std::endl;
+//		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
+//	}
 
 	if (programConfig.telegramConfig.useTelegramBot) {
-		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;		
+		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
 	}
@@ -294,12 +296,7 @@ void Recognize::StartCamerasThreads() {
 	
 	// Create the cameras objs
 	for (auto &config : this->camerasConfigs) {
-		this->cameras.push_back(Camera(config, &programConfig, &this->stop, this->hogDescriptor));
-	}
-
-	// Start a thread for each camera
-	for (size_t i = 0; i < this->cameras.size(); i++) {
-		this->threads.push_back(this->cameras[i].StartDetection());
+		this->cameras.push_back(std::unique_ptr<Camera>(new Camera(config, &programConfig, this->hogDescriptor)));
 	}
 }
 
@@ -414,20 +411,20 @@ void Recognize::StartPreviewCameras() {
 			bool allCamerasInSentry = true;
 
 			for (size_t i = 0; i < amountCameras; i++) {
-				if (cameras[i].frames.size() > 0) {
+				if (cameras[i]->frames.size() > 0) {
 					// if the vector pos i has no frame
-					if (!ready[cameras[i].config->order]) {
+					if (!ready[cameras[i]->config->order]) {
 						// take the first frame and delete it
-						frames[cameras[i].config->order] = cameras[i].frames[0];
+						frames[cameras[i]->config->order] = cameras[i]->frames[0];
 
 						if (showAreaCameraSees && !showProcessedFrames) {
 							cv::Scalar color = cv::Scalar(255, 0, 0);
-							cv::rectangle(frames[cameras[i].config->order], cameras[i].config->roi, color);
+							cv::rectangle(frames[cameras[i]->config->order], cameras[i]->config->roi, color);
 						}
 
-						cameras[i].frames.erase(cameras[i].frames.begin());
+						cameras[i]->frames.erase(cameras[i]->frames.begin());
 						
-						ready[cameras[i].config->order] = true;
+						ready[cameras[i]->config->order] = true;
 						
 						size++;
 					}
@@ -467,6 +464,8 @@ void Recognize::StartPreviewCameras() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(int(interval * 0.7)));
 	}  
 
+	std::cout << "Preview thread closed" << std::endl;
+
 	cv::destroyWindow("Preview Cameras");
 }
 
@@ -477,7 +476,7 @@ void Recognize::StartNotificationsSender() {
 	while (!stop) {
 		for (auto &&camera : cameras) {
 			// Send gif
-			if (programConfig.useGifInsteadImage && camera.gifFrames.state == State::Ready) {
+			if (programConfig.useGifInsteadImage && camera->gifFrames.state == State::Ready) {
 				// -----------------------------------------------------------
 				// Take before and after frames and combine them into a .gif
 				// -----------------------------------------------------------
@@ -488,11 +487,11 @@ void Recognize::StartNotificationsSender() {
 				std::string location;
 				const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
 
-				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(camera);
+				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(*camera);
 
-				if (camera.gifFrames.state == State::Send) {
+				if (camera->gifFrames.state == State::Send) {
 					if (this->programConfig.sendTextWhenDetectChange) {
-						Notification::Notification imn("Movimiento detectado en la camara " + camera.config->cameraName);
+						Notification::Notification imn("Movimiento detectado en la camara " + camera->config->cameraName);
 						imn.send(this->programConfig);
 					}
 					
@@ -507,35 +506,37 @@ void Recognize::StartNotificationsSender() {
 
 					std::system(command.c_str());
 
-					TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + camera.gifFrames.debugMessage, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+					TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + camera->gifFrames.debugMessage, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 				}
 				
 				// ---
 				// update gif collection data
 				// ---
-				camera.gifFrames.indexBefore = 0;
-				camera.gifFrames.indexAfter = 0;
-				camera.gifFrames.totalFramesBefore = 0;
+				camera->gifFrames.indexBefore = 0;
+				camera->gifFrames.indexAfter = 0;
+				camera->gifFrames.totalFramesBefore = 0;
 
-				camera.gifFrames.debugMessage = "";
-				camera.gifFrames.state = State::Initial;
-				camera.gifFrames.updateAfter = false;
-				camera.gifFrames.updateBefore = true;
+				camera->gifFrames.debugMessage = "";
+				camera->gifFrames.state = State::Initial;
+				camera->gifFrames.updateAfter = false;
+				camera->gifFrames.updateBefore = true;
 			}
 
-			size_t size = camera.pendingNotifications.size();
+			size_t size = camera->pendingNotifications.size();
 			for (size_t i = 0; i < size; i++) {	
-				std::cout << "Sending notification of type " << camera.pendingNotifications[i].type << std::endl;
+				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
-				camera.pendingNotifications[i].send(programConfig);
+				camera->pendingNotifications[i].send(programConfig);
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p
-			camera.pendingNotifications.clear();
+			camera->pendingNotifications.clear();
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 	}
+	
+	std::cout << "Notifiaction thread closed" << std::endl;
 }
 
 void Recognize::CloseAndJoin() {
@@ -545,9 +546,35 @@ void Recognize::CloseAndJoin() {
 	for (size_t i = 0; i < this->threads.size(); i++) {
 		this->threads[i].join();
 	}
+	
+	std::cout << "Threads from main closed" << std::endl;
+	
+	size_t sz = this->cameras.size();
+	for(size_t i = 0; i < sz; i++) {
+		Camera* camera = this->cameras[i].release();
+
+		if (camera->cameraThread->joinable()) {
+			camera->close = true;
+			camera->cameraThread->join();
+		}
+		
+		const std::string n = camera->config->cameraName;
+		std::cout << "Release " << n << std::endl;
+		delete camera;
+		std::cout << "Released " << n << std::endl;
+		
+		std::cout << "Size: " << this->cameras.size() << std::endl;
+	}
+	
+	std::cout << "Threads from cameras closed" << std::endl;
 
 	this->cameras.clear();
+	
+	std::cout << "Cameras vector cleaned" << std::endl;
+	
 	this->threads.clear();
+	
+	std::cout << "Threads vector cleared" << std::endl;
 }
 
 std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat& frame, CameraConfiguration& cfg) {
