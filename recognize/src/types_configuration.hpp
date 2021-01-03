@@ -78,6 +78,9 @@ enum DetectionMethod {None = -1, HogDescriptor = 0, YoloDNN_V4};
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
 	ushort msBetweenFrame = 25;
+	
+	// same as msBetweenFrame but will be used only after change
+	ushort msBetweenFrameAfterChange = 30;
 
 	// seconds to wait until save a new frame to the fraesToUpload list of the camera.
 	int secondsBetweenImage = 15;

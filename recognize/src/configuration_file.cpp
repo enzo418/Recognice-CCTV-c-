@@ -226,6 +226,9 @@ namespace ConfigurationFile {
 				<< "\n; FPS = 1000 / <msBetweenFrame>. Try different values and determine the efficiency vs effectiveness."
 				<< "\nmsBetweenFrame=" << cfg.msBetweenFrame
 				
+				<< "\n; Same as <msBetweenFrame>. But only will be applied after detecting a change in the frames."
+				<< "\nmsBetweenFrameAfterChange=" << cfg.msBetweenFrameAfterChange
+				
 				<< "\n\n# == Output-preview section\n"
 				
 				<< "\n; Comment the line below to let the program calculate the output res automatically"
@@ -313,6 +316,8 @@ namespace ConfigurationFile {
 
 		if (id == "msbetweenframe" || id == "millisbetweenframe") {
 			config.msBetweenFrame = (ushort)std::stoi(value);
+		} else if (id == "msbetweenframeafterchange") {
+			config.msBetweenFrameAfterChange = (ushort)std::stoi(value);
 		} else if (id == "secondsbetweenimage") {
 			std::replace(value.begin(), value.end(), ',', '.');
 			config.secondsBetweenImage = std::stoi(value);

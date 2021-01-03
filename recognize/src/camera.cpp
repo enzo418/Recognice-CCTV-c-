@@ -9,6 +9,10 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
 	
 	this->cameraThread = new std::thread(&Camera::ReadFramesWithInterval, this);
+
+	// higher interval -> lower max frames & lower interval -> higher max frames
+	this->maxFramesLeft = (100 / (programConfig->msBetweenFrameAfterChange)) * 140; // 100 ms => max = 70 frames
+	this->numberFramesToAdd = this->maxFramesLeft * 0.1;
 }
 
 Camera::~Camera() {
@@ -137,23 +141,11 @@ void Camera::ReadFramesWithInterval() {
 	
 	ushort framesLeft = 0; 
 
-	const ushort interval = this->_programConfig->msBetweenFrame;
-	
-	// higher interval -> lower max frames & lower interval -> higher max frames
-	const ushort maxFramesLeft = (100.0 / (interval+0.0)) * 70; // 100 ms => max = 70 frames
-
 	const char* camName = &this->config->cameraName[0];
-	const CAMERATYPE camType = this->config->type;
-	const int changeThreshold = this->config->changeThreshold;
 
 	const bool showPreview = this->_programConfig->showPreview;   
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
 
-	const int maxRegisterPerPoint = 10;
-
-	// ammount of frame that recognition will be active before going to idle state    
-	const uint8_t framesToRecognice = (100 / (interval + 0.0)) * 30; 
-		
 	cv::VideoCapture capture(this->config->url);
 
 	std::cout << "Opening " << camName << "..." << std::endl;
@@ -171,7 +163,7 @@ void Camera::ReadFramesWithInterval() {
 		// Read a new frame from the capturer
 		this->now = std::chrono::high_resolution_clock::now();
 		auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
-		if (intervalFrames >= interval) {
+		if (intervalFrames >= this->msBetweenFrames) {
 			capture.read(this->frame);
 			timeLastframe = std::chrono::high_resolution_clock::now();
 			shouldProcessFrame = true;
@@ -233,6 +225,8 @@ void Camera::ReadFramesWithInterval() {
 			{
 				std::cout << "Change detected. Checking..."  << std::endl;
 
+				this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
+
 				size_t overlappingFindings = 0;
 				// since gif does this (check if change inside an ignored area) for each frame... 
 				// only do it if user wants a image				
@@ -251,7 +245,13 @@ void Camera::ReadFramesWithInterval() {
 					// is valid, send an alert
 					this->ChangeTheStateAndAlert(now);
 				}
+				
+				if (framesLeft < maxFramesLeft)
+					framesLeft += numberFramesToAdd;
 			}
+
+			if (framesLeft == 0)
+				this->msBetweenFrames = this->_programConfig->msBetweenFrame;
 			
 			// push a new frame to display.
 			if (showPreview && !showProcessedImages) {
@@ -267,6 +267,7 @@ void Camera::ReadFramesWithInterval() {
 			}
 
 			shouldProcessFrame = false;
+			framesLeft--;
 		}
 	}
 

@@ -32,6 +32,8 @@ private:
 	// ============
 	cv::VideoCapture capturer;
 	
+	ulong msBetweenFrames;
+	
 	// current frame.
 	cv::Mat frame;
 
@@ -55,7 +57,10 @@ private:
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now(), 
 								lastSavedImage = std::chrono::high_resolution_clock::now();
-								// lastBackupImageStored = std::chrono::high_resolution_clock::now();
+	
+	ushort numberFramesToAdd = 0;
+	ushort maxFramesLeft = 0;
+	ushort framesLeft = 0;
 
 	// ==================
 	//  Change-threshold
