@@ -6,7 +6,7 @@ GifFrames::GifFrames(ProgramConfiguration* program, CameraConfiguration* cameraC
 	this->state = State::Initial;
 
 	this->framesBefore = this->program->numberGifFrames.framesBefore;
-	this->framesAfter = this->program->numberGifFrames.framesBefore;
+	this->framesAfter = this->program->numberGifFrames.framesAfter;
 	
 	const size_t nframes = this->framesBefore + this->framesAfter;
 
