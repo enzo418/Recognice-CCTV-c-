@@ -44,12 +44,12 @@ class GifFrames {
 
 		size_t indexBefore = 0;
 		// vector of frames "before"
-		std::vector<cv::Mat> before;
+		std::queue<cv::Mat> before;
 
 
 		size_t indexAfter = 0;
 		// vector of frames "after"
-		std::vector<cv::Mat> after;
+		std::queue<cv::Mat> after;
 
 		// current state of this gif
 		State state = State::Initial;

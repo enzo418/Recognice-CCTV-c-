@@ -102,7 +102,7 @@ void Camera::UpdateThreshold() {
 
 void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) {
 	// Play a sound
-	this->pendingNotifications.push_back(Notification::Notification());
+	// this->pendingNotifications.push_back(Notification::Notification());
 	
 	if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
 		this->currentGifFrames->detectedChange();

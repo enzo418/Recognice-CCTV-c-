@@ -10,27 +10,18 @@ GifFrames::GifFrames(ProgramConfiguration* program, CameraConfiguration* cameraC
 	
 	const size_t nframes = this->framesBefore + this->framesAfter;
 
-	this->before.resize(nframes);
-	this->after.resize(nframes);
-	framesTransformed.resize(nframes);
+	// framesTransformed.resize(nframes);
 }
 
 void GifFrames::addFrame(cv::Mat& frame) {
-	if (this->updateBefore || this->totalFramesBefore < this->framesBefore) {
-		// increase total (if it's max then just leave it there)
-		this->totalFramesBefore += this->totalFramesBefore >= this->framesBefore ? 0 : 1;
+	if (this->updateBefore || this->before.size() < this->framesBefore) {
+		if (this->before.size() > this->framesBefore)
+			this->before.pop();
 
-		// copy frame
-		frame.copyTo(this->before[this->indexBefore]);
-
-		// update next frame index
-		size_t i = this->indexBefore;
-		this->indexBefore = (i + 1) >= this->framesBefore ? 0 : (i + 1);
+		this->before.push(frame.clone());
 	} else if (this->updateAfter) { // change detected... get the following frames					 
-		if (this->indexAfter < this->framesAfter) {
-			frame.copyTo(this->after[this->indexAfter]);
-
-			this->indexAfter++;
+		if (this->after.size() < this->framesAfter) {
+			this->after.push(frame.clone());
 		} else {
 			// once we have all the frames...
 			this->state = State::Ready;
@@ -44,41 +35,41 @@ void GifFrames::addFrame(cv::Mat& frame) {
 
 void GifFrames::framesToSingleVectors() {
 	const size_t ammountOfFrames = this->framesBefore + this->framesAfter;
+	size_t i = 0;
 
-	size_t totalFrames = 0;
-	for (size_t i = this->indexBefore;;) {	
-		if (totalFrames < this->framesBefore) {
-			frames[totalFrames] = std::move(this->before[i]);
-			
-			framesTransformed[totalFrames].frame = frames[totalFrames].clone();
+	while (!this->before.empty()) {
+		this->frames.push_back(std::move(this->before.front()));
 
-			if (camera->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera->rotation);
+		FrameDescriptor fd;
+		fd.frame = this->frames.back().clone();
+		if (camera->rotation != 0)
+			ImageManipulation::RotateImage(fd.frame, camera->rotation);
 
-			// Take the region of interes
-			if (!camera->roi.empty()) {
-				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera->roi);
-			}
+		fd.frame = fd.frame(camera->roi);
 
-			// if (totalFrames == 0) {
-			// 	frameCero = &framesTransformed[0].frame;
-			// }
+		cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
 
-			totalFrames++;
-			i = (i + 1) >= this->framesBefore ? 0 : (i + 1);
-		} else
-			break;
+		this->framesTransformed.push_back(std::move(fd));
+
+		this->before.pop();
 	}
 	
-	for (; totalFrames < ammountOfFrames; totalFrames++) {
-		frames[totalFrames] = std::move(this->after[totalFrames - this->framesBefore]);
-		
-		framesTransformed[totalFrames].frame = frames[totalFrames].clone(); 
+	while (!this->after.empty()) {
+		this->frames.push_back(std::move(this->after.front()));
 
-		if (camera->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera->rotation);
+		FrameDescriptor fd;
+		fd.frame = this->frames.back().clone();
 
-		if (!camera->roi.empty()) {			
-			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera->roi); 
-		}
+		if (camera->rotation != 0)
+			ImageManipulation::RotateImage(fd.frame, camera->rotation);
+
+		fd.frame = fd.frame(camera->roi);
+
+		cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
+
+		this->framesTransformed.push_back(std::move(fd));
+
+		this->after.pop();
 	}
 }
 
