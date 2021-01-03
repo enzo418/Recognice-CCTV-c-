@@ -16,8 +16,6 @@ GifFrames::GifFrames(ProgramConfiguration* program, CameraConfiguration* cameraC
 }
 
 void GifFrames::addFrame(cv::Mat& frame) {
-	bool updated = true;
-
 	if (this->updateBefore || this->totalFramesBefore < this->framesBefore) {
 		// increase total (if it's max then just leave it there)
 		this->totalFramesBefore += this->totalFramesBefore >= this->framesBefore ? 0 : 1;
@@ -41,8 +39,6 @@ void GifFrames::addFrame(cv::Mat& frame) {
 			// move frames from queues to a vector
 			this->framesToSingleVectors();
 		}
-	} else {
-		updated = false;		
 	}
 }
 

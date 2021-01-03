@@ -106,7 +106,6 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		
 		if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
 			this->currentGifFrames->detectedChange();
-			std::cout << "[N] Changed state." << std::endl;
 		} else {
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
