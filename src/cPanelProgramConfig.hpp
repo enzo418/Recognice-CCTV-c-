@@ -55,6 +55,7 @@ class cPanelProgramConfig : public wxPanel {
 		ProgramConfiguration* m_config;
 
 		wxSpinCtrl* m_spinMsBetweenFrames;
+		wxSpinCtrl* m_spinMsBetweenFramesAfterChange;
 		wxSpinCtrlDouble* m_spinRatioScaleOutput;
 
 		wxBookCtrlBase *m_book;
@@ -88,6 +89,7 @@ class cPanelProgramConfig : public wxPanel {
 		void EnableDisableControlsBotGif();
 	protected:
 		void spinMsBetweenFrames_SpinChange(wxSpinEvent& ev);
+		void spinMsBetweenFramesAfterChange_SpinChange(wxSpinEvent& ev);
 		void spinRatioScaleOutput_SpinChange(wxSpinDoubleEvent& ev);
 		void chkShowPreviewCameras_CheckBoxClick(wxCommandEvent& ev);
 		void chkShowAreaCameraSees_CheckBoxClick(wxCommandEvent& ev);

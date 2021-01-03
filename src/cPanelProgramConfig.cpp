@@ -32,9 +32,12 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 	wxPanel* panelGeneral = new wxPanel(m_book, wxID_ANY);
 	wxSizer* sizerGeneral = new wxBoxSizer(wxVERTICAL);
 	
-	this->m_spinMsBetweenFrames = new wxSpinCtrl(panelGeneral, PROGRAM_ids::SPIN_MsBetweenFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->msBetweenFrame);;
+	this->m_spinMsBetweenFrames = new wxSpinCtrl(panelGeneral, PROGRAM_ids::SPIN_MsBetweenFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->msBetweenFrame);
 	BIND(m_spinMsBetweenFrames, wxEVT_SPINCTRL, wxSpinEvent, spinMsBetweenFrames_SpinChange);
-						
+	
+	this->m_spinMsBetweenFramesAfterChange = new wxSpinCtrl(panelGeneral, PROGRAM_ids::SPIN_MsBetweenFrames, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, imax, m_config->msBetweenFrameAfterChange);
+	BIND(m_spinMsBetweenFramesAfterChange, wxEVT_SPINCTRL, wxSpinEvent, spinMsBetweenFrames_SpinChange);
+							
 	this->m_spinRatioScaleOutput = new wxSpinCtrlDouble(panelGeneral, PROGRAM_ids::SPIN_RatioScaleOutput, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, dmax, m_config->ratioScaleOutput);
 	this->m_spinRatioScaleOutput->SetDigits(2);
 	BIND(m_spinRatioScaleOutput, wxEVT_SPINCTRLDOUBLE, wxSpinDoubleEvent, spinRatioScaleOutput_SpinChange);
@@ -44,6 +47,13 @@ cPanelProgramConfig::cPanelProgramConfig(wxBookCtrlBase* parent, ProgramConfigur
 					WidgetsHelper::GetSizerItemLabel(panelGeneral, m_spinRatioScaleOutput, _("Ratio Scale output"), _("Scales the output")), 
 					5
 				), 0, flags, border);
+				
+	sizerGeneral->Add(WidgetsHelper::GetSizerItemLabel(
+			panelGeneral,
+			m_spinMsBetweenFramesAfterChange,
+			_("ms between frames after change"),
+			_("Same as ms Between Frame. But only will be applied after detecting a change in the frames.")
+		), 0, flags, border);
 
 	this->m_chkShowPreviewCameras = new wxCheckBox(panelGeneral, PROGRAM_ids::CHK_ShowPreviewCameras, _("Show preview of the cameras"));
 	this->m_chkShowPreviewCameras->SetValue(m_config->showPreview);
@@ -186,6 +196,11 @@ cPanelProgramConfig::~cPanelProgramConfig() { }
 
 void cPanelProgramConfig::spinMsBetweenFrames_SpinChange(wxSpinEvent& ev) {
 	this->m_config->msBetweenFrame = this->m_spinMsBetweenFrames->GetValue();
+	ev.Skip();
+}
+
+void cPanelProgramConfig::spinMsBetweenFramesAfterChange_SpinChange(wxSpinEvent& ev) {
+	this->m_config->msBetweenFrameAfterChange = this->m_spinMsBetweenFramesAfterChange->GetValue();
 	ev.Skip();
 }
 
