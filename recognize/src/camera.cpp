@@ -178,7 +178,7 @@ void Camera::ReadFramesWithInterval() {
 			timeLastframe = std::chrono::high_resolution_clock::now();
 			shouldProcessFrame = true;
 		} else {            
-			// capture.read(this->frame); // keep reading to avoid error on VC.
+			capture.read(this->frame); // keep reading to avoid error on VC.
 		}
 
 		if (shouldProcessFrame) {
