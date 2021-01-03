@@ -17,35 +17,7 @@
 #include <unordered_map> // To get a unique file id from a camera url
 
 #include "notification.hpp"
-
-enum State { 	
-				Initial, /** Initial state: updating "before" frames **/
-				Collecting, /** collecting frames */
-				Ready, /** filled "after" frames, ready to send **/
-				Wait, /** Do not send... yet **/
-				Send, /** green flag to continue **/
-				Cancelled /** red flag. Delete the notification **/
-			};
-
-struct GifFrames {
-	size_t totalFramesBefore = 0;
-
-	bool updateBefore = true;
-	bool updateAfter = false;
-
-	size_t indexBefore = 0;
-	std::vector<cv::Mat> before;
-	
-	std::vector<cv::Mat> after;
-	size_t indexAfter = 0;
-
-	State state = State::Initial;
-
-	double avrgDistanceFrames = 0;
-	double avrgAreaDifference = 0;
-
-	std::string debugMessage;
-};
+#include "gif_frames.hpp"
 
 class Camera {
 private:
@@ -69,6 +41,8 @@ private:
 	// frame to send to the display.
 	cv::Mat frameToShow;
 		
+	std::unique_ptr<GifFrames> currentGifFrames;
+	
 	// used to store the diff frame between lastFrame and frame.
 	cv::Mat diff; 
 
@@ -80,9 +54,7 @@ private:
 	int totalNonZeroPixels = 0;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now(), 
-								lastSavedImage = std::chrono::high_resolution_clock::now(),
-								lastImageSended = std::chrono::high_resolution_clock::now(),
-								lastTextSended = std::chrono::high_resolution_clock::now();
+								lastSavedImage = std::chrono::high_resolution_clock::now();
 								// lastBackupImageStored = std::chrono::high_resolution_clock::now();
 
 	// ==================
@@ -128,6 +100,10 @@ public:
 	~Camera();
 	
 public:
+	std::chrono::time_point<std::chrono::high_resolution_clock>
+								lastImageSended = std::chrono::high_resolution_clock::now(),
+								lastTextSended = std::chrono::high_resolution_clock::now();
+
 	bool close = false;
 	
 	std::thread* cameraThread;
@@ -143,15 +119,10 @@ public:
 	// Temporal list of registers of when someone did enter o leave a site.
 	std::vector<Register> registers;
 
-	GifFrames gifFrames;
+	std::vector<std::unique_ptr<GifFrames>> gifsReady;
 	
 	// Current state of the camera sentry, detecting or detected.
 	NISTATE state;
 
-
-	void Connect();
-
-	// Creates a thread which calls to a internal method and then return the thread.
-//	std::thread StartDetection();
-	
+	void Connect();	
 };

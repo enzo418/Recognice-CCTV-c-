@@ -14,24 +14,15 @@
 #include <string>
 
 // Notification Icon State
-typedef unsigned char NISTATE;
+enum NISTATE {
+	SENTRY = 0, // Sentry state means that the camera is only comparing the current frame 
+				// to the last one to see if there is a significant change.
 
-/*	NISTATE:
-	Sentry state means that the camera is only comparing the current frame to the last one
-	to see if there is a significant change.
-*/
-#define NI_STATE_SENTRY 1 
+	DETECTING, 	// Detecting state means that the camera is currently using a 
+				// classification method to detect a person on the frame.
 
-/*	NISTATE:
-	Detecting state means that the camera is currently using a classification method to
-	detect a person on the frame.
-*/
-#define NI_STATE_DETECTING 2
-
-/*	NISTATE:
-	Detected means that the camera sucesfully detected person on the frame.
-*/
-#define NI_STATE_DETECTED 3
+	DETECTED  	// Detected means that the camera sucesfully detected person on the frame.
+};
 
 typedef unsigned short int ushort;
 typedef unsigned long int ulong;

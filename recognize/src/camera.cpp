@@ -1,11 +1,13 @@
 #include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
-	this->gifFrames.after.resize(programConfig->numberGifFrames.framesAfter);
-	this->gifFrames.before.resize(programConfig->numberGifFrames.framesBefore);
+	if (programConfig->useGifInsteadImage) {
+		this->currentGifFrames = std::unique_ptr<GifFrames>(new GifFrames(_programConfig, config));
+	}
+
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
-		
+	
 	this->cameraThread = new std::thread(&Camera::ReadFramesWithInterval, this);
 }
 
@@ -102,23 +104,24 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 		// Play a sound
 		this->pendingNotifications.push_back(Notification::Notification());
 		
-		// Send message with image
-		auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
-		if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-			if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
-				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
-				this->pendingNotifications.push_back(imn);
-			} else if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
-				this->gifFrames.updateBefore = false;
-				this->gifFrames.updateAfter = true;
-				this->gifFrames.state = State::Collecting;
+		if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
+			this->currentGifFrames->detectedChange();
+			std::cout << "[N] Changed state." << std::endl;
+		} else {
+			// Send message with image
+			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
+			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
+				if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
+					Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
+					this->pendingNotifications.push_back(imn);
+				}
+				
+				this->lastImageSended = std::chrono::high_resolution_clock::now();
 			}
-			
-			this->lastImageSended = std::chrono::high_resolution_clock::now();
 		}
 		
 		// Send text message
-		intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
+		auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
 		if (intervalFrames >= this->_programConfig->secondsBetweenMessage && !(this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage)) {
 			if (this->_programConfig->sendTextWhenDetectChange){
 				Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
@@ -167,8 +170,6 @@ void Camera::ReadFramesWithInterval() {
 	const int secondsBetweenMessages = this->_programConfig->secondsBetweenMessage;
 
 	while (!this->close && capture.isOpened()) {
-		const NISTATE camState = this->state;
-
 		// Read a new frame from the capturer
 		this->now = std::chrono::high_resolution_clock::now();
 		auto intervalFrames = (now - timeLastframe) / std::chrono::milliseconds(1);
@@ -177,7 +178,7 @@ void Camera::ReadFramesWithInterval() {
 			timeLastframe = std::chrono::high_resolution_clock::now();
 			shouldProcessFrame = true;
 		} else {            
-			capture.read(this->frame); // keep reading to avoid error on VC.
+			// capture.read(this->frame); // keep reading to avoid error on VC.
 		}
 
 		if (shouldProcessFrame) {
@@ -193,28 +194,23 @@ void Camera::ReadFramesWithInterval() {
 			if (this->_programConfig->useGifInsteadImage) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
-				// if still doesn't detect something (or it maybe detected and we still didn't fill the frames before it needed)
-				if (this->gifFrames.updateBefore || this->gifFrames.totalFramesBefore < this->_programConfig->numberGifFrames.framesBefore) {
-					// increase total (if it's max then just leave it there)
-					this->gifFrames.totalFramesBefore += this->gifFrames.totalFramesBefore >= this->_programConfig->numberGifFrames.framesBefore ? 0 : 1;
+				// if the current gif is ready to be sent, move it to the vector of gifs ready
+				// and create another gif
+				if (this->currentGifFrames->getState() == State::Ready && this->gifsReady.size() < 10) {
+					this->gifsReady.push_back(std::move(this->currentGifFrames));
 
-					// copy frame
-					this->frame.copyTo(this->gifFrames.before[this->gifFrames.indexBefore]);
-
-					// update next frame index
-					size_t i = this->gifFrames.indexBefore;
-					this->gifFrames.indexBefore = (i + 1) >= this->_programConfig->numberGifFrames.framesBefore ? 0 : (i + 1);
-				} else if (this->gifFrames.updateAfter) { // change detected... get the following frames					 
-					if (this->gifFrames.indexAfter < this->_programConfig->numberGifFrames.framesAfter) {
-						this->frame.copyTo(this->gifFrames.after[this->gifFrames.indexAfter]);
-
-						this->gifFrames.indexAfter++;
-					} else {
-						// once we have all the frames...
-						this->gifFrames.state = State::Ready;
-						this->gifFrames.updateAfter = false;
-					}
+					this->currentGifFrames = std::unique_ptr<GifFrames>(
+						new GifFrames(
+							this->_programConfig, 
+							this->config
+						)
+					);
+					std::cout << "[N] Pushed a new gif." << std::endl;
+				} else if (this->gifsReady.size() >= 5) {
+					std::cout << "[N] Gifs ready reached max value." << std::endl;
 				}
+
+				this->currentGifFrames->addFrame(this->frame);
 			}
 
 			this->ApplyBasicsTransformations();
@@ -224,17 +220,19 @@ void Camera::ReadFramesWithInterval() {
 				this->UpdateThreshold();
 			}
 
-			if (totalNonZeroPixels > this->config->changeThreshold * 0.7) {
-				std::cout << this->config->cameraName
-					<< " Non zero pixels=" << totalNonZeroPixels
-					<< " Configured threshold=" << this->config->changeThreshold
-					<< " State=" << (int)this->gifFrames.state
-					<< std::endl;
-			}
+			// if (totalNonZeroPixels > this->config->changeThreshold * 0.7) {
+			// 	std::cout << this->config->cameraName
+			// 		<< " Non zero pixels=" << totalNonZeroPixels
+			// 		<< " Configured threshold=" << this->config->changeThreshold
+			// 		<< " State=" << (int)this->currentGifFrames->getState()
+			// 		<< std::endl;
+			// }
 
 			this->lastFrame = this->frame;
 
-			if (this->totalNonZeroPixels > this->config->changeThreshold && this->gifFrames.state == State::Initial) {
+			if (this->totalNonZeroPixels > this->config->changeThreshold 
+				&& this->currentGifFrames->getState() == State::Initial) 
+			{
 				std::cout << "Change detected. Checking..."  << std::endl;
 
 				size_t overlappingFindings = 0;

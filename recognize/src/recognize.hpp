@@ -35,11 +35,6 @@
 //using namespace cv; // Gives error whe used with <Windows.h>
 using namespace std::chrono;
 
-struct FrameDescriptor {
-	cv::Mat frame;
-	FindingInfo finding;
-};
-
 class Recognize {
 private:
 	size_t indexMainThreadCameras;

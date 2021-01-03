@@ -2,212 +2,6 @@
 
 Recognize::Recognize() { }
 
-std::vector<cv::Mat*> Recognize::AnalizeLastFramesSearchBugs(Camera& camera) {
-	camera.gifFrames.state = State::Wait;
-	
-	const size_t ammountOfFrames = programConfig.numberGifFrames.framesBefore + programConfig.numberGifFrames.framesAfter;
-	std::vector<FrameDescriptor> framesTransformed(ammountOfFrames);
-	std::vector<cv::Mat*> frames(ammountOfFrames);
-	const double minPercentageAreaIgnore = camera.config->minPercentageAreaNeededToIgnore / 100;
-
-	cv::Mat* frameCero;
-	cv::Mat diff;
-	
-	size_t validFrames = 0;
-	double totalDistance = 0;
-	double totalAreaDifference = 0;
-	double totalArea = 0;
-	double totalNonPixels = 0;
-	size_t overlappingFindings = 0;
-
-	cv::Point p1;
-	cv::Point p2;
-
-	FindingInfo* lastValidFind = nullptr;
-
-	//// First get all the frames in order
-
-	size_t totalFrames = 0;
-	for (size_t i = camera.gifFrames.indexBefore;;) {	
-		if (totalFrames < programConfig.numberGifFrames.framesBefore) {						
-			frames[totalFrames] = &camera.gifFrames.before[i];
-			
-			framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone();
-
-			if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
-
-			// Take the region of interes
-			if (!camera.config->roi.empty()) {
-				framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi);
-			}
-
-			if (totalFrames == 0) {
-				frameCero = &framesTransformed[0].frame;
-			}
-
-			totalFrames++;
-			i = (i + 1) >= programConfig.numberGifFrames.framesBefore ? 0 : (i + 1);
-		} else
-			break;
-	}
-	
-	for (; totalFrames < ammountOfFrames; totalFrames++) {
-		frames[totalFrames] = &camera.gifFrames.after[totalFrames - programConfig.numberGifFrames.framesBefore];
-		
-		framesTransformed[totalFrames].frame = (*frames[totalFrames]).clone(); 
-
-		if (camera.config->rotation != 0) ImageManipulation::RotateImage(framesTransformed[totalFrames].frame, camera.config->rotation);
-
-		if (!camera.config->roi.empty()) {			
-			framesTransformed[totalFrames].frame = framesTransformed[totalFrames].frame(camera.config->roi); 
-		}
-	}
-
-	//// Process frames
-
-	bool p1Saved = false;
-	for (size_t i = 1; i < frames.size(); i++) {
-		cv::absdiff(/** *frameCero*/ framesTransformed[i-1].frame, framesTransformed[i].frame, diff);
-		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
-
-		cv::threshold(diff, diff, camera.config->noiseThreshold, 255, cv::THRESH_BINARY);
-
-		cv::cvtColor(diff, diff, cv::COLOR_BGR2GRAY);
-
-		FindingInfo finding = FindRect(diff);
-		framesTransformed[i].finding = finding;
-			
-		totalNonPixels += cv::countNonZero(diff);
-
-		if (finding.isGoodMatch) {
-			if (!p1Saved) {
-				p1 = finding.center;
-				p1Saved = true;
-			}
-			
-			totalArea += finding.area;
-
-//			cv::Point2f vertices[4];
-//			finding.rect.points(vertices);
-//			for (int j = 0; j < 4; j++) {
-//				vertices[j].x += camera.config->roi.x;
-//			}
-			
-			// check if finding is overlapping with a ignored area
-			for (auto &&j : camera.config->ignoredAreas) {					
-				cv::Rect inters = finding.rect.boundingRect() & j;
-				if (inters.area() >= finding.rect.boundingRect().area() * minPercentageAreaIgnore) {
-					overlappingFindings += 1;
-					
-					inters.x += camera.config->roi.x;
-					inters.y += camera.config->roi.y;
-					cv::rectangle(*frames[i], inters, cv::Scalar(255, 0, 0), 1);
-				}
-			}
-			
-			cv::Rect bnd = finding.rect.boundingRect();
-			bnd.x += camera.config->roi.x;
-			bnd.y += camera.config->roi.y;
-			cv::rectangle(*frames[i], bnd, cv::Scalar(255,255,170), 1);
-
-			// for (int j = 0; j < 4; j++) {			
-			// 	cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
-			// }
-
-			if (lastValidFind != nullptr) {
-				validFrames++;
-				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
-				totalAreaDifference += abs(framesTransformed[i].finding.area - lastValidFind->area);
-			}
-		
-			lastValidFind = &framesTransformed[i].finding;
-
-			p2 = finding.center;
-		}
-	}
-
-	double displacementX = abs(p1.x - p2.x);
-	double displacementY = abs(p1.y - p2.y);
-
-	if (camera.gifFrames.avrgDistanceFrames > 120)
-		camera.gifFrames.debugMessage += "\nIGNORED";
-
-	camera.gifFrames.debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
-	camera.gifFrames.debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
-	camera.gifFrames.debugMessage += "\nAverage area: " + std::to_string(totalArea / validFrames);
-	if (validFrames != 0) {
-		camera.gifFrames.avrgDistanceFrames = totalDistance / validFrames;
-		camera.gifFrames.avrgAreaDifference = totalAreaDifference / validFrames;
-	}
-
-	//// Check if it's valid
-	if (validFrames != 0 && camera.gifFrames.avrgDistanceFrames <= 120 && overlappingFindings < camera.config->thresholdFindingsOnIgnoredArea) {
-		//// Recognize a person
-		bool personDetected = false;
-		size_t start = programConfig.numberGifFrames.framesBefore - camera.config->framesToAnalyze.framesBefore;
-		start = start < 0 ? 0 : start;
-
-		size_t end = programConfig.numberGifFrames.framesAfter + camera.config->framesToAnalyze.framesAfter;
-		end = end > frames.size() ? frames.size() : end;
-
-		if (camera.config->type == CAMERA_ACTIVE) {
-			for (size_t i = start; i < end; i++) {
-				// query descriptor with frame
-				std::vector<std::tuple<cv::Rect, double, std::string>> results = this->Detect(framesTransformed[i].frame, *camera.config);
-				
-				size_t detectSz = results.size();
-
-				if(detectSz > 0) {
-					// draw detections on frame
-					for (size_t i = 0; i < detectSz; i++) {
-						// detections[i].x += camera.config->roi.x;
-						cv::Scalar color = cv::Scalar(0, std::get<1>(results[i]) * 200, 0);
-						cv::rectangle(framesTransformed[i].frame, std::get<0>(results[i]), color);
-						// putText(frame, std::to_string(foundWeights[i]), Utils::BottomRightRectangle(detections[i]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
-					}
-
-					camera.state = NI_STATE_DETECTED;
-
-					// send a extra notification?
-					// Notification::Notification ntf (*frames[i], "Se ha detectado algo en esta camara.", true);
-					// this->pendingNotifications.push_back(ntf);
-					camera.gifFrames.debugMessage += "\nA person was detected.";
-					
-					personDetected = true;
-					break;
-				}
-			}
-		}
-
-		/// TODO: Add config to select if want to send only when someone is detected
-		// if (personDetected) {
-			camera.gifFrames.state = State::Send;
-		// } else {
-		// 	camera.gifFrames.state = State::Cancelled;
-		// }
-	} else {
-		camera.gifFrames.state = State::Cancelled;
-		// camera.gifFrames.state = State::Send; // uncomment to send it any way
-
-		// This if is only for debuggin purposes
-		if (validFrames == 0) {
-			camera.gifFrames.avrgDistanceFrames = 0;
-			camera.gifFrames.avrgAreaDifference = 0;
-			camera.gifFrames.debugMessage += "\nCancelled due 0 valid frames found.";
-		} else if (camera.gifFrames.avrgDistanceFrames > 120) {
-			camera.gifFrames.debugMessage += "\nCancelled due avrg distance: " + std::to_string(camera.gifFrames.avrgDistanceFrames);
-		} else {
-			camera.gifFrames.debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of " + std::to_string(camera.config->thresholdFindingsOnIgnoredArea) + " validFrames needed.";
-		}
-	}
-
-	camera.gifFrames.debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(camera.gifFrames.avrgDistanceFrames) + "\naverage area difference: " + std::to_string(camera.gifFrames.avrgAreaDifference) + "\n Valid frames: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
-	
-	std::cout << camera.gifFrames.debugMessage << std::endl;
-
-	return frames;
-}
-
 void Recognize::Start(Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
 	this->close = false;
 	this->stop = false;
@@ -380,9 +174,6 @@ void Recognize::StartPreviewCameras() {
 	// resolution of each frame
 	cv::Mat res;
 
-	// saves the current state of the notification icon
-	NISTATE currentState = NI_STATE_SENTRY;
-
 	// used to, in case is false, display the last frame of the camera that has no frame
 	// in the moment of the iteration.
 	bool isFirstIteration = true;
@@ -475,51 +266,68 @@ void Recognize::StartNotificationsSender() {
 
 	while (!stop) {
 		for (auto &&camera : cameras) {
-			// Send gif
-			if (programConfig.useGifInsteadImage && camera->gifFrames.state == State::Ready) {
-				// -----------------------------------------------------------
-				// Take before and after frames and combine them into a .gif
-				// -----------------------------------------------------------
-				const std::string identifier = std::to_string(clock());
-				const std::string imageFolder = programConfig.imagesFolder;
-				const std::string root = "./" + imageFolder + "/" + identifier;
-				const std::string gifPath = root + ".gif";
-				std::string location;
-				const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
 
-				std::vector<cv::Mat*> frames = this->AnalizeLastFramesSearchBugs(*camera);
+			if (programConfig.useGifInsteadImage) {
+				size_t sz = camera->gifsReady.size();
+				for (size_t i = 0; i < sz; i++) {
+					bool eraseGifs = false;
 
-				if (camera->gifFrames.state == State::Send) {
-					if (this->programConfig.sendTextWhenDetectChange) {
-						Notification::Notification imn("Movimiento detectado en la camara " + camera->config->cameraName);
-						imn.send(this->programConfig);
+					GifFrames* gif = camera->gifsReady[i].release();
+					// Send gif
+					if (gif->getState() == State::Ready) {
+						// -----------------------------------------------------------
+						// Take before and after frames and combine them into a .gif
+						// -----------------------------------------------------------
+						const std::string identifier = std::to_string(clock());
+						const std::string imageFolder = programConfig.imagesFolder;
+						const std::string root = "./" + imageFolder + "/" + identifier;
+						const std::string gifPath = root + ".gif";
+						std::string location;
+						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
+
+						if (gif->isValid()) {
+							auto now = std::chrono::high_resolution_clock::now();
+							auto intervalFrames = (now - camera->lastImageSended) / std::chrono::seconds(1);
+							if (intervalFrames >= this->programConfig.secondsBetweenImage) {
+								eraseGifs = true;
+
+								std::vector<cv::Mat> frames = gif->getFrames();
+
+								if (this->programConfig.sendTextWhenDetectChange) {
+									Notification::Notification imn("Movimiento detectado en la camara " + camera->config->cameraName);
+									imn.send(this->programConfig);
+								}
+								
+								// if (frames.avrgDistanceFrames > 70) {
+								for (size_t i = 0; i < frames.size(); i++) {
+									location = root + "_" + std::to_string((int)i) + ".jpg";
+
+									cv::imwrite(location, frames[i]);
+								}
+
+								std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
+
+								std::system(command.c_str());
+
+								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+
+								camera->lastImageSended = std::chrono::high_resolution_clock::now();
+							}
+						}
 					}
-					
-					// if (frames.avrgDistanceFrames > 70) {
-					for (size_t i = 0; i < frames.size(); i++) {
-						location = root + "_" + std::to_string((int)i) + ".jpg";
 
-						cv::imwrite(location, *frames[i]);
+					delete gif;
+
+					// if a gif was sent then delete all the others 
+					if (eraseGifs) {
+						camera->gifsReady.clear();
+						sz = 0;
+					} else {
+						camera->gifsReady.erase(camera->gifsReady.begin() + i);
+						sz--;
+						i--;
 					}
-
-					std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
-
-					std::system(command.c_str());
-
-					TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + camera->gifFrames.debugMessage, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 				}
-				
-				// ---
-				// update gif collection data
-				// ---
-				camera->gifFrames.indexBefore = 0;
-				camera->gifFrames.indexAfter = 0;
-				camera->gifFrames.totalFramesBefore = 0;
-
-				camera->gifFrames.debugMessage = "";
-				camera->gifFrames.state = State::Initial;
-				camera->gifFrames.updateAfter = false;
-				camera->gifFrames.updateBefore = true;
 			}
 
 			size_t size = camera->pendingNotifications.size();
