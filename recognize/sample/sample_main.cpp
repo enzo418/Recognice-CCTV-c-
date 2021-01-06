@@ -62,19 +62,16 @@ int main(int argc, char* argv[]){
 
 	Recognize recognize;
 
-	recognize.Start(std::ref(cfgs), cfgs.programConfig.showPreview, cfgs.programConfig.telegramConfig.useTelegramBot);
+	recognize.Start(std::ref(cfgs), false, cfgs.programConfig.telegramConfig.useTelegramBot);
+
+	std::thread prev = std::thread(&Recognize::StartPreviewCameras, &recognize);
 
 	// signal(SIGINT, signal_callback_handler);
 
 	std::cout << "Press a key to stop the program.\n";
 	std::getchar();
 
-	recognize.close = true;
-	recognize.stop = true;
+	recognize.CloseAndJoin();
 
-	for (size_t i = 0; i < recognize.threads.size(); i++) {
-		std::cout << "joining thread " << i << std::endl;
-		recognize.threads[i].join();
-		std::cout << "joined thread " << i << std::endl; 
-	}	
+	prev.join();
 }

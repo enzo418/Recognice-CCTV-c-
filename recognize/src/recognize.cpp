@@ -196,24 +196,25 @@ void Recognize::StartPreviewCameras() {
 
 	cv::namedWindow("Preview Cameras");
 
+	cv::Mat dequeRes;
 	while (!stop && programConfig.showPreview) {
 		if (this->cameras.size() == amountCameras) {
 			// if all cameras are in sentry state
 			bool allCamerasInSentry = true;
 
 			for (size_t i = 0; i < amountCameras; i++) {
-				if (cameras[i]->frames.size() > 0) {
+				if (cameras[i]->frames->try_dequeue(dequeRes)) {
 					// if the vector pos i has no frame
 					if (!ready[cameras[i]->config->order]) {
 						// take the first frame and delete it
-						frames[cameras[i]->config->order] = cameras[i]->frames[0];
+						frames[cameras[i]->config->order] = dequeRes.clone();
 
 						if (showAreaCameraSees && !showProcessedFrames) {
 							cv::Scalar color = cv::Scalar(255, 0, 0);
 							cv::rectangle(frames[cameras[i]->config->order], cameras[i]->config->roi, color);
 						}
 
-						cameras[i]->frames.erase(cameras[i]->frames.begin());
+						// cameras[i]->frames.erase(cameras[i]->frames.begin());
 						
 						ready[cameras[i]->config->order] = true;
 						

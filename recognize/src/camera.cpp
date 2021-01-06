@@ -13,6 +13,9 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	// higher interval -> lower max frames & lower interval -> higher max frames
 	this->maxFramesLeft = (100 / (programConfig->msBetweenFrameAfterChange)) * 140; // 100 ms => max = 70 frames
 	this->numberFramesToAdd = this->maxFramesLeft * 0.1;
+
+	// allocate 400 Mat, each is aprox 0.6 MB (640x360 color) 400 * 0.6 = 270 MB per camera
+	this->frames = std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>>(new moodycamel::ReaderWriterQueue<cv::Mat>(400));
 }
 
 Camera::~Camera() {
@@ -72,7 +75,7 @@ void Camera::CalculateNonZeroPixels() {
 		// place diff image on top the frame img
 		cv::addWeighted(frame, 1, diff, 8, 12, d2);
 		
-		this->frames.push_back(d2);
+		this->frames->try_enqueue(std::move(d2));
 	}
 }
 
@@ -263,7 +266,7 @@ void Camera::ReadFramesWithInterval() {
 					}
 				}
 				
-				this->frames.push_back(std::move(this->frameToShow));
+				this->frames->try_enqueue(std::move(this->frameToShow));
 			}
 
 			shouldProcessFrame = false;

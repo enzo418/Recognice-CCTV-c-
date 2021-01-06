@@ -18,6 +18,7 @@
 
 #include "notification.hpp"
 #include "gif_frames.hpp"
+#include "readerwriterqueue.h"
 
 class Camera {
 private:
@@ -119,7 +120,7 @@ public:
 	std::vector<Notification::Notification> pendingNotifications;
 
 	// List of frames captured
-	std::vector<cv::Mat> frames;
+	std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>> frames;
 
 	// Temporal list of registers of when someone did enter o leave a site.
 	std::vector<Register> registers;
