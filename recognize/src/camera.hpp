@@ -113,7 +113,7 @@ public:
 
 	bool close = false;
 	
-	std::thread* cameraThread;
+	std::unique_ptr<std::thread> cameraThread;
 
 	CameraConfiguration* config = nullptr;
 

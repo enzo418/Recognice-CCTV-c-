@@ -8,7 +8,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
 	
-	this->cameraThread = new std::thread(&Camera::ReadFramesWithInterval, this);
+	this->cameraThread = std::unique_ptr<std::thread>(new std::thread(&Camera::ReadFramesWithInterval, this));
 
 	// higher interval -> lower max frames & lower interval -> higher max frames
 	this->maxFramesLeft = (100 / (programConfig->msBetweenFrameAfterChange)) * 140; // 100 ms => max = 70 frames
@@ -18,11 +18,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	this->frames = std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>>(new moodycamel::ReaderWriterQueue<cv::Mat>(100));
 }
 
-Camera::~Camera() {
-	std::cout << "Deleting camera " << this->config->cameraName << std::endl;
-	delete this->cameraThread;
-	std::cout << "Deleted camera 1 members... destroing it now..." << std::endl;
-}
+Camera::~Camera() {}
 
 void Camera::Connect() {
 	this->capturer.open(this->config->url);
