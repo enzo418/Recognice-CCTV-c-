@@ -18,7 +18,8 @@
 
 #include "notification.hpp"
 #include "gif_frames.hpp"
-#include "readerwriterqueue.h"
+
+#include "readerwriterqueue.h" // lock-free queue, home page: https://github.com/cameron314/readerwriterqueue
 
 class Camera {
 private:

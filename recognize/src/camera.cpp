@@ -14,8 +14,8 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 	this->maxFramesLeft = (100 / (programConfig->msBetweenFrameAfterChange)) * 140; // 100 ms => max = 70 frames
 	this->numberFramesToAdd = this->maxFramesLeft * 0.1;
 
-	// allocate 400 Mat, each is aprox 0.6 MB (640x360 color) 400 * 0.6 = 270 MB per camera
-	this->frames = std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>>(new moodycamel::ReaderWriterQueue<cv::Mat>(400));
+	// allocate 100 Mat, each is aprox 0.6 MB (640x360 color) 100 * 0.6 = 60 MB per camera
+	this->frames = std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>>(new moodycamel::ReaderWriterQueue<cv::Mat>(100));
 }
 
 Camera::~Camera() {
@@ -266,7 +266,7 @@ void Camera::ReadFramesWithInterval() {
 					}
 				}
 				
-				this->frames->try_enqueue(std::move(this->frameToShow));
+				this->frames->try_enqueue(std::move(this->frameToShow));  // Will only succeed if the queue has an empty slot (never allocates)
 			}
 
 			shouldProcessFrame = false;

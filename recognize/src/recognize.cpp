@@ -203,6 +203,7 @@ void Recognize::StartPreviewCameras() {
 			bool allCamerasInSentry = true;
 
 			for (size_t i = 0; i < amountCameras; i++) {
+				// try_dequeue Returns false if the queue was empty
 				if (cameras[i]->frames->try_dequeue(dequeRes)) {
 					// if the vector pos i has no frame
 					if (!ready[cameras[i]->config->order]) {
