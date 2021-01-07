@@ -15,6 +15,7 @@
 #include <chrono>
 #include <ctime>
 #include <unordered_map> // To get a unique file id from a camera url
+#include <memory>
 
 #include "notification.hpp"
 #include "gif_frames.hpp"

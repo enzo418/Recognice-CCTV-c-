@@ -16,6 +16,7 @@
 #include <sys/stat.h> // To check if file exist
 #include <unordered_map> // To get a unique file id from a camera url
 #include <signal.h> // to catch ctrl c signal
+#include <memory>
 
 #include "image_manipulation.hpp"
 #include "utils.hpp"

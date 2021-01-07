@@ -90,7 +90,7 @@ void Recognize::StartCamerasThreads() {
 	
 	// Create the cameras objs
 	for (auto &config : this->camerasConfigs) {
-		this->cameras.push_back(std::unique_ptr<Camera>(new Camera(config, &programConfig, this->hogDescriptor)));
+		this->cameras.push_back(std::make_unique<Camera>(config, &programConfig, this->hogDescriptor));
 	}
 }
 

@@ -30,7 +30,7 @@ include(${wxWidgets_USE_FILE})
 include_directories(${CURL_INCLUDE_DIR})
 
 # Set cmake cxx flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -lX11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread -lX11")
 
 add_executable(wxRecognize ${SOURCES} ${RECOG_SRC})
 

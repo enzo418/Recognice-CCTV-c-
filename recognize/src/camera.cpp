@@ -2,20 +2,20 @@
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
 	if (programConfig->useGifInsteadImage) {
-		this->currentGifFrames = std::unique_ptr<GifFrames>(new GifFrames(_programConfig, config));
+		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
 	}
 
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
 	
-	this->cameraThread = std::unique_ptr<std::thread>(new std::thread(&Camera::ReadFramesWithInterval, this));
+	this->cameraThread = std::make_unique<std::thread>(&Camera::ReadFramesWithInterval, this);
 
 	// higher interval -> lower max frames & lower interval -> higher max frames
 	this->maxFramesLeft = (100 / (programConfig->msBetweenFrameAfterChange)) * 140; // 100 ms => max = 70 frames
 	this->numberFramesToAdd = this->maxFramesLeft * 0.1;
 
 	// allocate 100 Mat, each is aprox 0.6 MB (640x360 color) 100 * 0.6 = 60 MB per camera
-	this->frames = std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>>(new moodycamel::ReaderWriterQueue<cv::Mat>(100));
+	this->frames = std::make_unique<moodycamel::ReaderWriterQueue<cv::Mat>>(100);
 }
 
 Camera::~Camera() {}
@@ -188,11 +188,9 @@ void Camera::ReadFramesWithInterval() {
 				if (this->currentGifFrames->getState() == State::Ready && this->gifsReady.size() < 10) {
 					this->gifsReady.push_back(std::move(this->currentGifFrames));
 
-					this->currentGifFrames = std::unique_ptr<GifFrames>(
-						new GifFrames(
-							this->_programConfig, 
-							this->config
-						)
+					this->currentGifFrames = std::make_unique<GifFrames>(
+						this->_programConfig, 
+						this->config						
 					);
 					std::cout << "[N] Pushed a new gif." << std::endl;
 				} else if (this->gifsReady.size() >= 5) {
