@@ -9,14 +9,18 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 	this->programConfig = configs.programConfig;
 	this->camerasConfigs = configs.camerasConfigs;
 
+	bool usesObjectDetection = false;
 	// Remove disabled cameras
 	size_t sz = this->camerasConfigs.size();
-	for (size_t i = 0; i < sz; i++)
+	for (size_t i = 0; i < sz; i++) {
 		if (this->camerasConfigs[i].type == CAMERA_DISABLED || this->camerasConfigs[i].url.empty()) {
 			this->camerasConfigs.erase(this->camerasConfigs.begin() + i);
 			i--;
 			sz--;
+		} else if (this->camerasConfigs[i].type == CAMERA_ACTIVE) {
+			usesObjectDetection = true;
 		}
+	}
 	
 	if (this->camerasConfigs.size() == 0) {
 		/// TODO: throw custom exception
@@ -24,39 +28,41 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 		std::exit(-1);
 	}
 	
-	if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor && lastDetectionMethod != DetectionMethod::HogDescriptor) {
-		if (lastDetectionMethod == DetectionMethod::YoloDNN_V4)
-			delete this->net;
-		
-		this->hogDescriptor = new cv::HOGDescriptor();
-		this->hogDescriptor->setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-		
-		lastDetectionMethod = DetectionMethod::HogDescriptor;
-	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4 && lastDetectionMethod != DetectionMethod::YoloDNN_V4) {
-		if (lastDetectionMethod == DetectionMethod::HogDescriptor)
-			delete this->hogDescriptor;
+	if (usesObjectDetection) {
+		if (this->programConfig.detectionMethod == DetectionMethod::HogDescriptor && lastDetectionMethod != DetectionMethod::HogDescriptor) {
+			if (lastDetectionMethod == DetectionMethod::YoloDNN_V4)
+				delete this->net;
 			
-		lastDetectionMethod = DetectionMethod::YoloDNN_V4;
-		
-		this->net = new cv::dnn::Net();
-		*this->net = cv::dnn::readNetFromDarknet("yolov4.cfg", "yolov4.weights");
-		this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-		output_names = this->net->getUnconnectedOutLayersNames();
-		
-		{
-			std::ifstream class_file("classes.txt");
-			if (!class_file)
+			this->hogDescriptor = new cv::HOGDescriptor();
+			this->hogDescriptor->setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+			
+			lastDetectionMethod = DetectionMethod::HogDescriptor;
+		} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4 && lastDetectionMethod != DetectionMethod::YoloDNN_V4) {
+			if (lastDetectionMethod == DetectionMethod::HogDescriptor)
+				delete this->hogDescriptor;
+				
+			lastDetectionMethod = DetectionMethod::YoloDNN_V4;
+			
+			this->net = new cv::dnn::Net();
+			*this->net = cv::dnn::readNetFromDarknet("yolov4.cfg", "yolov4.weights");
+			this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+			this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+			output_names = this->net->getUnconnectedOutLayersNames();
+			
 			{
-				std::cerr << "failed to open classes.txt\n";
-				std::exit(-1);
-			}
+				std::ifstream class_file("classes.txt");
+				if (!class_file)
+				{
+					std::cerr << "failed to open classes.txt\n";
+					std::exit(-1);
+				}
 
-			std::string line;
-			while (std::getline(class_file, line)) {
-				if (!line.empty()) {
-					class_names.push_back(line);
-					this->num_classes++;
+				std::string line;
+				while (std::getline(class_file, line)) {
+					if (!line.empty()) {
+						class_names.push_back(line);
+						this->num_classes++;
+					}
 				}
 			}
 		}
@@ -343,7 +349,7 @@ void Recognize::StartNotificationsSender() {
 			camera->pendingNotifications.clear();
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 	
 	std::cout << "Notifiaction thread closed" << std::endl;
