@@ -23,41 +23,50 @@
 
 namespace ConfigurationFile {
 	/**
-	 * @brief Get around for windows calls
-	 * @param fileName
-	 */
-	 const char* GetFilePath(const char* fileName);
+	* @brief Get around for windows calls
+	* @param fileName
+	*/
+	const char* GetFilePath(const char* fileName);
 
-	 void OpenFileWrite(std::fstream& file, std::string& fn);
-	 void OpenFileRead(std::fstream& file, std::string& fn);
-	
-	 void WriteConfigurationFileHeader(std::fstream& file);
-	 void WriteConfiguration(std::fstream& file, CameraConfiguration& cfg);
-	 void WriteConfiguration(std::fstream& file, ProgramConfiguration& cfg);
+	void OpenFileWrite(std::fstream& file, std::string& fn);
+	void OpenFileRead(std::fstream& file, std::string& fn);
+
+	std::string GetDocumentationString();
+	std::string GetConfigurationFileHeaderString();
+	std::string GetConfigurationString(CameraConfiguration& cfg);
+	std::string GetConfigurationString(ProgramConfiguration& cfg);
+	std::string GetConfigurationString(CamerasConfigurations& cfg);
 
 	template<typename T>
-	 T ReadNextConfiguration(std::fstream& file, T& config);
-
-	// writes the value in the field id
-	 bool SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
-
-	// writes the value in the field id
-	 bool SaveIdVal(ProgramConfiguration& config, std::string id, std::string value);
-
-	 inline void WriteLineInFile(std::fstream& file, const char* line);
-
-	 void PreprocessConfigurations(Configurations& cfgs);
+	T ReadNextConfiguration(std::istream& cfgBuffer, T& config);
 
 	/**
-	 * @brief Reads a file configuration and returns it
-	 * @param fileName Optinal, leave if you want to use the last file used.
-	 */
-	 Configurations ReadConfigurations(std::string filePath);
-	
+	* @brief Read configurations stream
+	* @param cfgBuffer type with that uses ios
+	*/
+	// template <typename S>
+	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer);
+
+	// writes the value in the field id
+	bool SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
+
+	// writes the value in the field id
+	bool SaveIdVal(ProgramConfiguration& config, std::string id, std::string value);
+
+	inline void WriteLineInFile(std::fstream& file, const char* line);
+
+	void PreprocessConfigurations(Configurations& cfgs);
+
 	/**
-	 * @brief Writes the configuration into a file
-	 * @param cfgs Configurations
-	 * @param fileName Optional, if it's blank the will use the last file name.
-	 */
-	 void SaveConfigurations(Configurations& cfgs, std::string filePath);
+	* @brief Reads a file configuration and returns it
+	* @param fileName Optinal, leave if you want to use the last file used.
+	*/
+	Configurations ReadConfigurations(std::string filePath);
+
+	/**
+	* @brief Writes the configuration into a file
+	* @param cfgs Configurations
+	* @param fileName Optional, if it's blank the will use the last file name.
+	*/
+	void SaveConfigurations(Configurations& cfgs, std::string filePath);
 };
