@@ -11,7 +11,7 @@ This repository contains the 3 projects related to the recognize.
 
 	- **webRecognize**: Web-GUI program to make it easier to configure the main program, can start it, stop it and show notifications. Client side built with pure js and html with `bulma` (style), `moment` (dates) and `jquery` (js to html helper). Server side uses [`seasocks`](https://github.com/mattgodbolt/seasocks/) to serve the files in a http server and provide WebSockets connections, also uses fmt.
 
-	- **wxRecognize**: First GUI made, then replaced with webRecgonize so they have the same purpose. Built with [`wxWidgets`](wxwidgets.org).
+	- **wxRecognize**: First GUI made, then replaced with webRecognize so they have the same purpose. Built with [`wxWidgets`](wxwidgets.org).
 
 # Libs/headers requerired	
 Those described above for each project in Content.
