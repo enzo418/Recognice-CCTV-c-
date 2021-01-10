@@ -349,11 +349,12 @@ $(function() {
 				else 
 					$('#notifications-content').append(getNotificationTemplate(ob["type"], ob['content']));
 
-			} else {
-				var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
-				audio.volume = 0.5;
-				audio.play();
 			}
+			
+			// if (playsound)
+			var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
+			audio.volume = 0.5;
+			audio.play();
 		}
 		
 	};

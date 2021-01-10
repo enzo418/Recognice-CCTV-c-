@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(WebRecognize VERSION 1.0.0)
 
+# We don't support Windows or Apple platforms since seasocks doesn't.
 if(WIN32)
     message(FATAL_ERROR "${PROJECT_NAME} does not support Windows")
 endif()
