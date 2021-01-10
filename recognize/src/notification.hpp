@@ -26,6 +26,8 @@ namespace Notification {
 			Notification();
 
 			void send(ProgramConfiguration& programConfig);
+
+			std::string getString();
 	};
 }
 

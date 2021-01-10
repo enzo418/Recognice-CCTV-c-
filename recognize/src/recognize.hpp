@@ -24,6 +24,8 @@
 
 #include "telegram_bot.hpp"
 
+#include "readerwriterqueue.h" // lock-free queue, home page: https://github.com/cameron314/readerwriterqueue
+
 #ifdef WINDOWS
 #else
 #define sprintf_s sprintf
@@ -66,10 +68,13 @@ public:
 
 	std::vector<std::unique_ptr<Camera>> cameras;
 
+	// keep a record of the notifications sended with media
+	std::unique_ptr<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>> notificationWithMedia;
+
 	Recognize(void);
 	~Recognize() = default;
 
-	void Start(Configurations& configs, bool startPreviewThread, bool startActionsThread);
+	void Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread);
 
 	void StartActionsBot();
 

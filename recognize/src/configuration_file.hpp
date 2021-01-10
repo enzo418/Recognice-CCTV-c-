@@ -47,6 +47,8 @@ namespace ConfigurationFile {
 	// template <typename S>
 	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer);
 
+	std::string ConfigurationsToString(Configurations& cfgs);
+
 	// writes the value in the field id
 	bool SaveIdVal(CameraConfiguration& config, std::string id, std::string value);
 

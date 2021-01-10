@@ -120,6 +120,13 @@ namespace ConfigurationFile {
 		}	
 	}
 
+	std::string ConfigurationsToString(Configurations& cfgs) {
+		std::string pConf = ConfigurationFile::GetConfigurationString(cfgs.programConfig);
+		std::string camerasConf = ConfigurationFile::GetConfigurationString(cfgs.camerasConfigs);
+		
+		return pConf + camerasConf;
+	}
+
 	std::string GetConfigurationFileHeaderString() {
 		std::ostringstream ss;
 		
@@ -188,6 +195,9 @@ namespace ConfigurationFile {
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n; Have in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time)."
 			<< "\n;gifFrames=integer..integer"
+
+			<< "\n\n; Folder where the images will be saved"
+			<< "\n;imagesFolder=string"
 
 			/* Camera doc*/
 			<< "\n\n;[CAMERA]"
@@ -310,7 +320,7 @@ namespace ConfigurationFile {
 			<< "\noutputResolution=" << cfg.outputResolution.width << "," << cfg.outputResolution.height
 			
 			<< "\nratioScaleOutput=" << std::fixed << std::setprecision(2) << cfg.ratioScaleOutput
-			<< "\nshowignoredareas=" << (cfg.showIgnoredAreas ?  "1" : "0")
+			<< "\nshowIgnoredAreas=" << (cfg.showIgnoredAreas ?  "1" : "0")
 			<< "\nshowPreviewCameras=" << (cfg.showPreview ?  "1" : "0")
 			<< "\nshowAreaCameraSees=" << (cfg.showAreaCameraSees ?  "1" : "0")
 			<< "\nshowProcessedFrames=" << (cfg.showProcessedFrames ?  "1" : "0");
@@ -322,11 +332,12 @@ namespace ConfigurationFile {
 				ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
 					
 		ss	<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
-			<< "\nsendimageofallcameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
+			<< "\nsendImageOfAllCameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
 			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "1" : "0")
-			<< "\nsendTextWhenDetectChange=" << (cfg.sendTextWhenDetectChange ?  "1" : "0");
+			<< "\nsendTextWhenDetectChange=" << (cfg.sendTextWhenDetectChange ?  "1" : "0")
+			<< "\nimagesFolder=" << cfg.imagesFolder;
 			
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
@@ -470,6 +481,8 @@ namespace ConfigurationFile {
 			} catch (std::invalid_argument e) {
 				sucess = false;
 			}
+		} else if (id == "imagesfolder" || id == "mediafolder") {
+			config.imagesFolder = value;
 		}
 		
 		return sucess;
