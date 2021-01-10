@@ -331,7 +331,9 @@ namespace ConfigurationFile {
 			if (!cfg.telegramConfig.chatId.empty())
 				ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
 					
-		ss	<< "\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
+		ss	<< "\nuseLocalNotifications=" << (cfg.useLocalNotifications ? "1" : "0")
+			
+			<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
 			<< "\nsendImageOfAllCameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
@@ -483,6 +485,8 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "imagesfolder" || id == "mediafolder") {
 			config.imagesFolder = value;
+		} else if (id == "usenotifications" || id == "sendnotifications") {
+			config.useLocalNotifications = value == "1";
 		}
 		
 		return sucess;

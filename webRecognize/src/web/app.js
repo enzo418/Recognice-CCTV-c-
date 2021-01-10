@@ -2,7 +2,7 @@ const getCameraAccordionTemplate = (i, camera) => `
 <div class="card">
 <header class="card-header">
 	<p class="card-header-title">
-		${camera["cameraName"]}
+		${camera["cameraname"]}
 	</p>
 	<a href="#collapsible-camera-${i}" data-action="collapse" class="card-header-icon is-hidden-fullscreen" aria-label="more options">
 		<span class="icon">
@@ -15,7 +15,7 @@ const getCameraAccordionTemplate = (i, camera) => `
 
 <div class="card-content-item">
 	<label for="cameraName">Camera name</label>
-	<input class="input" name="cameraName" type="text" placeholder="camera name" value='${camera["cameraName"] || ""}'>
+	<input class="input" name="cameraname" type="text" placeholder="camera name" value='${camera["cameraname"] || ""}'>
 </div>
 
 <div class="card-content-item">
@@ -35,7 +35,7 @@ const getCameraAccordionTemplate = (i, camera) => `
 
 <div class="card-content-item">
 	<label for="framesToAnalyze" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Selects the frames to search a person on, from">Frames to search a person in the obtained frames, values need to be lower or equal to gif frames number respectively (before..after).</label>
-	<input class="input" name="framesToAnalyze" type="text" placeholder="5..60" value='${camera["framesToAnalyze"] || ""}'>
+	<input class="input" name="framestoanalyze" type="text" placeholder="5..60" value='${camera["framestoanalyze"] || ""}'>
 </div>
 
 <div class="card-content-item">
@@ -49,42 +49,42 @@ const getCameraAccordionTemplate = (i, camera) => `
 
 <div class="card-content-item">
 	<label for="thresholdNoise">Used to remove noise (single scattered pixels). Between 30 and 50 is a general good value.</label>
-	<input class="input" name="thresholdNoise" type="number" min="0" placeholder="45" value='${camera["thresholdNoise"]}'>
+	<input class="input" name="thresholdnoise" type="number" min="0" placeholder="45" value='${camera["thresholdnoise"]}'>
 </div>
 
 <div class="card-content-item">
 	<label for="minimumThreshold">Minimum number of different pixels between the last 2 frames. Is used to leave a margin of "error". Is recommended to set it at a low number, like 10.You maybe will have to change it if you change the theshold noise or update Frequency</label>
-	<input class="input" name="minimumThreshold" type="number" min="0" placeholder="10" value='${camera["minimumThreshold"]}'>
+	<input class="input" name="minimumthreshold" type="number" min="0" placeholder="10" value='${camera["minimumthreshold"]}'>
 </div>
 
 <div class="card-content-item">
 	<label for="increaseTresholdFactor">Since the app is calculating the average change of pixels between the last two images you need to leave a margin to avoid sending notifications over small or insignificant changes. A general good value is between 1.04 (4%) and 1.30 (30%) of the average change.</label>
-	<input class="input" name="increaseTresholdFactor" type="number" min="0" placeholder="1" value='${camera["increaseTresholdFactor"]}'>
+	<input class="input" name="increasetresholdfactor" type="number" min="0" placeholder="1" value='${camera["increasetresholdfactor"]}'>
 </div>
 
 <div class="card-content-item">
 	<label for="updateThresholdFrequency">This tells the app how frequent (seconds) to update the average pixels change between the last two frames. On camera where there is fast changing objects is good to leave this value low, e.g. 5.</label>
-	<input class="input" name="updateThresholdFrequency" type="number" min="0" placeholder="10" value='${camera["updateThresholdFrequency"]}'>
+	<input class="input" name="updatethresholdfrequency" type="number" min="0" placeholder="10" value='${camera["updatethresholdfrequency"]}'>
 </div>
 
 <div class="card-content-item">
 	<label for="thresholdFindingsOnIgnoredArea">How many objects or changes on ignored areas are needed in order to not send a notification about the change?</label>
-	<input class="input" name="thresholdFindingsOnIgnoredArea" type="number" min="0" placeholder="2" value='${camera["thresholdFindingsOnIgnoredArea"]}'>
+	<input class="input" name="thresholdfindingsonignoredarea" type="number" min="0" placeholder="2" value='${camera["thresholdfindingsonignoredarea"]}'>
 </div>
 
 <div class="card-content-item">
 	<label for="minPercentageAreaNeededToIgnore">The change descriptor can have some 'error' due to filter and noise reduction, so is better to leave a margin in the area needed to match a ignored area for that. Recommended value: between 90 and 100.</label>
-	<input class="input" name="minPercentageAreaNeededToIgnore" type="number" min="0" placeholder="95" value='${camera["minPercentageAreaNeededToIgnore"]}'>
+	<input class="input" name="minpercentageareaneededtoignore" type="number" min="0" placeholder="95" value='${camera["minpercentageareaneededtoignore"]}'>
 </div>
 
 <div class="card-content-item is-hidden">
 	<label for="hitThreshold"></label>
-	<input class="input" name="hitThreshold" type="number" value='${camera["hitThreshold"]}'>
+	<input class="input" name="hitthreshold" type="number" value='${camera["hitthreshold"]}'>
 </div>
 
 <div class="card-content-item is-hidden">
 	<label for="ignoredAreas"></label>
-	<input class="input" name="ignoredAreas" type="text" value='${camera["ignoredAreas"] || ""}'>
+	<input class="input" name="ignoredareas" type="text" value='${camera["ignoredareas"] || ""}'>
 </div>
 
 <div class="card-content-item is-hidden">
@@ -121,131 +121,139 @@ const getProgramAccordionTemplate = program => `
 
 <div class="card-content-item">
 	<label for="msBetweenFrame" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Greater this value = Lower CPU usage.\n FPS = 1000 / ms, e.g. 25 ms = 40 FPS.\n Try different values and determine the efficiency vs effectiveness.">Milliseconds between frame of the camera</label>
-	<input class="input" name="msBetweenFrame" type="number" placeholder="30" min="0" value="${program['msBetweenFrame']}">
+	<input class="input" name="msbetweenframe" type="number" placeholder="30" min="0" value="${program['msbetweenframe']}">
 </div>
 
 <div class="card-content-item">
 	<label for="msBetweenFrameAfterChange" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Same as <msBetweenFrame>. But only will be applied after detecting a change in the frames.">Milliseconds between frame of the camera after detecting a change</label>
-	<input class="input" name="msBetweenFrameAfterChange" type="number" placeholder="30" min="0" value="${program['msBetweenFrameAfterChange']}">
+	<input class="input" name="msbetweenframeafterchange" type="number" placeholder="30" min="0" value="${program['msbetweenframeafterchange']}">
 </div>
 
 <div class="card-content-item">
 	<label for="outputResolution" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="width,height">Output-preview resolution</label>
-	<input class="input" name="outputResolution" type="text" placeholder="640,360" value="${program['outputResolution'] || ""}">
+	<input class="input" name="outputresolution" type="text" placeholder="640,360" value="${program['outputresolution'] || ""}">
 </div>
 
 <div class="card-content-item">
 	<label for="ratioScaleOutput" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Scales the output">Ratio scale ouput-preview</label>
-	<input class="input" name="ratioScaleOutput" type="number" placeholder="1" min="0" value="${program['ratioScaleOutput']}">
+	<input class="input" name="ratioscaleoutput" type="number" placeholder="1" min="0" value="${program['ratioscaleoutput']}">
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Draws the ignored area for each camera">
-		<input type="checkbox" name="showIgnoredAreas" ${program['showIgnoredAreas'] == '1' && 'checked'}>
+		<input type="checkbox" name="showignoredareas" ${program['showignoredareas'] == '1' && 'checked'}>
 		Show ignored areas
 	</label>
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="show cameras">
-		<input type="checkbox" name="showPreviewCameras" ${program['showPreviewCameras'] == '1' && 'checked'}>
+		<input type="checkbox" name="showpreviewcameras" ${program['showpreviewcameras'] == '1' && 'checked'}>
 		Show preview-output of the cameras
 	</label>
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Shows frames cropped rotated and with the change between them">
-		<input type="checkbox" name="showProcessedFrames" ${program['showProcessedFrames'] == '1' && 'checked'}>
+		<input type="checkbox" name="showprocessedframes" ${program['showprocessedframes'] == '1' && 'checked'}>
 		Show processed cameras frames
 	</label>
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Draws the rectangle corresponding to the ROI of the camera">
-		<input type="checkbox" name="showAreaCameraSees" ${program['showAreaCameraSees'] == '1' && 'checked'}>
+		<input type="checkbox" name="showareacamerasees" ${program['showareacamerasees'] == '1' && 'checked'}>
 		Draw the region of interest for each camera
 	</label>
+</div>
+
+<div class="card-content-item">
+<label class="checkbox">
+	<input type="checkbox" name="uselocalnotifications" ${program['uselocalnotifications'] == '1' && 'checked'}>
+	Use local notifications: if checked then the program will send notification (if send image when detect change or send text when detect change is checked)
+	to the local client, when using webRecognize. Doesn't affect telegram notification, you can use one or another without problems.
+</label>
 </div>
 
 <!-- Telegram -->
 <div class="card-content-item">
 	<label for="telegramBotApi">Telegram bot api key</label>
-	<input class="input" name="telegramBotApi" type="text" value="${program['telegramBotApi'] || ""}">
+	<input class="input" name="telegrambotapi" type="text" value="${program['telegrambotapi'] || ""}">
 </div>
 
 <div class="card-content-item">
 	<label for="telegramChatId">Telegram chat target id</label>
-	<input class="input" name="telegramChatId" type="text" value="${program['telegramChatId'] || ""}">
+	<input class="input" name="telegramchatid" type="text" value="${program['telegramchatid'] || ""}">
 </div>
 
 <div class="card-content-item">
 <label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Disable this to not send notifications.">
-	<input type="checkbox" name="useTelegramBot" ${program['useTelegramBot'] == '1' && 'checked'}>
+	<input type="checkbox" name="usetelegrambot" ${program['usetelegrambot'] == '1' && 'checked'}>
 	Use telegram bot
 </label>
 </div>
 
 <div class="card-content-item">
 <label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Sends a image of all the cameras after detecting a change. Does not replace send image or send text after change.">
-	<input type="checkbox" name="sendimageofallcameras" ${program['sendImageOfAllCameras'] == '1' && 'checked'}>
+	<input type="checkbox" name="sendimageofallcameras" ${program['sendimageofallcameras'] == '1' && 'checked'}>
 	Send image of all cameras after change
 </label>
 </div>
 
 <div class="card-content-item">
 	<label for="secondsBetweenImage" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Seconds to wait to send another notification with image.">Seconds between notification with image</label>
-	<input class="input" name="secondsBetweenImage" type="number" placeholder="30" min="0" value="${program['secondsBetweenImage']}">
+	<input class="input" name="secondsbetweenimage" type="number" placeholder="30" min="0" value="${program['secondsbetweenimage']}">
 </div>
 
 <div class="card-content-item">
 	<label for="secondsBetweenMessage" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Seconds to wait to send another notification with only text.">Seconds between notification with text</label>
-	<input class="input" name="secondsBetweenMessage" type="number" placeholder="30" min="0" value="${program['secondsBetweenMessage']}">
+	<input class="input" name="secondsbetweenmessage" type="number" placeholder="30" min="0" value="${program['secondsbetweenmessage']}">
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Send image message after detectig change.">
-		<input type="checkbox" name="sendImageWhenDetectChange" ${program['sendImageWhenDetectChange'] == '1' && 'checked'}>
+		<input type="checkbox" name="sendimagewhendetectchange" ${program['sendimagewhendetectchange'] == '1' && 'checked'}>
 		Send a image when detect a change
 	</label>
 </div>
 
 <div class="card-content-item">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Send text message after detectig change.">
-		<input type="checkbox" name="sendTextWhenDetectChange" ${program['sendTextWhenDetectChange'] == '1' && 'checked'}>
+		<input type="checkbox" name="sendtextwhendetectchange" ${program['sendtextwhendetectchange'] == '1' && 'checked'}>
 		Send a text alert when detect a change
 	</label>
 </div>
 
 <div class="card-content-item">
 	<label for="authUsersToSendActions" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="user_1,user_2,...,user_n.">Authorized users to send actions from telegram</label>
-	<input class="input" name="authUsersToSendActions" type="text" placeholder="user1,user2,usern" value="${program['authUsersToSendActions'] || ""}">
+	<input class="input" name="authuserstosendactions" type="text" placeholder="user1,user2,usern" value="${program['authuserstosendactions'] || ""}">
 </div>
 
 <div class="card-content-item">
 <label class="checkbox">
-	<input type="checkbox" name="useGifInsteadOfImage" ${program['useGifInsteadOfImage'] == '1' && 'checked'}>
+	<input type="checkbox" name="usegifinsteadofimage" ${program['usegifinsteadofimage'] == '1' && 'checked'}>
 	Send a gif instead of a image
 </label>
 </div>
 
 <div class="card-content-item">
 	<label for="gifResizePercentage" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="Selects the Quality of the gif. Values go from 0 to 100. 50 is means that the gif will be resized at half the resolution..">Gif resize resolution percentage</label>
-	<input class="input" name="gifResizePercentage" type="number" placeholder="50" min="0" max="100" value="${program['gifResizePercentage']}">
+	<input class="input" name="gifresizepercentage" type="number" placeholder="50" min="0" max="100" value="${program['gifresizepercentage']}">
 </div>
 
 <div class="card-content-item">
 	<label for="detectionMethod">Detection method to use: <p> 0: HOG Descriptor, uses built in opencv HOG Descriptor.</p> <p>1: YOLO V4 DNN, uses darknet neural net, more precise than HOG.</p></label>
-	<input class="input" name="detectionMethod" type="number" placeholder="50" min="0" max="1" value="${program['detectionMethod']}">
+	<input class="input" name="detectionmethod" type="number" placeholder="50" min="0" max="1" value="${program['detectionmethod']}">
 </div>
 
 <div class="card-content-item">
 	<label for="gifFrames" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="How much frames are going to be on the GIF, \nbefore the detected change .. anfter the cange">Number of frames in the gif, before and after the change: nBefore..nAfter</label>
-	<input class="input" name="gifFrames" type="text" placeholder="5..60" value="${program['gifFrames'] || ""}">
+	<input class="input" name="gifframes" type="text" placeholder="5..60" value="${program['gifframes'] || ""}">
 </div>
 
 <div class="card-content-item">
 	<label for="imagesFolder">Folder name where to save the images, relative to the executable path (if val=media then path will be <executable_path>/media)</label>
-	<input class="input" name="imagesFolder" type="text" placeholder="media" value="${program['imagesFolder']}">
+	<input class="input" name="imagesfolder" type="text" placeholder="media" value="${program['imagesfolder']}">
 </div>
 
 </div>
@@ -412,7 +420,7 @@ function getHeadersFromStringConfig(str) {
 		for(var j = 0;j < lines.length; j++){
 			if (lines[j].length > 0) {
 				var eq = lines[j].indexOf("=");
-				var id = lines[j].slice(0, eq);
+				var id = lines[j].slice(0, eq).toLowerCase();
 				var val = lines[j].slice(eq+1, lines[j].length);
 				obj[id] = val;
 			}

@@ -16,18 +16,22 @@ namespace Notification {
 		this->type = Type::SOUND;
 	}
 
-	void Notification::send(ProgramConfiguration& programConfig) {
-		if (this->type == Type::IMAGE && this->image.rows != 0) {
-			if (programConfig.telegramConfig.useTelegramBot) {
-				std::string location = programConfig.imagesFolder + "/" + this->filename;
-				cv::imwrite("./" + location, this->image);
+	std::string Notification::send(ProgramConfiguration& programConfig) {
+		if (this->type == Type::IMAGE && this->image.rows != 0) {			
+			std::string location = programConfig.imagesFolder + "/" + this->filename;
+			cv::imwrite("./" + location, this->image);
 
-				TelegramBot::SendMediaToChat(location, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
-			}
+			if (programConfig.telegramConfig.useTelegramBot)
+				TelegramBot::SendMediaToChat(location, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);	
+
+			return location;	
 		} else if (this->type == Type::TEXT) {
 			if (programConfig.telegramConfig.useTelegramBot) {
-				TelegramBot::SendMessageToChat(this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);
+				TelegramBot::SendMessageToChat(this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);				
 			}
+			return this->text;
+		} else {
+			return "sound";
 		}
 	}
 

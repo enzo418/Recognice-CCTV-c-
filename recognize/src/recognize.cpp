@@ -84,7 +84,7 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 //		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
 //	}
 
-	if (programConfig.telegramConfig.useTelegramBot) {
+	if (programConfig.telegramConfig.useTelegramBot || programConfig.useLocalNotifications) {
 		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
@@ -304,9 +304,8 @@ void Recognize::StartNotificationsSender() {
 
 								std::vector<cv::Mat> frames = gif->getFrames();
 
-								if (this->programConfig.sendTextWhenDetectChange) {
-									Notification::Notification imn("Movimiento detectado en la camara " + camera->config->cameraName);
-									imn.send(this->programConfig);
+								if (this->programConfig.sendTextWhenDetectChange && this->programConfig.telegramConfig.useTelegramBot) {
+									camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
 								}
 								
 								// if (frames.avrgDistanceFrames > 70) {
@@ -320,7 +319,8 @@ void Recognize::StartNotificationsSender() {
 
 								std::system(command.c_str());
 
-								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+								if (this->programConfig.telegramConfig.useTelegramBot)
+									TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 
 								camera->lastImageSended = std::chrono::high_resolution_clock::now();
 
@@ -348,11 +348,11 @@ void Recognize::StartNotificationsSender() {
 			for (size_t i = 0; i < size; i++) {	
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
-				camera->pendingNotifications[i].send(programConfig);
+				std::string data = camera->pendingNotifications[i].send(programConfig);
 				this->notificationWithMedia->try_emplace(
 						std::pair<Notification::Type, std::string>(
 							camera->pendingNotifications[i].type, 
-							camera->pendingNotifications[i].getString()
+							data
 							)
 					);
 			}
