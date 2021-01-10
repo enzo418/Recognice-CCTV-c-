@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>web recognize</title>
+	<link rel="stylesheet" href="assets/bulma.min.css">
+	<link rel="stylesheet" href="assets/bulma-tooltip.min.css">
+	<link rel="stylesheet" href="assets/bulma-pageloader.min.css">
+	<link rel="stylesheet" href="assets/bulma-collapsible.min.css">
+	<link rel="stylesheet" href="assets/styles.css">
+
+	<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" sizes="any">
+
+	<script async src="assets/fontawesome.js"></script>
+	<script src='assets/moment.min.js'></script>
+	<script src='assets/bulma-collapsible.min.js'></script>
+	<script src='assets/jquery.min.js'></script>
+	<script src='app.js'></script>
+</head>
+
+<body>
+	<section class="section">		
+		<div class="container">
+			<div class="" id="configuration-page">
+				<div id="accordion_first">
+					
+				</div>
+				<div class="buttons ">
+					<button class="button is-link">
+						<span class="icon is-small">
+							<i class="fas fa-plus"></i>
+						</span>
+					<span>Add new camera</span></button>
+
+					<button class="button is-success" onclick="saveIntoFile()">
+						<span class="icon is-small">
+							<i class="fas fa-save"></i>
+						</span>
+					<span>Save configurations into file</span></button>
+				</div>
+			</div>
+			<div id="notifications-page" class="is-hidden">
+				<h1 class="title">Notifications</h1>
+				<div id="notifications-content">
+
+				</div>
+			</div>
+	</section>
+
+	<div class="pageloader is-active" id="pageloader">
+		<span class="title">Esperando al servidor...</span>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal" id="modal-file">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p>Select a file configuration to open</p>
+				</div>
+				<div class="message-body">
+					<!-- Dropdown -->
+					<div class="dropdown" id="dropdown-file">
+						<div class="dropdown-trigger">
+							<button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+								<span id="dropdown-current-file-element">new</span>
+								<span class="icon is-small">
+									<i class="fas fa-angle-down" aria-hidden="true"></i>
+								</span>
+							</button>
+						</div>
+						<div class="dropdown-menu" id="dropdown-menu" role="menu">
+							<div class="dropdown-content">
+								<a class="dropdown-item is-active">
+									new
+								</a>
+							</div>
+						</div>
+					</div>
+					<div class="buttons has-addons is-right">
+						<button class="button is-success" id="button-select-config-file">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Ok</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<nav class="navbar is-black is-fixed-bottom" role="navigation" aria-label="main navigation">
+		<div class="navbar-brand">
+			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-status">
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+			</a>
+		</div>
+	
+		<div id="navbar-status" class="navbar-menu">
+			<div class="navbar-start">
+				<a class="navbar-item">
+					<h1 id="button-state-recognize">Recognize is not running</h1>
+				</a>
+
+				<a class="navbar-item">
+					<button class="button is-success" id="button-toggle-recognize">Start Recognize</button>
+				</a>
+
+				<a class="navbar-item">
+					<h1 id="button-current-page" onclick="togglePage()">Show notifications page</h1>
+				</a>
+			</div>
+		</div>
+	</nav>
+</body>
+
+</html>
