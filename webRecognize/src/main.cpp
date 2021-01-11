@@ -200,9 +200,7 @@ std::string GetConfigurationsPathsToJson() {
 	size_t i = 0;
 	for (const auto & entry : std::filesystem::directory_iterator("../../recognize/build/")) {
 		std::string path = entry.path().generic_string();
-		if (entry.path().has_extension() 
-			&& path.find(".ini") != std::string::npos
-			&& path.find(".ini~") == std::string::npos) {
+		if (entry.path().extension() == ".ini") {
 			Json::Value path_json = Json::Value(path);
 			configsFiles.append(path_json);
 			i++;
