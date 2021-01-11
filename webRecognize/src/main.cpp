@@ -43,10 +43,9 @@ namespace {
 		std::set<WebSocket*> _cons;
 		Server* server;
 		Recognize* recognize;
-		std::thread* recognizeThread;
 
-		HandlerFile(Server* server, Recognize* recognize, std::thread* recognizeThread) 
-			: server(server), recognize(recognize), recognizeThread(recognizeThread) { };
+		HandlerFile(Server* server, Recognize* recognize) 
+			: server(server), recognize(recognize) { };
 
 		void onConnect(WebSocket* con) override {
 			_cons.insert(con);
@@ -114,16 +113,13 @@ namespace {
 										configurations.programConfig.imagesFolder.size()
 									);
 
-					recognizeThread = new std::thread(
-												&Recognize::Start, recognize, 
-														std::move(configurations), 
+					recognize->Start(std::move(configurations), 
 														configurations.programConfig.showPreview, 
 														configurations.programConfig.telegramConfig.useTelegramBot);
 
 				} else { // was running, stop it
 					recognize->CloseAndJoin();
-					
-					recognizeThread->join();
+
 					std::cout << "Closed recognize" << std::endl;
 				}
 
@@ -174,13 +170,12 @@ namespace {
 
 int main(int /*argc*/, const char* /*argv*/[]) {
 	Recognize recognize;
-	std::thread* recThread;
 
 	const uint16_t port = 9000;
 	Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
 
 	server.addPageHandler(std::make_shared<MyAuthHandler>());
-	std::shared_ptr<HandlerFile> handler = std::make_shared<HandlerFile>(&server, &recognize, recThread);
+	std::shared_ptr<HandlerFile> handler = std::make_shared<HandlerFile>(&server, &recognize);
 	server.addWebSocketHandler("/file", handler);
 	
 	std::cout << "Listening in: http://localhost:" << port << std::endl;
