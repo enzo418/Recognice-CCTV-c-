@@ -16,6 +16,9 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 
 	// allocate 100 Mat, each is aprox 0.6 MB (640x360 color) 100 * 0.6 = 60 MB per camera
 	this->frames = std::make_unique<moodycamel::ReaderWriterQueue<cv::Mat>>(100);
+
+	// allocate a empty lastFrame to avoid checking if is empty every time
+	this->lastFrame = cv::Mat(this->config->roi.size(), CV_8UC1);
 }
 
 Camera::~Camera() {}
@@ -43,7 +46,7 @@ void Camera::ApplyBasicsTransformations() {
 	// }
 
 	// Then rotate it
-	if (this->config->rotation != 0) ImageManipulation::RotateImage(this->frame, this->config->rotation);
+	ImageManipulation::RotateImage(this->frame, this->config->rotation);
 
 	// Take the region of interes
 	if (!this->config->roi.empty()) {
@@ -144,6 +147,8 @@ void Camera::ReadFramesWithInterval() {
 
 	const bool showPreview = this->_programConfig->showPreview;   
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
+	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
+	const bool useGifInsteadImg = this->_programConfig->useGifInsteadImage;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -172,15 +177,15 @@ void Camera::ReadFramesWithInterval() {
 
 		if (shouldProcessFrame) {
 			// If the frame is not valid try resetting the connection with the camera
-			if (this->frame.rows == 0) {                
-				capture.release();
-				capture.open(this->config->url);
-				assert(capture.isOpened());
-				continue;
-			}
+			// if (this->frame.rows == 0) {                
+			// 	capture.release();
+			// 	capture.open(this->config->url);
+			// 	assert(capture.isOpened());
+			// 	continue;
+			// }
 
 			// Once a new frame is ready, update buffer frames
-			if (this->_programConfig->useGifInsteadImage) {
+			if (useGifInsteadImg) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready
@@ -202,10 +207,8 @@ void Camera::ReadFramesWithInterval() {
 
 			this->ApplyBasicsTransformations();
 
-			if (this->lastFrame.rows > 0) {
-				this->CalculateNonZeroPixels();
-				this->UpdateThreshold();
-			}
+			this->CalculateNonZeroPixels();
+			this->UpdateThreshold();
 
 			// if (totalNonZeroPixels > this->config->changeThreshold * 0.7) {
 			// 	std::cout << this->config->cameraName
@@ -227,7 +230,7 @@ void Camera::ReadFramesWithInterval() {
 				size_t overlappingFindings = 0;
 				// since gif does this (check if change inside an ignored area) for each frame... 
 				// only do it if user wants a image				
-				if (!this->_programConfig->useGifInsteadImage) {
+				if (!useGifInsteadImg) {
 					this->lastFinding = FindRect(diff);
 					
 					for (auto &&i : this->config->ignoredAreas) {
@@ -252,7 +255,7 @@ void Camera::ReadFramesWithInterval() {
 			
 			// push a new frame to display.
 			if (showPreview && !showProcessedImages) {
-				if (this->_programConfig->showIgnoredAreas) { 
+				if (showIgnoredAreas) { 
 					// Draw ignored areas
 					for (auto i : this->config->ignoredAreas) {
 						i.x += this->config->roi.x;
