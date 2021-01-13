@@ -15,7 +15,6 @@
 #include <chrono>
 #include <iostream>
 #include <filesystem>
-#include <json/json.h>
 #include <map>
 
 #include <fmt/core.h>
@@ -26,9 +25,14 @@
 namespace fs = std::filesystem;
 using namespace seasocks;
 
-std::string GetConfigurationsPathsToJson();
+std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach);
+std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach);
 std::string GetRecognizeStateJson();
 std::string GetMediaPath();
+
+std::string GetJsonString(const std::string& key, const std::string& value) {
+	return fmt::format("{{\"{0}\": {1}}}", key, value);
+}
 
 bool recognize_running = false;
 size_t connections_number = 0;
@@ -49,10 +53,11 @@ namespace {
 
 		void onConnect(WebSocket* con) override {
 			_cons.insert(con);
-			con->send(GetConfigurationsPathsToJson());
+			con->send(GetConfigurationsPathsJson({"../../recognize/build/"}));
 			con->send(GetRecognizeStateJson());
 			connections_number++;
 		}
+
 		void onDisconnect(WebSocket* con) override {
 			_cons.erase(con);
 			connections_number--;
@@ -72,15 +77,10 @@ namespace {
 
 				// read file
 				Configurations cfgs = ConfigurationFile::ReadConfigurations(val);				
-				std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+				std::string res = "\"" + ConfigurationFile::ConfigurationsToString(cfgs) + "\"";
 				
-				// prepare payload
-				Json::Value root;
-				Json::Value config_file = Json::Value(res);
-				root["configuration_file"] = config_file;
-
 				// send payload
-				con->send(root.toStyledString());
+				con->send(GetJsonString("configuration_file", res));
 
 				connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, val));
 			} else if (id == "save_into_config_file") {
@@ -114,8 +114,8 @@ namespace {
 									);
 
 					recognize->Start(std::move(configurations), 
-														configurations.programConfig.showPreview, 
-														configurations.programConfig.telegramConfig.useTelegramBot);
+										configurations.programConfig.showPreview, 
+										configurations.programConfig.telegramConfig.useTelegramBot);
 
 				} else { // was running, stop it
 					recognize->CloseAndJoin();
@@ -193,30 +193,31 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 	return 0;
 }
 
-std::string GetConfigurationsPathsToJson() {
-	Json::Value root;
-	Json::Value configsFiles = Json::arrayValue;
+std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach) {
+	std::string configsFiles = "[";
 
 	size_t i = 0;
-	for (const auto & entry : std::filesystem::directory_iterator("../../recognize/build/")) {
-		std::string path = entry.path().generic_string();
-		if (entry.path().extension() == ".ini") {
-			Json::Value path_json = Json::Value(path);
-			configsFiles.append(path_json);
-			i++;
+	for (const auto& directory : directoriesToSeach) {
+		for (const auto & entry : std::filesystem::directory_iterator(directory)) {
+			std::string path = entry.path().generic_string();
+			if (entry.path().extension() == ".ini") {
+				if(i > 0) configsFiles += ",";
+
+				configsFiles += "\"" + path + "\"";
+				i++;
+			}
 		}
 	}
 
-	root["configuration_files"] = configsFiles;
+	configsFiles += "]";
+	
+	return configsFiles;
+}
 
-	return root.toStyledString();
+std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach) {
+	return GetJsonString("configuration_files", GetConfigurationsPaths(directoriesToSeach));
 }
 
 std::string GetRecognizeStateJson() {
-	Json::Value root;
-	Json::Value state = Json::Value(recognize_running);
-
-	root["recognize_state_changed"] = state;
-
-	return root.toStyledString();
+	return GetJsonString("recognize_state_changed", recognize_running ? "true" : "false");
 }

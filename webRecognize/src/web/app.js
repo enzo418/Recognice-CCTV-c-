@@ -299,6 +299,7 @@ $(function() {
 
 	ws.onmessage = function(message) {
 		var data = JSON.parse(message.data);
+		console.log(data);
 
 		if (data.hasOwnProperty("configuration_files")) {
 			var dropdown_content = document.querySelector('#dropdown-file div.dropdown-content');
