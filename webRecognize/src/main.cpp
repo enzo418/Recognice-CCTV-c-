@@ -8,6 +8,7 @@
 #include "../../recognize/src/configuration_file.hpp"
 #include "../../recognize/src/notification.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
@@ -77,10 +78,10 @@ namespace {
 
 				// read file
 				Configurations cfgs = ConfigurationFile::ReadConfigurations(val);				
-				std::string res = "\"" + ConfigurationFile::ConfigurationsToString(cfgs) + "\"";
-				
+				std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+
 				// send payload
-				con->send(GetJsonString("configuration_file", res));
+				con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
 
 				connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, val));
 			} else if (id == "save_into_config_file") {
