@@ -357,7 +357,16 @@ $(function() {
 					$(getNotificationTemplate(ob["type"], ob['content'])).insertBefore(not_content.children[0]);
 				else 
 					$('#notifications-content').append(getNotificationTemplate(ob["type"], ob['content']));
-
+				
+				Push.create("Alert!", {
+					body: "How's it hangin'?",
+					icon: '/favicon.svg',
+					timeout: 2000,
+					onClick: function () {
+						window.focus();
+						this.close();
+					}
+				});
 			}
 			
 			// if (playsound)
