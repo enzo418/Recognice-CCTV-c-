@@ -48,7 +48,8 @@ namespace Utils {
 	#pragma endregion
 
 	#pragma region ConfigFileHelpers
-	static bool nextLineIsHeader(std::fstream& file) {
+	// template<typename S>
+	static bool nextLineIsHeader(std::istream& file) {
 		char c = 0;
 		char last = 0;
 

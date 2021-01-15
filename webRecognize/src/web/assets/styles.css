@@ -1,0 +1,68 @@
+html, body {
+	height: 100%;
+}
+
+body, .section {
+	background-color: #36393f;
+}
+
+.section {
+    padding: 3rem 0.5rem;
+}
+
+.title, .subtitle {
+	color: black;
+}
+
+.hour {
+	color: #313131;
+	align-self: flex-end;
+}
+
+.card-content-item {	
+	background-color: #292b2f;
+    color: white;
+    padding: 5px;
+	margin: 5px 0;
+}
+
+.card-header {
+	background-color: black;
+}
+
+.card-header-title {
+	color: white;
+}
+
+.card-content {
+    padding: 0 0.2rem 1.5rem 0.2rem;
+	background-color: #2f3136;
+}
+
+div[data-parent="accordion_first"] {
+	background-color: #2f3136;
+}
+
+.footer-camera-buttons {
+	overflow: scroll;
+}
+
+.footer-camera-buttons > button {
+    margin: 0 0.5rem;
+}
+
+.card-footer-item {
+	justify-content: end;
+}
+
+.checkbox:hover {
+	color: white;
+}
+
+.card {
+	margin: 0 0 1rem 0;
+}
+
+label {
+	color: white;
+}

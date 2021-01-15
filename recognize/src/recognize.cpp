@@ -1,8 +1,10 @@
 #include "recognize.hpp"
 
-Recognize::Recognize() { }
+Recognize::Recognize() {
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);
+}
 
-void Recognize::Start(Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
+void Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
 	this->close = false;
 	this->stop = false;
 	
@@ -82,7 +84,7 @@ void Recognize::Start(Configurations& configs, bool startPreviewThread, bool sta
 //		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
 //	}
 
-	if (programConfig.telegramConfig.useTelegramBot) {
+	if (programConfig.telegramConfig.useTelegramBot || programConfig.useLocalNotifications) {
 		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
@@ -265,7 +267,7 @@ void Recognize::StartPreviewCameras() {
 
 	std::cout << "Preview thread closed" << std::endl;
 
-	cv::destroyWindow("Preview Cameras");
+	// cv::destroyWindow("Preview Cameras");
 }
 
 void Recognize::StartNotificationsSender() {
@@ -287,8 +289,9 @@ void Recognize::StartNotificationsSender() {
 						// Take before and after frames and combine them into a .gif
 						// -----------------------------------------------------------
 						const std::string identifier = std::to_string(clock());
-						const std::string imageFolder = programConfig.imagesFolder;
-						const std::string root = "./" + imageFolder + "/" + identifier;
+						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
+						const std::string imagesIdentifier = imageFolder + std::to_string(camera->config->order);
+						const std::string root = imageFolder + identifier;
 						const std::string gifPath = root + ".gif";
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
@@ -301,25 +304,28 @@ void Recognize::StartNotificationsSender() {
 
 								std::vector<cv::Mat> frames = gif->getFrames();
 
-								if (this->programConfig.sendTextWhenDetectChange) {
-									Notification::Notification imn("Movimiento detectado en la camara " + camera->config->cameraName);
-									imn.send(this->programConfig);
+								if (this->programConfig.sendTextWhenDetectChange && this->programConfig.telegramConfig.useTelegramBot) {
+									camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
 								}
 								
 								// if (frames.avrgDistanceFrames > 70) {
 								for (size_t i = 0; i < frames.size(); i++) {
-									location = root + "_" + std::to_string((int)i) + ".jpg";
+									location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
 
 									cv::imwrite(location, frames[i]);
 								}
 
-								std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + root + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
+								std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 								std::system(command.c_str());
 
-								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+								if (this->programConfig.telegramConfig.useTelegramBot)
+									TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 
 								camera->lastImageSended = std::chrono::high_resolution_clock::now();
+
+								this->notificationWithMedia->try_emplace(
+									std::pair<Notification::Type, std::string>(Notification::IMAGE, gifPath));
 							}
 						}
 					}
@@ -342,7 +348,13 @@ void Recognize::StartNotificationsSender() {
 			for (size_t i = 0; i < size; i++) {	
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
-				camera->pendingNotifications[i].send(programConfig);
+				std::string data = camera->pendingNotifications[i].send(programConfig);
+				this->notificationWithMedia->try_emplace(
+						std::pair<Notification::Type, std::string>(
+							camera->pendingNotifications[i].type, 
+							data
+							)
+					);
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p

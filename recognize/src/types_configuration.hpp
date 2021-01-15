@@ -133,6 +133,8 @@ struct ProgramConfiguration {
 	cv::Mat frameWithAllTheCameras;
 	
 	DetectionMethod detectionMethod = DetectionMethod::HogDescriptor;
+
+	bool useLocalNotifications = true;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

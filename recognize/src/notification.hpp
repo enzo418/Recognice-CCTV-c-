@@ -25,7 +25,9 @@ namespace Notification {
 			// Creates a sound notification
 			Notification();
 
-			void send(ProgramConfiguration& programConfig);
+			std::string send(ProgramConfiguration& programConfig);
+
+			std::string getString();
 	};
 }
 
