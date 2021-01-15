@@ -393,11 +393,15 @@ $(function() {
 	$('#button-toggle-recognize').click(function() {
 		ws.send("change_recognize_state " + !RECOGNIZE_RUNNING);
 	});
+
+	$('#button-just-notifications').click(function () {
+		$('#configuration-page').remove();
+		$('#button-current-page').remove();
+		togglePage();
+		$('#modal-file').toggleClass('is-active');
+	});
 });
 
-set = function(value) {
-	$('#count').val(value)
-}
 
 function changeRecognizeStatusElements(running) {
 	if (running) {

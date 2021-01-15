@@ -19,6 +19,11 @@ body, .section {
 	align-self: flex-end;
 }
 
+.buttons-config-selector {
+	display: flex;
+	justify-content: space-between;
+}
+
 .card-content-item {	
 	background-color: #292b2f;
     color: white;
