@@ -143,43 +143,49 @@ namespace {
 		// sample on how to implement a tick function
 		void Tick() {
 			server->execute([this] {
-				cv::Mat res;
-				while (recognize->frames->try_dequeue(res)) {
-					// Serialize the input image to a stringstream
-					// std::stringstream serializedStream = serialize(res);
-					// std::string serialized ((char*)res.data);
-					std::vector<uchar> buf;
-					cv::imencode(".jpg", res, buf);
-					auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
-					std::string encoded = "\"" +  base64_encode(enc_msg, buf.size()) + "\"";
-
-
-					// Base64 encode the std::stringstream
-					// std::string encoded;
-					// encoded = "\"" + Base64::Encode(serialized) + "\"";
-
-					sendEveryone(GetJsonString("new_image", encoded));
+				std::vector<cv::Mat> res;
+				cv::Mat a;
+				
+				// std::cout << "[M] Deque?\n";
+				while (recognize->frames->try_dequeue(a)) {
+					res.push_back(a);
+					// std::cout << "[M] Deque!\n";
 				}
+				// std::cout << "[M] Queue clear!\n";
+
+				Json::Value arr;
+				for (auto &&img : res) {
+					// Serialize the input image to a stringstream
+					std::vector<uchar> buf;
+					cv::imencode(".jpg", a, buf);
+					auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
+					std::string encoded = base64_encode(enc_msg, buf.size());
+
+					arr.append(encoded);
+				}
+
+				sendEveryone(GetJsonString("new_image", arr.toStyledString()));
+				
 				
 
-				// std::pair<Notification::Type, std::string> media;
-				// while (recognize->notificationWithMedia->try_dequeue(media)) {					
-				// 	std::string command = "";
+				std::pair<Notification::Type, std::string> media;
+				while (recognize->notificationWithMedia->try_dequeue(media)) {					
+					std::string command = "";
 
-				// 	if (media.first == Notification::IMAGE) {
-				// 		command = "image";
-				// 		std::size_t found = media.second.find_last_of("/\\");
-				// 		media.second = lastMediaPath + "/" + media.second.substr(found+1);
-				// 	} else if (media.first == Notification::TEXT)
-				// 		command = "text";
-				// 	else if (media.first == Notification::SOUND)
-				// 		command = "sound";
+					if (media.first == Notification::IMAGE) {
+						command = "image";
+						std::size_t found = media.second.find_last_of("/\\");
+						media.second = lastMediaPath + "/" + media.second.substr(found+1);
+					} else if (media.first == Notification::TEXT)
+						command = "text";
+					else if (media.first == Notification::SOUND)
+						command = "sound";
 
-				// 	command = fmt::format("{{\"new_notification\": {{\"type\":\"{0}\", \"content\":\"{1}\"}}}}", command, media.second);
+					command = fmt::format("{{\"new_notification\": {{\"type\":\"{0}\", \"content\":\"{1}\"}}}}", command, media.second);
 
-				// 	sendEveryone(command);
-				// 	std::cout << "sended to everyone: " << command << std::endl;
-				// }
+					sendEveryone(command);
+					std::cout << "sended to everyone: " << command << std::endl;
+				}
 			});
 		}
 	};
@@ -190,56 +196,6 @@ namespace {
 			return Response::unhandled(); // cause next handler to run
 		}
 	};
-}
-
-// Serialize a cv::Mat to a stringstream
-std::stringstream serialize(cv::Mat input) {
-       // We will need to also serialize the width, height, type and size of the matrix
-       int width = input.cols;
-       int height = input.rows;
-       int type = input.type();
-       size_t size = input.total() * input.elemSize();
-
-       // Initialize a stringstream and write the data
-       std::stringstream ss;
-       ss.write((char*)(&width), sizeof(int));
-       ss.write((char*)(&height), sizeof(int));
-       ss.write((char*)(&type), sizeof(int));
-       ss.write((char*)(&size), sizeof(size_t));
-
-       // Write the whole image data
-       ss.write((char*)input.data, size);
-
-	return ss;
-}
-
-// Deserialize a Mat from a stringstream
-cv::Mat deserialize(std::stringstream& input) {
-       // The data we need to deserialize
-       int width = 0;
-       int height = 0;
-       int type = 0;
-       size_t size = 0;
-
-       // Read the width, height, type and size of the buffer
-       input.read((char*)(&width), sizeof(int));
-       input.read((char*)(&height), sizeof(int));
-       input.read((char*)(&type), sizeof(int));
-       input.read((char*)(&size), sizeof(size_t));
-
-       // Allocate a buffer for the pixels
-       char* data = new char[size];
-       // Read the pixels from the stringstream
-       input.read(data, size);
-
-       // Construct the image (clone it so that it won't need our buffer anymore)
-       cv::Mat m = cv::Mat(height, width, type, data).clone();
-
-       // Delete our buffer
-       delete[]data;
-
-       // Return the matrix
-       return m;
 }
 
 int main(int /*argc*/, const char* /*argv*/[]) {
@@ -256,7 +212,7 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 
 	std::thread tick([&] {
 		for(;;) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			if (recognize_running)
 				handler->Tick();
 		}

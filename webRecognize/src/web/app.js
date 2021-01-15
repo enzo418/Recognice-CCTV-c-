@@ -382,8 +382,22 @@ $(function() {
 		}
 
 		if (data.hasOwnProperty("new_image")) {
-			console.log(data);
-			$('#frame').attr("src","data:image/png;base64," + data["new_image"]);
+			// console.log(data);
+			// $('#frame').attr("src","data:image/png;base64," + data["new_image"]);
+			data["new_image"].forEach(im => {
+				setTimeout(() => {
+					$('#frame').attr("src","data:image/png;base64," + im);
+				}, 30);
+				// var canvas = document.getElementById('canvas');
+				// var ctx = canvas.getContext('2d');
+				// var img = new Image();
+				
+
+				// img.src = "data:image/png;base64," + im;
+				// img.onload = function () {
+				// 	setTimeout(() => ctx.drawImage(img,0,0), 30);
+				// }
+			});
 		}
 		
 	};

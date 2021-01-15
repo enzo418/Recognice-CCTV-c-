@@ -263,7 +263,9 @@ void Recognize::StartPreviewCameras() {
 				}
 
 				if (programConfig.showPreviewOnWeb) {
+					// std::cout << "[R] Enque?\n";
 					this->frames->try_enqueue(std::move(res));
+					// std::cout << "[R] Enqued!\n";
 				}
 			}
 		}
