@@ -59,6 +59,7 @@ private:
 	const float NMS_THRESHOLD = 0.4;
 	
 	std::vector<std::tuple<cv::Rect, double, std::string>> Detect(cv::Mat& frame, CameraConfiguration& cfg);
+
 public:
 	bool stop = false;
 	bool close = false;
@@ -70,6 +71,8 @@ public:
 
 	// keep a record of the notifications sended with media
 	std::unique_ptr<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>> notificationWithMedia;
+	
+	std::unique_ptr<moodycamel::ReaderWriterQueue<cv::Mat>> frames;
 
 	Recognize(void);
 	~Recognize() = default;

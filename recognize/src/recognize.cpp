@@ -2,6 +2,7 @@
 
 Recognize::Recognize() {
 	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);
+	this->frames = std::make_unique<moodycamel::ReaderWriterQueue<cv::Mat>>(100);
 }
 
 void Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -256,9 +257,14 @@ void Recognize::StartPreviewCameras() {
 
 				cv::resize(res, res, cv::Size(scaleW, scaleH));
 
-				cv::imshow("Preview Cameras", res);
-				cv::waitKey(20);            
-				programConfig.frameWithAllTheCameras = std::move(res);
+				if (programConfig.showPreviewOnThisComputer){
+					cv::imshow("Preview Cameras", res);
+					cv::waitKey(20);            
+				}
+
+				if (programConfig.showPreviewOnWeb) {
+					this->frames->try_enqueue(std::move(res));
+				}
 			}
 		}
 

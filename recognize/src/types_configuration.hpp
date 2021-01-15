@@ -135,6 +135,10 @@ struct ProgramConfiguration {
 	DetectionMethod detectionMethod = DetectionMethod::HogDescriptor;
 
 	bool useLocalNotifications = true;
+
+	bool showPreviewOnWeb = true;
+
+	bool showPreviewOnThisComputer = true;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

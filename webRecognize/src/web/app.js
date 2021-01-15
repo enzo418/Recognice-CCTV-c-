@@ -322,7 +322,9 @@ $(function() {
 
 				dropdown_content.appendChild(file_elem); // add file elem to dropdown
 			});
-		} else if (data.hasOwnProperty("configuration_file")) {
+		}
+		
+		if (data.hasOwnProperty("configuration_file")) {
 			console.log(data);
 			setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
 
@@ -345,10 +347,14 @@ $(function() {
 					
 				}
 			});
-		} else if (data.hasOwnProperty("recognize_state_changed")) {
+		}
+		
+		if (data.hasOwnProperty("recognize_state_changed")) {
 			RECOGNIZE_RUNNING = data["recognize_state_changed"];
 			changeRecognizeStatusElements(RECOGNIZE_RUNNING);
-		} else if (data.hasOwnProperty("new_notification")) {
+		}
+		
+		if (data.hasOwnProperty("new_notification")) {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
@@ -359,9 +365,9 @@ $(function() {
 					$('#notifications-content').append(getNotificationTemplate(ob["type"], ob['content']));
 				
 				Push.create("Alert!", {
-					body: "How's it hangin'?",
+					body: "Cam",
 					icon: '/favicon.svg',
-					timeout: 2000,
+					timeout: 6000,
 					onClick: function () {
 						window.focus();
 						this.close();
@@ -373,6 +379,11 @@ $(function() {
 			var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
 			audio.volume = 0.5;
 			audio.play();
+		}
+
+		if (data.hasOwnProperty("new_image")) {
+			console.log(data);
+			$('#frame').attr("src","data:image/png;base64," + data["new_image"]);
 		}
 		
 	};
