@@ -1,5 +1,5 @@
 /*
-   base64.cpp and base64.h
+   base64.cpp and base64.hpp
 
    base64 encoding and decoding with C++.
    More information at
@@ -31,7 +31,7 @@
 
 */
 
-#include "base64.h"
+#include "base64.hpp"
 
 #include <algorithm>
 #include <stdexcept>

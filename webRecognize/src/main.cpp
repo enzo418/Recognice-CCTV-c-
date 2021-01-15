@@ -18,7 +18,7 @@
 #include <iostream>
 #include <filesystem>
 #include <map>
-#include "base64.h"
+#include "base64.hpp"
 
 #include <fmt/core.h>
 
@@ -256,7 +256,7 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 
 	std::thread tick([&] {
 		for(;;) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (recognize_running)
 				handler->Tick();
 		}
