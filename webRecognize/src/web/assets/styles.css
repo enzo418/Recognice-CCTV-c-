@@ -2,8 +2,21 @@ html, body {
 	height: 100%;
 }
 
+::-webkit-scrollbar-thumb {
+    background-color: #494e52;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #191c1d;
+}
+
+::-webkit-scrollbar {
+    background-color: #222526;
+    color: #b5aea2;
+}
+
 body, .section {
-	background-color: #36393f;
+	background-color: #121213;
 }
 
 .section {
@@ -14,14 +27,70 @@ body, .section {
 	color: black;
 }
 
-.hour {
-	color: #313131;
-	align-self: flex-end;
+.button {
+    background-color: rgb(25, 28, 29);
+    border-color: rgb(5 98 125);
+    color: rgb(210, 205, 196);
+}
+
+.button.is-hovered, .button:hover {
+    border-color: rgb(73, 80, 83);
+    color: rgb(210, 205, 196);
+}
+
+/** FILE DROPDOWN */
+.message.is-primary .message-header {
+    background-color: #206592;
+    color: #fff;
+    box-shadow: 0px -1px 7px 3px #000000;
+}
+
+.message.is-primary {
+    background-color: #252525;
+}
+
+.dropdown-content {
+	background-color: #05030a;
+}
+
+a.dropdown-item, button.dropdown-item {
+    padding-right: 3rem;
+    text-align: inherit;
+    white-space: nowrap;
+    width: 100%;
+    color: #fff;
 }
 
 .buttons-config-selector {
 	display: flex;
 	justify-content: space-between;
+	padding-top: 1rem;
+}
+
+.buttons-config-selector .button.is-success {
+	background-color: #38adad;
+}
+
+.buttons-config-selector .button.is-success.is-hovered, .button.is-success:hover {
+    background-color: #3ec46d;
+    border-color: transparent;
+    color: #fff;
+}
+
+.button.is-focused, .button:focus {
+	border-color: #3273dc;
+    color: #ffffff;
+}
+
+/** END FILE DROPDOWN */
+
+.card {
+	margin: 0 0 1rem 0;
+	background-color: #292929;
+}
+
+.card-content {
+	background-color: rgb(20, 21, 22);
 }
 
 .card-content-item {	
@@ -64,10 +133,94 @@ div[data-parent="accordion_first"] {
 	color: white;
 }
 
-.card {
-	margin: 0 0 1rem 0;
-}
-
 label {
 	color: white;
+}
+/** TABS */
+.tabs ul {
+    border-bottom-color: rgb(61, 67, 69);
+}
+
+.tabs ul li:not(.is-active) a span {
+	color: white;
+}
+
+.tabs.is-boxed li.is-active a {
+    background-color: rgb(25, 28, 29);
+    border-top-color: rgb(61, 67, 69);
+    border-right-color: rgb(61, 67, 69);
+    border-left-color: rgb(61, 67, 69);
+    border-bottom-color: transparent !important;
+}
+
+.tabs li.is-active a {
+    border-bottom-color: rgb(27, 77, 158);
+    color: rgb(72, 156, 236);
+}
+
+.tabs.is-boxed a:hover {
+	background-color: #27292d;
+}
+/** END TABS */
+
+/** NAVBAR */
+.navbar-link, a.navbar-item {
+    border: 1px solid transparent;
+}
+
+.navbar .navbar-item:hover {
+    background-color: transparent;
+    color: #3273dc;
+    border-color: #0053ee;
+}
+
+.navbar .navbar-item:focus-within {
+    background-color: transparent;
+}
+
+/** END NAV BAR */
+
+.notification {
+    position: fixed;
+    bottom: 5rem;
+	right: 0.5rem;
+	z-index: 100;
+}
+
+@media screen and (max-width: 1023px) { 
+	.navbar-menu {
+		background-color: #101319;		
+		box-shadow: 0 8px 16px rgba(10,10,10,.1);
+		padding: .5rem 0;
+	}
+
+	.navbar-item, .navbar-link {
+		color: #ffffff;
+	}
+}
+
+.input, .select select, .textarea {
+    background-color: rgb(25, 28, 29);
+    border-color: rgb(61, 67, 69);
+    color: rgb(210, 205, 196);
+}
+
+/** Notifications page */
+#notifications-page .title {
+	color: #fff;
+	/* border-bottom: 1px solid #01235d; */
+	box-shadow: 2px 2px #008586;
+    padding-left: 0.5rem;
+}
+
+#notifications-content .box {
+    background-color: #191a1b;
+	border: 1px solid #00858629;
+}	
+
+.hour {
+	color: #ffffff;
+    align-self: flex-end;
+    padding-top: 0.5rem;
+    text-align: right;
 }
