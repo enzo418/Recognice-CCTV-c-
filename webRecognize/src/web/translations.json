@@ -1,0 +1,156 @@
+{
+	"en": {
+		"msBetweenFrame" : {
+			"label": "Milliseconds between frames",
+			"description": "Milliseconds between each frame. Greater <msBetweenFrame> = Lower CPU usage. FPS = 1000 / <msBetweenFrame>. Try different values and determine the efficiency vs effectiveness."
+		},
+		"msBetweenFrameAfterChange": {
+			"label": "Milliseconds between frames after detecting a change",
+			"description": "Same as <msBetweenFrame>. But only will be applied after detecting a change in the frames."
+		},
+		"outputResolution": {
+			"label": "Output or Preview resolution",
+			"description": "The preview will be resized to this resolution."
+		},
+		"ratioScaleOutput": {
+			"label": "Scales the output",
+			"description": ""
+		},
+		"showignoredareas": {
+			"label": "Show ignored areas",
+			"description": "Draws the ignored area for each camera"
+		},
+		"showPreviewCameras": {
+			"label": "Show preview-output of the cameras",
+			"description": "show cameras"
+		},
+		"showAreaCameraSees": {
+			"label": "Draw the ROI of each camera",
+			"description": ""
+		},
+		"showProcessedFrames": {
+			"label": "Show processed cameras frames",
+			"description": "Shows frames cropped rotated and with the change between them"
+		},
+		"useLocalNotifications": {
+			"label": "Use local notifications",
+			"description": "If checked, the program will send notifications to the webpage, which will send a push notification to you."
+		},
+		"telegramBotApi": {
+			"label": "Api key of the telegram bot",
+			"description": ""
+		},
+		"telegramChatId": {
+			"label": "Chat id to send the notifications with the telegram bot",
+			"description": ""
+		},
+		"useTelegramBot": {
+			"label": "Use telegram bot (send alerts and receive commands)",
+			"description": ""
+		},
+		"sendimageofallcameras": {
+			"label": "Send image of all the cameras on alert",
+			"description": ""
+		},
+		"secondsBetweenImage": {
+			"label": "Seconds to wait until a new alert with a image (or gif) is sent",
+			"description": ""
+		},
+		"secondsBetweenMessage": {
+			"label": "Seconds to wait until a new alert with a text is sent",
+			"description": ""
+		},
+		"sendImageWhenDetectChange": {
+			"label": "Send a image (or gif) when detect a change",
+			"description": ""
+		},
+		"sendTextWhenDetectChange": {
+			"label": "Send a text alert when detect a change",
+			"description": ""
+		},
+		"authUsersToSendActions": {
+			"label": "Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n",
+			"description": ""
+		},
+		"useGifInsteadOfImage": {
+			"label": "Send gif instead of image in notifications",
+			"description": ""
+		},
+		"gifResizePercentage": {
+			"label": "Selects the Quality of the gif. Values go from 0 to 100. 50 is means that the gif will be resized at half the resolution.",
+			"description": ""
+		},
+		"detectionMethod": {
+			"label": "Select the detection method\n 0: HOG Descriptor, uses built in opencv HOG Descriptor.\n 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG.",
+			"description": ""
+		},
+		"gifFrames": {
+			"label": "How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>.\n'..' denotes the frame where the change was detected (initial).\nHave in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time).",
+			"description": ""
+		},
+		"imagesFolder": {
+			"label": "Folder where the images will be saved",
+			"description": ""
+		},
+		"cameraName": {
+			"label": "Camera name",
+			"description": ""
+		},
+		"url": {
+			"label": "Url of the camera",
+			"description": ""
+		},
+		"roi": {
+			"label": "Region of interest",
+			"description": "ROI (Region of interest) crop each image that the camera sends. Sintaxis is: <p_x>,<p_y>,<widht>,<height>"
+		},
+		"hitThreshold": {
+			"label": "Hit threshold",
+			"description": ""
+		},
+		"order": {
+			"label": "Position of the camera in the preview, starts at 0 and is unique.",
+			"description": ""
+		},
+		"rotation": {
+			"label": "Rotation (degrees)",
+			"description": ""
+		},
+		"framesToAnalyze": {
+			"label": "Frames to search a person in the obtained frames, values need to be lower or equal to gif frames number respectively (before..after).",
+			"description": "Sintaxis is <nframesBefore>..<nframesAfter>"
+		},
+		"type": {
+			"label": "Camera type\n0   : Disabled, Camera is disabled, doesn't show or process frames.\n1   : Sentry, Only sends notifications.\n2   : Active, Same as Sentry but try to recognize a person in the frames selected on \"framesToAnalyze\"",
+			"description": ""
+		},
+		"thresholdNoise": {
+			"label": "Noise threshold",
+			"description": "Used to remove noise (single scattered pixels). Between 30 and 50 is a general good value."
+		},
+		"minimumThreshold": {
+			"label": "Minimum threshold",
+			"description": "Minimum number of different pixels between the last 2 frames. Is used to leave a margin of \"error\"."
+		},
+		"increaseTresholdFactor": {
+			"label": "Factor to increase threshold by",
+			"description": "Since the app is calculating the average change of pixels between the last two images you need to leave a margin to avoid sending notifications over small or insignificant changes. A general good value is between 1.04 (4%) and 1.30 (30%) of the average change."
+		},
+		"updateThresholdFrequency": {
+			"label": "Update threshold frequency",
+			"description": "This tells the app how frequent (seconds) to update the average pixels change between the last two frames.\n On camera where there is fast changing objects is good to leave this value low, e.g. 5."
+		},
+		"thresholdFindingsOnIgnoredArea": {
+			"label": "Threshold findings on ignored area",
+			"description": "How many objects or changes on ignored areas are needed in order to not send a notification about the change?"
+		},
+		"minPercentageAreaNeededToIgnore": {
+			"label": "Minimum percentage area needed to ignore the change",
+			"description": "Maybe the object didn't match with all the ignored area, so is better to leave a margin for \"errors\".\nRecommended value: between 90 and 100."
+		},
+		"ignoredAreas": {
+			"label": "List of ignored areas",
+			"description": "Sintaxis: <p_x>,<p_y>,<widht>,<height>\nAlso you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]"
+		}
+	}
+}

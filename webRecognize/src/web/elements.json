@@ -1,0 +1,214 @@
+{
+	"program": {
+		"msBetweenFrame": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"msBetweenFrameAfterChange": {
+			"type": "number",
+			"hidden": false,			
+			"placeholder": "",
+			"min": 0
+		},
+		"outputResolution": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": "640x360"
+		},
+		"ratioScaleOutput": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"showignoredareas": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"showPreviewCameras": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"showAreaCameraSees": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"showProcessedFrames": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"useLocalNotifications": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"telegramBotApi": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"telegramChatId": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"useTelegramBot": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"sendimageofallcameras": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"secondsBetweenImage": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"secondsBetweenMessage": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"sendImageWhenDetectChange": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"sendTextWhenDetectChange": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"authUsersToSendActions": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"useGifInsteadOfImage": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"gifResizePercentage": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0,
+			"max": 100
+		},
+		"detectionMethod": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"gifFrames": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"imagesFolder": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		}
+	},
+	"camera": {
+		"cameraName": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"url": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"roi": {
+			"type": "string",
+			"hidden": true,
+			"placeholder": ""
+		},
+		"hitThreshold": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"order": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"rotation": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": -360,
+			"max": 360
+		},
+		"framesToAnalyze": {
+			"type": "string",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"type": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"thresholdNoise": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"minimumThreshold": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": -1
+		},
+		"increaseTresholdFactor": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"updateThresholdFrequency": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"thresholdFindingsOnIgnoredArea": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"minPercentageAreaNeededToIgnore": {
+			"type": "number",
+			"hidden": false,
+			"placeholder": "",
+			"min": 0
+		},
+		"ignoredAreas": {
+			"type": "string",
+			"hidden": true,
+			"placeholder": ""
+		}
+	}
+}
