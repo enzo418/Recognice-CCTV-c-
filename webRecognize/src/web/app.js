@@ -1,16 +1,10 @@
 const getCameraAccordionTemplate = (i, camera) => `
-<div class="card">
+<div class="card is-hidden" id="camera-${i}">
 <header class="card-header">
 	<p class="card-header-title">
 		${camera["cameraname"]}
 	</p>
-	<a href="#collapsible-camera-${i}" data-action="collapse" class="card-header-icon is-hidden-fullscreen" aria-label="more options">
-		<span class="icon">
-			<i class="fas fa-angle-down" aria-hidden="true"></i>
-		</span>
-	</a>
 </header>
-<div id="collapsible-camera-${i}" class="is-collapsible" data-parent="accordion_first">
 	<div class="card-content camera-config-content"> <!-- Start content card -->
 
 <div class="card-content-item">
@@ -101,22 +95,15 @@ const getCameraAccordionTemplate = (i, camera) => `
 		</div>
 		</div>
 	</footer>
-</div>
 </div>`;
 
 const getProgramAccordionTemplate = program => `
-<div class="card">
+<div class="card" id="program">
 	<header class="card-header">
 		<p class="card-header-title">
 			Program configuration
 		</p>
-		<a href="#collapsible-program-config" data-action="collapse" class="card-header-icon is-hidden-fullscreen" aria-label="more options">
-			<span class="icon">
-				<i class="fas fa-angle-down" aria-hidden="true"></i>
-			</span>
-		</a>
 	</header>
-	<div id="collapsible-program-config" class="is-collapsible" data-parent="accordion_first">
 		<div class="card-content program-config-content">
 
 <div class="card-content-item">
@@ -257,7 +244,6 @@ const getProgramAccordionTemplate = program => `
 </div>
 
 </div>
-</div>
 </div>`;
 
 const getNotificationTemplate = (type, text) => `
@@ -268,13 +254,19 @@ ${(type == "image" &&
 	</figure>`
 ) || ""}
 ${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
-<h6 class="subtitle is-6 hour">${moment().format('MMMM Do YYYY, h:mm:ss a')}</h6>
+<h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
 </div>`;
+
+const getTabTemplate = (i, camName) => `
+<li data-config="camera-${i}">
+	<a><span>${camName}</span></a>
+</li>`
 
 var FILE_PATH = ""; // file that the user requested at the start
 var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
 var ws;
+var lastConfigurationActive = "program"; // id of the element
 
 $(function() {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
@@ -298,8 +290,8 @@ $(function() {
 	};
 
 	ws.onmessage = function(message) {
+		console.log(message);
 		var data = JSON.parse(message.data);
-		console.log(data);
 
 		if (data.hasOwnProperty("configuration_files")) {
 			var dropdown_content = document.querySelector('#dropdown-file div.dropdown-content');
@@ -322,33 +314,48 @@ $(function() {
 
 				dropdown_content.appendChild(file_elem); // add file elem to dropdown
 			});
-		} else if (data.hasOwnProperty("configuration_file")) {
+		} 
+		
+		if (data.hasOwnProperty("configuration_file")) {
 			console.log(data);
 			setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
 
 			//  Add accordion program and cameras
 			var headers = getHeadersFromStringConfig(data["configuration_file"]);
-
-			$('#accordion_first').append(getProgramAccordionTemplate(headers["program"]));
-
+			
+			$('#configurations').append(getProgramAccordionTemplate(headers["program"]));
+			
+			// Add tabs and configuration inputs
+			var tabs = document.querySelector('.tabs ul');
 			headers["cameras"].forEach((val, i) => {
-				$('#accordion_first').append(getCameraAccordionTemplate(i, val));
+				$(tabs).append(getTabTemplate(i, val["cameraname"]));
+				$('#configurations').append(getCameraAccordionTemplate(i, val));
 			});
 
-			// Accordion
-			const bulmaCollapsibleInstances = bulmaCollapsible.attach('.is-collapsible');
-
-			// Loop into instances
-			bulmaCollapsibleInstances.forEach(bulmaCollapsibleInstance => {
-				// Check if current state is collapsed or not
-				if (!bulmaCollapsibleInstance.collapsed()) {
+			// set listeners tabs
+			tabs = [...document.querySelector('.tabs ul').querySelectorAll('li')];
+			tabs.forEach(el => {
+					el.onclick = function () {
+						document.getElementById(lastConfigurationActive).classList.add('is-hidden');
+						
+						tabs.forEach(el => el.classList.remove('is-active'))
 					
-				}
-			});
-		} else if (data.hasOwnProperty("recognize_state_changed")) {
+						el.classList.add('is-active');
+						
+						document.getElementById(el.dataset.config).classList.remove('is-hidden');
+	
+						lastConfigurationActive = el.dataset.config;
+					}
+				});
+		} 
+		
+		if (data.hasOwnProperty("recognize_state_changed")) {
+			$('#button-toggle-recognize').removeClass('is-loading');
 			RECOGNIZE_RUNNING = data["recognize_state_changed"];
 			changeRecognizeStatusElements(RECOGNIZE_RUNNING);
-		} else if (data.hasOwnProperty("new_notification")) {
+		}
+		
+		if (data.hasOwnProperty("new_notification")) {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
@@ -359,7 +366,7 @@ $(function() {
 					$('#notifications-content').append(getNotificationTemplate(ob["type"], ob['content']));
 				
 				Push.create("Alert!", {
-					body: "How's it hangin'?",
+					body: "...",
 					icon: '/favicon.svg',
 					timeout: 2000,
 					onClick: function () {
@@ -374,7 +381,22 @@ $(function() {
 			audio.volume = 0.5;
 			audio.play();
 		}
-		
+
+		if (data.hasOwnProperty('request_reply')) {
+			var ob = data["request_reply"];
+			if (ob["status"] == "ok") {
+				$('#notification').removeClass('is-danger')
+								  .addClass('is-success');				
+			} else if (ob["status"] == "error") {
+				$('#notification').removeClass('is-success')
+								  .addClass('is-danger');
+			}
+
+			$('#notification').removeClass('is-hidden')
+			$('#notification span').text(ob["message"]);
+
+			setTimeout(() => $('#notification').addClass('is-hidden'), 2000);
+		}
 	};
 
 	ws.onerror = function(error) {
@@ -391,6 +413,7 @@ $(function() {
 	});
 
 	$('#button-toggle-recognize').click(function() {
+		$(this).toggleClass('is-loading');
 		ws.send("change_recognize_state " + !RECOGNIZE_RUNNING);
 	});
 
@@ -399,6 +422,7 @@ $(function() {
 		$('#button-current-page').remove();
 		togglePage();
 		$('#modal-file').toggleClass('is-active');
+		Notification.requestPermission();
 	});
 });
 
@@ -499,17 +523,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// Add a click event on each of them
 		$navbarBurgers.forEach( el => {
-		el.addEventListener('click', () => {
+			el.addEventListener('click', () => {
 
-			// Get the target from the "data-target" attribute
-			const target = el.dataset.target;
-			const $target = document.getElementById(target);
+				// Get the target from the "data-target" attribute
+				const target = el.dataset.target;
+				const $target = document.getElementById(target);
 
-			// Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
-			el.classList.toggle('is-active');
-			$target.classList.toggle('is-active');
-
-		});
-		});
+				// Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+				el.classList.toggle('is-active');
+				$target.classList.toggle('is-active');
+			})
+		})
 	}
-});  
+
+	document.querySelectorAll('.notification .delete').forEach(($delete) => {
+		var $notification = $delete.parentNode;
+
+		$delete.addEventListener('click', () => {
+			$($notification).toggleClass('is-hidden');
+		});
+	});
+
+	// Update notifications time
+	setInterval(() => {
+		[...document.querySelectorAll('.hour')].forEach(el => {
+			el.innerHTML = moment(el.dataset.date, "MMMM Do YYYY, h:mm:ss a").fromNow();
+		});
+	}, 10 * 1000);
+});

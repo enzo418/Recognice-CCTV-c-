@@ -35,6 +35,23 @@ std::string GetJsonString(const std::string& key, const std::string& value) {
 	return fmt::format("{{\"{0}\": {1}}}", key, value);
 }
 
+/** Transform
+ * { {"key1", "val1"}, {"key2", "val2"}, ...} => 
+ * => {"key1": "val1", "key2": "val2", ...]
+ * 
+*/
+std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v) {
+	std::string res = "{";
+	for (auto &&i : v) {
+		res += fmt::format("\"{}\": \"{}\",", i.first, i.second);
+	}
+	
+	res.pop_back(); // pop last ,
+	res += "}";
+
+	return res;
+}
+
 bool recognize_running = false;
 size_t connections_number = 0;
 std::map<std::string, std::string> connection_file;
@@ -96,6 +113,8 @@ namespace {
 				std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
 
 				ConfigurationFile::SaveConfigurations(configurations, file);
+
+				con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "file saved correctly!"}})));
 			} else if (id == "change_recognize_state") {
 				recognize_running = !recognize_running;
 				
@@ -117,10 +136,12 @@ namespace {
 					recognize->Start(std::move(configurations), 
 										configurations.programConfig.showPreview, 
 										configurations.programConfig.telegramConfig.useTelegramBot);
-
+					
+					con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "recognize started!"}})));
 				} else { // was running, stop it
 					recognize->CloseAndJoin();
 
+					con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "recognize stop!"}})));
 					std::cout << "Closed recognize" << std::endl;
 				}
 

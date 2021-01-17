@@ -22,11 +22,18 @@
 </head>
 
 <body>
-	<section class="section">		
+	<section class="section">
 		<div class="container">
 			<div class="" id="configuration-page">
-				<div id="accordion_first">
-					
+				<div id="configurations">					
+				<div class="tabs is-boxed">
+					<ul>
+					<li class="is-active" data-config="program">
+						<a><span>Program configuration</span></a>
+					</li>
+					</ul>
+				</div>
+
 				</div>
 				<div class="buttons ">
 					<button class="button is-link">
@@ -101,6 +108,11 @@
 				</div>
 			</article>
 		</div>
+	</div>
+
+	<div id="notification" class="notification is-hidden">
+		<button class="delete"></button>
+		<span class="notification-text">Notification text</span>
 	</div>
 
 	<nav class="navbar is-black is-fixed-bottom" role="navigation" aria-label="main navigation">
