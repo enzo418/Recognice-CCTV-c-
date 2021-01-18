@@ -534,8 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	// Mouse or touch moved
 	function move (e) {
-		e.preventDefault();
-		e = e.touches[0] || e;
+		e.preventDefault();		
+		e = (e.touches || [])[0] || e;
 		if (cnvRoi.clickPressed) {
 			var image = new Image();
 			image.onload = function() {
@@ -564,7 +564,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Click or touch pressed
 	function pressed (e) {
 		e.preventDefault();
-		e = e.touches[0] || e;	
+		console.log(e);
+		e = (e.touches || [])[0] || e;
 		cnvRoi.clickPressed = true;
 		const x = e.clientX - cnvRoi.x;
 		const y = e.clientY - cnvRoi.y;
