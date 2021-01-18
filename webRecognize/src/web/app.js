@@ -87,6 +87,8 @@ var cnvRoi = {
 	roi: ""
 }
 
+var notificationPaginator = {index: 0, elements:[]}; // DOM notification elements
+
 $(function() {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
 
@@ -204,11 +206,12 @@ $(function() {
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
 				var not_content = document.getElementById('notifications-content');
-				if (not_content.children.length > 0)
-					$(getNotificationTemplate(ob["type"], ob['content'])).insertBefore(not_content.children[0]);
-				else 
-					$('#notifications-content').append(getNotificationTemplate(ob["type"], ob['content']));
-				
+				var $not = $(getNotificationTemplate(ob["type"], ob['content']));
+								
+				notificationPaginator.elements.push($not[0]);
+
+				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+
 				Push.create("Alert!", {
 					body: "...",
 					icon: '/favicon.svg',
@@ -597,3 +600,25 @@ document.addEventListener('DOMContentLoaded', () => {
 	cnvRoi.canvas.addEventListener("mouseup", relesed, false);
 	cnvRoi.canvas.addEventListener("touchend", relesed, false);
 });
+
+function previousNotification(){
+	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : 0;
+	changeCurrentElementNotification($i);
+}
+
+function nextNotification(){
+	var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
+	changeCurrentElementNotification($i);
+}
+
+function changeCurrentElementNotification($i) {
+	var $not = $('#notifications-content');
+	$not.empty();
+
+	$not.append(notificationPaginator.elements[$i]);
+	notificationPaginator.index = $i;
+	
+	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
+	$('.notification-previous-left').text(notificationPaginator.index);
+}
+	
