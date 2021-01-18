@@ -11,9 +11,9 @@ const getCameraContainerTemplate = (i, camera) => `
 
 	<footer class="card-footer">
 		<div class="card-footer-item footer-camera-buttons">
-			<button class="button">Select camera region of interest</button>
-			<button class="button">Select camera ignored areas</button>
-			<button class="button is-danger">Delete camera</button>
+			<button class="button button-select-camera-roi" onclick="selectCameraROI(event, ${i})">Select camera region of interest</button>
+			<button class="button button-select-camera-ignored-areas" onclick="selectCameraIgnoredAreas(event, ${i})">Select camera ignored areas</button>
+			<button class="button is-danger" onclick="deleteCamera(event, ${i})">Delete camera</button>
 		</div>
 		</div>
 	</footer>
@@ -72,6 +72,20 @@ var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
 var ws;
 var lastConfigurationActive = "program"; // id of the element
+var cameras = []; // actual cameras as an dictionary
+var unfinishedRequests = {}; 	// dict of unfinished request where key is the request and key a function to
+								// execute when we receive it.
+var cnvRoi = {
+	canvas: null,
+	ctx: null,
+	lastImage: "",
+	clickPressed: false,
+	p1: {x: 0, y: 0}, // lt or rb
+	p2: {x: 0, y: 0}, // rb or lt
+	x: 0, // canvas position in x
+	y: 0, // canvas position in y (with scrollbar)
+	roi: ""
+}
 
 $(function() {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
@@ -95,8 +109,8 @@ $(function() {
 	};
 
 	ws.onmessage = function(message) {
-		console.log(message);
 		var data = JSON.parse(message.data);
+		console.log(data);
 
 		if (data.hasOwnProperty("configuration_files")) {
 			var dropdown_content = document.querySelector('#dropdown-file div.dropdown-content');
@@ -127,6 +141,8 @@ $(function() {
 
 			//  Add accordion program and cameras
 			var headers = getHeadersFromStringConfig(data["configuration_file"]);
+
+			cameras = headers.cameras;
 			
 			getElementsTranslations().then(res => {				
 				const [elements, translations] = res;
@@ -223,7 +239,53 @@ $(function() {
 			$('#notification').removeClass('is-hidden')
 			$('#notification span').text(ob["message"]);
 
-			setTimeout(() => $('#notification').addClass('is-hidden'), 2000);
+			setTimeout(() => $('#notification').addClass('is-hidden'), 6000);
+
+			if (ob["trigger"].length > 0) {
+				// execute pending unifished request
+				Object.entries(unfinishedRequests).forEach($request => {
+					if ($request[0] == ob["trigger"]) {
+						unfinishedRequests[$request[0]]();
+						delete unfinishedRequests[$request[0]];						
+					}
+				});
+			}
+		}
+		
+
+		if (data.hasOwnProperty('frame_camera')) {
+			var ob = data['frame_camera'];
+			
+			var index = ob["camera"];
+			var frame = ob["frame"];
+
+			var modal = document.querySelector('#modal-roi');
+			
+			modal.classList.add('is-active');
+			
+			modal.dataset.index = index;
+
+			var image = new Image();
+			image.onload = function() {
+				cnvRoi.ctx.drawImage(image, 0, 0);
+
+				cnvRoi.ctx.strokeStyle = "Red"; 
+				cnvRoi.ctx.lineWidth = 5;
+
+				var camera = document.querySelector('#camera-' + index);
+				var roiInput = camera.querySelector('input[name="roi"]');
+				cnvRoi.roi = roiInput.value;
+				if (roiInput.value.length > 0) {
+					var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
+					if (numbers.length === 4)
+						cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
+				}
+
+				onResize();
+			};
+			image.src = "data:image/jpg;base64," + frame;
+			
+			cnvRoi.lastImage = frame;
 		}
 	};
 
@@ -387,6 +449,45 @@ function addTemplateElements(jqElemRoot, values, elements, translations) {
 	});
 }
 
+function selectCameraROI($ev, $cameraIndex) {
+	$($ev.target).addClass("is-loading");
+	ws.send(`get_camera_frame ${$cameraIndex} ${cameras[$cameraIndex].url}`);
+	unfinishedRequests["get_camera_frame"] = function () {
+		setTimeout(function (){
+		$($ev.target).removeClass("is-loading");
+		}, 500);
+	}
+}
+
+function selectCameraIgnoredAreas($ev, $cameraIndex) {
+	$($ev.target).addClass("is-loading");
+}
+
+function deleteCamera($ev, $cameraIndex) {
+	$($ev.target).addClass("is-loading");
+}
+
+function saveCameraROI($ev, save) {
+	var camindex = $('#modal-roi').data("index");
+	var camera = document.querySelector('#camera-' + camindex);
+
+	if (save) {
+		var roiInput = camera.querySelector('input[name="roi"]');
+		roiInput.value = cnvRoi.roi;
+	}
+
+	cnvRoi.x = cnvRoi.y = 0;
+
+	camera.querySelector('.button-select-camera-roi').classList.remove('is-loading');	
+	$('#modal-roi').toggleClass('is-active');
+}
+
+function onResize() {
+	var bounds = cnvRoi.canvas.getBoundingClientRect()
+	cnvRoi.x = bounds.left;
+	cnvRoi.y = bounds.top;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
 	// Get all "navbar-burger" elements
@@ -424,4 +525,70 @@ document.addEventListener('DOMContentLoaded', () => {
 			el.innerHTML = moment(el.dataset.date, "MMMM Do YYYY, h:mm:ss a").fromNow();
 		});
 	}, 10 * 1000);
+
+	document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
+
+	// set ROI canvas listeners
+	cnvRoi.canvas = document.querySelector('#modal-roi canvas');
+	cnvRoi.ctx = cnvRoi.canvas.getContext('2d');
+	
+	// Mouse or touch moved
+	function move (e) {
+		e.preventDefault();
+		e = e.touches[0] || e;
+		if (cnvRoi.clickPressed) {
+			var image = new Image();
+			image.onload = function() {
+				cnvRoi.ctx.drawImage(image, 0, 0);
+
+				const x1 = e.clientX - cnvRoi.x;
+				const y1 = e.clientY - cnvRoi.y;
+
+				cnvRoi.p2 = {x: x1, y: y1};
+
+				const x0 = cnvRoi.p1.x;
+				const y0 = cnvRoi.p1.y;
+				const width = x1 - x0;
+				const heigth = y1 - y0;
+
+				cnvRoi.ctx.strokeRect(x0, y0, width, heigth);			
+			};
+
+			image.src = "data:image/jpg;base64," + cnvRoi.lastImage;	
+		}
+	}
+
+	cnvRoi.canvas.addEventListener("mousemove", move, false);
+	cnvRoi.canvas.addEventListener("touchmove", move, false);
+	
+	// Click or touch pressed
+	function pressed (e) {
+		e.preventDefault();
+		e = e.touches[0] || e;	
+		cnvRoi.clickPressed = true;
+		const x = e.clientX - cnvRoi.x;
+		const y = e.clientY - cnvRoi.y;
+
+		cnvRoi.p1 = {x,y};
+	}
+
+	cnvRoi.canvas.addEventListener("mousedown", pressed, false);
+	cnvRoi.canvas.addEventListener("touchstart", pressed, false);
+
+	// Click or touch released
+	function relesed (e) {
+		cnvRoi.clickPressed = false;
+
+		const lt = {x: Math.round(Math.min(cnvRoi.p1.x, cnvRoi.p2.x)), y: Math.round(Math.min(cnvRoi.p1.y, cnvRoi.p2.y))}
+		const br = {x: Math.round(Math.max(cnvRoi.p1.x, cnvRoi.p2.x)), y: Math.round(Math.max(cnvRoi.p1.y, cnvRoi.p2.y))}
+
+		const width = br.x - lt.x;
+		const heigth = br.y - lt.y;
+		
+		cnvRoi.roi = `[${lt.x},${lt.y}],[${width}, ${heigth}]`;
+		e.preventDefault();
+	}
+
+	cnvRoi.canvas.addEventListener("mouseup", relesed, false);
+	cnvRoi.canvas.addEventListener("touchend", relesed, false);
 });

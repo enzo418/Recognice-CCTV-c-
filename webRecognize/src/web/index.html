@@ -2,6 +2,7 @@
 <html>
 
 <head>
+	<meta name="mobile-web-app-capable" content="yes">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>web recognize</title>
@@ -21,7 +22,7 @@
 	<script src='app.js'></script>
 </head>
 
-<body>
+<body onresize="onResize()">
 	<section class="section">
 		<div class="container">
 			<div class="" id="configuration-page">
@@ -61,7 +62,7 @@
 		<span class="title">Esperando al servidor...</span>
 	</div>
 
-	<!-- Modal -->
+	<!-- Modal File -->
 	<div class="modal" id="modal-file">
 		<div class="modal-background"></div>
 		<div class="modal-content container is-fullhd">
@@ -69,7 +70,7 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Select a file configuration to open</p>
+					<p>Select a configuration file to open</p>
 				</div>
 				<div class="message-body">
 					<!-- Dropdown -->
@@ -103,6 +104,40 @@
 								<i class="fas fa-check"></i>
 							</span>
 							<span>Ok</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<!-- Modal ROI -->
+	<div class="modal" id="modal-roi" data-index="">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p>Select the camera region of interest</p>
+				</div>
+				<div class="message-body">
+					
+					<canvas width="640" height="360"></canvas>
+
+					<div class="buttons-roi">
+						<button class="button is-danger" id="button-camera-discard-roi" onclick="saveCameraROI(event, false)">
+							<span class="icon is-small">
+								<i class="fas fa-times"></i>
+							</span>
+							<span>Cancel</span>
+						</button>
+
+						<button class="button is-success" id="button-camera-save-roi" onclick="saveCameraROI(event, true)">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Save</span>
 						</button>
 					</div>
 				</div>

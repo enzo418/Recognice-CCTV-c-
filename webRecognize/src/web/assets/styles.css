@@ -225,29 +225,16 @@ label {
     text-align: right;
 }
 
-/* do not group these rules */
-*::-webkit-input-placeholder {
-    color: red;
+#modal-roi .modal-content {
+	max-width: 100%;
+	width: fit-content;
+	max-height: 100%;
+    margin: 0;
+    padding: 0;
 }
-*:-moz-placeholder {
-    /* FF 4-18 */
-    color: red;
-    opacity: 1;
-}
-*::-moz-placeholder {
-    /* FF 19+ */
-    color: red;
-    opacity: 1;
-}
-*:-ms-input-placeholder {
-    /* IE 10+ */
-    color: red;
-}
-*::-ms-input-placeholder {
-    /* Microsoft Edge */
-    color: red;
-}
-*::placeholder {
-    /* modern browser */
-    color: red;
+
+#modal-roi .buttons-roi {
+	display: flex;
+	justify-content: space-between;
+	padding-top: 1rem;
 }

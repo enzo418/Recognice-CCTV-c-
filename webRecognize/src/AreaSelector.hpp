@@ -2,12 +2,11 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include <vector>
-#include <wx/msgdlg.h>
 #include <chrono>
-#include "../recognize/src/utils.hpp"
-#include "../recognize/src/types.hpp"
-#include "../recognize/src/types_configuration.hpp"
-#include "../recognize/src/image_manipulation.hpp"
+#include "../../recognize/src/utils.hpp"
+#include "../../recognize/src/types.hpp"
+#include "../../recognize/src/types_configuration.hpp"
+#include "../../recognize/src/image_manipulation.hpp"
 
 namespace AreaSelector {
 	struct AreaDataROI {
@@ -51,7 +50,7 @@ namespace AreaSelector {
 	 * @param url source
 	 * @param roi reference param
 	 */
-	void SelectCameraROI(CameraConfiguration& cfg);
+	bool SelectCameraROI(CameraConfiguration& cfg);
 			
 	/**
 	 * @brief Callback for SelectCameraIgnoredAreas
@@ -68,6 +67,12 @@ namespace AreaSelector {
 	 * @param url source
 	 * @param roi reference param
 	 */
-	void SelectCameraIgnoredAreas(CameraConfiguration& cfg);
+	bool SelectCameraIgnoredAreas(CameraConfiguration& cfg);
+
+	/**
+	 * @brief Helper function to resize a frame to the common resolution
+	 * @param frame frame to resize
+	 */
+	void ResizeFrameToCommon(cv::Mat& frame);
 };
 

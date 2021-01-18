@@ -21,9 +21,14 @@ namespace AreaSelector {
 		return sucess;
 	}
 
-	void SelectCameraROI(CameraConfiguration& cfg) {
+	void ResizeFrameToCommon(cv::Mat& frame) {
+		cv::resize(frame, frame, RESIZERESOLUTION);
+	}
+
+	bool SelectCameraROI(CameraConfiguration& cfg) {
 		AreaDataROI data;
-		
+		bool success = false;
+
 		if (GetFrame(cfg.url, data.frame)) {
 			// setup window
 			cv::namedWindow("Press a key to exit");
@@ -51,9 +56,11 @@ namespace AreaSelector {
 				data.roi.height = RESIZERESOLUTION.height;
 			
 			cfg.roi = data.roi;
-		} else {
-			wxMessageBox("Couldn't open the camera", "Error");
+			
+			success = true;
 		}
+
+		return success;
 	}
 
 	void onMouseROI(int event, int x, int y, int flags, void* params) {
@@ -87,9 +94,10 @@ namespace AreaSelector {
 		}
 	}
 
-	void SelectCameraIgnoredAreas(CameraConfiguration& cfg) {
+	bool SelectCameraIgnoredAreas(CameraConfiguration& cfg) {
 		AreaDataIgnoredAreas data;
 		data.rng = cv::RNG(12345);
+		bool success = false;
 		
 		if (GetFrame(cfg.url, data.frame)) {
 			// setup window
@@ -122,9 +130,11 @@ namespace AreaSelector {
 			cv::waitKey(0);
 			
 			cv::destroyAllWindows();
-		} else {
-			wxMessageBox("Couldn't open the camera", "Error");
+
+			success = true;
 		}
+
+		return success;
 	}
 
 	void onMouseIgnoredAreas(int event, int x, int y, int flags, void* params) {

@@ -10,6 +10,8 @@
 
 #include "AreaSelector.hpp"
 
+#include "base64.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <set>
@@ -59,10 +61,16 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
 	return res;
 }
 
-std::string GetAlertMessage(const AlertStatus& status, const std::string& message) {
+/**
+ * @brief Formats a alert message
+ * @param status status of the alert, ok or error
+ * @param message message of the alert
+ * @param trigger_query query that triggered the alert, should be the same as the query received
+ */
+std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& trigger_query  = "") {
 	std::string st = AlertStatus::OK == status ? "ok" : "error";
 
-	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}}));
+	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"trigger", trigger_query}}));
 }
 
 bool recognize_running = false;
@@ -161,14 +169,26 @@ namespace {
 				sendEveryone(GetRecognizeStateJson());
 			} else if (id == "get_camera_frame") {
 				if (!val.empty()) {
+					// find camera index
+					indx = strcspn(val.c_str(), " ");
+					std::string camIndex = val.substr(0, indx);
+					std::string camUrl = val.substr(indx + 1, val.size() - 1);
+
 					cv::Mat img;
-					if (AreaSelector::GetFrame(val, img)) {
-						
+					if (AreaSelector::GetFrame(camUrl, img)) {
+						AreaSelector::ResizeFrameToCommon(img);
+
+						std::vector<uchar> buf;
+						cv::imencode(".jpg", img, buf);
+						auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
+						std::string encoded = base64_encode(enc_msg, buf.size());
+
+						con->send(GetJsonString("frame_camera", GetJsonString({{"camera", camIndex},{"frame", encoded}})));
 					} else {
-						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera."))
+						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
 					}
 				} else {
-					con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty."))
+					con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
 				}
 			} else {
 				std::cout << "Command without handler received: '" << id << " value=" << val << "'\n";
