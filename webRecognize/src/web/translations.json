@@ -9,7 +9,7 @@
 			"description": "Same as <msBetweenFrame>. But only will be applied after detecting a change in the frames."
 		},
 		"outputResolution": {
-			"label": "Output or Preview resolution",
+			"label": "Output or Preview resolution, leave on 0,0 to use auto-size",
 			"description": "The preview will be resized to this resolution."
 		},
 		"ratioScaleOutput": {

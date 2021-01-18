@@ -8,6 +8,8 @@
 #include "../../recognize/src/configuration_file.hpp"
 #include "../../recognize/src/notification.hpp"
 
+#include "AreaSelector.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <set>
@@ -25,6 +27,11 @@
 
 namespace fs = std::filesystem;
 using namespace seasocks;
+
+enum AlertStatus {
+	ERROR 	= 0,
+	OK 		= 1
+};
 
 std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach);
 std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach);
@@ -50,6 +57,12 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
 	res += "}";
 
 	return res;
+}
+
+std::string GetAlertMessage(const AlertStatus& status, const std::string& message) {
+	std::string st = AlertStatus::OK == status ? "ok" : "error";
+
+	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}}));
 }
 
 bool recognize_running = false;
@@ -114,7 +127,7 @@ namespace {
 
 				ConfigurationFile::SaveConfigurations(configurations, file);
 
-				con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "file saved correctly!"}})));
+				con->send(GetAlertMessage(AlertStatus::OK, "file saved correctly!"));
 			} else if (id == "change_recognize_state") {
 				recognize_running = !recognize_running;
 				
@@ -137,15 +150,26 @@ namespace {
 										configurations.programConfig.showPreview, 
 										configurations.programConfig.telegramConfig.useTelegramBot);
 					
-					con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "recognize started!"}})));
+					con->send(GetAlertMessage(AlertStatus::OK, "recognize started!"));
 				} else { // was running, stop it
 					recognize->CloseAndJoin();
 
-					con->send(GetJsonString("request_reply", GetJsonString({{"status", "ok"}, {"message", "recognize stop!"}})));
+					con->send(GetAlertMessage(AlertStatus::OK, "recognize stopped!"));
 					std::cout << "Closed recognize" << std::endl;
 				}
 
 				sendEveryone(GetRecognizeStateJson());
+			} else if (id == "get_camera_frame") {
+				if (!val.empty()) {
+					cv::Mat img;
+					if (AreaSelector::GetFrame(val, img)) {
+						
+					} else {
+						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera."))
+					}
+				} else {
+					con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty."))
+				}
 			} else {
 				std::cout << "Command without handler received: '" << id << " value=" << val << "'\n";
 			}

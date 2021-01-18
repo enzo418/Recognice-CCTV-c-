@@ -133,8 +133,9 @@ $(function() {
 
 				/// ---- ADD PROGRAM ITEM			
 				var programEl = $(getProgramContainerTemplate());
+				var programContent = $(programEl).children('.program-config-content');
 				
-				addTemplateElements(programEl, headers.program, elements.program, translations.en);
+				addTemplateElements(programContent, headers.program, elements.program, translations.en);
 
 				$('#configurations').append(programEl);
 
@@ -148,9 +149,10 @@ $(function() {
 
 					// get camera root container
 					var camEl = $(getCameraContainerTemplate(i, val));
+					var camConten = $(camEl).children('.camera-config-content');
 					
 					// add each input element
-					addTemplateElements(camEl, val, elements.camera, translations.en);
+					addTemplateElements(camConten, val, elements.camera, translations.en);
 
 					// add to configurations container
 					$('#configurations').append(camEl);
@@ -364,9 +366,7 @@ function getElementsTranslations() {
 }
 
 function addTemplateElements(jqElemRoot, values, elements, translations) {
-	console.log({jqElemRoot, elements, translations});
 	Object.entries(elements).forEach(el => {
-		console.log({el}, el[0], translations[el[0]]);
 		const $name = el[0];
 		const $type = el[1].type;
 		const $hidden = el[1].hidden;
