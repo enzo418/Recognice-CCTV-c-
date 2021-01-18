@@ -87,6 +87,24 @@ var cnvRoi = {
 	roi: ""
 }
 
+var cnvAreas = {
+	canvas: null,
+	ctx: null,
+	lastImage: "",
+	clickPressed: false,
+	x: 0,
+	y: 0,
+	areas: [],
+	current: {
+		p1: {x: 0, y:0},
+		p2: {x: 0, y:0},
+		color: ""
+	},
+	areasString: "",
+	lastClick: null,
+	colors: ["Aqua", "Red", "Blue", "Chartreuse", "Crimson", "Cyan", "DeepPink", "Gold", "LawnGreen", "PaleTurquoise"]
+}
+
 var notificationPaginator = {index: 0, elements:[]}; // DOM notification elements
 
 $(function() {
@@ -262,34 +280,64 @@ $(function() {
 			
 			var index = ob["camera"];
 			var frame = ob["frame"];
-
-			var modal = document.querySelector('#modal-roi');
 			
-			modal.classList.add('is-active');
-			
-			modal.dataset.index = index;
+			if (frameRequestOrigin === "roi") {
+				var modal = document.querySelector('#modal-roi');
+				
+				modal.classList.add('is-active');
+				
+				modal.dataset.index = index;
 
-			var image = new Image();
-			image.onload = function() {
-				cnvRoi.ctx.drawImage(image, 0, 0);
+				var image = new Image();
+				image.onload = function() {
+					cnvRoi.ctx.drawImage(image, 0, 0);
 
-				cnvRoi.ctx.strokeStyle = "Red"; 
-				cnvRoi.ctx.lineWidth = 5;
+					cnvRoi.ctx.strokeStyle = "Red"; 
+					cnvRoi.ctx.lineWidth = 5;
 
-				var camera = document.querySelector('#camera-' + index);
-				var roiInput = camera.querySelector('input[name="roi"]');
-				cnvRoi.roi = roiInput.value;
-				if (roiInput.value.length > 0) {
-					var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
-					if (numbers.length === 4)
-						cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
-				}
+					var camera = document.querySelector('#camera-' + index);
+					var roiInput = camera.querySelector('input[name="roi"]');
+					cnvRoi.roi = roiInput.value;
+					if (roiInput.value.length > 0) {
+						var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
+						if (numbers.length === 4)
+							cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
+					}
 
-				onResize();
-			};
-			image.src = "data:image/jpg;base64," + frame;
-			
-			cnvRoi.lastImage = frame;
+					onResize();
+				};
+				image.src = "data:image/jpg;base64," + frame;
+				
+				cnvRoi.lastImage = frame;
+			} else {
+				var modal = document.querySelector('#modal-igarea');
+				
+				modal.classList.add('is-active');
+				
+				modal.dataset.index = index;
+
+				var image = new Image();
+				image.onload = function() {
+					cnvAreas.ctx.drawImage(image, 0, 0);
+
+					cnvAreas.ctx.strokeStyle = "Red"; 
+					cnvAreas.ctx.lineWidth = 5;
+
+					var camera = document.querySelector('#camera-' + index);
+					var igAreas = camera.querySelector('input[name="ignoredareas"]');
+					// cnvRoi.roi = igAreas.value;
+					// if (igAreas.value.length > 0) {
+					// 	var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
+					// 	if (numbers.length === 4)
+					// 		cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
+					// }
+
+					onResize();
+				};
+				image.src = "data:image/jpg;base64," + frame;
+				
+				cnvAreas.lastImage = frame;
+			}
 		}
 	};
 
@@ -456,19 +504,33 @@ function addTemplateElements(jqElemRoot, values, elements, translations) {
 function selectCameraROI($ev, $cameraIndex) {
 	$($ev.target).addClass("is-loading");
 
+	frameRequestOrigin = "roi";
+
 	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
 	
 	ws.send(`get_camera_frame ${$cameraIndex} ${rotation} ${cameras[$cameraIndex].url}`);
 
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function (){
-		$($ev.target).removeClass("is-loading");
+			$($ev.target).removeClass("is-loading");
 		}, 500);
 	}
 }
 
 function selectCameraIgnoredAreas($ev, $cameraIndex) {
 	$($ev.target).addClass("is-loading");
+
+	frameRequestOrigin = "ig-areas";
+
+	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
+	
+	ws.send(`get_camera_frame ${$cameraIndex} ${rotation} ${cameras[$cameraIndex].url}`);
+
+	unfinishedRequests["get_camera_frame"] = function () {
+		setTimeout(function (){
+			$($ev.target).removeClass("is-loading");
+		}, 500);
+	}
 }
 
 function deleteCamera($ev, $cameraIndex) {
@@ -490,10 +552,39 @@ function saveCameraROI($ev, save) {
 	$('#modal-roi').toggleClass('is-active');
 }
 
+function saveCameraIgarea($ev, save) {
+	var camindex = $('#modal-igarea').data("index");
+	var camera = document.querySelector('#camera-' + camindex);
+
+	if (save) {
+		var roiInput = camera.querySelector('input[name="roi"]');
+		roiInput.value = cnvRoi.roi;
+	}
+
+	cnvRoi.x = cnvRoi.y = 0;
+
+	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');	
+	$('#modal-igarea').toggleClass('is-active');
+}
+
 function onResize() {
 	var bounds = cnvRoi.canvas.getBoundingClientRect()
 	cnvRoi.x = bounds.left;
 	cnvRoi.y = bounds.top;
+
+	var bounds = cnvAreas.canvas.getBoundingClientRect()
+	cnvAreas.x = bounds.left;
+	cnvAreas.y = bounds.top;
+}
+
+function getRectangleDimensions($p1, $p2) {
+	const lt = {x: Math.round(Math.min($p1.x, $p2.x)), y: Math.round(Math.min($p1.y, $p2.y))}
+	const br = {x: Math.round(Math.max($p1.x, $p2.x)), y: Math.round(Math.max($p1.y, $p2.y))}
+
+	const width = br.x - lt.x;
+	const heigth = br.y - lt.y;
+
+	return [lt, width, heigth];
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -535,71 +626,183 @@ document.addEventListener('DOMContentLoaded', () => {
 	}, 10 * 1000);
 
 	document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
+	document.querySelector('#modal-igarea .modal-content').addEventListener('scroll', onResize, false);
 
 	// set ROI canvas listeners
 	cnvRoi.canvas = document.querySelector('#modal-roi canvas');
 	cnvRoi.ctx = cnvRoi.canvas.getContext('2d');
 	
-	// Mouse or touch moved
-	function move (e) {
-		e.preventDefault();		
-		e = (e.touches || [])[0] || e;
-		if (cnvRoi.clickPressed) {
-			var image = new Image();
-			image.onload = function() {
-				cnvRoi.ctx.drawImage(image, 0, 0);
+	$(function() {
+		// Mouse or touch moved
+		function move (e) {
+			e.preventDefault();		
+			e = (e.touches || [])[0] || e;
+			if (cnvRoi.clickPressed) {
+				var image = new Image();
+				image.onload = function() {
+					cnvRoi.ctx.drawImage(image, 0, 0);
 
-				const x1 = e.clientX - cnvRoi.x;
-				const y1 = e.clientY - cnvRoi.y;
+					const x1 = e.clientX - cnvRoi.x;
+					const y1 = e.clientY - cnvRoi.y;
 
-				cnvRoi.p2 = {x: x1, y: y1};
+					cnvRoi.p2 = {x: x1, y: y1};
 
-				const x0 = cnvRoi.p1.x;
-				const y0 = cnvRoi.p1.y;
-				const width = x1 - x0;
-				const heigth = y1 - y0;
+					const x0 = cnvRoi.p1.x;
+					const y0 = cnvRoi.p1.y;
+					const width = x1 - x0;
+					const heigth = y1 - y0;
 
-				cnvRoi.ctx.strokeRect(x0, y0, width, heigth);			
-			};
+					cnvRoi.ctx.strokeRect(x0, y0, width, heigth);			
+				};
 
-			image.src = "data:image/jpg;base64," + cnvRoi.lastImage;	
+				image.src = "data:image/jpg;base64," + cnvRoi.lastImage;	
+			}
 		}
-	}
 
-	cnvRoi.canvas.addEventListener("mousemove", move, false);
-	cnvRoi.canvas.addEventListener("touchmove", move, false);
-	
-	// Click or touch pressed
-	function pressed (e) {
-		e.preventDefault();
-		console.log(e);
-		e = (e.touches || [])[0] || e;
-		cnvRoi.clickPressed = true;
-		const x = e.clientX - cnvRoi.x;
-		const y = e.clientY - cnvRoi.y;
-
-		cnvRoi.p1 = {x,y};
-	}
-
-	cnvRoi.canvas.addEventListener("mousedown", pressed, false);
-	cnvRoi.canvas.addEventListener("touchstart", pressed, false);
-
-	// Click or touch released
-	function relesed (e) {
-		cnvRoi.clickPressed = false;
-
-		const lt = {x: Math.round(Math.min(cnvRoi.p1.x, cnvRoi.p2.x)), y: Math.round(Math.min(cnvRoi.p1.y, cnvRoi.p2.y))}
-		const br = {x: Math.round(Math.max(cnvRoi.p1.x, cnvRoi.p2.x)), y: Math.round(Math.max(cnvRoi.p1.y, cnvRoi.p2.y))}
-
-		const width = br.x - lt.x;
-		const heigth = br.y - lt.y;
+		cnvRoi.canvas.addEventListener("mousemove", move, false);
+		cnvRoi.canvas.addEventListener("touchmove", move, false);
 		
-		cnvRoi.roi = `[${lt.x},${lt.y}],[${width}, ${heigth}]`;
-		e.preventDefault();
-	}
+		// Click or touch pressed
+		function pressed (e) {
+			e.preventDefault();
+			console.log(e);
+			e = (e.touches || [])[0] || e;
+			cnvRoi.clickPressed = true;
+			const x = e.clientX - cnvRoi.x;
+			const y = e.clientY - cnvRoi.y;
 
-	cnvRoi.canvas.addEventListener("mouseup", relesed, false);
-	cnvRoi.canvas.addEventListener("touchend", relesed, false);
+			cnvRoi.p1 = {x,y};
+		}
+
+		cnvRoi.canvas.addEventListener("mousedown", pressed, false);
+		cnvRoi.canvas.addEventListener("touchstart", pressed, false);
+
+		// Click or touch released
+		function relesed (e) {
+			cnvRoi.clickPressed = false;
+
+			const [lt, width, heigth] = getRectangleDimensions(cnvRoi.p1, cnvRoi.p2);
+			
+			cnvRoi.roi = `[${lt.x},${lt.y}],[${width}, ${heigth}]`;
+			e.preventDefault();
+		}
+
+		cnvRoi.canvas.addEventListener("mouseup", relesed, false);
+		cnvRoi.canvas.addEventListener("touchend", relesed, false);
+	});
+
+	$(function() {
+		/* CANVAS IGNORED AREAS LISTENERS */
+		// set ROI canvas listeners
+		cnvAreas.canvas = document.querySelector('#modal-igarea canvas');
+		cnvAreas.ctx = cnvAreas.canvas.getContext('2d');
+		
+		// Mouse or touch moved
+		function move (e) {
+			e.preventDefault();		
+			e = (e.touches || [])[0] || e;
+			if (cnvAreas.clickPressed) {
+				var image = new Image();
+				image.onload = function() {
+					// check again... there is alot of this calls at the same time and causes problems
+					if (cnvAreas.clickPressed) { 
+						cnvAreas.ctx.drawImage(image, 0, 0);
+
+						cnvAreas.areas.forEach(area => {
+							cnvAreas.ctx.strokeStyle = area.color;
+							cnvAreas.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
+						});
+						
+						const x1 = e.clientX - cnvAreas.x;
+						const y1 = e.clientY - cnvAreas.y;
+
+						cnvAreas.current.p2 = {x: x1, y: y1};
+
+						const x0 = cnvAreas.current.p1.x;
+						const y0 = cnvAreas.current.p1.y;
+						const width = x1 - x0;
+						const heigth = y1 - y0;
+
+						cnvAreas.ctx.strokeStyle = cnvAreas.current.color;
+
+						cnvAreas.ctx.strokeRect(x0, y0, width, heigth);
+					}
+				};
+
+				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;	
+			}
+		}
+
+		cnvAreas.canvas.addEventListener("mousemove", move, false);
+		cnvAreas.canvas.addEventListener("touchmove", move, false);
+		
+		// Click or touch pressed
+		function pressed (e) {
+			e.preventDefault();
+			e = (e.touches || [])[0] || e;
+			cnvAreas.lastClick = performance.now();
+			cnvAreas.clickPressed = true;
+			const x = e.clientX - cnvAreas.x;
+			const y = e.clientY - cnvAreas.y;
+
+			cnvAreas.current.color = cnvAreas.colors[getRandomArbitrary(0, cnvAreas.colors.length)];
+
+			cnvAreas.current.p1 = cnvAreas.current.p2 = {x,y};
+		}
+
+		cnvAreas.canvas.addEventListener("mousedown", pressed, false);
+		cnvAreas.canvas.addEventListener("touchstart", pressed, false);
+
+		// Click or touch released
+		function relesed (e) {
+			cnvAreas.clickPressed = false;
+			var time = (performance.now() - cnvAreas.lastClick) / 1000;
+
+			const [lt, width, heigth] = getRectangleDimensions(cnvAreas.current.p1, cnvAreas.current.p2);
+			
+			console.log({time, width, heigth});
+			if (time < 2 && time > 0 && width > -2 && width < 2 && heigth > -2 && heigth < 2) {
+				var tmpAreas = [];
+				const p = cnvAreas.current.p1;
+				cnvAreas.areas.forEach(area => {					
+					if (!(p.x >= area.lt.x && p.x <= area.lt.x + area.width &&
+						p.y >= area.lt.y && p.y <= area.lt.y + area.heigth)) {
+						tmpAreas.push(area);
+					}
+				});
+				
+				cnvAreas.areas = tmpAreas;
+
+				// draw areas
+				var image = new Image();
+				image.onload = function() {
+					cnvAreas.ctx.drawImage(image, 0, 0);
+
+					cnvAreas.areas.forEach(area => {
+						cnvAreas.ctx.strokeStyle = area.color;
+						cnvAreas.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
+					});
+				};
+
+				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;	
+			} else {
+				cnvAreas.areas.push({lt, width, heigth, color: cnvAreas.current.color});
+
+				cnvAreas.areas.forEach(area => {
+					cnvAreas.areasString += `[${area.lt.x},${area.lt.y}],[${area.width}, ${area.heigth}],`;
+				});
+
+				cnvAreas.areasString = cnvAreas.areasString.substring(0, cnvAreas.areasString.length - 1);
+
+				cnvAreas.current.p1 = {x: 0, y: 0};
+				cnvAreas.current.p2 = {x: 0, y: 0};
+			}
+			e.preventDefault();
+		}
+
+		cnvAreas.canvas.addEventListener("mouseup", relesed, false);
+		cnvAreas.canvas.addEventListener("touchend", relesed, false);
+	});
 });
 
 function previousNotification(){
@@ -622,4 +825,7 @@ function changeCurrentElementNotification($i) {
 	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
 	$('.notification-previous-left').text(notificationPaginator.index);
 }
-	
+
+function getRandomArbitrary(min, max) {
+    return Math.round(Math.random() * (max - min) + min);
+}

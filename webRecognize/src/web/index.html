@@ -9,7 +9,6 @@
 	<link rel="stylesheet" href="assets/bulma.min.css">
 	<link rel="stylesheet" href="assets/bulma-tooltip.min.css">
 	<link rel="stylesheet" href="assets/bulma-pageloader.min.css">
-	<link rel="stylesheet" href="assets/bulma-collapsible.min.css">
 	<link rel="stylesheet" href="assets/styles.css">
 
 	<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" sizes="any">
@@ -144,6 +143,40 @@
 						</button>
 
 						<button class="button is-success" id="button-camera-save-roi" onclick="saveCameraROI(event, true)">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Save</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<!-- Modal Ignored areas -->
+	<div class="modal" id="modal-igarea" data-index="">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p>Select the camera region of interest</p>
+				</div>
+				<div class="message-body">
+					
+					<canvas width="640" height="360"></canvas>
+
+					<div class="buttons-igarea">
+						<button class="button is-danger" id="button-camera-discard-igarea" onclick="saveCameraIgarea(event, false)">
+							<span class="icon is-small">
+								<i class="fas fa-times"></i>
+							</span>
+							<span>Cancel</span>
+						</button>
+
+						<button class="button is-success" id="button-camera-save-igarea" onclick="saveCameraIgarea(event, true)">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
