@@ -559,6 +559,8 @@ function saveCameraIgarea($ev, save) {
 	if (save) {
 		var roiInput = camera.querySelector('input[name="roi"]');
 		roiInput.value = cnvRoi.roi;
+	} else {
+		cnvAreas.areas = [];
 	}
 
 	cnvRoi.x = cnvRoi.y = 0;
