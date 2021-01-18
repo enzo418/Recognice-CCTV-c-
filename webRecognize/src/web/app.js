@@ -216,7 +216,7 @@ $(function() {
 
 				Push.create("Alert!", {
 					body: "...",
-					icon: '/favicon.svg',
+					icon: 'assets/favicon.svg',
 					timeout: 2000,
 					onClick: function () {
 						window.focus();
@@ -257,7 +257,6 @@ $(function() {
 			}
 		}
 		
-
 		if (data.hasOwnProperty('frame_camera')) {
 			var ob = data['frame_camera'];
 			

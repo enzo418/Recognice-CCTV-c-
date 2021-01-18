@@ -261,6 +261,12 @@ label {
     color: #fff;
 	border-radius: 0.35rem;
 	padding: 1.3rem;
+	border: 0.1rem solid white;
+}
+
+.navigator-notification:hover {
+	background-color: #000000d1;
+    color: #00feff;
 }
 
 .previous-notification {
@@ -270,4 +276,8 @@ label {
 
 .next-notification {
 	bottom: 20%;
+}
+
+.navigator-notification span {
+    margin-left: 0.2rem;
 }
