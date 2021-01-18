@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	cnvRoi.canvas = document.querySelector('#modal-roi canvas');
 	cnvRoi.ctx = cnvRoi.canvas.getContext('2d');
 	
-	$(function() {
+	$(function() { // change scope to use some custom move / onclick / ... functions that may repeat
 		// Mouse or touch moved
 		function move (e) {
 			e.preventDefault();		
@@ -691,8 +691,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		cnvRoi.canvas.addEventListener("touchend", relesed, false);
 	});
 
-	$(function() {
-		/* CANVAS IGNORED AREAS LISTENERS */
+	/* CANVAS IGNORED AREAS LISTENERS */
+	$(function() {  // change scope to use some custom move / onclick / ... functions that may repeat
 		// set ROI canvas listeners
 		cnvAreas.canvas = document.querySelector('#modal-igarea canvas');
 		cnvAreas.ctx = cnvAreas.canvas.getContext('2d');
@@ -760,7 +760,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			const [lt, width, heigth] = getRectangleDimensions(cnvAreas.current.p1, cnvAreas.current.p2);
 			
-			console.log({time, width, heigth});
+			// if it's dimesion is small enough and was a quick click then delete it, else save it
+
 			if (time < 2 && time > 0 && width > -2 && width < 2 && heigth > -2 && heigth < 2) {
 				var tmpAreas = [];
 				const p = cnvAreas.current.p1;
