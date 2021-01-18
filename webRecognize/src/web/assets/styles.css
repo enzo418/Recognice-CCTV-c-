@@ -1,6 +1,6 @@
-html, body {
+/* html, body {
 	height: 100%;
-}
+} */
 
 ::-webkit-scrollbar-thumb {
     background-color: #494e52;
@@ -17,6 +17,7 @@ html, body {
 
 body, .section, html {
 	background-color: #121213;
+	/* height: calc(100% + 20%); */
 }
 
 .section {

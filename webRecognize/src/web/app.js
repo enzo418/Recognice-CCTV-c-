@@ -207,7 +207,9 @@ $(function() {
 			if (ob["type"] != "sound") {
 				var not_content = document.getElementById('notifications-content');
 				var $not = $(getNotificationTemplate(ob["type"], ob['content']));
-								
+				
+				$('.navigator-notification').removeClass('is-hidden');
+
 				notificationPaginator.elements.push($not[0]);
 
 				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
@@ -602,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function previousNotification(){
-	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : 0;
+	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : notificationPaginator.elements.length - 1;
 	changeCurrentElementNotification($i);
 }
 
