@@ -73,6 +73,6 @@ namespace AreaSelector {
 	 * @brief Helper function to resize a frame to the common resolution
 	 * @param frame frame to resize
 	 */
-	void ResizeFrameToCommon(cv::Mat& frame);
+	void ResizeRotateFrame(cv::Mat& frame, int rotation);
 };
 

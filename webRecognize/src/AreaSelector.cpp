@@ -21,8 +21,9 @@ namespace AreaSelector {
 		return sucess;
 	}
 
-	void ResizeFrameToCommon(cv::Mat& frame) {
+	void ResizeRotateFrame(cv::Mat& frame, int rotation) {
 		cv::resize(frame, frame, RESIZERESOLUTION);
+		ImageManipulation::RotateImage(frame, rotation);
 	}
 
 	bool SelectCameraROI(CameraConfiguration& cfg) {

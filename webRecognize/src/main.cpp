@@ -172,18 +172,24 @@ namespace {
 					// find camera index
 					indx = strcspn(val.c_str(), " ");
 					std::string camIndex = val.substr(0, indx);
-					std::string camUrl = val.substr(indx + 1, val.size() - 1);
+					std::string camRotUrl = val.substr(indx + 1, val.size() - 1);
 
+					indx = strcspn(camRotUrl.c_str(), " ");
+					std::string camRotation = camRotUrl.substr(0, indx);
+					std::string camUrl = camRotUrl.substr(indx + 1, camRotUrl.size() - 1);
+					
 					cv::Mat img;
-					if (AreaSelector::GetFrame(camUrl, img)) {
-						AreaSelector::ResizeFrameToCommon(img);
+					if (AreaSelector::GetFrame(camUrl, img)) {		
+						int rotation = std::stoi(camRotation); // try ... catch?
+
+						AreaSelector::ResizeRotateFrame(img, rotation);
 
 						std::vector<uchar> buf;
 						cv::imencode(".jpg", img, buf);
 						auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
 						std::string encoded = base64_encode(enc_msg, buf.size());
 
-						con->send(GetJsonString("frame_camera", GetJsonString({{"camera", camIndex},{"frame", encoded}})));
+						con->send(GetJsonString("frame_camera", GetJsonString({{"camera", camIndex},{"frame", encoded}})));						
 					} else {
 						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
 					}

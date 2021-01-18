@@ -451,7 +451,11 @@ function addTemplateElements(jqElemRoot, values, elements, translations) {
 
 function selectCameraROI($ev, $cameraIndex) {
 	$($ev.target).addClass("is-loading");
-	ws.send(`get_camera_frame ${$cameraIndex} ${cameras[$cameraIndex].url}`);
+
+	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
+	
+	ws.send(`get_camera_frame ${$cameraIndex} ${rotation} ${cameras[$cameraIndex].url}`);
+
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function (){
 		$($ev.target).removeClass("is-loading");
