@@ -67,6 +67,12 @@ const getTabTemplate = (i, camName) => `
 	<a><span>${camName}</span></a>
 </li>`
 
+const getAlertTemplate = ($message, $stateClass) => `
+<div class="notification ${$stateClass}">
+	<button class="delete" onclick="deleteAlert(event)"></button>
+	<span class="notification-text">${$message}</span>
+</div>`;
+
 var FILE_PATH = ""; // file that the user requested at the start
 var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
@@ -238,19 +244,7 @@ $(function() {
 
 		if (data.hasOwnProperty('request_reply')) {
 			var ob = data["request_reply"];
-			if (ob["status"] == "ok") {
-				$('#notification').removeClass('is-danger')
-								  .addClass('is-success');				
-			} else if (ob["status"] == "error") {
-				$('#notification').removeClass('is-success')
-								  .addClass('is-danger');
-			}
-
-			$('#notification').removeClass('is-hidden')
-			$('#notification span').text(ob["message"]);
-
-			setTimeout(() => $('#notification').addClass('is-hidden'), 6000);
-
+			createAlert(ob["status"], ob["message"])
 			if (ob["trigger"].length > 0) {
 				// execute pending unifished request
 				Object.entries(unfinishedRequests).forEach($request => {
@@ -376,6 +370,18 @@ $(function() {
 	});
 });
 
+
+function createAlert($state, $message) {
+	var stateClass = $state === "ok" ? 'is-success' : 'is-danger';
+	var alert = $(getAlertTemplate($message, stateClass));
+	$('#alerts').append(alert);				
+
+	setTimeout(() => alert.remove(), 8000);
+}
+
+function deleteAlert($ev) {
+	($ev.target.parentNode).remove();
+}
 
 function sendObj(key, body) {
 	body["key"] = key;
@@ -672,14 +678,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			})
 		})
 	}
-
-	document.querySelectorAll('.notification .delete').forEach(($delete) => {
-		var $notification = $delete.parentNode;
-
-		$delete.addEventListener('click', () => {
-			$($notification).toggleClass('is-hidden');
-		});
-	});
 
 	// Update notifications time
 	setInterval(() => {
