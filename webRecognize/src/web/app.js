@@ -94,7 +94,7 @@ var cnvAreas = {
 	clickPressed: false,
 	x: 0,
 	y: 0,
-	areas: [],
+	areas: [], // area: {lt: {x, y}, width, height}
 	current: {
 		p1: {x: 0, y:0},
 		p2: {x: 0, y:0},
@@ -325,12 +325,21 @@ $(function() {
 
 					var camera = document.querySelector('#camera-' + index);
 					var igAreas = camera.querySelector('input[name="ignoredareas"]');
-					// cnvRoi.roi = igAreas.value;
-					// if (igAreas.value.length > 0) {
-					// 	var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
-					// 	if (numbers.length === 4)
-					// 		cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
-					// }
+					cnvAreas.areasString = igAreas.value;
+					if (cnvAreas.areasString.length > 0) {
+						var numbers = cnvAreas.areasString.match(/\d+/g).map(i => parseInt(i));
+						if (numbers.length % 4 === 0) {
+							for(var base = 0; base < numbers.length; base+=4) {
+								const color = cnvAreas.colors[getRandomArbitrary(0, cnvAreas.colors.length)];
+								const 	lt = {x: numbers[base + 0], y: numbers[base + 1]},
+										width = numbers[base + 2],
+										heigth = numbers[base + 3];
+
+								cnvAreas.areas.push({lt, width, heigth, color});
+								cnvAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);						
+							}
+						}
+					}
 
 					onResize();
 				};
@@ -557,13 +566,13 @@ function saveCameraIgarea($ev, save) {
 	var camera = document.querySelector('#camera-' + camindex);
 
 	if (save) {
-		var roiInput = camera.querySelector('input[name="roi"]');
-		roiInput.value = cnvRoi.roi;
+		var igAreaInput = camera.querySelector('input[name="ignoredareas"]');
+		igAreaInput.value = cnvAreas.areasString;
 	} else {
 		cnvAreas.areas = [];
 	}
 
-	cnvRoi.x = cnvRoi.y = 0;
+	cnvAreas.x = cnvAreas.y = 0;
 
 	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');	
 	$('#modal-igarea').toggleClass('is-active');
