@@ -12,7 +12,7 @@ struct NumberFramesBeforeAfter {
 };
 
 struct CameraConfiguration {
-	std::string cameraName = "NEW CAMERA";
+	std::string cameraName = "new_camera";
 
 	// url or path to the camera / video
 	std::string url;
@@ -33,7 +33,7 @@ struct CameraConfiguration {
 	int changeThreshold = 1000;
 
 	// The type of the camera. See definition.
-	CAMERATYPE type;
+	CAMERATYPE type = CAMERA_DISABLED;
 
 	// Time to wait from the time a person reaches the point of entry or exit until they reach the other point
 	int secondsWaitEntryExit = 1;

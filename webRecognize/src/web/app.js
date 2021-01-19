@@ -63,7 +63,7 @@ ${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
 </div>`;
 
 const getTabTemplate = (i, camName) => `
-<li data-config="camera-${i}">
+<li data-config="camera-${i}" id="tab-camera-${i}">
 	<a><span>${camName}</span></a>
 </li>`
 
@@ -106,6 +106,8 @@ var cnvAreas = {
 }
 
 var notificationPaginator = {index: 0, elements:[]}; // DOM notification elements
+
+var configurationsElements = {elements: {}, translations: {}};
 
 $(function() {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
@@ -164,8 +166,10 @@ $(function() {
 
 			cameras = headers.cameras;
 			
-			getElementsTranslations().then(res => {				
+			getElementsTranslations().then(res => {								
 				const [elements, translations] = res;
+				configurationsElements.elements = elements;
+				configurationsElements.translations = translations;
 
 				/// ---- ADD PROGRAM ITEM			
 				var programEl = $(getProgramContainerTemplate());
@@ -178,38 +182,7 @@ $(function() {
 				/// ---- END PROGRAM ITEM
 
 				/// ==== ADD CAMERAS CONFIGURATIONS
-				var tabs = document.querySelector('.tabs ul');
-				headers["cameras"].forEach((val, i) => {
-					// add tab
-					$(tabs).append(getTabTemplate(i, val["cameraname"]));
-
-					// get camera root container
-					var camEl = $(getCameraContainerTemplate(i, val));
-					var camConten = $(camEl).children('.camera-config-content');
-					
-					// add each input element
-					addTemplateElements(camConten, val, elements.camera, translations.en);
-
-					// add to configurations container
-					$('#configurations').append(camEl);
-				});				
-				/// ==== END ADD CAMERAS CONFIGURATIONS
-
-				// set listeners tabs
-				tabs = [...document.querySelector('.tabs ul').querySelectorAll('li')];
-				tabs.forEach(el => {
-						el.onclick = function () {
-							document.getElementById(lastConfigurationActive).classList.add('is-hidden');
-							
-							tabs.forEach(el => el.classList.remove('is-active'))
-						
-							el.classList.add('is-active');
-							
-							document.getElementById(el.dataset.config).classList.remove('is-hidden');
-		
-							lastConfigurationActive = el.dataset.config;
-						}
-					});
+				headers["cameras"].forEach((val, i) => AddCameraElement(val, i));				
 			});
 		} 
 		
@@ -367,6 +340,14 @@ $(function() {
 				cnvAreas.lastImage = frame;
 			}
 		}
+
+		if (data.hasOwnProperty("new_camera_config")) {
+			var ob = data["new_camera_config"];
+			console.log(ob);
+			var headers = getHeadersFromStringConfig(ob["configuration"]);
+			var i_start = cameras.length;
+			headers.cameras.forEach((cam, i) => AddCameraElement(cam, i_start + i));
+		}
 	};
 
 	ws.onerror = function(error) {
@@ -400,6 +381,38 @@ function sendObj(key, body) {
 	body["key"] = key;
 	ws.send(JSON.stringify(body));
 	console.log("Sended: ", body);
+}
+
+function AddCameraElement(val, i) {
+	var tabs = document.querySelector('.tabs ul');
+	// add tab
+	var $tab = $(getTabTemplate(i, val["cameraname"]));
+	$(tabs).append($tab);
+	$tab.click(function ($e) {
+		var el = $e.currentTarget;
+
+		document.getElementById(lastConfigurationActive).classList.add('is-hidden');
+								
+		// set listeners tabs
+		[...tabs.querySelectorAll('li')]
+			.forEach(el => el.classList.remove('is-active'))
+	
+		el.classList.add('is-active');
+		
+		document.getElementById(el.dataset.config).classList.remove('is-hidden');
+
+		lastConfigurationActive = el.dataset.config;
+	});
+
+	// get camera root container
+	var camEl = $(getCameraContainerTemplate(i, val));
+	var camConten = $(camEl).children('.camera-config-content');
+	
+	// add each input element
+	addTemplateElements(camConten, val, configurationsElements.elements.camera, configurationsElements.translations.en);
+
+	// add to configurations container
+	$('#configurations').append(camEl);
 }
 
 function changeRecognizeStatusElements(running) {
@@ -567,8 +580,20 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 	}
 }
 
+function addNewCamera($ev) {
+
+	sendObj("get_new_camera", {});
+}
+
 function deleteCamera($ev, $cameraIndex) {
 	$($ev.target).addClass("is-loading");
+
+	lastConfigurationActive = "program";
+	cameras.splice($cameraIndex, 1);
+	document.getElementById('camera-' + $cameraIndex).remove();
+	document.getElementById('tab-camera-' + $cameraIndex).remove();
+
+	document.getElementById('tab-program').click();
 }
 
 function saveCameraROI($ev, save) {

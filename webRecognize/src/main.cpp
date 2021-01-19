@@ -228,6 +228,11 @@ namespace {
 					} else {
 						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
 					}
+				} else if (id == "get_new_camera") {
+					CameraConfiguration cfg;
+					Json::Value root;
+					root["new_camera_config"]["configuration"] = Json::Value(ConfigurationFile::GetConfigurationString(cfg));
+					con->send(root.toStyledString());
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}
