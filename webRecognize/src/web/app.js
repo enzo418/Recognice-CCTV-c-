@@ -383,26 +383,28 @@ function sendObj(key, body) {
 	console.log("Sended: ", body);
 }
 
+function onTabClick($e) {
+	var el = $e.currentTarget;
+
+	document.getElementById(lastConfigurationActive).classList.add('is-hidden');
+							
+	// set listeners tabs
+	[...document.querySelector('.tabs ul').querySelectorAll('li')]
+		.forEach(el => el.classList.remove('is-active'))
+
+	el.classList.add('is-active');
+	
+	document.getElementById(el.dataset.config).classList.remove('is-hidden');
+
+	lastConfigurationActive = el.dataset.config;
+}
+
 function AddCameraElement(val, i) {
 	var tabs = document.querySelector('.tabs ul');
 	// add tab
 	var $tab = $(getTabTemplate(i, val["cameraname"]));
 	$(tabs).append($tab);
-	$tab.click(function ($e) {
-		var el = $e.currentTarget;
-
-		document.getElementById(lastConfigurationActive).classList.add('is-hidden');
-								
-		// set listeners tabs
-		[...tabs.querySelectorAll('li')]
-			.forEach(el => el.classList.remove('is-active'))
-	
-		el.classList.add('is-active');
-		
-		document.getElementById(el.dataset.config).classList.remove('is-hidden');
-
-		lastConfigurationActive = el.dataset.config;
-	});
+	$tab.click(onTabClick);
 
 	// get camera root container
 	var camEl = $(getCameraContainerTemplate(i, val));
