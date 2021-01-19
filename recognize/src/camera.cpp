@@ -73,6 +73,12 @@ void Camera::CalculateNonZeroPixels() {
 		cv::Mat d2;
 		// place diff image on top the frame img
 		cv::addWeighted(frame, 1, diff, 8, 12, d2);
+
+		if (this->_programConfig->showIgnoredAreas) { 
+			// Draw ignored areas
+			for (auto&& i : this->config->ignoredAreas)
+				cv::rectangle(d2, i, cv::Scalar(255,0,255));
+		}
 		
 		this->frames->try_enqueue(std::move(d2));
 	}
@@ -257,7 +263,7 @@ void Camera::ReadFramesWithInterval() {
 			if (showPreview && !showProcessedImages) {
 				if (showIgnoredAreas) { 
 					// Draw ignored areas
-					for (auto i : this->config->ignoredAreas) {
+					for (auto&& i : this->config->ignoredAreas) {
 						i.x += this->config->roi.x;
 						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}

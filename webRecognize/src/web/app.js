@@ -310,6 +310,8 @@ $(function() {
 				
 				cnvRoi.lastImage = frame;
 			} else {
+				cnvAreas.areas = [];
+				
 				var modal = document.querySelector('#modal-igarea');
 				
 				modal.classList.add('is-active');
@@ -336,11 +338,14 @@ $(function() {
 										heigth = numbers[base + 3];
 
 								cnvAreas.areas.push({lt, width, heigth, color});
+
+								cnvAreas.ctx.strokeStyle = color;
 								cnvAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);						
 							}
 						}
 					}
-
+					
+					console.log("areas loaded: ", cnvAreas.areas.length);
 					onResize();
 				};
 				image.src = "data:image/jpg;base64," + frame;
@@ -359,13 +364,12 @@ $(function() {
 		$(this).addClass("is-loading");
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
 		FILE_PATH = selected;
-		ws.send('need_config_file ' + selected);
-		console.log("send: ", 'need_config_file ' + selected);
+		sendObj('need_config_file', {file: selected});
 	});
 
 	$('#button-toggle-recognize').click(function() {
 		$(this).toggleClass('is-loading');
-		ws.send("change_recognize_state " + !RECOGNIZE_RUNNING);
+		sendObj("change_recognize_state", {state: !RECOGNIZE_RUNNING});
 	});
 
 	$('#button-just-notifications').click(function () {
@@ -377,6 +381,12 @@ $(function() {
 	});
 });
 
+
+function sendObj(key, body) {
+	body["key"] = key;
+	ws.send(JSON.stringify(body));
+	console.log("Sended: ", body);
+}
 
 function changeRecognizeStatusElements(running) {
 	if (running) {
@@ -445,10 +455,9 @@ function saveIntoFile () {
 		camerasConfig += config;
 	});
 
-	var config = programConfig + camerasConfig;
+	var configurations = programConfig + camerasConfig;
 
-
-	ws.send('save_into_config_file ' + config);
+	sendObj('save_into_config_file',  {configurations});
 }
 
 function togglePage() {
@@ -517,7 +526,7 @@ function selectCameraROI($ev, $cameraIndex) {
 
 	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
 	
-	ws.send(`get_camera_frame ${$cameraIndex} ${rotation} ${cameras[$cameraIndex].url}`);
+	sendObj('get_camera_frame', {index: $cameraIndex, rotation, url: cameras[$cameraIndex].url});
 
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function (){
@@ -533,7 +542,9 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 
 	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
 	
-	ws.send(`get_camera_frame ${$cameraIndex} ${rotation} ${cameras[$cameraIndex].url}`);
+	var roi = document.querySelector('#camera-' + $cameraIndex).querySelector('input[name="roi"]').value;
+
+	sendObj('get_camera_frame', {index: $cameraIndex, rotation, url: cameras[$cameraIndex].url, roi});
 
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function (){
@@ -774,16 +785,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			// if it's dimesion is small enough and was a quick click then delete it, else save it
 
 			if (time < 2 && time > 0 && width > -2 && width < 2 && heigth > -2 && heigth < 2) {
-				var tmpAreas = [];
 				const p = cnvAreas.current.p1;
-				cnvAreas.areas.forEach(area => {					
-					if (!(p.x >= area.lt.x && p.x <= area.lt.x + area.width &&
-						p.y >= area.lt.y && p.y <= area.lt.y + area.heigth)) {
-						tmpAreas.push(area);
+				cnvAreas.areas.forEach((area, index, object) => {					
+					if (p.x >= area.lt.x && p.x <= area.lt.x + area.width &&
+						p.y >= area.lt.y && p.y <= area.lt.y + area.heigth) {
+						object.splice(index, 1);
 					}
 				});
-				
-				cnvAreas.areas = tmpAreas;
 
 				// draw areas
 				var image = new Image();
@@ -800,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			} else {
 				cnvAreas.areas.push({lt, width, heigth, color: cnvAreas.current.color});
 
+				cnvAreas.areasString = "";
 				cnvAreas.areas.forEach(area => {
 					cnvAreas.areasString += `[${area.lt.x},${area.lt.y}],[${area.width}, ${area.heigth}],`;
 				});

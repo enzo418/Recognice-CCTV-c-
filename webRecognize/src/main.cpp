@@ -4,9 +4,12 @@
 #include "seasocks/WebSocket.h"
 #include "seasocks/StringUtil.h"
 
+#include <opencv2/core.hpp>
+
 #include "../../recognize/src/recognize.hpp"
 #include "../../recognize/src/configuration_file.hpp"
 #include "../../recognize/src/notification.hpp"
+#include "../../recognize/src/utils.hpp"
 
 #include "AreaSelector.hpp"
 
@@ -16,6 +19,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <sstream>
 #include <thread>
 #include <chrono>
 #include <iostream>
@@ -23,6 +27,7 @@
 #include <map>
 
 #include <fmt/core.h>
+#include <fmt/color.h>
 
 #include <cstdlib>
 #include <filesystem>
@@ -104,100 +109,117 @@ namespace {
 		}
 
 		void onData(WebSocket* con, const char* data) override {
-			const std::string string(data);
+			Json::Value root;
+			
+			bool requestIsValid = false;
 
-			// get command and value
-			int indx = strcspn(data, " ");
-			std::string id = string.substr(0, indx);
-			std::string val = string.substr(indx + 1, string.size() - 1);
+			Json::CharReaderBuilder reader;
+			std::istringstream s(data);
+			std::string errs;
+			std::string id;
 
-			if (id == "need_config_file") {
-				std::cout << "File requested=" << val << std::endl;
+			if (Json::parseFromStream(reader, s, &root, &errs)) {
+				if (root.isMember("key")) {
+					fmt::print("key is member\n");
+					id = root["key"].asString();
+					requestIsValid = true;
+				}	
+			}
 
-				// read file
-				Configurations cfgs = ConfigurationFile::ReadConfigurations(val);				
-				std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+			if (requestIsValid) {
+				if (id == "need_config_file") {
+					const std::string file = root["file"].asString();
+					std::cout << "File requested=" << file << std::endl;
 
-				// send payload
-				con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
+					// read file
+					Configurations cfgs = ConfigurationFile::ReadConfigurations(file);				
+					std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
 
-				connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, val));
-			} else if (id == "save_into_config_file") {
-				std::string file = connection_file[con->credentials()->username];
-				std::cout 
-					<< "File=" << file
-					<< "Configuration size:\n" << val.length() << std::endl;
-				
-				std::istringstream iss(val);
-				Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss);
+					// send payload
+					con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
 
-				std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
-
-				ConfigurationFile::SaveConfigurations(configurations, file);
-
-				con->send(GetAlertMessage(AlertStatus::OK, "file saved correctly!"));
-			} else if (id == "change_recognize_state") {
-				recognize_running = !recognize_running;
-				
-				// was stopped, run it
-				if (recognize_running) {
+					connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, file));
+				} else if (id == "save_into_config_file") {
 					std::string file = connection_file[con->credentials()->username];
-					std::cout << "Starting recognize with file: " << file << std::endl;
-					Configurations configurations = ConfigurationFile::ReadConfigurations(file);
-
-					std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
-
-					fs::create_directories(configurations.programConfig.imagesFolder);
-
-					lastMediaPath = configurations.programConfig.imagesFolder.substr(
-										SERVER_FILEPATH.size(), 
-										configurations.programConfig.imagesFolder.size()
-									);
-
-					recognize->Start(std::move(configurations), 
-										configurations.programConfig.showPreview, 
-										configurations.programConfig.telegramConfig.useTelegramBot);
+					const std::string cfgString = root["configurations"].asString();
+					std::cout 
+						<< "File=" << file
+						<< "Configuration size:\n" << cfgString.length() << std::endl;
 					
-					con->send(GetAlertMessage(AlertStatus::OK, "recognize started!"));
-				} else { // was running, stop it
-					recognize->CloseAndJoin();
+					std::istringstream iss(cfgString);
+					Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss);
 
-					con->send(GetAlertMessage(AlertStatus::OK, "recognize stopped!"));
-					std::cout << "Closed recognize" << std::endl;
-				}
+					std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
 
-				sendEveryone(GetRecognizeStateJson());
-			} else if (id == "get_camera_frame") {
-				if (!val.empty()) {
-					// find camera index
-					indx = strcspn(val.c_str(), " ");
-					std::string camIndex = val.substr(0, indx);
-					std::string camRotUrl = val.substr(indx + 1, val.size() - 1);
+					ConfigurationFile::SaveConfigurations(configurations, file);
 
-					indx = strcspn(camRotUrl.c_str(), " ");
-					std::string camRotation = camRotUrl.substr(0, indx);
-					std::string camUrl = camRotUrl.substr(indx + 1, camRotUrl.size() - 1);
+					con->send(GetAlertMessage(AlertStatus::OK, "file saved correctly!"));
+				} else if (id == "change_recognize_state") {
+					recognize_running = !recognize_running;
 					
-					cv::Mat img;
-					if (AreaSelector::GetFrame(camUrl, img)) {		
-						int rotation = std::stoi(camRotation); // try ... catch?
+					// was stopped, run it
+					if (recognize_running) {
+						std::string file = connection_file[con->credentials()->username];
+						std::cout << "Starting recognize with file: " << file << std::endl;
+						Configurations configurations = ConfigurationFile::ReadConfigurations(file);
 
-						AreaSelector::ResizeRotateFrame(img, rotation);
+						std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
 
-						std::vector<uchar> buf;
-						cv::imencode(".jpg", img, buf);
-						auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
-						std::string encoded = base64_encode(enc_msg, buf.size());
+						fs::create_directories(configurations.programConfig.imagesFolder);
 
-						con->send(GetJsonString("frame_camera", GetJsonString({{"camera", camIndex},{"frame", encoded}})));						
+						lastMediaPath = configurations.programConfig.imagesFolder.substr(
+											SERVER_FILEPATH.size(), 
+											configurations.programConfig.imagesFolder.size()
+										);
+
+						recognize->Start(std::move(configurations), 
+											configurations.programConfig.showPreview, 
+											configurations.programConfig.telegramConfig.useTelegramBot);
+						
+						con->send(GetAlertMessage(AlertStatus::OK, "recognize started!"));
+					} else { // was running, stop it
+						recognize->CloseAndJoin();
+
+						con->send(GetAlertMessage(AlertStatus::OK, "recognize stopped!"));
+						std::cout << "Closed recognize" << std::endl;
+					}
+
+					sendEveryone(GetRecognizeStateJson());
+				} else if (id == "get_camera_frame") {
+					const unsigned int index = root["index"].asUInt();
+					const int rotation = root["rotation"].asInt();
+					const std::string url = root["url"].asString();
+					if (!url.empty()) {
+						cv::Mat img;
+						if (AreaSelector::GetFrame(url, img)) {		
+							AreaSelector::ResizeRotateFrame(img, rotation);
+
+							if (root.isMember("roi")) {
+								const std::vector<int> numbers = Utils::GetNumbersString(root["roi"].asString());
+								if (numbers.size() == 4) {
+									cv::Rect roi(cv::Point(numbers[0], numbers[1]), cv::Size(numbers[2], numbers[3]));
+									img = img(roi);
+								}
+							}
+
+							std::vector<uchar> buf;
+							cv::imencode(".jpg", img, buf);
+							auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
+							std::string encoded = base64_encode(enc_msg, buf.size());
+
+							con->send(GetJsonString("frame_camera", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));						
+						} else {
+							con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
+						}
 					} else {
-						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
+						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
 					}
 				} else {
-					con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
+					std::cout << "Command without handler received: '" << id << "'\n";
 				}
 			} else {
-				std::cout << "Command without handler received: '" << id << " value=" << val << "'\n";
+				fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "ERROR: ");
+				fmt::print("Couldn't parse string: {}\n", data);
 			}
 		}
 
