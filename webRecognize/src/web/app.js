@@ -223,7 +223,6 @@ $(function() {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				var not_content = document.getElementById('notifications-content');
 				var $not = $(getNotificationTemplate(ob["type"], ob['content']));
 				
 				$('.navigator-notification').removeClass('is-hidden');
@@ -247,6 +246,21 @@ $(function() {
 			var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
 			audio.volume = 0.5;
 			audio.play();
+		}
+
+		if (data.hasOwnProperty("last_notifications")) {
+			var $notifications = data["last_notifications"]["notifications"];
+			$notifications.forEach(notification => {
+				if (notification["type"] != "sound") {
+					var $not = $(getNotificationTemplate(notification["type"], notification['content']));
+					
+					$('.navigator-notification').removeClass('is-hidden');
+
+					notificationPaginator.elements.push($not[0]);
+
+					changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+				}
+			});
 		}
 
 		if (data.hasOwnProperty('request_reply')) {

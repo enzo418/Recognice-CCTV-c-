@@ -81,10 +81,13 @@ std::string GetAlertMessage(const AlertStatus& status, const std::string& messag
 bool recognize_running = false;
 size_t connections_number = 0;
 std::map<std::string, std::string> connection_file;
+std::vector<std::string> lastNotificationsSended;
 
 const std::string SERVER_FILEPATH = "../src/web";
 
 std::string lastMediaPath = "";
+
+constexpr int Max_Notifications_Number = 20;
 
 namespace {
 	struct HandlerFile : WebSocket::Handler {
@@ -99,6 +102,17 @@ namespace {
 			_cons.insert(con);
 			con->send(GetConfigurationsPathsJson({"../../recognize/build/"}));
 			con->send(GetRecognizeStateJson());
+			if (lastNotificationsSended.size() > 0) {
+				std::string lastNotifications = "[";
+				for (auto &&i : lastNotificationsSended) {
+					lastNotifications += i + ",";
+				}
+				
+				lastNotifications.insert(lastNotifications.size() - 1, "]");
+				
+				con->send(GetJsonString("last_notifications", GetJsonString({{"notifications", lastNotifications}})));
+			}
+
 			connections_number++;
 		}
 
@@ -234,21 +248,26 @@ namespace {
 			server->execute([this] {
 				std::pair<Notification::Type, std::string> media;
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
-					std::string command = "";
+					std::string query = "";
 
 					if (media.first == Notification::IMAGE) {
-						command = "image";
+						query = "image";
 						std::size_t found = media.second.find_last_of("/\\");
 						media.second = lastMediaPath + "/" + media.second.substr(found+1);
 					} else if (media.first == Notification::TEXT)
-						command = "text";
+						query = "text";
 					else if (media.first == Notification::SOUND)
-						command = "sound";
+						query = "sound";
 
-					command = fmt::format("{{\"new_notification\": {{\"type\":\"{0}\", \"content\":\"{1}\"}}}}", command, media.second);
+					query = fmt::format("{{\"new_notification\": {{\"type\":\"{0}\", \"content\":\"{1}\"}}}}", query, media.second);
 
-					sendEveryone(command);
-					std::cout << "sended to everyone: " << command << std::endl;
+					if (lastNotificationsSended.size() > Max_Notifications_Number)
+						lastNotificationsSended.erase(lastNotificationsSended.begin());
+					else
+						lastNotificationsSended.push_back(query);
+					
+					sendEveryone(query);
+					std::cout << "sended to everyone: " << query << std::endl;
 				}
 			});
 		}
