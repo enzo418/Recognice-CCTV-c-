@@ -22,6 +22,32 @@
 </head>
 
 <body onresize="onResize()">
+	<nav class="navbar is-black" role="navigation" aria-label="main navigation">
+		<div class="navbar-brand">
+			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-status">
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+			</a>
+		</div>
+	
+		<div id="navbar-status" class="navbar-menu">
+			<div class="navbar-start">
+				<a class="navbar-item">
+					<h1 id="button-state-recognize">Recognize is not running</h1>
+				</a>
+
+				<a class="navbar-item">
+					<button class="button is-success" id="button-toggle-recognize">Start Recognize</button>
+				</a>
+
+				<a class="navbar-item">
+					<h1 id="button-current-page" onclick="togglePage()">Show notifications page</h1>
+				</a>
+			</div>
+		</div>
+	</nav>
+
 	<section class="section">
 		<div class="container">
 			<div class="" id="configuration-page">
@@ -50,8 +76,25 @@
 				</div>
 			</div>
 			<div id="notifications-page" class="is-hidden">
-				<h1 class="title">Notifications</h1>
-				<div id="notifications-content">
+				<div class="header">
+					<h1 class="title">Notifications</h1>
+					
+					<div class="notifications-configuration">
+						<label class="notifications-configuration-item checkbox">
+							<input type="checkbox" onclick="togglePush()" id="toggle-push" checked>
+							<i class="fas fa-bell"></i>
+							Send push notifications
+						</label>
+
+						<label class="notifications-configuration-item checkbox">
+							<input type="checkbox" onclick="toggleNotificationSound()" id="toggle-notification-sound" checked>
+							<i class="fas fa-volume-off"></i>
+							Play sound on notification
+						</label>
+					</div>
+				</div>
+
+				<div id="notifications-content" class="unselectable">
 
 				</div>
 
@@ -191,32 +234,6 @@
 	<div id="alerts">
 		
 	</div>
-
-	<nav class="navbar is-black is-fixed-bottom" role="navigation" aria-label="main navigation">
-		<div class="navbar-brand">
-			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-status">
-				<span aria-hidden="true"></span>
-				<span aria-hidden="true"></span>
-				<span aria-hidden="true"></span>
-			</a>
-		</div>
-	
-		<div id="navbar-status" class="navbar-menu">
-			<div class="navbar-start">
-				<a class="navbar-item">
-					<h1 id="button-state-recognize">Recognize is not running</h1>
-				</a>
-
-				<a class="navbar-item">
-					<button class="button is-success" id="button-toggle-recognize">Start Recognize</button>
-				</a>
-
-				<a class="navbar-item">
-					<h1 id="button-current-page" onclick="togglePage()">Show notifications page</h1>
-				</a>
-			</div>
-		</div>
-	</nav>
 </body>
 
 </html>

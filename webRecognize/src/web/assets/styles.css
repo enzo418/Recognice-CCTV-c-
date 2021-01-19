@@ -53,6 +53,12 @@ body, .section, html {
     user-select: none;
 }
 
+.notifications-configuration {
+	display: flex;
+	flex-direction: column;
+}
+
+
 /** FILE DROPDOWN */
 .message.is-primary .message-header {
     background-color: #206592;
@@ -223,11 +229,28 @@ label {
 }
 
 /** Notifications page */
-#notifications-page .title {
-	color: #fff;
-	/* border-bottom: 1px solid #01235d; */
+#notifications-page .header {	 
 	box-shadow: 2px 2px #008586;
-    padding-left: 0.5rem;
+	padding-left: 0.5rem;
+	margin-bottom: 1.5rem;
+	display: flex;
+	justify-content: space-between;
+}
+
+#notifications-page .header .title {
+	color: #fff;
+	display: contents;
+}
+
+#notifications-page .header .notifications-configuration {
+	display: inline;
+    flex-direction: column;
+}
+
+#notifications-page .header .notifications-configuration-item {
+	margin: 0.2rem 0.2rem 0.2rem 0;
+	display: block;
+	font-size: 1.2rem;
 }
 
 #notifications-content .box {

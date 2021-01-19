@@ -66,6 +66,18 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
 	return res;
 }
 
+std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v, bool whitoutQuote) {
+	std::string res = "{";
+	for (auto &&i : v) {
+		res += fmt::format("\"{}\": {},", i.first, i.second);
+	}
+	
+	res.pop_back(); // pop last ,
+	res += "}";
+
+	return res;
+}
+
 /**
  * @brief Formats a alert message
  * @param status status of the alert, ok or error
@@ -82,6 +94,7 @@ bool recognize_running = false;
 size_t connections_number = 0;
 std::map<std::string, std::string> connection_file;
 std::vector<std::string> lastNotificationsSended;
+std::map<std::string, std::string> cachedImages; // map of single images from the cameras in cache
 
 const std::string SERVER_FILEPATH = "../src/web";
 
@@ -108,9 +121,9 @@ namespace {
 					lastNotifications += i + ",";
 				}
 				
-				lastNotifications.insert(lastNotifications.size() - 1, "]");
+				lastNotifications[lastNotifications.size() - 1] = ']';
 				
-				con->send(GetJsonString("last_notifications", GetJsonString({{"notifications", lastNotifications}})));
+				con->send(GetJsonString("last_notifications", GetJsonString({{"notifications", lastNotifications}}, false)));
 			}
 
 			connections_number++;
@@ -133,8 +146,7 @@ namespace {
 			std::string id;
 
 			if (Json::parseFromStream(reader, s, &root, &errs)) {
-				if (root.isMember("key")) {
-					fmt::print("key is member\n");
+				if (root.isMember("key")) {					
 					id = root["key"].asString();
 					requestIsValid = true;
 				}	
@@ -203,28 +215,43 @@ namespace {
 					const unsigned int index = root["index"].asUInt();
 					const int rotation = root["rotation"].asInt();
 					const std::string url = root["url"].asString();
+					std::string roi_s;
+					if (root.isMember("roi")) {
+						roi_s = root["roi"].asString();
+					}
+
 					if (!url.empty()) {
-						cv::Mat img;
-						if (AreaSelector::GetFrame(url, img)) {		
-							AreaSelector::ResizeRotateFrame(img, rotation);
+						std::string cacheKey = url + std::to_string(rotation) + roi_s;
+						std::string encoded;
+						bool error = false;
+						if (cachedImages.find(cacheKey) == cachedImages.end()) {							
+							cv::Mat img;
+							if (AreaSelector::GetFrame(url, img)) {		
+								AreaSelector::ResizeRotateFrame(img, rotation);
 
-							if (root.isMember("roi")) {
-								const std::vector<int> numbers = Utils::GetNumbersString(root["roi"].asString());
-								if (numbers.size() == 4) {
-									cv::Rect roi(cv::Point(numbers[0], numbers[1]), cv::Size(numbers[2], numbers[3]));
-									img = img(roi);
+								if (!roi_s.empty()) {
+									const std::vector<int> numbers = Utils::GetNumbersString(roi_s);
+									if (numbers.size() == 4) {
+										cv::Rect roi(cv::Point(numbers[0], numbers[1]), cv::Size(numbers[2], numbers[3]));
+										img = img(roi);
+									}
 								}
+
+								std::vector<uchar> buf;
+								cv::imencode(".jpg", img, buf);
+								auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
+								encoded = base64_encode(enc_msg, buf.size());
+								cachedImages.insert({cacheKey, encoded});
+							} else {
+								con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
+								error = true;
 							}
-
-							std::vector<uchar> buf;
-							cv::imencode(".jpg", img, buf);
-							auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
-							std::string encoded = base64_encode(enc_msg, buf.size());
-
-							con->send(GetJsonString("frame_camera", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));						
 						} else {
-							con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
+							encoded = cachedImages[cacheKey];
 						}
+
+						if (!error)
+							con->send(GetJsonString("frame_camera", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));
 					} else {
 						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
 					}
@@ -264,12 +291,13 @@ namespace {
 					else if (media.first == Notification::SOUND)
 						query = "sound";
 
-					query = fmt::format("{{\"new_notification\": {{\"type\":\"{0}\", \"content\":\"{1}\"}}}}", query, media.second);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\"}}", query, media.second);
+					query = fmt::format("{{\"new_notification\": {}}}", body);
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number)
 						lastNotificationsSended.erase(lastNotificationsSended.begin());
 					else
-						lastNotificationsSended.push_back(query);
+						lastNotificationsSended.push_back(body);
 					
 					sendEveryone(query);
 					std::cout << "sended to everyone: " << query << std::endl;

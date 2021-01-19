@@ -81,6 +81,10 @@ var lastConfigurationActive = "program"; // id of the element
 var cameras = []; // actual cameras as an dictionary
 var unfinishedRequests = {}; 	// dict of unfinished request where key is the request and key a function to
 								// execute when we receive it.
+
+var SEND_PUSH_NOTIFICATIONS = window.localStorage.getItem("send_push") === "true";
+var PLAY_SOUND_NOTIFICATION = window.localStorage.getItem("play_sound_notification") === "true";
+
 var cnvRoi = {
 	canvas: null,
 	ctx: null,
@@ -202,29 +206,14 @@ $(function() {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				var $not = $(getNotificationTemplate(ob["type"], ob['content']));
-				
-				$('.navigator-notification').removeClass('is-hidden');
-
-				notificationPaginator.elements.push($not[0]);
-
-				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
-
-				Push.create("Alert!", {
-					body: "...",
-					icon: 'assets/favicon.svg',
-					timeout: 2000,
-					onClick: function () {
-						window.focus();
-						this.close();
-					}
-				});
+				createNewNotification(ob["type"], ob["content"], true);
 			}
 			
-			// if (playsound)
-			var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
-			audio.volume = 0.5;
-			audio.play();
+			if (PLAY_SOUND_NOTIFICATION) {
+				var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
+				audio.volume = 0.5;
+				audio.play();
+			}
 		}
 
 		if (data.hasOwnProperty("last_notifications")) {
@@ -342,6 +331,14 @@ $(function() {
 			var i_start = cameras.length;
 			headers.cameras.forEach((cam, i) => AddCameraElement(cam, i_start + i));
 		}
+
+		if (data.hasOwnProperty("last_notifications")) {
+			var ob = data["last_notifications"]["notifications"];
+			ob.forEach(not => {
+				if (not["type"] !== "sound")
+					createNewNotification(not["type"], not["content"], false)
+			});
+		}
 	};
 
 	ws.onerror = function(error) {
@@ -371,6 +368,16 @@ $(function() {
 });
 
 
+function togglePush() {
+	SEND_PUSH_NOTIFICATIONS = !SEND_PUSH_NOTIFICATIONS;
+	window.localStorage.setItem("send_push", SEND_PUSH_NOTIFICATIONS);
+}
+
+function toggleNotificationSound() {
+	PLAY_SOUND_NOTIFICATION = !PLAY_SOUND_NOTIFICATION;
+	window.localStorage.setItem("play_sound_notification", PLAY_SOUND_NOTIFICATION);
+}
+
 function createAlert($state, $message) {
 	var stateClass = $state === "ok" ? 'is-success' : 'is-danger';
 	var alert = $(getAlertTemplate($message, stateClass));
@@ -381,6 +388,28 @@ function createAlert($state, $message) {
 
 function deleteAlert($ev) {
 	($ev.target.parentNode).remove();
+}
+
+function createNewNotification($type, $content, $sendPush) {
+	var $not = $(getNotificationTemplate($type, $content));
+
+	$('.navigator-notification').removeClass('is-hidden');
+
+	this.notificationPaginator.elements.push($not[0]);
+
+	changeCurrentElementNotification(this.notificationPaginator.elements.length - 1);
+
+	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
+		Push.create("Alert!", {
+			body: "...",
+			icon: 'assets/favicon.svg',
+			timeout: 2000,
+			onClick: function () {
+				window.focus();
+				this.close();
+			}
+		});
+	}
 }
 
 function sendObj(key, body) {
@@ -678,6 +707,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			})
 		})
 	}
+
+	$('#toggle-push').attr("checked", SEND_PUSH_NOTIFICATIONS);
+	$('#toggle-notification-sound').attr("checked", PLAY_SOUND_NOTIFICATION);
 
 	// Update notifications time
 	setInterval(() => {
