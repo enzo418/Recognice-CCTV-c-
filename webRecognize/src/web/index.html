@@ -97,16 +97,18 @@
 				<div id="notifications-content" class="unselectable">
 
 				</div>
-
-				<a class="navigator-notification previous-notification icon is-hidden" onclick="previousNotification()">
-					<i class="fas fa-arrow-up"></i>
-					<span class="notification-previous-left unselectable"></span>
-				</a>
-
-				<a class="navigator-notification next-notification icon is-hidden" onclick="nextNotification()">
-					<i class="fas fa-arrow-down"></i>
-					<span class="notification-next-left unselectable"></span>
-				</a>
+				
+				<div class="buttons-navigator-notification">
+					<button class="navigator-notification previous-notification icon button is-hidden" onclick="previousNotification()">
+						<i class="fas fa-arrow-left is-left"></i>
+						<span class="notification-previous-left unselectable"></span>
+					</button>
+					
+					<button class="button navigator-notification next-notification icon is-hidden" onclick="nextNotification()">
+						<span class="notification-next-left unselectable"></span>
+						<i class="fas fa-arrow-right is-right"></i>
+					</button>
+				</div>
 			</div>
 	</section>
 

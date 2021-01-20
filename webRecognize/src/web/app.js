@@ -207,8 +207,13 @@ $(function() {
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
 				createNewNotification(ob["type"], ob["content"], true);
+				createAlert("ok", "New notification", 1500);
 			}
 			
+			// only change if user is watching the last one
+			if (notificationPaginator.index === 0)
+				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+
 			if (PLAY_SOUND_NOTIFICATION) {
 				var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
 				audio.volume = 0.5;
@@ -323,6 +328,8 @@ $(function() {
 				if (not["type"] !== "sound")
 					createNewNotification(not["type"], not["content"], false)
 			});
+
+			changeCurrentElementNotification(notificationPaginator.elements.length - 1);
 		}
 	};
 
@@ -363,12 +370,12 @@ function toggleNotificationSound() {
 	window.localStorage.setItem("play_sound_notification", PLAY_SOUND_NOTIFICATION);
 }
 
-function createAlert($state, $message) {
+function createAlert($state, $message, $duration = 8000) {
 	var stateClass = $state === "ok" ? 'is-success' : 'is-danger';
 	var alert = $(getAlertTemplate($message, stateClass));
 	$('#alerts').append(alert);				
 
-	setTimeout(() => alert.remove(), 8000);
+	setTimeout(() => alert.remove(), $duration);
 }
 
 function deleteAlert($ev) {
@@ -381,8 +388,6 @@ function createNewNotification($type, $content, $sendPush) {
 	$('.navigator-notification').removeClass('is-hidden');
 
 	this.notificationPaginator.elements.push($not[0]);
-
-	changeCurrentElementNotification(this.notificationPaginator.elements.length - 1);
 
 	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
 		Push.create("Alert!", {
@@ -397,6 +402,8 @@ function createNewNotification($type, $content, $sendPush) {
 			vibrate: [200, 100, 200, 100, 200, 100, 200]
 		});
 	}
+	
+	updateNotificationsNumberPaginator();
 }
 
 function sendObj(key, body) {
@@ -894,15 +901,19 @@ function nextNotification(){
 	changeCurrentElementNotification($i);
 }
 
+function updateNotificationsNumberPaginator() {
+	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
+	$('.notification-previous-left').text(notificationPaginator.index);
+}
+
 function changeCurrentElementNotification($i) {
 	var $not = $('#notifications-content');
 	$not.empty();
 
 	$not.append(notificationPaginator.elements[$i]);
 	notificationPaginator.index = $i;
-	
-	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
-	$('.notification-previous-left').text(notificationPaginator.index);
+
+	updateNotificationsNumberPaginator();
 }
 
 function getRandomArbitrary(min, max) {

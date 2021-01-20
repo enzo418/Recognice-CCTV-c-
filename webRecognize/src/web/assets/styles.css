@@ -279,14 +279,32 @@ label {
 	padding-top: 1rem;
 }
 
+.buttons-navigator-notification {
+	display: flex;
+	justify-content: space-between;
+	position: relative;
+}
+
 .navigator-notification {
-	position: absolute;
+	/* position: absolute; */
 	right: 0;
-	background-color: #ff0062;
+	/* background-color: #ff0062; */
     color: #fff;
 	border-radius: 0.35rem;
 	padding: 1.3rem;
 	border: 0.1rem solid white;
+	width: 100%;
+	margin: 0.5rem 0;
+}
+
+.is-right {
+	position: absolute;
+	right: 1.5rem;
+}
+
+.is-left {
+	position: absolute;
+	left: 1.5rem;
 }
 
 .navigator-notification:hover {
@@ -296,7 +314,7 @@ label {
 
 .previous-notification {
 	bottom: 60%;
-	background-color: #ff6600;
+	margin-right: 1rem;
 }
 
 .next-notification {
