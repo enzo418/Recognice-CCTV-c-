@@ -216,21 +216,6 @@ $(function() {
 			}
 		}
 
-		if (data.hasOwnProperty("last_notifications")) {
-			var $notifications = data["last_notifications"]["notifications"];
-			$notifications.forEach(notification => {
-				if (notification["type"] != "sound") {
-					var $not = $(getNotificationTemplate(notification["type"], notification['content']));
-					
-					$('.navigator-notification').removeClass('is-hidden');
-
-					notificationPaginator.elements.push($not[0]);
-
-					changeCurrentElementNotification(notificationPaginator.elements.length - 1);
-				}
-			});
-		}
-
 		if (data.hasOwnProperty('request_reply')) {
 			var ob = data["request_reply"];
 			createAlert(ob["status"], ob["message"])
