@@ -296,8 +296,8 @@ namespace {
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number)
 						lastNotificationsSended.erase(lastNotificationsSended.begin());
-					else
-						lastNotificationsSended.push_back(body);
+						
+					lastNotificationsSended.push_back(body);
 					
 					sendEveryone(query);
 					std::cout << "sended to everyone: " << query << std::endl;
