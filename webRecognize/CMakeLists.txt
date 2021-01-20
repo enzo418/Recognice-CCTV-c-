@@ -13,8 +13,8 @@ option(WITH_CUDA "Use cuda DNN" ON)
 
 if (WITH_CUDA)
 	MESSAGE(STATUS "WITH_CUDA")
-	add_definitions(-DWITH_CUDA)
-endif()
+	add_compile_definitions(WITH_CUDA)
+endif(WITH_CUDA)
 
 # Opencv package
 find_package(OpenCV REQUIRED)
