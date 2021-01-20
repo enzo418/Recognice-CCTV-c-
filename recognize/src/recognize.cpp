@@ -40,6 +40,7 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 			
 			lastDetectionMethod = DetectionMethod::HogDescriptor;
 		} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4 && lastDetectionMethod != DetectionMethod::YoloDNN_V4) {
+			#ifdef WITH_CUDA
 			if (lastDetectionMethod == DetectionMethod::HogDescriptor)
 				delete this->hogDescriptor;
 				
@@ -67,6 +68,7 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 					}
 				}
 			}
+			#endif // WITH_CUDA
 		}
 	}
 	
