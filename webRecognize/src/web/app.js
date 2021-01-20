@@ -402,12 +402,14 @@ function createNewNotification($type, $content, $sendPush) {
 	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
 		Push.create("Alert!", {
 			body: "...",
-			icon: 'assets/favicon.svg',
-			timeout: 2000,
+			icon: '/assets/favicon.svg',
+			link: '/#',
+			timeout: 4000,
 			onClick: function () {
 				window.focus();
 				this.close();
-			}
+			},
+			vibrate: [200, 100, 200, 100, 200, 100, 200]
 		});
 	}
 }
