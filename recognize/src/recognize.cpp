@@ -418,6 +418,7 @@ std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat
 			results.push_back(std::make_tuple(detections[i], foundWeights[i], ""));
 		}
 	} else if (this->programConfig.detectionMethod == DetectionMethod::YoloDNN_V4) {
+		#ifdef WITH_CUDA
 		cv::Mat blob;
 		std::vector<cv::Mat> detectionsFrames;
 		cv::dnn::blobFromImage(frame, blob, 0.006921, cv::Size(608,608), cv::Scalar(), true, false, CV_32F);
@@ -456,6 +457,7 @@ std::vector<std::tuple<cv::Rect, double, std::string>> Recognize::Detect(cv::Mat
 				results.push_back(std::make_tuple(boxes[c][idx], scores[c][idx], class_names[c]));
 			}
 		}
+		#endif // WITH_CUDA
 	}
 	
 	return results;
