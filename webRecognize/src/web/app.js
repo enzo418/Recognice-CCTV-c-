@@ -112,7 +112,20 @@ var cnvAreas = {
 	},
 	areasString: "",
 	lastClick: null,
-	colors: ["Aqua", "Red", "Blue", "Chartreuse", "Crimson", "Cyan", "DeepPink", "Gold", "LawnGreen", "PaleTurquoise"]
+	colors: ["Aqua", "Red", "Blue", "Chartreuse", "Crimson", "Cyan", "DeepPink", "Gold", "LawnGreen", "PaleTurquoise"],
+	removeAll: function () {
+		this.areas = [];
+		this.areasString = "";
+		var camindex = $('#modal-igarea').data("index");
+		document.querySelector('#camera-' + camindex)
+			.querySelector('input[name="ignoredareas"]')
+			.value = "";
+		
+		var image = new Image();
+		image.onload = () => this.ctx.drawImage(image, 0, 0);
+
+		image.src = "data:image/jpg;base64," + this.lastImage;
+	}
 }
 
 var notificationPaginator = {index: 0, elements:[]}; // DOM notification elements
@@ -259,9 +272,9 @@ $(function() {
 					var roiInput = camera.querySelector('input[name="roi"]');
 					cnvRoi.roi = roiInput.value;
 					if (roiInput.value.length > 0) {
-						var numbers = cnvRoi.roi.match(/\d+/g).map(i => parseInt(i));
-						if (numbers.length === 4)
-							cnvRoi.ctx.strokeRect(numbers[0], numbers[1], numbers[2], numbers[3]);
+						var roi = stringToRoi(roiInput.value);
+						if (roi.length > 0)
+							cnvRoi.ctx.strokeRect(roi[0], roi[1], roi[2], roi[3]);
 					}
 
 					onResize();
@@ -359,6 +372,13 @@ $(function() {
 	});
 });
 
+function stringToRoi(roi) {
+	var numbers = roi.match(/\d+/g).map(i => parseInt(i));
+	if (numbers.length === 4)
+		return [numbers[0], numbers[1], numbers[2], numbers[3]];
+	else
+		return false;
+}
 
 function togglePush() {
 	SEND_PUSH_NOTIFICATIONS = !SEND_PUSH_NOTIFICATIONS;
@@ -602,6 +622,12 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 	
 	var roi = document.querySelector('#camera-' + $cameraIndex).querySelector('input[name="roi"]').value;
 
+	var parsedRoi = stringToRoi(roi);
+	if (parsedRoi) {
+		$(cnvAreas.canvas).attr("width", parsedRoi[2])
+		$(cnvAreas.canvas).attr("height", parsedRoi[3]);
+	}
+
 	sendObj('get_camera_frame', {index: $cameraIndex, rotation, url: cameras[$cameraIndex].url, roi});
 
 	unfinishedRequests["get_camera_frame"] = function () {
@@ -628,7 +654,7 @@ function deleteCamera($ev, $cameraIndex) {
 }
 
 function saveCameraROI($ev, save) {
-	var camindex = $('#modal-roi').data("index");
+	var camindex = $('#modal-roi')[0].dataset["index"];
 	var camera = document.querySelector('#camera-' + camindex);
 
 	if (save) {
@@ -643,7 +669,7 @@ function saveCameraROI($ev, save) {
 }
 
 function saveCameraIgarea($ev, save) {
-	var camindex = $('#modal-igarea').data("index");
+	var camindex = $('#modal-igarea')[0].dataset["index"]; // $('#modal-igarea').data("index"); <-- bugged
 	var camera = document.querySelector('#camera-' + camindex);
 
 	if (save) {

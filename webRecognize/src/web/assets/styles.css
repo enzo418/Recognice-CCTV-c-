@@ -267,7 +267,8 @@ label {
 
 #modal-roi .modal-content, #modal-igarea .modal-content {
 	max-width: 100%;
-	width: fit-content;
+	width: min-content;
+	height: min-content;
 	max-height: 100%;
     margin: 0;
     padding: 0;
