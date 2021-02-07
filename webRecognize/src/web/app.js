@@ -132,6 +132,9 @@ var notificationPaginator = {index: 0, elements:[]}; // DOM notification element
 
 var configurationsElements = {elements: {}, translations: {}};
 
+var appTitle = "Web Recognize";
+var currentNumberNotificationsWindowTitle = 0;
+
 $(function() {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
 
@@ -231,6 +234,10 @@ $(function() {
 				var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
 				audio.volume = 0.5;
 				audio.play();
+			}
+			
+			if (document.visibilityState == "hidden") {
+				document.title = `(${++currentNumberNotificationsWindowTitle}) ${appTitle}`;
 			}
 		}
 
@@ -916,6 +923,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		cnvAreas.canvas.addEventListener("touchend", relesed, false);
 	});
 });
+
+window.addEventListener("focus", function(event) { 
+	setTimeout(() => {
+		if (document.visibilityState == "visible") {
+			currentNumberNotificationsWindowTitle = 0;
+			document.title = appTitle;
+		}
+	}, 250);
+}, false);
 
 function previousNotification(){
 	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : notificationPaginator.elements.length - 1;
