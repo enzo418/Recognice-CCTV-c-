@@ -55,7 +55,7 @@ const getNotificationTemplate = (type, text) => `
 <div class="box">
 ${(type == "image" && 
 	`<figure class="image">
-		<img src="${text}" alt="Image">
+		<img src="" data-src="${text}" alt="Image">
 	</figure>`
 ) || ""}
 ${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
@@ -227,7 +227,7 @@ $(function() {
 			}
 			
 			// only change if user is watching the last one
-			if (notificationPaginator.index === 0)
+			if (notificationPaginator.index === notificationPaginator.elements.length - 1)
 				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
 
 			if (PLAY_SOUND_NOTIFICATION) {
@@ -933,26 +933,39 @@ window.addEventListener("focus", function(event) {
 	}, 250);
 }, false);
 
+// Helper function that updates the current index to the previous and calls a function to change the notification displayed
 function previousNotification(){
 	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : notificationPaginator.elements.length - 1;
 	changeCurrentElementNotification($i);
 }
 
+// Helper function that updates the current index to the next one and calls a function to change the notification displayed
 function nextNotification(){
 	var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
 	changeCurrentElementNotification($i);
 }
 
+// updates the number of notifications shown on the buttons to change notification
 function updateNotificationsNumberPaginator() {
 	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
 	$('.notification-previous-left').text(notificationPaginator.index);
 }
 
+// removes the notifications elements from the container and append the requested
 function changeCurrentElementNotification($i) {
 	var $not = $('#notifications-content');
+
+	[...$not[0].children].forEach(el => {
+		el.getElementsByTagName("img")[0].dataset.src = el.getElementsByTagName("img")[0].src;
+		el.getElementsByTagName("img")[0].src = "";
+	});
+
 	$not.empty();
 
-	$not.append(notificationPaginator.elements[$i]);
+	var el = notificationPaginator.elements[$i];
+	el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
+	
+	$not.append(el);
 	notificationPaginator.index = $i;
 
 	updateNotificationsNumberPaginator();
