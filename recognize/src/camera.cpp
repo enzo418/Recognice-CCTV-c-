@@ -34,7 +34,9 @@ void Camera::Connect() {
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
 	// if use gif is true, it's already resized
-	if (!this->_programConfig->useGifInsteadImage)
+	if (!this->_programConfig->useGifInsteadImage 
+			&& (this->_programConfig->telegramConfig.useTelegramBot 
+					|| this->_programConfig->localNotificationsConfig.useLocalNotifications))
 		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 	
 	this->frameToShow = this->frame.clone();
@@ -160,7 +162,7 @@ void Camera::ReadFramesWithInterval() {
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
 	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
 	const bool useNotifications = this->_programConfig->telegramConfig.useTelegramBot 
-								  && this->_programConfig->localNotificationsConfig.useLocalNotifications;
+								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
 	const bool useGifInsteadImg = useNotifications && this->_programConfig->useGifInsteadImage;
 
 	cv::VideoCapture capture(this->config->url);
