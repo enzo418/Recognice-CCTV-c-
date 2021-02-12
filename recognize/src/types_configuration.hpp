@@ -88,17 +88,13 @@ struct ProgramConfiguration {
 	// seconds to waait until send another message.
 	int secondsBetweenMessage = 15;
 
-	// if should send a image when the threshold change was passed.
-	bool sendImageWhenDetectChange;
-	
-	// if should send a text message when the threshold change was passed.
-	bool sendTextWhenDetectChange;
-
 	// resolution of the preview
 	cv::Size outputResolution;
 
 	// telefram bot config
 	TelegramBotConfig telegramConfig;
+
+	LocalNotificationsConfig localNotificationsConfig;
 
 	// show preview of the cameras
 	bool showPreview;
@@ -133,8 +129,6 @@ struct ProgramConfiguration {
 	cv::Mat frameWithAllTheCameras;
 	
 	DetectionMethod detectionMethod = DetectionMethod::HogDescriptor;
-
-	bool useLocalNotifications = true;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

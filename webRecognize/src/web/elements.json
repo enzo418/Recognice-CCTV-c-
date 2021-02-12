@@ -43,11 +43,6 @@
 			"hidden": false,
 			"placeholder": ""
 		},
-		"useLocalNotifications": {
-			"type": "boolean",
-			"hidden": false,
-			"placeholder": ""
-		},
 		"telegramBotApi": {
 			"type": "string",
 			"hidden": false,
@@ -59,6 +54,31 @@
 			"placeholder": ""
 		},
 		"useTelegramBot": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"telegrambot_sendImageWhenDetectChange": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"telegrambot_sendTextWhenDetectChange": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"uselocalnotifications": {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"localnotifications_sendimagewhendetectchange" : {
+			"type": "boolean",
+			"hidden": false,
+			"placeholder": ""
+		},
+		"localnotifications_sendtextwhendetectchange" : {
 			"type": "boolean",
 			"hidden": false,
 			"placeholder": ""
@@ -79,16 +99,6 @@
 			"hidden": false,
 			"placeholder": "",
 			"min": 0
-		},
-		"sendImageWhenDetectChange": {
-			"type": "boolean",
-			"hidden": false,
-			"placeholder": ""
-		},
-		"sendTextWhenDetectChange": {
-			"type": "boolean",
-			"hidden": false,
-			"placeholder": ""
 		},
 		"authUsersToSendActions": {
 			"type": "string",

@@ -116,13 +116,16 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 	// Play a sound
 	// this->pendingNotifications.push_back(Notification::Notification());
 	
-	if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
+	if (this->_programConfig->useGifInsteadImage 
+		&& (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
+		|| this->_programConfig->telegramConfig.sendImageWhenDetectChange)) {
 		this->currentGifFrames->detectedChange();
 	} else {
 		// Send message with image
 		auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 		if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-			if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
+			if(this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
+				|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) {                  
 				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 				this->pendingNotifications.push_back(imn);
 			}
@@ -133,12 +136,14 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 	
 	// Send text message
 	auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
-	if (intervalFrames >= this->_programConfig->secondsBetweenMessage && !(this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage)) {
-		if (this->_programConfig->sendTextWhenDetectChange){
-			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
-			this->pendingNotifications.push_back(imn);
-			this->lastTextSended = std::chrono::high_resolution_clock::now();
-		}
+	if (intervalFrames >= this->_programConfig->secondsBetweenMessage 
+		&& (this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
+		|| this->_programConfig->telegramConfig.sendTextWhenDetectChange)
+		&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif if valid*/) {
+		
+		Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
+		this->pendingNotifications.push_back(imn);
+		this->lastTextSended = std::chrono::high_resolution_clock::now();		
 	}
 }
 
@@ -154,7 +159,9 @@ void Camera::ReadFramesWithInterval() {
 	const bool showPreview = this->_programConfig->showPreview;   
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
 	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
-	const bool useGifInsteadImg = this->_programConfig->useGifInsteadImage;
+	const bool useNotifications = this->_programConfig->telegramConfig.useTelegramBot 
+								  && this->_programConfig->localNotificationsConfig.useLocalNotifications;
+	const bool useGifInsteadImg = useNotifications && this->_programConfig->useGifInsteadImage;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -229,31 +236,33 @@ void Camera::ReadFramesWithInterval() {
 			if (this->totalNonZeroPixels > this->config->changeThreshold 
 				&& this->currentGifFrames->getState() == State::Initial) 
 			{
-				std::cout << "Change detected. Checking..."  << std::endl;
+				if (useNotifications) {
+					std::cout << "Change detected. Checking..."  << std::endl;
 
-				this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
+					this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
 
-				size_t overlappingFindings = 0;
-				// since gif does this (check if change inside an ignored area) for each frame... 
-				// only do it if user wants a image				
-				if (!useGifInsteadImg) {
-					this->lastFinding = FindRect(diff);
-					
-					for (auto &&i : this->config->ignoredAreas) {
-						cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
-						if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->config->minPercentageAreaNeededToIgnore) {
-							overlappingFindings += 1;
+					size_t overlappingFindings = 0;
+					// since gif does this (check if change inside an ignored area) for each frame... 
+					// only do it if user wants a image				
+					if (!useGifInsteadImg) {
+						this->lastFinding = FindRect(diff);
+						
+						for (auto &&i : this->config->ignoredAreas) {
+							cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
+							if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->config->minPercentageAreaNeededToIgnore) {
+								overlappingFindings += 1;
+							}
 						}
 					}
-				}
 
-				if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
-					// is valid, send an alert
-					this->ChangeTheStateAndAlert(now);
+					if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
+						// is valid, send an alert
+						this->ChangeTheStateAndAlert(now);
+					}
+					
+					if (framesLeft < maxFramesLeft)
+						framesLeft += numberFramesToAdd;
 				}
-				
-				if (framesLeft < maxFramesLeft)
-					framesLeft += numberFramesToAdd;
 			}
 
 			if (framesLeft == 0)

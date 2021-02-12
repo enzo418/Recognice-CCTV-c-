@@ -60,12 +60,20 @@
 			"label": "Seconds to wait until a new alert with a text is sent",
 			"description": ""
 		},
-		"sendImageWhenDetectChange": {
-			"label": "Send a image (or gif) when detect a change",
+		"telegrambot_sendimagewhendetectchange": {
+			"label": "[TelegramBot] Send a image (or gif) when detect a change",
 			"description": ""
 		},
-		"sendTextWhenDetectChange": {
-			"label": "Send a text alert when detect a change",
+		"telegrambot_sendtextwhendetectchange": {
+			"label": "[TelegramBot] Send a text alert when detect a change",
+			"description": ""
+		},
+		"localnotifications_sendimagewhendetectchange": {
+			"label": "[LocalNotifications] Send a image (or gif) when detect a change",
+			"description": ""
+		},
+		"localnotifications_sendtextwhendetectchange": {
+			"label": "[LocalNotifications] Send a text alert when detect a change",
 			"description": ""
 		},
 		"authUsersToSendActions": {

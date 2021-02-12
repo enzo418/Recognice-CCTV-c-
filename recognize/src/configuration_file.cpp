@@ -174,8 +174,11 @@ namespace ConfigurationFile {
 			<< "\n;sendimageofallcameras=boolean"
 			<< "\n;secondsBetweenImage=int"
 			<< "\n;secondsBetweenMessage=int"
-			<< "\n;sendImageWhenDetectChange=boolean"
-			<< "\n;sendTextWhenDetectChange=boolean"
+			<< "\n;ntelegrambot_sendImageWhenDetectChange=boolean"
+			<< "\n;ntelegrambot_sendTextWhenDetectChange=boolean"
+
+			<< "\n;localnotifications_sendTextWhenDetectChange=boolean"
+			<< "\n;localnotifications_sendImageWhenDetectChange=boolean"			
 			
 			<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n."
 			<< "\n;authUsersToSendActions=string,string,..."
@@ -331,15 +334,18 @@ namespace ConfigurationFile {
 			if (!cfg.telegramConfig.chatId.empty())
 				ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
 					
-		ss	<< "\nuseLocalNotifications=" << (cfg.useLocalNotifications ? "1" : "0")
+		ss	<< "\nuseLocalNotifications=" << (cfg.localNotificationsConfig.useLocalNotifications ? "1" : "0")
 			
 			<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
 			<< "\nsendImageOfAllCameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
-			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "1" : "0")
-			<< "\nsendTextWhenDetectChange=" << (cfg.sendTextWhenDetectChange ?  "1" : "0")
-			<< "\nimagesFolder=" << cfg.imagesFolder;
+			<< "\ntelegrambot_sendImageWhenDetectChange=" << (cfg.telegramConfig.sendImageWhenDetectChange ?  "1" : "0")
+			<< "\ntelegrambot_sendTextWhenDetectChange=" << (cfg.telegramConfig.sendTextWhenDetectChange ?  "1" : "0")
+			<< "\nimagesFolder=" << cfg.imagesFolder
+			
+			<< "\nlocalnotifications_sendTextWhenDetectChange=" << (cfg.localNotificationsConfig.sendTextWhenDetectChange ?  "1" : "0")
+			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0");
 			
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
@@ -427,8 +433,10 @@ namespace ConfigurationFile {
 		} else if (id == "showprocessedframes" || id == "showprocessedimages") {
 			Utils::toLowerCase(value);
 			config.showProcessedFrames = value == "0" ? false : true;
-		} else if (id == "sendimagewhendetectchange" || id == "sendimageafterdetectigchange"){
-			config.sendImageWhenDetectChange = value == "0" ? false : true;
+		} else if (id == "telegrambot_sendimagewhendetectchange" || id == "telegrambot_sendimageafterdetectigchange"){
+			config.telegramConfig.sendImageWhenDetectChange = value == "1";
+		} else if (id == "telegrambot_sendtextwhendetectchange" || id == "telegrambot_sendtextafterchange") {
+			config.telegramConfig.sendTextWhenDetectChange = value == "1";
 		} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 			Utils::toLowerCase(value);
 			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
@@ -474,9 +482,6 @@ namespace ConfigurationFile {
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
 			config.showIgnoredAreas = value == "0" ? false : true;
-		} else if (id == "sendtextwhendetectchange" || id == "sendtextafterchange") {
-			Utils::toLowerCase(value);
-			config.sendTextWhenDetectChange = value == "0" ? false : true;
 		} else if (id == "detectionmethod") {
 			try {
 				config.detectionMethod = (DetectionMethod)std::stoi(value);
@@ -485,8 +490,12 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "imagesfolder" || id == "mediafolder") {
 			config.imagesFolder = value;
-		} else if (id == "usenotifications" || id == "sendnotifications") {
-			config.useLocalNotifications = value == "1";
+		} else if (id == "uselocalnotifications") {
+			config.localNotificationsConfig.useLocalNotifications = value == "1";
+		} else if (id == "localnotifications_sendtextwhendetectchange" || id == "localnotification_sendtextwhendetectchange") {
+			config.localNotificationsConfig.sendTextWhenDetectChange = value == "1";
+		} else if (id == "localnotifications_sendimagewhendetectchange" || id == "localnotification_sendimagewhendetectchange") {
+			config.localNotificationsConfig.sendImageWhenDetectChange = value == "1";
 		}
 		
 		return sucess;

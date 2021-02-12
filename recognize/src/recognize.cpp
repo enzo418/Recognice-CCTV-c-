@@ -86,7 +86,7 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 //		this->threads.push_back(std::thread(&Recognize::StartActionsBot, this));
 //	}
 
-	if (programConfig.telegramConfig.useTelegramBot || programConfig.useLocalNotifications) {
+	if (programConfig.telegramConfig.useTelegramBot || programConfig.localNotificationsConfig.useLocalNotifications) {
 		std::cout << "pushed thread of notifications in " << this->threads.size() << std::endl;
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
@@ -306,7 +306,8 @@ void Recognize::StartNotificationsSender() {
 
 								std::vector<cv::Mat> frames = gif->getFrames();
 
-								if (this->programConfig.sendTextWhenDetectChange && this->programConfig.telegramConfig.useTelegramBot) {
+								if (this->programConfig.telegramConfig.useTelegramBot
+									|| this->programConfig.localNotificationsConfig.useLocalNotifications) {
 									camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
 								}
 								
@@ -351,12 +352,17 @@ void Recognize::StartNotificationsSender() {
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
 				std::string data = camera->pendingNotifications[i].send(programConfig);
-				this->notificationWithMedia->try_emplace(
-						std::pair<Notification::Type, std::string>(
-							camera->pendingNotifications[i].type, 
-							data
-							)
-					);
+				if (camera->pendingNotifications[i].type == Notification::IMAGE 
+						|| camera->pendingNotifications[i].type == Notification::SOUND
+						|| (camera->pendingNotifications[i].type == Notification::TEXT 
+								&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange)) {
+					this->notificationWithMedia->try_emplace(
+							std::pair<Notification::Type, std::string>(
+								camera->pendingNotifications[i].type, 
+								data
+								)
+						);
+				}
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p

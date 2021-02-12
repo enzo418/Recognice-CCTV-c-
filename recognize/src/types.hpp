@@ -102,6 +102,22 @@ struct TelegramBotConfig {
 
 	// channel to send the images
 	std::string chatId;
+
+	// if should send a image when the threshold change was passed.
+	bool sendImageWhenDetectChange;
+	
+	// if should send a text message when the threshold change was passed.
+	bool sendTextWhenDetectChange;
+};
+
+struct LocalNotificationsConfig {
+	bool useLocalNotifications;
+
+	// if should send a image when the threshold change was passed.
+	bool sendImageWhenDetectChange;
+	
+	// if should send a text message when the threshold change was passed.
+	bool sendTextWhenDetectChange;
 };
 
 // struct UntrustedFinding {
