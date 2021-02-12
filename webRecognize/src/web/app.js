@@ -963,7 +963,8 @@ function changeCurrentElementNotification($i) {
 	$not.empty();
 
 	var el = notificationPaginator.elements[$i];
-	el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
+	if (el.getElementsByTagName("img").length >= 0)
+	    el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
 	
 	$not.append(el);
 	notificationPaginator.index = $i;
