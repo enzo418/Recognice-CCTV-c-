@@ -33,6 +33,10 @@ body, .section, html {
 	color: black;
 }
 
+.text-notification .subtitle {
+	color: #fff;
+}
+
 .button {
     background-color: rgb(25, 28, 29);
     border-color: rgb(5 98 125);

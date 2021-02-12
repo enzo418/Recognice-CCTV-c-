@@ -52,7 +52,7 @@ const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => 
 </div>`;
 
 const getNotificationTemplate = (type, text) => `
-<div class="box">
+<div class="box ${(type == "text" && "text-notification") || ""}">
 ${(type == "image" && 
 	`<figure class="image">
 		<img src="" data-src="${text}" alt="Image">
