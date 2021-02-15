@@ -118,34 +118,36 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 	// Play a sound
 	// this->pendingNotifications.push_back(Notification::Notification());
 	
-	if (this->_programConfig->useGifInsteadImage 
-		&& (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
-		|| this->_programConfig->telegramConfig.sendImageWhenDetectChange)) {
-		this->currentGifFrames->detectedChange();
-	} else {
-		// Send message with image
-		auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
-		if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-			if(this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
-				|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) {                  
+	if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
+		|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
+	{
+		if (this->_programConfig->useGifInsteadImage) {
+			this->currentGifFrames->detectedChange();
+		} else {
+			// Send message with image
+			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
+			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
 				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
 				this->pendingNotifications.push_back(imn);
+				
+				this->lastImageSended = std::chrono::high_resolution_clock::now();
 			}
-			
-			this->lastImageSended = std::chrono::high_resolution_clock::now();
 		}
 	}
 	
 	// Send text message
 	auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
 	if (intervalFrames >= this->_programConfig->secondsBetweenMessage 
-		&& (this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
-		|| this->_programConfig->telegramConfig.sendTextWhenDetectChange)
-		&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif if valid*/) {
-		
+		&& 	(
+				this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
+				|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
+			)
+		&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif is valid*/
+		)
+	{
 		Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
 		this->pendingNotifications.push_back(imn);
-		this->lastTextSended = std::chrono::high_resolution_clock::now();		
+		this->lastTextSended = std::chrono::high_resolution_clock::now();
 	}
 }
 

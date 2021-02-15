@@ -284,9 +284,14 @@ void Recognize::StartNotificationsSender() {
 				for (size_t i = 0; i < sz; i++) {
 					bool eraseGifs = false;
 
+					auto now = std::chrono::high_resolution_clock::now();
+					auto intervalFrames = (now - camera->lastImageSended) / std::chrono::seconds(1);
+
 					GifFrames* gif = camera->gifsReady[i].release();
-					// Send gif
-					if (gif->getState() == State::Ready) {
+					// Ready and didn't send a gif since secondsBetweenImage and is valid
+					if (gif->getState() == State::Ready 
+							&& intervalFrames >= this->programConfig.secondsBetweenImage
+							&& gif->isValid()) {
 						// -----------------------------------------------------------
 						// Take before and after frames and combine them into a .gif
 						// -----------------------------------------------------------
@@ -298,39 +303,31 @@ void Recognize::StartNotificationsSender() {
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
 
-						if (gif->isValid()) {
-							auto now = std::chrono::high_resolution_clock::now();
-							auto intervalFrames = (now - camera->lastImageSended) / std::chrono::seconds(1);
-							if (intervalFrames >= this->programConfig.secondsBetweenImage) {
-								eraseGifs = true;
+						eraseGifs = true;
 
-								std::vector<cv::Mat> frames = gif->getFrames();
+						std::vector<cv::Mat> frames = gif->getFrames();
 
-								if (this->programConfig.telegramConfig.useTelegramBot
-									|| this->programConfig.localNotificationsConfig.useLocalNotifications) {
-									camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
-								}
-								
-								// if (frames.avrgDistanceFrames > 70) {
-								for (size_t i = 0; i < frames.size(); i++) {
-									location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
-
-									cv::imwrite(location, frames[i]);
-								}
-
-								std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
-
-								std::system(command.c_str());
-
-								if (this->programConfig.telegramConfig.useTelegramBot)
-									TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
-
-								camera->lastImageSended = std::chrono::high_resolution_clock::now();
-
-								this->notificationWithMedia->try_emplace(
-									std::pair<Notification::Type, std::string>(Notification::IMAGE, gifPath));
-							}
+						if (this->programConfig.localNotificationsConfig.useLocalNotifications) {
+							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
 						}
+						
+						for (size_t i = 0; i < frames.size(); i++) {
+							location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
+
+							cv::imwrite(location, frames[i]);
+						}
+
+						std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
+
+						std::system(command.c_str());
+
+						if (this->programConfig.telegramConfig.useTelegramBot)
+							TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+
+						camera->lastImageSended = std::chrono::high_resolution_clock::now();
+
+						this->notificationWithMedia->try_emplace(
+							std::pair<Notification::Type, std::string>(Notification::IMAGE, gifPath));					
 					}
 
 					delete gif;
@@ -353,9 +350,14 @@ void Recognize::StartNotificationsSender() {
 
 				std::string data = camera->pendingNotifications[i].send(programConfig);
 				if (camera->pendingNotifications[i].type == Notification::IMAGE 
-						|| camera->pendingNotifications[i].type == Notification::SOUND
-						|| (camera->pendingNotifications[i].type == Notification::TEXT 
-								&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange)) {
+					|| camera->pendingNotifications[i].type == Notification::SOUND
+					|| (
+							// check if user wants text messages in local notifications
+							camera->pendingNotifications[i].type == Notification::TEXT 
+							&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange							
+						)
+					) 
+				{						
 					this->notificationWithMedia->try_emplace(
 							std::pair<Notification::Type, std::string>(
 								camera->pendingNotifications[i].type, 
