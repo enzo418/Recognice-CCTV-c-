@@ -73,6 +73,11 @@ const getAlertTemplate = ($message, $stateClass) => `
 	<span class="notification-text">${$message}</span>
 </div>`;
 
+const getGroupTemplate = ($name, $id) => `
+<fieldset class="configuration-group" id=${$id}>
+  <legend>${$name}</legend>
+ </fieldset>`;
+
 var FILE_PATH = ""; // file that the user requested at the start
 var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
@@ -197,12 +202,13 @@ $(function() {
 				configurationsElements.elements = elements;
 				configurationsElements.translations = translations;
 
-				/// ---- ADD PROGRAM ITEM			
+				/// ---- ADD PROGRAM ITEM		
+				// create program configurations html-element	
 				var programEl = $(getProgramContainerTemplate());
 				var programContent = $(programEl).children('.program-config-content');
-				
-				addTemplateElements(programContent, headers.program, elements.program, translations.en);
 
+				addGroups(elements.program.groups, headers.program, programContent, translations.en);
+				
 				$('#configurations').append(programEl);
 
 				/// ---- END PROGRAM ITEM
@@ -466,8 +472,9 @@ function AddCameraElement(val, i) {
 	var camEl = $(getCameraContainerTemplate(i, val));
 	var camConten = $(camEl).children('.camera-config-content');
 	
-	// add each input element
-	addTemplateElements(camConten, val, configurationsElements.elements.camera, configurationsElements.translations.en);
+	addGroups(configurationsElements.elements.camera.groups, val, camConten, configurationsElements.translations.en)
+	// // add each input element
+	// addTemplateElements(camConten, val, configurationsElements.elements.camera, configurationsElements.translations.en);
 
 	// add to configurations container
 	$('#configurations').append(camEl);
@@ -566,10 +573,17 @@ function getElementsTranslations() {
 	return new Promise(resolve => {
 		fetch('/elements.json')
 			.then(elements => elements.json())
-			.then(elements => {
-			elements.camera = objectKeysToLowerCase(elements.camera)
-			elements.program = objectKeysToLowerCase(elements.program)
+			.then(elements => {			
+			// lower case ids of the elements
+			[...elements.camera.groups].forEach(group => {
+				group.elements.forEach(el => {el.target = el.target.toLowerCase()})
+			});
 
+			[...elements.program.groups].forEach(group => {
+				group.elements.forEach(el => {el.target = el.target.toLowerCase()})
+			})
+
+			// get the translations
 			fetch('/translations.json')
 				.then(translations => translations.json())
 				.then(translations => {
@@ -584,23 +598,37 @@ function getElementsTranslations() {
 
 function addTemplateElements(jqElemRoot, values, elements, translations) {
 	Object.entries(elements).forEach(el => {
-		const $name = el[0];
-		const $type = el[1].type;
-		const $hidden = el[1].hidden;
-		const $placeholder = el[1].placeholder;
-		const $label = translations[$name].label;
-		const $tooltip = translations[$name].description;
-		
-		if (["text", "string"].indexOf($type) >= 0) {
-			$(jqElemRoot).append(getTextInputItemTemplate($name, $placeholder, values[$name] || "", $label, $tooltip, $hidden));
-		} else if (["number", "integer", "int", "decimal"].indexOf($type) >= 0) {
-			const $max = el[1].max;
-			const $min = el[1].min;
+		const $name = el[0].target;
+		appendTemplateElement(jqElemRoot, values[$name], el, translations[$name].label, translations[$name].description);
+	});
+}
 
-			$(jqElemRoot).append(getNumberInputItemTemplate($name, $placeholder, values[$name] || null, $label, $tooltip, $max, $min, $hidden));
-		} else if (["checkbox", "boolean", "bool"].indexOf($type) >= 0) {
-			$(jqElemRoot).append(getCheckBoxItemTemplate($name, values[$name] === '1', $label, $tooltip, $hidden));
-		}
+function appendTemplateElement($jqElemRoot, $value, $element, $label, $description) {
+	const $name = $element.target;
+	const $type = $element.type;
+	const $hidden = $element.hidden;
+	const $placeholder = $element.placeholder;
+	
+	if (["text", "string"].indexOf($type) >= 0) {
+		$($jqElemRoot).append(getTextInputItemTemplate($name, $placeholder, $value || "", $label, $description, $hidden));
+	} else if (["number", "integer", "int", "decimal"].indexOf($type) >= 0) {
+		const $max = $element.max;
+		const $min = $element.min;
+
+		$($jqElemRoot).append(getNumberInputItemTemplate($name, $placeholder, $value || null, $label, $description, $max, $min, $hidden));
+	} else if (["checkbox", "boolean", "bool"].indexOf($type) >= 0) {
+		$($jqElemRoot).append(getCheckBoxItemTemplate($name, $value === '1', $label, $description, $hidden));
+	}
+}
+
+function addGroups($groups, $values, $jqElemRoot, $translations) {
+	[...$groups].forEach(group => {
+		var groupEl = $(getGroupTemplate(group.name, group.name.toLowerCase()));
+		group.elements.forEach(el => {
+			const $el_name = el.target;
+			appendTemplateElement(groupEl, $values[$el_name], el, $translations[$el_name].label, $translations[$el_name].description);
+		});
+		$jqElemRoot.append(groupEl);
 	});
 }
 
