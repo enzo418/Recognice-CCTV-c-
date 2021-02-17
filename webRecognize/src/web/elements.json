@@ -100,7 +100,14 @@
 						"target": "useTelegramBot",
 						"type": "boolean",
 						"hidden": false,
-						"placeholder": ""
+						"placeholder": "",
+						"on_change": [
+							{
+								"id": "group_telegramNotificationsSettings",
+								"on_checked": "enabled",
+								"on_unchecked": "disabled"
+							}
+						]
 					},
 					{
 						"target": "telegramBotApi",
@@ -155,6 +162,7 @@
 				"groups": [
 					{
 						"name": "Telegram Notifications",
+						"id": "group_telegramNotificationsSettings",
 						"elements": [
 							{	
 								"target": "telegrambot_sendImageWhenDetectChange",
@@ -172,6 +180,7 @@
 					},
 					{
 						"name": "Local Notifications",
+						"id": "group_localNotificationsSettings",
 						"elements": [
 							{	
 								"target": "localnotifications_sendimagewhendetectchange" ,
@@ -196,7 +205,14 @@
 						"target": "uselocalnotifications",
 						"type": "boolean",
 						"hidden": false,
-						"placeholder": ""
+						"placeholder": "",
+						"on_change": [
+							{
+								"id": "group_localNotificationsSettings",
+								"on_checked": "enabled",
+								"on_unchecked": "disabled"
+							}
+						]
 					}
 				]
 			}

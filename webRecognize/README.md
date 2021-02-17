@@ -4,11 +4,11 @@ The fronted is built dynamically. First we get the html-elements specifications 
 ### **elements.json**
 In this file are all the elements/fields of the program and camera configuration. It's a json that his root object has two properties, `program` and `camera`, each one has a `groups` property that contains the groups. Each of these `group` has its `name` and the `elements` it contains, it can also have `groups`.
 
-A element has 5 properties:
+A element has 4 requeried and 2 optional properties:
 - `target`: string
     - target filed to change in the configuration.
 
-- `type`: string with number|integer|int|decimal | checkbox|boolean|bool | text|string
+- `type`: string: number|integer|int|decimal | checkbox|boolean|bool | text|string
     - the input type of the html element
 
 - `hidden`: boolean
@@ -21,6 +21,14 @@ A element has 5 properties:
 
 - `max`: number
     - only for numeric inputs
+
+- `on_change`: array
+    - only for checkbox, used to enable/disable elements based on the changed state of the checkbox.
+    - Its elements have 3 properties:
+        - `id`: string
+            - id of the element to enable/disable, can be a group.
+        - `on_checked`: string: enabled|disabled
+        - `on_unchecked`: string: enabled|disabled
 
 ### **translations.json**
 As its name describes, it contains the translations.

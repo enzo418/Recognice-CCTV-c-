@@ -622,13 +622,40 @@ function appendTemplateElement($jqElemRoot, $value, $element, $label, $descripti
 
 		$($jqElemRoot).append(getNumberInputItemTemplate($name, $placeholder, $value || null, $label, $description, $max, $min, $hidden));
 	} else if (["checkbox", "boolean", "bool"].indexOf($type) >= 0) {
-		$($jqElemRoot).append(getCheckBoxItemTemplate($name, $value === '1', $label, $description, $hidden));
+		const $onChange = $element.on_change;
+
+		var chckEl = $(getCheckBoxItemTemplate($name, $value === '1', $label, $description, $hidden));
+		
+		if ($onChange) {
+			var inputEl = chckEl.find('input');
+			
+			/* TODO: change state by initial value.
+			/* In order to do this, it would be neccesary to save all the correspoding
+			/* calls to toggleStateElements in an array with its value depending on $value, since
+			/* not all the elements are in the DOM at this point of time.
+			/* Example:
+			 	arr.push(
+					toggleStateElements($value === '1' ? "on_checked" : "on_unchecked", $onChange);
+				)
+			*/
+
+			// listen to changes
+			inputEl.change(function(e) {
+				if (e.target.checked) {
+					toggleStateElements("on_checked", $onChange);
+				} else {
+					toggleStateElements("on_unchecked", $onChange);
+				}
+			});
+		}
+
+		$($jqElemRoot).append(chckEl);
 	}
 }
 
 function addGroups($groups, $values, $jqElemRoot, $translations) {
 	[...$groups].forEach(group => {
-		var groupEl = $(getGroupTemplate(group.name, group.name.toLowerCase()));
+		var groupEl = $(getGroupTemplate(group.name, (group.id || "").toLowerCase() || group.name.toLowerCase()));
 
 		if (group.groups) {
 			addGroups(group.groups, $values, groupEl, $translations);
@@ -639,6 +666,17 @@ function addGroups($groups, $values, $jqElemRoot, $translations) {
 			appendTemplateElement(groupEl, $values[$el_name], el, $translations[$el_name].label, $translations[$el_name].description);
 		});
 		$jqElemRoot.append(groupEl);
+	});
+}
+
+function toggleStateElements($selector, $elements) {
+	[...$elements].forEach(el => {
+		var $inputs = document.querySelectorAll(`#${el.id.toLowerCase()} input`) || [];
+		[...$inputs].forEach(input => {
+			input.removeAttribute("enabled");
+			input.removeAttribute("disabled");
+			input.setAttribute(el[$selector], "");
+		});
 	});
 }
 
