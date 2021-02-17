@@ -40,7 +40,7 @@ const getTextInputItemTemplate = ($name, $placeholder, $value, $label, $tooltip,
 const getNumberInputItemTemplate = ($name, $placeholder, $value, $label, $tooltip, $max, $min, $hidden) => `
 <div class="card-content-item ${$hidden && 'is-hidden'}">
 	<label for="${$name}" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="${$tooltip}">${$label}</label>
-	<input class="input" name="${$name}" type="number" placeholder="${$placeholder}" ${$min != null && 'min="'+$min +'"'} ${$max != null && 'max="'+$max +'"'} ${$value && "value='"+$value +"'"}>
+	<input class="input" name="${$name}" type="number" placeholder="${$placeholder}" ${$min != null && 'min="' + $min + '"'} ${$max != null && 'max="' + $max + '"'} ${$value && "value='" + $value + "'"}>
 </div>`;
 
 const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => `
@@ -53,11 +53,11 @@ const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => 
 
 const getNotificationTemplate = (type, text) => `
 <div class="box ${(type == "text" && "text-notification") || ""}">
-${(type == "image" && 
-	`<figure class="image">
+${(type == "image" &&
+		`<figure class="image">
 		<img src="" data-src="${text}" alt="Image">
 	</figure>`
-) || ""}
+	) || ""}
 ${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
 <h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
 </div>`;
@@ -85,7 +85,7 @@ var ws;
 var lastConfigurationActive = "program"; // id of the element
 var cameras = []; // actual cameras as an dictionary
 var unfinishedRequests = {}; 	// dict of unfinished request where key is the request and key a function to
-								// execute when we receive it.
+// execute when we receive it.
 
 var SEND_PUSH_NOTIFICATIONS = window.localStorage.getItem("send_push") === "true";
 var PLAY_SOUND_NOTIFICATION = window.localStorage.getItem("play_sound_notification") === "true";
@@ -95,8 +95,8 @@ var cnvRoi = {
 	ctx: null,
 	lastImage: "",
 	clickPressed: false,
-	p1: {x: 0, y: 0}, // lt or rb
-	p2: {x: 0, y: 0}, // rb or lt
+	p1: { x: 0, y: 0 }, // lt or rb
+	p2: { x: 0, y: 0 }, // rb or lt
 	x: 0, // canvas position in x
 	y: 0, // canvas position in y (with scrollbar)
 	roi: ""
@@ -111,8 +111,8 @@ var cnvAreas = {
 	y: 0,
 	areas: [], // area: {lt: {x, y}, width, height}
 	current: {
-		p1: {x: 0, y:0},
-		p2: {x: 0, y:0},
+		p1: { x: 0, y: 0 },
+		p2: { x: 0, y: 0 },
 		color: ""
 	},
 	areasString: "",
@@ -125,7 +125,7 @@ var cnvAreas = {
 		document.querySelector('#camera-' + camindex)
 			.querySelector('input[name="ignoredareas"]')
 			.value = "";
-		
+
 		var image = new Image();
 		image.onload = () => this.ctx.drawImage(image, 0, 0);
 
@@ -133,35 +133,37 @@ var cnvAreas = {
 	}
 }
 
-var notificationPaginator = {index: 0, elements:[]}; // DOM notification elements
+var notificationPaginator = { index: 0, elements: [] }; // DOM notification elements
 
-var configurationsElements = {elements: {}, translations: {}};
+var configurationsElements = { elements: {}, translations: {} };
 
 var appTitle = "Web Recognize";
 var currentNumberNotificationsWindowTitle = 0;
 
-$(function() {
+var PendingElementsToToggleState = []; // array of {state: string, elements: [{id: string, on_checked: string, on_unchecked: string}]}
+
+$(function () {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
 
-	ws.onopen = function() {
+	ws.onopen = function () {
 		console.log('onopen');
 		$('#pageloader').removeClass("is-active");
 		$('#modal-file').addClass("is-active");
-		
+
 		var dropdown = document.querySelector('#dropdown-file');
 		var dropdown_content = dropdown.querySelector('.dropdown-content');
-		dropdown.addEventListener('click', function(event) {
+		dropdown.addEventListener('click', function (event) {
 			event.stopPropagation();
 			dropdown.classList.toggle('is-active');
 		});
 	};
 
-	ws.onclose = function() {
+	ws.onclose = function () {
 		$('#message').text('Lost connection.');
 		console.log('onclose');
 	};
 
-	ws.onmessage = function(message) {
+	ws.onmessage = function (message) {
 		var data = JSON.parse(message.data);
 		console.log(data);
 
@@ -169,9 +171,9 @@ $(function() {
 			var dropdown_content = document.querySelector('#dropdown-file div.dropdown-content');
 			data["configuration_files"].forEach((file) => {
 				var file_elem = document.createElement("a");
-				
+
 				file_elem.classList.add("dropdown-item");
-				
+
 				file_elem.innerText = file;
 
 				file_elem.onclick = (e) => {
@@ -186,8 +188,8 @@ $(function() {
 
 				dropdown_content.appendChild(file_elem); // add file elem to dropdown
 			});
-		} 
-		
+		}
+
 		if (data.hasOwnProperty("configuration_file")) {
 			console.log(data);
 			setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
@@ -196,34 +198,37 @@ $(function() {
 			var headers = getHeadersFromStringConfig(data["configuration_file"]);
 
 			cameras = headers.cameras;
-			
-			getElementsTranslations().then(res => {								
+
+			getElementsTranslations().then(res => {
 				const [elements, translations] = res;
 				configurationsElements.elements = elements;
 				configurationsElements.translations = translations;
 
-				/// ---- ADD PROGRAM ITEM		
+				// -- ADD PROGRAM CONFIGURATION TO THE CONFIGURATIONS
 				// create program configurations html-element	
 				var programEl = $(getProgramContainerTemplate());
 				var programContent = $(programEl).children('.program-config-content');
 
 				addGroups(elements.program.groups, headers.program, programContent, translations.en);
-				
+
 				$('#configurations').append(programEl);
-
-				/// ---- END PROGRAM ITEM
-
-				/// ==== ADD CAMERAS CONFIGURATIONS
-				headers["cameras"].forEach((val, i) => AddCameraElement(val, i));				
-			});
-		} 
 		
+				// -- ADD CAMERAS CONFIGURATIONS and tabs
+				headers["cameras"].forEach((val, i) => addCameraConfigurationElementsTab(val, i));
+
+				// Toggle elements that couldn't be disabled/enabled when needed
+				PendingElementsToToggleState.forEach(toggle => {
+					toggleStateElements(toggle.state, toggle.elements);
+				});
+			});
+		}
+
 		if (data.hasOwnProperty("recognize_state_changed")) {
 			$('#button-toggle-recognize').removeClass('is-loading');
 			RECOGNIZE_RUNNING = data["recognize_state_changed"];
 			changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 		}
-		
+
 		if (data.hasOwnProperty("new_notification")) {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
@@ -231,7 +236,7 @@ $(function() {
 				createNewNotification(ob["type"], ob["content"], true);
 				createAlert("ok", "New notification", 1500);
 			}
-			
+
 			// only change if user is watching the last one
 			if (notificationPaginator.index === notificationPaginator.elements.length - 1)
 				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
@@ -241,7 +246,7 @@ $(function() {
 				audio.volume = 0.5;
 				audio.play();
 			}
-			
+
 			if (document.visibilityState == "hidden") {
 				document.title = `(${++currentNumberNotificationsWindowTitle}) ${appTitle}`;
 			}
@@ -255,30 +260,30 @@ $(function() {
 				Object.entries(unfinishedRequests).forEach($request => {
 					if ($request[0] == ob["trigger"]) {
 						unfinishedRequests[$request[0]]();
-						delete unfinishedRequests[$request[0]];						
+						delete unfinishedRequests[$request[0]];
 					}
 				});
 			}
 		}
-		
+
 		if (data.hasOwnProperty('frame_camera')) {
 			var ob = data['frame_camera'];
-			
+
 			var index = ob["camera"];
 			var frame = ob["frame"];
-			
+
 			if (frameRequestOrigin === "roi") {
 				var modal = document.querySelector('#modal-roi');
-				
+
 				modal.classList.add('is-active');
-				
+
 				modal.dataset.index = index;
 
 				var image = new Image();
-				image.onload = function() {
+				image.onload = function () {
 					cnvRoi.ctx.drawImage(image, 0, 0);
 
-					cnvRoi.ctx.strokeStyle = "Red"; 
+					cnvRoi.ctx.strokeStyle = "Red";
 					cnvRoi.ctx.lineWidth = 5;
 
 					var camera = document.querySelector('#camera-' + index);
@@ -293,22 +298,22 @@ $(function() {
 					onResize();
 				};
 				image.src = "data:image/jpg;base64," + frame;
-				
+
 				cnvRoi.lastImage = frame;
 			} else {
 				cnvAreas.areas = [];
-				
+
 				var modal = document.querySelector('#modal-igarea');
-				
+
 				modal.classList.add('is-active');
-				
+
 				modal.dataset.index = index;
 
 				var image = new Image();
-				image.onload = function() {
+				image.onload = function () {
 					cnvAreas.ctx.drawImage(image, 0, 0);
 
-					cnvAreas.ctx.strokeStyle = "Red"; 
+					cnvAreas.ctx.strokeStyle = "Red";
 					cnvAreas.ctx.lineWidth = 5;
 
 					var camera = document.querySelector('#camera-' + index);
@@ -317,25 +322,25 @@ $(function() {
 					if (cnvAreas.areasString.length > 0) {
 						var numbers = cnvAreas.areasString.match(/\d+/g).map(i => parseInt(i));
 						if (numbers.length % 4 === 0) {
-							for(var base = 0; base < numbers.length; base+=4) {
+							for (var base = 0; base < numbers.length; base += 4) {
 								const color = cnvAreas.colors[getRandomArbitrary(0, cnvAreas.colors.length)];
-								const 	lt = {x: numbers[base + 0], y: numbers[base + 1]},
-										width = numbers[base + 2],
-										heigth = numbers[base + 3];
+								const lt = { x: numbers[base + 0], y: numbers[base + 1] },
+									width = numbers[base + 2],
+									heigth = numbers[base + 3];
 
-								cnvAreas.areas.push({lt, width, heigth, color});
+								cnvAreas.areas.push({ lt, width, heigth, color });
 
 								cnvAreas.ctx.strokeStyle = color;
-								cnvAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);						
+								cnvAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);
 							}
 						}
 					}
-					
+
 					console.log("areas loaded: ", cnvAreas.areas.length);
 					onResize();
 				};
 				image.src = "data:image/jpg;base64," + frame;
-				
+
 				cnvAreas.lastImage = frame;
 			}
 		}
@@ -345,7 +350,7 @@ $(function() {
 			console.log(ob);
 			var headers = getHeadersFromStringConfig(ob["configuration"]);
 			var i_start = cameras.length;
-			headers.cameras.forEach((cam, i) => AddCameraElement(cam, i_start + i));
+			headers.cameras.forEach((cam, i) => addCameraConfigurationElementsTab(cam, i_start + i));
 		}
 
 		if (data.hasOwnProperty("last_notifications")) {
@@ -359,21 +364,21 @@ $(function() {
 		}
 	};
 
-	ws.onerror = function(error) {
+	ws.onerror = function (error) {
 		console.log('onerror ' + error);
 		console.log(error);
 	};
 
-	$('#button-select-config-file').click(function() {
+	$('#button-select-config-file').click(function () {
 		$(this).addClass("is-loading");
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
 		FILE_PATH = selected;
-		sendObj('need_config_file', {file: selected});
+		sendObj('need_config_file', { file: selected });
 	});
 
-	$('#button-toggle-recognize').click(function() {
+	$('#button-toggle-recognize').click(function () {
 		$(this).toggleClass('is-loading');
-		sendObj("change_recognize_state", {state: !RECOGNIZE_RUNNING});
+		sendObj("change_recognize_state", { state: !RECOGNIZE_RUNNING });
 	});
 
 	$('#button-just-notifications').click(function () {
@@ -406,7 +411,7 @@ function toggleNotificationSound() {
 function createAlert($state, $message, $duration = 8000) {
 	var stateClass = $state === "ok" ? 'is-success' : 'is-danger';
 	var alert = $(getAlertTemplate($message, stateClass));
-	$('#alerts').append(alert);				
+	$('#alerts').append(alert);
 
 	setTimeout(() => alert.remove(), $duration);
 }
@@ -435,7 +440,7 @@ function createNewNotification($type, $content, $sendPush) {
 			vibrate: [200, 100, 200, 100, 200, 100, 200]
 		});
 	}
-	
+
 	updateNotificationsNumberPaginator();
 }
 
@@ -449,19 +454,19 @@ function onTabClick($e) {
 	var el = $e.currentTarget;
 
 	document.getElementById(lastConfigurationActive).classList.add('is-hidden');
-							
+
 	// set listeners tabs
 	[...document.querySelector('.tabs ul').querySelectorAll('li')]
 		.forEach(el => el.classList.remove('is-active'))
 
 	el.classList.add('is-active');
-	
+
 	document.getElementById(el.dataset.config).classList.remove('is-hidden');
 
 	lastConfigurationActive = el.dataset.config;
 }
 
-function AddCameraElement(val, i) {
+function addCameraConfigurationElementsTab(val, i) {
 	var tabs = document.querySelector('.tabs ul');
 	// add tab
 	var $tab = $(getTabTemplate(i, val["cameraname"]));
@@ -471,7 +476,7 @@ function AddCameraElement(val, i) {
 	// get camera root container
 	var camEl = $(getCameraContainerTemplate(i, val));
 	var camConten = $(camEl).children('.camera-config-content');
-	
+
 	addGroups(configurationsElements.elements.camera.groups, val, camConten, configurationsElements.translations.en)
 	// // add each input element
 	// addTemplateElements(camConten, val, configurationsElements.elements.camera, configurationsElements.translations.en);
@@ -497,51 +502,51 @@ function getHeadersFromStringConfig(str) {
 		var start = match.index - 2;
 		var end = match.index + match[0].length + 2;
 		var name = match[0]
-		headers_match.push({start, end, name});
+		headers_match.push({ start, end, name });
 	}
 
-	var headers = {"program": {}, "cameras": []};
-	for(var i = 0; i < headers_match.length; i++) {
-		var nxt = headers_match[i+1] || []
-		
+	var headers = { "program": {}, "cameras": [] };
+	for (var i = 0; i < headers_match.length; i++) {
+		var nxt = headers_match[i + 1] || []
+
 		var cam_str = str.slice(headers_match[i]["end"], nxt["start"] || str.length);
-		
+
 		var obj = {};
 		var lines = cam_str.split('\n');
-		for(var j = 0;j < lines.length; j++){
+		for (var j = 0; j < lines.length; j++) {
 			if (lines[j].length > 0) {
 				var eq = lines[j].indexOf("=");
 				var id = lines[j].slice(0, eq).toLowerCase();
-				var val = lines[j].slice(eq+1, lines[j].length);
+				var val = lines[j].slice(eq + 1, lines[j].length);
 				obj[id] = val;
 			}
 		}
-		
+
 		if (headers_match[i]["name"] == "CAMERA")
 			headers["cameras"].push(obj);
-		else 
+		else
 			headers["program"] = obj;
 	}
-	
+
 	return headers;
 }
 
-function saveIntoFile () {
+function saveIntoFile() {
 	var programConfig = "[PROGRAM]\n";
 	[...document.querySelectorAll('.program-config-content input')]
-		.forEach(input => { 
+		.forEach(input => {
 			if (input.value.length > 0)
-				programConfig +=`${input.name}=${input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value}\n`
+				programConfig += `${input.name}=${input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value}\n`
 		});
-	
+
 	var camerasConfig = "";
 	[...document.querySelectorAll('.camera-config-content')].forEach(cameraContent => {
 		var config = "\n[CAMERA]\n";
-		
+
 		[...cameraContent.querySelectorAll('input')]
 			.forEach(input => {
 				if (input.value.length > 0)
-					config +=`${input.name}=${input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value}\n`
+					config += `${input.name}=${input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value}\n`
 			});
 
 		camerasConfig += config;
@@ -549,7 +554,7 @@ function saveIntoFile () {
 
 	var configurations = programConfig + camerasConfig;
 
-	sendObj('save_into_config_file',  {configurations});
+	sendObj('save_into_config_file', { configurations });
 }
 
 function togglePage() {
@@ -573,27 +578,27 @@ function getElementsTranslations() {
 	return new Promise(resolve => {
 		fetch('/elements.json')
 			.then(elements => elements.json())
-			.then(elements => {			
-			// lower case ids of the elements
-			groupsToLowerCase(elements.camera.groups);
-			groupsToLowerCase(elements.program.groups);
+			.then(elements => {
+				// lower case ids of the elements
+				groupsToLowerCase(elements.camera.groups);
+				groupsToLowerCase(elements.program.groups);
 
-			// get the translations
-			fetch('/translations.json')
-				.then(translations => translations.json())
-				.then(translations => {
-					Object.entries(translations).forEach(
-						el => translations[el[0]] = objectKeysToLowerCase(translations[el[0]]));
+				// get the translations
+				fetch('/translations.json')
+					.then(translations => translations.json())
+					.then(translations => {
+						Object.entries(translations).forEach(
+							el => translations[el[0]] = objectKeysToLowerCase(translations[el[0]]));
 
-					resolve([elements, translations]);
-				})
-			})	
+						resolve([elements, translations]);
+					})
+			})
 	});
 }
 
 function groupsToLowerCase(groups) {
 	[...groups].forEach(group => {
-		group.elements.forEach(el => {el.target = el.target.toLowerCase()})
+		group.elements.forEach(el => { el.target = el.target.toLowerCase() })
 
 		if (group.groups) {
 			groupsToLowerCase(group.groups);
@@ -613,7 +618,7 @@ function appendTemplateElement($jqElemRoot, $value, $element, $label, $descripti
 	const $type = $element.type;
 	const $hidden = $element.hidden;
 	const $placeholder = $element.placeholder;
-	
+
 	if (["text", "string"].indexOf($type) >= 0) {
 		$($jqElemRoot).append(getTextInputItemTemplate($name, $placeholder, $value || "", $label, $description, $hidden));
 	} else if (["number", "integer", "int", "decimal"].indexOf($type) >= 0) {
@@ -625,22 +630,19 @@ function appendTemplateElement($jqElemRoot, $value, $element, $label, $descripti
 		const $onChange = $element.on_change;
 
 		var chckEl = $(getCheckBoxItemTemplate($name, $value === '1', $label, $description, $hidden));
-		
+
 		if ($onChange) {
 			var inputEl = chckEl.find('input');
-			
-			/* TODO: change state by initial value.
-			/* In order to do this, it would be neccesary to save all the correspoding
-			/* calls to toggleStateElements in an array with its value depending on $value, since
-			/* not all the elements are in the DOM at this point of time.
-			/* Example:
-			 	arr.push(
-					toggleStateElements($value === '1' ? "on_checked" : "on_unchecked", $onChange);
-				)
-			*/
+
+			PendingElementsToToggleState.push(
+				{
+					state: ($value === '1' ? "on_checked" : "on_unchecked"),
+					elements: $onChange
+				}
+			)
 
 			// listen to changes
-			inputEl.change(function(e) {
+			inputEl.change(function (e) {
 				if (e.target.checked) {
 					toggleStateElements("on_checked", $onChange);
 				} else {
@@ -686,11 +688,11 @@ function selectCameraROI($ev, $cameraIndex) {
 	frameRequestOrigin = "roi";
 
 	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
-	
-	sendObj('get_camera_frame', {index: $cameraIndex, rotation, url: cameras[$cameraIndex].url});
+
+	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url: cameras[$cameraIndex].url });
 
 	unfinishedRequests["get_camera_frame"] = function () {
-		setTimeout(function (){
+		setTimeout(function () {
 			$($ev.target).removeClass("is-loading");
 		}, 500);
 	}
@@ -702,7 +704,7 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 	frameRequestOrigin = "ig-areas";
 
 	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
-	
+
 	var roi = document.querySelector('#camera-' + $cameraIndex).querySelector('input[name="roi"]').value;
 
 	var parsedRoi = stringToRoi(roi);
@@ -711,10 +713,10 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 		$(cnvAreas.canvas).attr("height", parsedRoi[3]);
 	}
 
-	sendObj('get_camera_frame', {index: $cameraIndex, rotation, url: cameras[$cameraIndex].url, roi});
+	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url: cameras[$cameraIndex].url, roi });
 
 	unfinishedRequests["get_camera_frame"] = function () {
-		setTimeout(function (){
+		setTimeout(function () {
 			$($ev.target).removeClass("is-loading");
 		}, 500);
 	}
@@ -747,7 +749,7 @@ function saveCameraROI($ev, save) {
 
 	cnvRoi.x = cnvRoi.y = 0;
 
-	camera.querySelector('.button-select-camera-roi').classList.remove('is-loading');	
+	camera.querySelector('.button-select-camera-roi').classList.remove('is-loading');
 	$('#modal-roi').toggleClass('is-active');
 }
 
@@ -764,7 +766,7 @@ function saveCameraIgarea($ev, save) {
 
 	cnvAreas.x = cnvAreas.y = 0;
 
-	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');	
+	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');
 	$('#modal-igarea').toggleClass('is-active');
 }
 
@@ -779,8 +781,8 @@ function onResize() {
 }
 
 function getRectangleDimensions($p1, $p2) {
-	const lt = {x: Math.round(Math.min($p1.x, $p2.x)), y: Math.round(Math.min($p1.y, $p2.y))}
-	const br = {x: Math.round(Math.max($p1.x, $p2.x)), y: Math.round(Math.max($p1.y, $p2.y))}
+	const lt = { x: Math.round(Math.min($p1.x, $p2.x)), y: Math.round(Math.min($p1.y, $p2.y)) }
+	const br = { x: Math.round(Math.max($p1.x, $p2.x)), y: Math.round(Math.max($p1.y, $p2.y)) }
 
 	const width = br.x - lt.x;
 	const heigth = br.y - lt.y;
@@ -797,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	if ($navbarBurgers.length > 0) {
 
 		// Add a click event on each of them
-		$navbarBurgers.forEach( el => {
+		$navbarBurgers.forEach(el => {
 			el.addEventListener('click', () => {
 
 				// Get the target from the "data-target" attribute
@@ -827,39 +829,39 @@ document.addEventListener('DOMContentLoaded', () => {
 	// set ROI canvas listeners
 	cnvRoi.canvas = document.querySelector('#modal-roi canvas');
 	cnvRoi.ctx = cnvRoi.canvas.getContext('2d');
-	
-	$(function() { // change scope to use some custom move / onclick / ... functions that may repeat
+
+	$(function () { // change scope to use some custom move / onclick / ... functions that may repeat
 		// Mouse or touch moved
-		function move (e) {
-			e.preventDefault();		
+		function move(e) {
+			e.preventDefault();
 			e = (e.touches || [])[0] || e;
 			if (cnvRoi.clickPressed) {
 				var image = new Image();
-				image.onload = function() {
+				image.onload = function () {
 					cnvRoi.ctx.drawImage(image, 0, 0);
 
 					const x1 = e.clientX - cnvRoi.x;
 					const y1 = e.clientY - cnvRoi.y;
 
-					cnvRoi.p2 = {x: x1, y: y1};
+					cnvRoi.p2 = { x: x1, y: y1 };
 
 					const x0 = cnvRoi.p1.x;
 					const y0 = cnvRoi.p1.y;
 					const width = x1 - x0;
 					const heigth = y1 - y0;
 
-					cnvRoi.ctx.strokeRect(x0, y0, width, heigth);			
+					cnvRoi.ctx.strokeRect(x0, y0, width, heigth);
 				};
 
-				image.src = "data:image/jpg;base64," + cnvRoi.lastImage;	
+				image.src = "data:image/jpg;base64," + cnvRoi.lastImage;
 			}
 		}
 
 		cnvRoi.canvas.addEventListener("mousemove", move, false);
 		cnvRoi.canvas.addEventListener("touchmove", move, false);
-		
+
 		// Click or touch pressed
-		function pressed (e) {
+		function pressed(e) {
 			e.preventDefault();
 			console.log(e);
 			e = (e.touches || [])[0] || e;
@@ -867,18 +869,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			const x = e.clientX - cnvRoi.x;
 			const y = e.clientY - cnvRoi.y;
 
-			cnvRoi.p1 = {x,y};
+			cnvRoi.p1 = { x, y };
 		}
 
 		cnvRoi.canvas.addEventListener("mousedown", pressed, false);
 		cnvRoi.canvas.addEventListener("touchstart", pressed, false);
 
 		// Click or touch released
-		function relesed (e) {
+		function relesed(e) {
 			cnvRoi.clickPressed = false;
 
 			const [lt, width, heigth] = getRectangleDimensions(cnvRoi.p1, cnvRoi.p2);
-			
+
 			cnvRoi.roi = `[${lt.x},${lt.y}],[${width}, ${heigth}]`;
 			e.preventDefault();
 		}
@@ -888,31 +890,31 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	/* CANVAS IGNORED AREAS LISTENERS */
-	$(function() {  // change scope to use some custom move / onclick / ... functions that may repeat
+	$(function () {  // change scope to use some custom move / onclick / ... functions that may repeat
 		// set ROI canvas listeners
 		cnvAreas.canvas = document.querySelector('#modal-igarea canvas');
 		cnvAreas.ctx = cnvAreas.canvas.getContext('2d');
-		
+
 		// Mouse or touch moved
-		function move (e) {
-			e.preventDefault();		
+		function move(e) {
+			e.preventDefault();
 			e = (e.touches || [])[0] || e;
 			if (cnvAreas.clickPressed) {
 				var image = new Image();
-				image.onload = function() {
+				image.onload = function () {
 					// check again... there is alot of this calls at the same time and causes problems
-					if (cnvAreas.clickPressed) { 
+					if (cnvAreas.clickPressed) {
 						cnvAreas.ctx.drawImage(image, 0, 0);
 
 						cnvAreas.areas.forEach(area => {
 							cnvAreas.ctx.strokeStyle = area.color;
 							cnvAreas.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
 						});
-						
+
 						const x1 = e.clientX - cnvAreas.x;
 						const y1 = e.clientY - cnvAreas.y;
 
-						cnvAreas.current.p2 = {x: x1, y: y1};
+						cnvAreas.current.p2 = { x: x1, y: y1 };
 
 						const x0 = cnvAreas.current.p1.x;
 						const y0 = cnvAreas.current.p1.y;
@@ -925,15 +927,15 @@ document.addEventListener('DOMContentLoaded', () => {
 					}
 				};
 
-				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;	
+				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;
 			}
 		}
 
 		cnvAreas.canvas.addEventListener("mousemove", move, false);
 		cnvAreas.canvas.addEventListener("touchmove", move, false);
-		
+
 		// Click or touch pressed
-		function pressed (e) {
+		function pressed(e) {
 			e.preventDefault();
 			e = (e.touches || [])[0] || e;
 			cnvAreas.lastClick = performance.now();
@@ -943,24 +945,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			cnvAreas.current.color = cnvAreas.colors[getRandomArbitrary(0, cnvAreas.colors.length)];
 
-			cnvAreas.current.p1 = cnvAreas.current.p2 = {x,y};
+			cnvAreas.current.p1 = cnvAreas.current.p2 = { x, y };
 		}
 
 		cnvAreas.canvas.addEventListener("mousedown", pressed, false);
 		cnvAreas.canvas.addEventListener("touchstart", pressed, false);
 
 		// Click or touch released
-		function relesed (e) {
+		function relesed(e) {
 			cnvAreas.clickPressed = false;
 			var time = (performance.now() - cnvAreas.lastClick) / 1000;
 
 			const [lt, width, heigth] = getRectangleDimensions(cnvAreas.current.p1, cnvAreas.current.p2);
-			
+
 			// if it's dimesion is small enough and was a quick click then delete it, else save it
 
 			if (time < 2 && time > 0 && width > -2 && width < 2 && heigth > -2 && heigth < 2) {
 				const p = cnvAreas.current.p1;
-				cnvAreas.areas.forEach((area, index, object) => {					
+				cnvAreas.areas.forEach((area, index, object) => {
 					if (p.x >= area.lt.x && p.x <= area.lt.x + area.width &&
 						p.y >= area.lt.y && p.y <= area.lt.y + area.heigth) {
 						object.splice(index, 1);
@@ -969,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// draw areas
 				var image = new Image();
-				image.onload = function() {
+				image.onload = function () {
 					cnvAreas.ctx.drawImage(image, 0, 0);
 
 					cnvAreas.areas.forEach(area => {
@@ -978,9 +980,9 @@ document.addEventListener('DOMContentLoaded', () => {
 					});
 				};
 
-				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;	
+				image.src = "data:image/jpg;base64," + cnvAreas.lastImage;
 			} else {
-				cnvAreas.areas.push({lt, width, heigth, color: cnvAreas.current.color});
+				cnvAreas.areas.push({ lt, width, heigth, color: cnvAreas.current.color });
 
 				cnvAreas.areasString = "";
 				cnvAreas.areas.forEach(area => {
@@ -989,8 +991,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				cnvAreas.areasString = cnvAreas.areasString.substring(0, cnvAreas.areasString.length - 1);
 
-				cnvAreas.current.p1 = {x: 0, y: 0};
-				cnvAreas.current.p2 = {x: 0, y: 0};
+				cnvAreas.current.p1 = { x: 0, y: 0 };
+				cnvAreas.current.p2 = { x: 0, y: 0 };
 			}
 			e.preventDefault();
 		}
@@ -1000,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 });
 
-window.addEventListener("focus", function(event) { 
+window.addEventListener("focus", function (event) {
 	setTimeout(() => {
 		if (document.visibilityState == "visible") {
 			currentNumberNotificationsWindowTitle = 0;
@@ -1010,13 +1012,13 @@ window.addEventListener("focus", function(event) {
 }, false);
 
 // Helper function that updates the current index to the previous and calls a function to change the notification displayed
-function previousNotification(){
-	var $i = notificationPaginator.index > 0 ? notificationPaginator.index  - 1 : notificationPaginator.elements.length - 1;
+function previousNotification() {
+	var $i = notificationPaginator.index > 0 ? notificationPaginator.index - 1 : notificationPaginator.elements.length - 1;
 	changeCurrentElementNotification($i);
 }
 
 // Helper function that updates the current index to the next one and calls a function to change the notification displayed
-function nextNotification(){
+function nextNotification() {
 	var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
 	changeCurrentElementNotification($i);
 }
@@ -1040,8 +1042,8 @@ function changeCurrentElementNotification($i) {
 
 	var el = notificationPaginator.elements[$i];
 	if (el.getElementsByTagName("img").length > 0)
-	    el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
-	
+		el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
+
 	$not.append(el);
 	notificationPaginator.index = $i;
 
@@ -1049,5 +1051,5 @@ function changeCurrentElementNotification($i) {
 }
 
 function getRandomArbitrary(min, max) {
-    return Math.round(Math.random() * (max - min) + min);
+	return Math.round(Math.random() * (max - min) + min);
 }
