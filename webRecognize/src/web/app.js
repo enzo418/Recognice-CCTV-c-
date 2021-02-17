@@ -32,19 +32,19 @@ const getProgramContainerTemplate = () => `
 </div>`;
 
 const getTextInputItemTemplate = ($name, $placeholder, $value, $label, $tooltip, $hidden) => `
-<div class="card-content-item ${$hidden && 'is-hidden'}">
+<div class="card-content-item ${$hidden && 'is-hidden'}" id="${$name.toLowerCase()}">
 	<label for="${$name}" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="${$tooltip}">${$label}</label>
 	<input class="input" name="${$name}" type="text" placeholder="${$placeholder}" value="${$value}">
 </div>`;
 
 const getNumberInputItemTemplate = ($name, $placeholder, $value, $label, $tooltip, $max, $min, $hidden) => `
-<div class="card-content-item ${$hidden && 'is-hidden'}">
+<div class="card-content-item ${$hidden && 'is-hidden'}" id="${$name.toLowerCase()}">
 	<label for="${$name}" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="${$tooltip}">${$label}</label>
 	<input class="input" name="${$name}" type="number" placeholder="${$placeholder}" ${$min != null && 'min="' + $min + '"'} ${$max != null && 'max="' + $max + '"'} ${$value && "value='" + $value + "'"}>
 </div>`;
 
 const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => `
-<div class="card-content-item ${$hidden && 'is-hidden'}">
+<div class="card-content-item ${$hidden && 'is-hidden'}" id="${$name.toLowerCase()}">
 	<label class="checkbox" class="has-tooltip-multiline has-tooltip-text-centered has-tooltip-right" data-tooltip="${$tooltip}">
 		<input type="checkbox" name="${$name}" ${$checked && 'checked'}>
 		${$label}
