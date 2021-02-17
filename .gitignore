@@ -15,6 +15,7 @@
 
 # webRecognize
 !webRecognize
+!webRecognize/*.md
 !webRecognize/src/web
 !webRecognize/src/web/app.js
 !webRecognize/src/web/index.html
