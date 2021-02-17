@@ -8,7 +8,7 @@ A element has 5 properties:
 - `target`: string
     - target filed to change in the configuration.
 
-- `type`: (number|integer|int|decimal)|(checkbox|boolean|bool)|(text|string)
+- `type`: string with number|integer|int|decimal | checkbox|boolean|bool | text|string
     - the input type of the html element
 
 - `hidden`: boolean
