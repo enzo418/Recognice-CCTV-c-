@@ -31,7 +31,7 @@
 						"placeholder": ""
 					}
 				]
-			},			
+			},
 			{
 				"name": "output",
 				"elements": [					
@@ -94,6 +94,35 @@
 				]
 			},
 			{
+				"name": "Telegram Configuration",
+				"elements": [
+					{
+						"target": "useTelegramBot",
+						"type": "boolean",
+						"hidden": false,
+						"placeholder": ""
+					},
+					{
+						"target": "telegramBotApi",
+						"type": "string",
+						"hidden": false,
+						"placeholder": ""
+					},
+					{	
+						"target": "telegramChatId",
+						"type": "string",
+						"hidden": false,
+						"placeholder": ""
+					},
+					{	
+						"target": "authUsersToSendActions",
+						"type": "string",
+						"hidden": false,
+						"placeholder": ""
+					}
+				]
+			},
+			{
 				"name": "notifications",
 				"elements": [
 					{	
@@ -122,46 +151,41 @@
 						"hidden": false,
 						"placeholder": ""
 					}
-				]
-			},
-			{
-				"name": "Telegram Configuration",
-				"elements": [
+				],
+				"groups": [
 					{
-						"target": "telegramBotApi",
-						"type": "string",
-						"hidden": false,
-						"placeholder": ""
+						"name": "Telegram Notifications",
+						"elements": [
+							{	
+								"target": "telegrambot_sendImageWhenDetectChange",
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							},
+							{	
+								"target": "telegrambot_sendTextWhenDetectChange",
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							}
+						]
 					},
-					{	
-						"target": "telegramChatId",
-						"type": "string",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "useTelegramBot",
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "telegrambot_sendImageWhenDetectChange",
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "telegrambot_sendTextWhenDetectChange",
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "authUsersToSendActions",
-						"type": "string",
-						"hidden": false,
-						"placeholder": ""
+					{
+						"name": "Local Notifications",
+						"elements": [
+							{	
+								"target": "localnotifications_sendimagewhendetectchange" ,
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							},
+							{	
+								"target": "localnotifications_sendtextwhendetectchange" ,
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							}
+						]
 					}
 				]
 			},
@@ -170,18 +194,6 @@
 				"elements": [
 					{	
 						"target": "uselocalnotifications",
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "localnotifications_sendimagewhendetectchange" ,
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
-					{	
-						"target": "localnotifications_sendtextwhendetectchange" ,
 						"type": "boolean",
 						"hidden": false,
 						"placeholder": ""

@@ -575,13 +575,8 @@ function getElementsTranslations() {
 			.then(elements => elements.json())
 			.then(elements => {			
 			// lower case ids of the elements
-			[...elements.camera.groups].forEach(group => {
-				group.elements.forEach(el => {el.target = el.target.toLowerCase()})
-			});
-
-			[...elements.program.groups].forEach(group => {
-				group.elements.forEach(el => {el.target = el.target.toLowerCase()})
-			})
+			groupsToLowerCase(elements.camera.groups);
+			groupsToLowerCase(elements.program.groups);
 
 			// get the translations
 			fetch('/translations.json')
@@ -593,6 +588,16 @@ function getElementsTranslations() {
 					resolve([elements, translations]);
 				})
 			})	
+	});
+}
+
+function groupsToLowerCase(groups) {
+	[...groups].forEach(group => {
+		group.elements.forEach(el => {el.target = el.target.toLowerCase()})
+
+		if (group.groups) {
+			groupsToLowerCase(group.groups);
+		}
 	});
 }
 
@@ -624,6 +629,11 @@ function appendTemplateElement($jqElemRoot, $value, $element, $label, $descripti
 function addGroups($groups, $values, $jqElemRoot, $translations) {
 	[...$groups].forEach(group => {
 		var groupEl = $(getGroupTemplate(group.name, group.name.toLowerCase()));
+
+		if (group.groups) {
+			addGroups(group.groups, $values, groupEl, $translations);
+		}
+
 		group.elements.forEach(el => {
 			const $el_name = el.target;
 			appendTemplateElement(groupEl, $values[$el_name], el, $translations[$el_name].label, $translations[$el_name].description);

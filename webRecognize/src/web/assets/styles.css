@@ -137,6 +137,11 @@ a.dropdown-item, button.dropdown-item {
     flex-direction: column;    
 }
 
+.configuration-group .configuration-group {
+	display: block;
+    width: auto;
+}
+
 .card-content-item {	
 	background-color: #292b2f;
     color: white;
