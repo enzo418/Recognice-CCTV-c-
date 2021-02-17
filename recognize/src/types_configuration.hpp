@@ -129,6 +129,10 @@ struct ProgramConfiguration {
 	cv::Mat frameWithAllTheCameras;
 	
 	DetectionMethod detectionMethod = DetectionMethod::HogDescriptor;
+
+	bool analizeBeforeAfterChangeFrames = true;
+
+	NumberFramesBeforeAfter framesToAnalyzeChangeValidity;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

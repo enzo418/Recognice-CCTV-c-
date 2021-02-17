@@ -157,6 +157,25 @@
 						"type": "boolean",
 						"hidden": false,
 						"placeholder": ""
+					},
+					{
+						"target": "analizeBeforeAfterChangeFrames",
+						"type": "boolean",
+						"hidden": false,
+						"placeholder": "",
+						"on_change": [
+							{
+								"id": "framesToAnalyzeChangeValidity",
+								"on_checked": "enabled",
+								"on_unchecked": "disabled"
+							}
+						]
+					},
+					{
+						"target": "framesToAnalyzeChangeValidity",
+						"type": "string",
+						"hidden": false,
+						"placeholder": "10..8"
 					}
 				],
 				"groups": [

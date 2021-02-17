@@ -4,7 +4,7 @@ The fronted is built dynamically. First we get the html-elements specifications 
 ### **elements.json**
 In this file are all the elements/fields of the program and camera configuration. It's a json that his root object has two properties, `program` and `camera`, each one has a `groups` property that contains the groups. Each of these `group` has its `name` and the `elements` it contains, it can also have `groups`.
 
-A element has 4 requeried and 2 optional properties:
+A element has 4 requeried and 3 optional properties:
 - `target`: string
     - target filed to change in the configuration.
 

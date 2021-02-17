@@ -159,6 +159,14 @@
 		"ignoredAreas": {
 			"label": "List of ignored areas",
 			"description": "Syntax: <p_x>,<p_y>,<widht>,<height>\nAlso you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]"
+		},
+		"analizeBeforeAfterChangeFrames": {
+			"label": "Analyze pre- and post-change frames for validation",
+			"description": "If the program should analize the <> frames before\n and then the <> frames after a change occurs"
+		},
+		"framesToAnalyzeChangeValidity": {
+			"label": "Number of frames to analyze when checking for the validity of the change detected.\nSyntax is: <framesBefore>..<framesAfter>",
+			"description": ""
 		}
 	}
 }

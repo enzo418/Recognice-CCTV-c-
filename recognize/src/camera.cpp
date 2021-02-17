@@ -34,7 +34,8 @@ void Camera::Connect() {
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
 	// if use gif is true, it's already resized
-	if (!this->_programConfig->useGifInsteadImage 
+	if (this->_programConfig->analizeBeforeAfterChangeFrames 
+			|| !this->_programConfig->useGifInsteadImage 
 			&& (this->_programConfig->telegramConfig.useTelegramBot 
 					|| this->_programConfig->localNotificationsConfig.useLocalNotifications))
 		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
@@ -117,13 +118,13 @@ void Camera::UpdateThreshold() {
 void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) {
 	// Play a sound
 	// this->pendingNotifications.push_back(Notification::Notification());
-	
-	if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
-		|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
-	{
-		if (this->_programConfig->useGifInsteadImage) {
-			this->currentGifFrames->detectedChange();
-		} else {
+
+	if (this->_programConfig->analizeBeforeAfterChangeFrames) {
+		this->currentGifFrames->detectedChange();
+	} else {
+		if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
+			|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
+		{
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
@@ -133,21 +134,21 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
 			}
 		}
-	}
-	
-	// Send text message
-	auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
-	if (intervalFrames >= this->_programConfig->secondsBetweenMessage 
-		&& 	(
-				this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
-				|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
+		
+		// Send text message
+		auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
+		if (intervalFrames >= this->_programConfig->secondsBetweenMessage 
+			&& 	(
+					this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
+					|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
+				)
+			&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif is valid*/
 			)
-		&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif is valid*/
-		)
-	{
-		Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
-		this->pendingNotifications.push_back(imn);
-		this->lastTextSended = std::chrono::high_resolution_clock::now();
+		{
+			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
+			this->pendingNotifications.push_back(imn);
+			this->lastTextSended = std::chrono::high_resolution_clock::now();
+		}
 	}
 }
 
@@ -202,7 +203,7 @@ void Camera::ReadFramesWithInterval() {
 			// }
 
 			// Once a new frame is ready, update buffer frames
-			if (useGifInsteadImg) {
+			if (this->_programConfig->analizeBeforeAfterChangeFrames || useGifInsteadImg) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready

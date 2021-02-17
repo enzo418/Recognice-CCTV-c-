@@ -130,8 +130,8 @@ namespace ConfigurationFile {
 	std::string GetConfigurationFileHeaderString() {
 		std::ostringstream ss;
 		
-		ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the sintaxis."
-			<< "\n; The variables are defined with the following sintaxis: <id>=<value>"
+		ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the syntax."
+			<< "\n; The variables are defined with the following syntax: <id>=<value>"
 			<< "\n; You can use lowercase, uppercase, mixed, it doesn't mind."
 			<< "\n; Some variables need boolean values, 1 is true and 0 is false."
 			<< "\n; The program configuration is  declared with [PROGRAM]."
@@ -143,7 +143,7 @@ namespace ConfigurationFile {
 	std::string GetDocumentationString() {
 		std::ostringstream ss;
 
-	ss 		<< "\n; Variables will be explained with a comment above it and the sintaxis or type expected after ="
+	ss 		<< "\n; Variables will be explained with a comment above it and the syntax or type expected after ="
 			<< "\n; type can be: \n;\t - string\n;\t - number: integer (int) or decimal\n;\t - boolean: 1 for ON or 0 for OFF"
 			
 			/* Program doc */
@@ -180,12 +180,22 @@ namespace ConfigurationFile {
 			<< "\n;localnotifications_sendTextWhenDetectChange=boolean"
 			<< "\n;localnotifications_sendImageWhenDetectChange=boolean"			
 			
-			<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n."
+			<< "\n\n; Authorized users to send actions from telegram. syntax: user_1,user_2,...,user_n."
 			<< "\n;authUsersToSendActions=string,string,..."
 			
 			<< "\n\n; This tells the app if send a image or a gif."
 			<< "\n;useGifInsteadOfImage=boolean"
-			
+
+			<< "\n\n; Should the program analyze pre- and post-change images in order to verify the validity of the change?"
+			<< "\n; If active, the program will verify if each change is in an ignored area."
+			<< "\n; If not active, the program will just verify if the detected change is not in an ignored area."
+			<< "\n;analizeBeforeAfterChangeFrames=boolean"
+
+			<< "\n\n; If so, then how much frames before and after should be considered."
+			<< "\n; The syntax is: <nframesBefore>..<nframesAfter>."
+			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
+			<< "\n;framesToAnalyzeChangeValidity=integer..integer"
+
 			<< "\n\n; Selects the Quality of the gif. Values go from 0 to 100. 50 is means that the gif will be resized at half the resolution."
 			<< "\n;gifResizePercentage=int"
 			
@@ -194,7 +204,7 @@ namespace ConfigurationFile {
 			<< "\n; 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG."
 			<< "\n;detectionMethod=int"
 			
-			<< "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
+			<< "\n\n; How much frames are going to be on the GIF. The syntax is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n; Have in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time)."
 			<< "\n;gifFrames=integer..integer"
@@ -206,7 +216,7 @@ namespace ConfigurationFile {
 			<< "\n\n;[CAMERA]"
 			<< "\n;cameraName=string"
 			<< "\n;url=string"
-			<< "\n\n; ROI (Region of interest) crop each image that the camera sends. Sintaxis is: <p_x>,<p_y>,<widht>,<height>"
+			<< "\n\n; ROI (Region of interest) crop each image that the camera sends. syntax is: <p_x>,<p_y>,<widht>,<height>"
 			<< "\n;roi=integer,integer,integer,integer"
 			
 			<< "\n\n; "
@@ -218,7 +228,7 @@ namespace ConfigurationFile {
 			<< "\n\n; Rotation (degrees)"
 			<< "\n;rotation=integer"
 			
-			<< "\n\n; Selects the frame to search a person on. The sintaxis is: <nframesBefore>..<nframesAfter>."
+			<< "\n\n; Selects the frame to search a person on. The syntax is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n;framesToAnalyze=integer..integer"
 				
@@ -256,7 +266,7 @@ namespace ConfigurationFile {
 			<< "\n; Recommended value: between 90 and 100."
 			<< "\n;minPercentageAreaNeededToIgnore=integer"
 		
-			<< "\n\n; List of ignored areas. Sintaxis: <p_x>,<p_y>,<widht>,<height>"
+			<< "\n\n; List of ignored areas. syntax: <p_x>,<p_y>,<widht>,<height>"
 			<< "\n; Also you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]"
 			<< "\n;ignoredAreas=integer,integer,integer,integer,...";
 			
@@ -334,9 +344,7 @@ namespace ConfigurationFile {
 			if (!cfg.telegramConfig.chatId.empty())
 				ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
 					
-		ss	<< "\nuseLocalNotifications=" << (cfg.localNotificationsConfig.useLocalNotifications ? "1" : "0")
-			
-			<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
+		ss	<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
 			<< "\nsendImageOfAllCameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
@@ -344,8 +352,11 @@ namespace ConfigurationFile {
 			<< "\ntelegrambot_sendTextWhenDetectChange=" << (cfg.telegramConfig.sendTextWhenDetectChange ?  "1" : "0")
 			<< "\nimagesFolder=" << cfg.imagesFolder
 			
+			<< "\n\nuseLocalNotifications=" << (cfg.localNotificationsConfig.useLocalNotifications ? "1" : "0")
 			<< "\nlocalnotifications_sendTextWhenDetectChange=" << (cfg.localNotificationsConfig.sendTextWhenDetectChange ?  "1" : "0")
-			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0");
+			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0")
+			
+			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0");
 			
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
@@ -356,9 +367,11 @@ namespace ConfigurationFile {
 								
 				<< "\ndetectionMethod=" << cfg.detectionMethod;
 			
-		
 		if (cfg.numberGifFrames.framesBefore != -1 && cfg.numberGifFrames.framesAfter != -1)
 			ss << "\ngifFrames=" << cfg.numberGifFrames.framesBefore << ".."  << cfg.numberGifFrames.framesAfter;
+
+		if (cfg.framesToAnalyzeChangeValidity.framesBefore != -1 && cfg.framesToAnalyzeChangeValidity.framesAfter != -1)
+			ss << "\nframesToAnalyzeChangeValidity=" << cfg.framesToAnalyzeChangeValidity.framesBefore << ".."  << cfg.framesToAnalyzeChangeValidity.framesAfter;
 
 		return ss.str();
 	}
@@ -496,6 +509,21 @@ namespace ConfigurationFile {
 			config.localNotificationsConfig.sendTextWhenDetectChange = value == "1";
 		} else if (id == "localnotifications_sendimagewhendetectchange" || id == "localnotification_sendimagewhendetectchange") {
 			config.localNotificationsConfig.sendImageWhenDetectChange = value == "1";
+		} else if (id == "analizebeforeafterchangeframes") {
+			config.analizeBeforeAfterChangeFrames = value == "1";
+		} else if (id == "framestoanalyzechangevalidity") {
+			std::vector<std::string> results = Utils::GetRange(value);
+			size_t sz = results.size();
+			if (sz == 3) {
+				try {
+					config.framesToAnalyzeChangeValidity.framesBefore = size_t(std::stol(results[0]));
+					config.framesToAnalyzeChangeValidity.framesAfter = size_t(std::stol(results[2]));
+				} catch (std::invalid_argument e) {
+					sucess = false;
+				}
+			} else {
+				sucess = false;
+			}
 		}
 		
 		return sucess;
