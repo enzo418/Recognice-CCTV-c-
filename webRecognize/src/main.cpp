@@ -316,7 +316,7 @@ namespace {
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
 					std::string query = "";
 
-					if (media.first == Notification::IMAGE) {
+					if (media.first == Notification::IMAGE || media.first == Notification::GIF) {
 						query = "image";
 						std::size_t found = media.second.find_last_of("/\\");
 						media.second = lastMediaPath + "/" + media.second.substr(found+1);
