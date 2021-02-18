@@ -79,6 +79,7 @@ const getGroupTemplate = ($name, $id) => `
  </fieldset>`;
 
 var FILE_PATH = ""; // file that the user requested at the start
+var ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
 var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
 var ws;
@@ -362,6 +363,10 @@ $(function () {
 
 			changeCurrentElementNotification(notificationPaginator.elements.length - 1);
 		}
+
+		if (data.hasOwnProperty("root_configurations_directory")) {
+			ROOT_CONFIGURATIONS_DIRECTORY = data["root_configurations_directory"];
+		}
 	};
 
 	ws.onerror = function (error) {
@@ -371,9 +376,16 @@ $(function () {
 
 	$('#button-select-config-file').click(function () {
 		$(this).addClass("is-loading");
-		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
+		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText.trim();
 		FILE_PATH = selected;
-		sendObj('need_config_file', { file: selected });
+		var is_new = false;
+		if (selected == "new") {
+			$('#modal-file-name').toggleClass('is-active');
+			$('#modal-file').toggleClass('is-active');
+			$(this).toggleClass("is-loading");	
+		} else {
+			sendObj('need_config_file', { file: selected, is_new});
+		}
 	});
 
 	$('#button-toggle-recognize').click(function () {
@@ -408,6 +420,18 @@ $(function () {
 		FILE_PATH = parent_path + ($('#file-copy-name').val()).replace(/(\.\w+)+/, '') + ".ini";
 		sendObj('need_copy_file', { file: selectedFile, copy_path: FILE_PATH });
 		$('#modal-file-copy').toggleClass('is-active');
+	});
+
+	$('#button-cancel-file-name').click(function () {
+		$('#modal-file-name').toggleClass('is-active');
+		$('#modal-file').toggleClass('is-active');
+	});
+
+	$('#button-selected-new-file-name').click(function () {
+		$(this).addClass("is-loading");
+		FILE_PATH = ROOT_CONFIGURATIONS_DIRECTORY + ($('#new-file-name').val()).replace(/(\.\w+)+/, '') + ".ini";
+		sendObj('need_config_file', { file: FILE_PATH, is_new: true });
+		$('#modal-file-name').toggleClass('is-active');
 	});
 });
 

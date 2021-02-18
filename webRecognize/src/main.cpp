@@ -98,6 +98,8 @@ std::map<std::string, std::string> cachedImages; // map of single images from th
 
 const std::string SERVER_FILEPATH = "../src/web";
 
+const std::string ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
+
 std::string lastMediaPath = "";
 
 constexpr int Max_Notifications_Number = 20;
@@ -113,7 +115,7 @@ namespace {
 
 		void onConnect(WebSocket* con) override {
 			_cons.insert(con);
-			con->send(GetConfigurationsPathsJson({"../../recognize/build/"}));
+			con->send(GetConfigurationsPathsJson({"../../recognize/build/", "./configurations/"}));
 			con->send(GetRecognizeStateJson());
 			if (lastNotificationsSended.size() > 0) {
 				std::string lastNotifications = "[";
@@ -125,6 +127,8 @@ namespace {
 				
 				con->send(GetJsonString("last_notifications", GetJsonString({{"notifications", lastNotifications}}, false)));
 			}
+
+			con->send(GetJsonString("root_configurations_directory", "\""+ ROOT_CONFIGURATIONS_DIRECTORY + "\""));
 
 			connections_number++;
 		}
@@ -155,11 +159,22 @@ namespace {
 			if (requestIsValid) {
 				if (id == "need_config_file") {
 					const std::string file = root["file"].asString();
+					const bool isNew = root["is_new"].asBool();
 					std::cout << "File requested=" << file << std::endl;
 
 					// read file
 					Configurations cfgs = ConfigurationFile::ReadConfigurations(file);				
 					std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+
+					if (isNew) {
+						std::filesystem::path path { file };
+						
+						std::cout << "\tFile is new. Full path: " << path << std::endl;
+
+						std::filesystem::create_directories(path.parent_path());
+
+						ConfigurationFile::SaveConfigurations(cfgs, path.string());
+					}
 
 					// send payload
 					con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
@@ -363,13 +378,15 @@ std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesTo
 
 	size_t i = 0;
 	for (const auto& directory : directoriesToSeach) {
-		for (const auto & entry : std::filesystem::directory_iterator(directory)) {
-			std::string path = entry.path().generic_string();
-			if (entry.path().extension() == ".ini") {
-				if(i > 0) configsFiles += ",";
+		if (fs::exists(directory)) {
+			for (const auto & entry : std::filesystem::directory_iterator(directory)) {
+				std::string path = entry.path().generic_string();
+				if (entry.path().extension() == ".ini") {
+					if(i > 0) configsFiles += ",";
 
-				configsFiles += "\"" + path + "\"";
-				i++;
+					configsFiles += "\"" + path + "\"";
+					i++;
+				}
 			}
 		}
 	}
