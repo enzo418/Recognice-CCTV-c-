@@ -5,6 +5,10 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
 	}
 
+	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("basic_logger", "logs/camera.txt");
+
+	logger = std::make_unique<spdlog::logger>(cameraConfig.cameraName, sink);
+
 	this->Connect();
 	this->accumulatorThresholds = cameraConfig.minimumThreshold;
 	
@@ -112,6 +116,8 @@ void Camera::UpdateThreshold() {
 		this->thresholdSamples = 0;
 
 		this->lastThresholdUpdate = std::chrono::high_resolution_clock::now();
+		logger->info("treshold_changed|{}|{}|{}", NOW_UNIX_TIME, oldThres, this->config->changeThreshold);
+		logger->flush();
 	}
 }
 
@@ -242,6 +248,7 @@ void Camera::ReadFramesWithInterval() {
 				&& this->currentGifFrames->getState() == State::Initial) 
 			{
 				if (useNotifications) {
+					logger->info("treshold_exceeded|{}|{}|{}", NOW_UNIX_TIME, this->totalNonZeroPixels, this->config->changeThreshold);
 					std::cout << "Change detected. Checking..."  << std::endl;
 
 					this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;

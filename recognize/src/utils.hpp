@@ -15,6 +15,10 @@
 #include "types.hpp"
 #include "types_configuration.hpp"
 
+
+#define NOW_UNIX_TIME std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+
+
 #define ExistInVector(vector,val) (std::find(std::begin(vector), std::end(vector), val) != std::end(vector))
 
 namespace Utils {

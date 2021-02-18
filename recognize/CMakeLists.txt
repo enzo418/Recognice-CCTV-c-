@@ -11,6 +11,11 @@ find_package(CURL REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
 # =========
 #  Sources 
 # =========
@@ -36,4 +41,4 @@ add_executable(recognize ${SOURCES})
 include_directories(${CURL_INCLUDE_DIR})
 
 # set -l of opencv and curl
-target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp)
+target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp spdlog::spdlog)

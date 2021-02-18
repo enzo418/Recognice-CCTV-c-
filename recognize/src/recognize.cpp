@@ -1,7 +1,7 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);	
 }
 
 void Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -275,6 +275,9 @@ void Recognize::StartPreviewCameras() {
 void Recognize::StartNotificationsSender() {
 	cv::Mat frame;
 	std::string date;
+	
+	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("basic_logger", "logs/notifications.txt");
+	logger = std::make_unique<spdlog::logger>("notifications", sink);
 
 	while (!stop) {
 		for (auto &&camera : cameras) {
@@ -289,9 +292,9 @@ void Recognize::StartNotificationsSender() {
 
 					GifFrames* gif = camera->gifsReady[i].release();
 					// Ready and didn't send a gif since secondsBetweenImage and is valid
+
 					if (gif->getState() == State::Ready 
-							&& intervalFrames >= this->programConfig.secondsBetweenImage
-							&& gif->isValid()) {
+							&& intervalFrames >= this->programConfig.secondsBetweenImage) {
 						// -----------------------------------------------------------
 						// Take before and after frames and combine them into a .gif
 						// -----------------------------------------------------------
@@ -303,40 +306,92 @@ void Recognize::StartNotificationsSender() {
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
 
+						auto start = std::chrono::system_clock::now();
+
+						const bool gifIsValid = this->programConfig.analizeBeforeAfterChangeFrames && gif->isValid();
+						
+						auto end = std::chrono::system_clock::now();
+
+						auto elapsed_validating = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+						logger->info("spent-validating-gif-ms|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, elapsed_validating.count());
+
+
+						const bool sendImageNotification = this->programConfig.localNotificationsConfig.sendImageWhenDetectChange 
+															|| this->programConfig.telegramConfig.sendImageWhenDetectChange;
 						eraseGifs = true;
 
+						start = std::chrono::system_clock::now();
 						std::vector<cv::Mat> frames = gif->getGifFrames();
+
+						end = std::chrono::system_clock::now();
+
+						auto elapsed_gettingFrames = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+						logger->info("spent-getting-frames-ms|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, elapsed_gettingFrames.count());
+
+						if (this->programConfig.analizeBeforeAfterChangeFrames && gifIsValid) {
+							if (!programConfig.useGifInsteadImage
+									&& this->programConfig.analizeBeforeAfterChangeFrames
+									&& sendImageNotification) {
+								cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
+								camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
+							}
+
+							if (this->programConfig.analizeBeforeAfterChangeFrames
+								&& this->programConfig.telegramConfig.sendTextWhenDetectChange
+								|| this->programConfig.localNotificationsConfig.sendTextWhenDetectChange) {
+								camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
+							}
+						} 
 						
-						if (programConfig.useGifInsteadImage) {
+						if (sendImageNotification 
+								&& 	programConfig.useGifInsteadImage 
+								&& 	(	(	this->programConfig.analizeBeforeAfterChangeFrames
+											&& gifIsValid
+										)
+										|| !this->programConfig.analizeBeforeAfterChangeFrames
+									)
+							) {
+
+							start = std::chrono::system_clock::now();
+
 							for (size_t i = 0; i < frames.size(); i++) {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
 
 								cv::imwrite(location, frames[i]);
 							}
 
+							end = std::chrono::system_clock::now();
+
+							auto elapsed_writing = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+							
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
-
+							
+							start = std::chrono::system_clock::now();
 							std::system(command.c_str());
+							end = std::chrono::system_clock::now();
 
-							if (this->programConfig.telegramConfig.useTelegramBot)
+							auto elapsed_converting = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+							logger->info("gif_spent-writing-files_spent-converting_total-ms|{}|{}|{}|{}", 
+											NOW_UNIX_TIME, 
+											elapsed_writing.count(),
+											elapsed_converting.count(), 
+											(elapsed_writing + elapsed_converting).count());
+
+							if (this->programConfig.telegramConfig.useTelegramBot) {
+								logger->info("gif_ready_sending|{}|{}", NOW_UNIX_TIME, camera->config->cameraName);
 								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
-
+								logger->info("gif_ready_sended|{}|{}", NOW_UNIX_TIME, camera->config->cameraName);
+							}
+										
 							camera->lastImageSended = std::chrono::high_resolution_clock::now();
-
+							
 							this->notificationWithMedia->try_emplace(
 								std::pair<Notification::Type, std::string>(Notification::IMAGE, gifPath));	
-						} else if (this->programConfig.analizeBeforeAfterChangeFrames
-									&& this->programConfig.localNotificationsConfig.sendImageWhenDetectChange 
-									|| this->programConfig.telegramConfig.sendImageWhenDetectChange) {
-							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
-						}
-
-						if (this->programConfig.analizeBeforeAfterChangeFrames
-							&& this->programConfig.telegramConfig.sendTextWhenDetectChange
-							|| this->programConfig.localNotificationsConfig.sendTextWhenDetectChange) {
-							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
-						}
+						} 
 					}
 
 					delete gif;
@@ -357,8 +412,15 @@ void Recognize::StartNotificationsSender() {
 			for (size_t i = 0; i < size; i++) {
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
+				logger->info("sending_notification|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, camera->pendingNotifications[i].type);
+
+
+
 				// send to telegram
 				std::string data = camera->pendingNotifications[i].send(programConfig);
+
+
+				logger->info("sended_notification|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName ,camera->pendingNotifications[i].type);
 				
 				// send to local
 				if (camera->pendingNotifications[i].type == Notification::SOUND
@@ -380,6 +442,8 @@ void Recognize::StartNotificationsSender() {
 								)
 						);
 				}
+
+				logger->flush();
 			}
 
 			// This proc shouldn't clear all the notifcations since it's a multithread process :p

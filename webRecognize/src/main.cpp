@@ -198,6 +198,8 @@ namespace {
 											configurations.programConfig.imagesFolder.size()
 										);
 
+						std::cout << "Media path: " << lastMediaPath << std::endl;
+
 						recognize->Start(std::move(configurations), 
 											configurations.programConfig.showPreview, 
 											configurations.programConfig.telegramConfig.useTelegramBot);

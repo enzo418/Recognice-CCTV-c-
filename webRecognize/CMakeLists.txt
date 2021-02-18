@@ -25,6 +25,11 @@ find_package(Seasocks REQUIRED)
 
 find_package(fmt)
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
 # Curl package
 set(CURL_LIBRARY "-lcurl") 
 find_package(CURL REQUIRED) 
@@ -52,4 +57,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread -lX11")
 add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
 
 # set -l of opencv and curl
-target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp Seasocks::seasocks fmt::fmt)
+target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp Seasocks::seasocks fmt::fmt spdlog::spdlog)

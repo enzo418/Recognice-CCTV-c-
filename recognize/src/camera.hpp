@@ -22,6 +22,9 @@
 
 #include "readerwriterqueue.h" // lock-free queue, home page: https://github.com/cameron314/readerwriterqueue
 
+#include "spdlog/logger.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
 class Camera {
 private:
 	// ============================
@@ -88,6 +91,8 @@ private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> lastThresholdUpdate = std::chrono::high_resolution_clock::now();
 
 	FindingInfo lastFinding;
+
+	std::unique_ptr<spdlog::logger> logger;
 
 	void UpdateThreshold();
 
