@@ -61,27 +61,31 @@
 			"description": ""
 		},
 		"telegrambot_sendimagewhendetectchange": {
-			"label": "Send a image (or gif) when detect a change",
+			"label": "Send a image when the program detectes a change",
+			"description": ""
+		},
+		"telegrambot_sendgifwhendetectchange": {
+			"label": "Send a GIF when the program detectes a change",
 			"description": ""
 		},
 		"telegrambot_sendtextwhendetectchange": {
-			"label": "Send a text alert when detect a change",
+			"label": "Send a text alert when the program detectes a change",
 			"description": ""
 		},
 		"localnotifications_sendimagewhendetectchange": {
-			"label": "Send a image (or gif) when detect a change",
+			"label": "Send a image when the program detectes a change",
+			"description": ""
+		},
+		"localnotifications_sendgifwhendetectchange": {
+			"label": "Send a GIF when the program detectes a change",
 			"description": ""
 		},
 		"localnotifications_sendtextwhendetectchange": {
-			"label": "Send a text alert when detect a change",
+			"label": "Send a text alert when the program detectes a change",
 			"description": ""
 		},
 		"authUsersToSendActions": {
 			"label": "Authorized users to send actions from telegram. Syntax: user_1,user_2,...,user_n",
-			"description": ""
-		},
-		"useGifInsteadOfImage": {
-			"label": "Send gif instead of image in notifications",
 			"description": ""
 		},
 		"gifResizePercentage": {

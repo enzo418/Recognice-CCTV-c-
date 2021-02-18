@@ -76,6 +76,7 @@
 			},
 			{
 				"name": "Gif",
+				"id": "group-gif",
 				"elements": [
 					{
 						"target": "gifResizePercentage",
@@ -152,12 +153,6 @@
 						"placeholder": "",
 						"min": 0
 					},
-					{	
-						"target": "useGifInsteadOfImage",
-						"type": "boolean",
-						"hidden": false,
-						"placeholder": ""
-					},
 					{
 						"target": "analizeBeforeAfterChangeFrames",
 						"type": "boolean",
@@ -190,6 +185,12 @@
 								"placeholder": ""
 							},
 							{	
+								"target": "telegrambot_sendGifWhenDetectChange",
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							},
+							{	
 								"target": "telegrambot_sendTextWhenDetectChange",
 								"type": "boolean",
 								"hidden": false,
@@ -203,6 +204,12 @@
 						"elements": [
 							{	
 								"target": "localnotifications_sendimagewhendetectchange" ,
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							},
+							{	
+								"target": "localnotifications_sendGifwhendetectchange" ,
 								"type": "boolean",
 								"hidden": false,
 								"placeholder": ""

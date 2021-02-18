@@ -1,7 +1,9 @@
 #include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
-	if (programConfig->useGifInsteadImage) {
+	if (this->_programConfig->analizeBeforeAfterChangeFrames 
+		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
+		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
 	}
 
