@@ -22,8 +22,7 @@
 
 #include "readerwriterqueue.h" // lock-free queue, home page: https://github.com/cameron314/readerwriterqueue
 
-#include "spdlog/logger.h"
-#include "spdlog/sinks/basic_file_sink.h"
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -94,7 +93,7 @@ private:
 
 	FindingInfo lastFinding;
 
-	std::unique_ptr<spdlog::logger> logger;
+	std::shared_ptr<spdlog::logger> logger;
 
 	void UpdateThreshold();
 

@@ -276,8 +276,7 @@ void Recognize::StartNotificationsSender() {
 	cv::Mat frame;
 	std::string date;
 	
-	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("basic_logger", "logs/notifications.txt");
-	logger = std::make_unique<spdlog::logger>("notifications", sink);
+	this->logger = spdlog::basic_logger_mt("notifications", "logs/notifications.txt");
 
 	while (!stop) {
 		for (auto &&camera : cameras) {
@@ -312,9 +311,9 @@ void Recognize::StartNotificationsSender() {
 						
 						auto end = std::chrono::system_clock::now();
 
-						auto elapsed_validating = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+						auto elapsed_validating = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-						logger->info("spent-validating-gif-ms|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, elapsed_validating.count());
+						logger->info("spent-validating-gif-μs|{}|{}", camera->config->cameraName, elapsed_validating.count());
 
 
 						const bool sendImageNotification = this->programConfig.localNotificationsConfig.sendImageWhenDetectChange 
@@ -326,9 +325,9 @@ void Recognize::StartNotificationsSender() {
 
 						end = std::chrono::system_clock::now();
 
-						auto elapsed_gettingFrames = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+						auto elapsed_gettingFrames = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-						logger->info("spent-getting-frames-ms|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, elapsed_gettingFrames.count());
+						logger->info("spent-getting-frames-μs|{}|{}", camera->config->cameraName, elapsed_gettingFrames.count());
 
 						if (this->programConfig.analizeBeforeAfterChangeFrames && gifIsValid) {
 							if (!programConfig.useGifInsteadImage
@@ -364,7 +363,7 @@ void Recognize::StartNotificationsSender() {
 
 							end = std::chrono::system_clock::now();
 
-							auto elapsed_writing = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+							auto elapsed_writing = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
 							
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
@@ -373,18 +372,18 @@ void Recognize::StartNotificationsSender() {
 							std::system(command.c_str());
 							end = std::chrono::system_clock::now();
 
-							auto elapsed_converting = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+							auto elapsed_converting = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+							auto totalC = elapsed_writing + elapsed_converting;
 
-							logger->info("gif_spent-writing-files_spent-converting_total-ms|{}|{}|{}|{}", 
-											NOW_UNIX_TIME, 
-											elapsed_writing.count(),
-											elapsed_converting.count(), 
-											(elapsed_writing + elapsed_converting).count());
+							logger->info("gif_spent-writing-files_spent-converting_total-μs|{} ({} ms)|{} ({} ms)|{} ({} ms)",
+											elapsed_writing, elapsed_writing / 1000,
+											elapsed_converting, elapsed_converting / 1000,
+											totalC, totalC / 1000);
 
 							if (this->programConfig.telegramConfig.useTelegramBot) {
-								logger->info("gif_ready_sending|{}|{}", NOW_UNIX_TIME, camera->config->cameraName);
+								logger->info("gif_ready_sending|{}", camera->config->cameraName);
 								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
-								logger->info("gif_ready_sended|{}|{}", NOW_UNIX_TIME, camera->config->cameraName);
+								logger->info("gif_ready_sended|{}", camera->config->cameraName);
 							}
 										
 							camera->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -412,7 +411,7 @@ void Recognize::StartNotificationsSender() {
 			for (size_t i = 0; i < size; i++) {
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
 
-				logger->info("sending_notification|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName, camera->pendingNotifications[i].type);
+				logger->info("sending_notification|{}|{}", camera->config->cameraName, camera->pendingNotifications[i].type);
 
 
 
@@ -420,7 +419,7 @@ void Recognize::StartNotificationsSender() {
 				std::string data = camera->pendingNotifications[i].send(programConfig);
 
 
-				logger->info("sended_notification|{}|{}|{}", NOW_UNIX_TIME, camera->config->cameraName ,camera->pendingNotifications[i].type);
+				logger->info("sended_notification|{}|{}", camera->config->cameraName ,camera->pendingNotifications[i].type);
 				
 				// send to local
 				if (camera->pendingNotifications[i].type == Notification::SOUND
