@@ -261,26 +261,24 @@ namespace {
 					root["new_camera_config"]["configuration"] = Json::Value(ConfigurationFile::GetConfigurationString(cfg));
 					con->send(root.toStyledString());
 				}  else if (id == "need_copy_file") {
-					Json::Value root;
-					const auto file = fs::path(root["file"].asString());
-					const std::string copy_name = root["copy_name"].asString();
-					const std::string copy_file_path = file.parent_path().string() + copy_name;
-					
+					const auto file = root["file"].asString();
+					const std::string copy_path = root["copy_path"].asString();
+
 					std::cout 	<< "File requested=" << file
 								<< std::endl
-								<< "Copied to: " << copy_file_path
+								<< "Copied to: " << copy_path
 								<< std::endl;
 					
-					fs::copy_file(file, copy_file_path);
+					fs::copy_file(file, copy_path);
 
 					// read file
-					Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_file_path);				
+					Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path);				
 					std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
 
 					// send payload
 					con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
 
-					connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, copy_file_path));
+					connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, copy_path));
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}

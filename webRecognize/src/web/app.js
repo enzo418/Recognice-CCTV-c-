@@ -388,6 +388,27 @@ $(function () {
 		$('#modal-file').toggleClass('is-active');
 		Notification.requestPermission();
 	});
+
+	$('#button-modal-make-copy-file').click(function () {
+		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
+		FILE_PATH = selected;
+		$('#modal-file-copy').toggleClass('is-active');
+		$('#modal-file').toggleClass('is-active');
+	});
+
+	$('#button-cancel-copy-file').click(function () {
+		$('#modal-file-copy').toggleClass('is-active');
+		$('#modal-file').toggleClass('is-active');
+	});
+
+	$('#button-make-copy-file').click(function () {
+		$(this).addClass("is-loading");
+		var selectedFile = FILE_PATH;
+		var parent_path = selectedFile.match(/^.*(\\|\/|\:)/, '')[0];
+		FILE_PATH = parent_path + ($('#file-copy-name').val()).replace(/(\.\w+)+/, '') + ".ini";
+		sendObj('need_copy_file', { file: selectedFile, copy_path: FILE_PATH });
+		$('#modal-file-copy').toggleClass('is-active');
+	});
 });
 
 function stringToRoi(roi) {
