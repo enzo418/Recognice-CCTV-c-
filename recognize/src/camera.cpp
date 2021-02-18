@@ -23,6 +23,8 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 
 	// allocate a empty lastFrame to avoid checking if is empty every time
 	this->lastFrame = cv::Mat(this->config->roi.size(), CV_8UC1);
+
+	this->msBetweenFrames = programConfig->msBetweenFrame;
 }
 
 Camera::~Camera() {}
