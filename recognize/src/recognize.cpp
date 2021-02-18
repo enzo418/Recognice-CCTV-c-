@@ -380,7 +380,8 @@ void Recognize::StartNotificationsSender() {
 											elapsed_converting, elapsed_converting / 1000,
 											totalC, totalC / 1000);
 
-							if (this->programConfig.telegramConfig.useTelegramBot) {
+							if (this->programConfig.telegramConfig.useTelegramBot
+									&& this->programConfig.telegramConfig.sendImageWhenDetectChange) {
 								logger->info("gif_ready_sending|{}", camera->config->cameraName);
 								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
 								logger->info("gif_ready_sended|{}", camera->config->cameraName);
