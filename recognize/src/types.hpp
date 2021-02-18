@@ -105,6 +105,9 @@ struct TelegramBotConfig {
 
 	// if should send a image when the threshold change was passed.
 	bool sendImageWhenDetectChange;
+
+	// if should send a gif when the threshold change was passed.
+	bool sendGifWhenDetectChange;
 	
 	// if should send a text message when the threshold change was passed.
 	bool sendTextWhenDetectChange;
@@ -115,6 +118,9 @@ struct LocalNotificationsConfig {
 
 	// if should send a image when the threshold change was passed.
 	bool sendImageWhenDetectChange;
+	
+	// if should send a gif when the threshold change was passed.
+	bool sendGifWhenDetectChange;
 	
 	// if should send a text message when the threshold change was passed.
 	bool sendTextWhenDetectChange;

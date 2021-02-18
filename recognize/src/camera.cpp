@@ -34,10 +34,14 @@ void Camera::Connect() {
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
 	// if use gif is true, it's already resized
-	if (this->_programConfig->analizeBeforeAfterChangeFrames 
-			|| !this->_programConfig->useGifInsteadImage 
-			&& (this->_programConfig->telegramConfig.useTelegramBot 
-					|| this->_programConfig->localNotificationsConfig.useLocalNotifications))
+	if ((	this->_programConfig->telegramConfig.useTelegramBot 
+			|| this->_programConfig->localNotificationsConfig.useLocalNotifications
+		)	
+		&& !(this->_programConfig->analizeBeforeAfterChangeFrames 
+			|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
+			|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange
+			)
+		)
 		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 	
 	this->frameToShow = this->frame.clone();
@@ -119,9 +123,14 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 	// Play a sound
 	// this->pendingNotifications.push_back(Notification::Notification());
 
-	if (this->_programConfig->analizeBeforeAfterChangeFrames) {
+	const bool sendGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
+							|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
+	
+	if (sendGif || this->_programConfig->analizeBeforeAfterChangeFrames) {
 		this->currentGifFrames->detectedChange();
-	} else {
+	}
+
+	if (!this->_programConfig->analizeBeforeAfterChangeFrames) {
 		if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
 			|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
 		{
@@ -142,7 +151,8 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 					this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
 					|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
 				)
-			&& !this->_programConfig->useGifInsteadImage /* If is using gif then don't send since, it will send text if the gif is valid*/
+			&& !(this->_programConfig->telegramConfig.sendGifWhenDetectChange
+				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
 			)
 		{
 			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
@@ -166,7 +176,8 @@ void Camera::ReadFramesWithInterval() {
 	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
 	const bool useNotifications = this->_programConfig->telegramConfig.useTelegramBot 
 								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
-	const bool useGifInsteadImg = useNotifications && this->_programConfig->useGifInsteadImage;
+	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
+						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -203,7 +214,7 @@ void Camera::ReadFramesWithInterval() {
 			// }
 
 			// Once a new frame is ready, update buffer frames
-			if (this->_programConfig->analizeBeforeAfterChangeFrames || useGifInsteadImg) {
+			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready
@@ -249,7 +260,7 @@ void Camera::ReadFramesWithInterval() {
 					size_t overlappingFindings = 0;
 					// since gif does this (check if change inside an ignored area) for each frame... 
 					// only do it if user wants a image				
-					if (!useGifInsteadImg) {
+					if (!this->_programConfig->analizeBeforeAfterChangeFrames && !useGif) {
 						this->lastFinding = FindRect(diff);
 						
 						for (auto &&i : this->config->ignoredAreas) {

@@ -276,10 +276,16 @@ void Recognize::StartNotificationsSender() {
 	cv::Mat frame;
 	std::string date;
 
-	while (!stop) {
+	const bool sendGif = this->programConfig.telegramConfig.sendGifWhenDetectChange
+						|| this->programConfig.localNotificationsConfig.sendGifWhenDetectChange;
+
+	const bool useNotifications = this->programConfig.telegramConfig.useTelegramBot
+									|| this->programConfig.localNotificationsConfig.useLocalNotifications;
+
+	while (!stop && useNotifications) {
 		for (auto &&camera : cameras) {
 
-			if (programConfig.useGifInsteadImage || programConfig.analizeBeforeAfterChangeFrames) {
+			if (sendGif || programConfig.analizeBeforeAfterChangeFrames) {
 				size_t sz = camera->gifsReady.size();
 				for (size_t i = 0; i < sz; i++) {
 					bool eraseGifs = false;
@@ -306,8 +312,19 @@ void Recognize::StartNotificationsSender() {
 						eraseGifs = true;
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
-						
-						if (programConfig.useGifInsteadImage) {
+												
+						if (this->programConfig.analizeBeforeAfterChangeFrames) {
+							
+							// image notification
+							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
+							
+							// text notification
+							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
+						}
+
+						if (sendGif) {
+							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
 
@@ -316,27 +333,10 @@ void Recognize::StartNotificationsSender() {
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
-							std::system(command.c_str());
-
-							if (this->programConfig.telegramConfig.useTelegramBot)
-								TelegramBot::SendMediaToChat(gifPath, "Movimiento detectado. " + gif->getText(), programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command));
 
 							camera->lastImageSended = std::chrono::high_resolution_clock::now();
-
-							this->notificationWithMedia->try_emplace(
-								std::pair<Notification::Type, std::string>(Notification::IMAGE, gifPath));	
-						} else if (this->programConfig.analizeBeforeAfterChangeFrames
-									&& this->programConfig.localNotificationsConfig.sendImageWhenDetectChange 
-									|| this->programConfig.telegramConfig.sendImageWhenDetectChange) {
-							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
-						}
-
-						if (this->programConfig.analizeBeforeAfterChangeFrames
-							&& this->programConfig.telegramConfig.sendTextWhenDetectChange
-							|| this->programConfig.localNotificationsConfig.sendTextWhenDetectChange) {
-							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
-						}
+						} 
 					}
 
 					delete gif;
@@ -356,26 +356,42 @@ void Recognize::StartNotificationsSender() {
 			size_t size = camera->pendingNotifications.size();
 			for (size_t i = 0; i < size; i++) {
 				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
+				Notification::Notification& notf = camera->pendingNotifications[i];
+				
+				// Since merging multiple images into one file is cpu intensive, 
+				// and can take up to a few seconds on different processors, 
+				// the media types (gif/videos) need to be converted as they are sent, 
+				// so that they don't delay the rest of the notifications in the queue. 
+				// A different solution is to build it in another thread, 
+				// but it requires coordination. And I think it is an overkill.
+				if (notf.type == Notification::GIF) {				
+					notf.buildMedia();
+				}
 
 				// send to telegram
-				std::string data = camera->pendingNotifications[i].send(programConfig);
+				std::string data = notf.send(programConfig);
 				
 				// send to local
-				if (camera->pendingNotifications[i].type == Notification::SOUND
+				if (programConfig.localNotificationsConfig.useLocalNotifications
+					&& notf.type == Notification::SOUND
 					|| (
-							camera->pendingNotifications[i].type == Notification::IMAGE
+							notf.type == Notification::IMAGE
 							&& this->programConfig.localNotificationsConfig.sendImageWhenDetectChange
 						)
 					|| (
 							// check if user wants text messages in local notifications
-							camera->pendingNotifications[i].type == Notification::TEXT 
+							notf.type == Notification::TEXT 
 							&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange
-						)
-					) 
-				{						
+						)					
+					|| (
+							notf.type == Notification::GIF
+							&& this->programConfig.localNotificationsConfig.sendGifWhenDetectChange
+					)
+				)
+				{
 					this->notificationWithMedia->try_emplace(
 							std::pair<Notification::Type, std::string>(
-								camera->pendingNotifications[i].type, 
+								notf.type, 
 								data
 								)
 						);

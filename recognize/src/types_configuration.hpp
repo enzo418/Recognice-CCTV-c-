@@ -116,9 +116,7 @@ struct ProgramConfiguration {
 
 	// relative folder to save the imgs of the changes / detections
 	std::string imagesFolder = "saved_imgs";
-
-	bool useGifInsteadImage = true;
-
+	
 	ushort gifResizePercentage = 60;
 
 	NumberFramesBeforeAfter numberGifFrames;
