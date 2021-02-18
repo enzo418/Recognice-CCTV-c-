@@ -313,14 +313,12 @@ void Recognize::StartNotificationsSender() {
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
 												
-						if (this->programConfig.analizeBeforeAfterChangeFrames) {
-							
+						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
+							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
+						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
 							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
-							
-							// text notification
-							camera->pendingNotifications.push_back(Notification::Notification("Movimiento detectado en la camara " + camera->config->cameraName));
 						}
 
 						if (sendGif) {
