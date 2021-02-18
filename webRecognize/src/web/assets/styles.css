@@ -366,3 +366,13 @@ legend {
 		width: auto;
 	}
 }
+
+.new-file-name-container, .file-copy-container {
+	display: flex;
+    align-items: center;
+    flex-direction: row;
+}
+
+.new-file-name-container span, .file-copy-container span {
+	color: rgb(199 199 199);
+}

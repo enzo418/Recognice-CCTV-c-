@@ -184,7 +184,12 @@
 				</div>
 				<div class="message-body">
 					<label for="file-copy-name">Insert the new name of the copied file:</label>
-					<input class="input" type="text" name="file-copy-name" id="file-copy-name">
+					<div class="file-copy-container">
+						<span class="root-dir-configurations"></span>
+						<input class="input" type="text" name="file-copy-name" id="file-copy-name">	
+						<span>.ini</span>
+					</div>
+
 					<div class="buttons-config-selector">
 						<button class="button is-success" id="button-cancel-copy-file">
 							<span class="icon is-small">
@@ -217,8 +222,12 @@
 				</div>
 				<div class="message-body">
 					
-					<label for="new-file-name">Insert the name of the new file:</label>
-					<input class="input" type="text" name="new-file-name" id="new-file-name">
+					<label for="new-file-name">Insert the name of the new file (without extension)</label>
+					<div class="new-file-name-container">
+						<span class="root-dir-configurations"></span>
+						<input class="input" type="text" name="new-file-name" id="new-file-name">
+						<span>.ini</span>
+					</div>
 					
 					<div class="buttons-config-selector">
 						<button class="button is-success" id="button-cancel-file-name">
