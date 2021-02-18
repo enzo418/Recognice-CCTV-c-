@@ -260,6 +260,9 @@ namespace {
 					Json::Value root;
 					root["new_camera_config"]["configuration"] = Json::Value(ConfigurationFile::GetConfigurationString(cfg));
 					con->send(root.toStyledString());
+				}  else if (id == "copy_and_reply_file") {
+					Json::Value root;
+					/// TODO: Copy file and then send it back
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}
