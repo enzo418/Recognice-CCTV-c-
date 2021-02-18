@@ -90,10 +90,12 @@ a.dropdown-item, button.dropdown-item {
 	display: flex;
 	justify-content: space-between;
 	padding-top: 1rem;
+	flex-direction: column;
 }
 
 .buttons-config-selector .button.is-success {
 	background-color: #38adad;
+	margin: 0.5rem 0;
 }
 
 .buttons-config-selector .button.is-success.is-hovered, .button.is-success:hover {
@@ -363,4 +365,14 @@ legend {
 	.card-content .configuration-group {
 		width: auto;
 	}
+}
+
+.new-file-name-container, .file-copy-container {
+	display: flex;
+    align-items: center;
+    flex-direction: row;
+}
+
+.new-file-name-container span, .file-copy-container span {
+	color: rgb(199 199 199);
 }

@@ -153,7 +153,91 @@
 							<span>Just wanna see notifications</span>
 						</button>
 
+						<button class="button is-success" id="button-modal-make-copy-file">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Make a copy of this file and select it</span>
+						</button>
+
 						<button class="button is-success" id="button-select-config-file">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Ok</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<!-- Modal File Copy -->
+	<div class="modal" id="modal-file-copy">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p>Set the name of the copy</p>
+				</div>
+				<div class="message-body">
+					<label for="file-copy-name">Insert the new name of the copied file:</label>
+					<div class="file-copy-container">
+						<span class="root-dir-configurations"></span>
+						<input class="input" type="text" name="file-copy-name" id="file-copy-name">	
+						<span>.ini</span>
+					</div>
+
+					<div class="buttons-config-selector">
+						<button class="button is-success" id="button-cancel-copy-file">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Cancel</span>
+						</button>
+
+						<button class="button is-success" id="button-make-copy-file">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Ok</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<!-- Modal Select file name -->
+	<div class="modal" id="modal-file-name">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p>Select the name of the file</p>
+				</div>
+				<div class="message-body">
+					
+					<label for="new-file-name">Insert the name of the new file (without extension)</label>
+					<div class="new-file-name-container">
+						<span class="root-dir-configurations"></span>
+						<input class="input" type="text" name="new-file-name" id="new-file-name">
+						<span>.ini</span>
+					</div>
+					
+					<div class="buttons-config-selector">
+						<button class="button is-success" id="button-cancel-file-name">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span>Cancel</span>
+						</button>
+
+						<button class="button is-success" id="button-selected-new-file-name">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
