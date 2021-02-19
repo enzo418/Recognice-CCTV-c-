@@ -36,9 +36,12 @@ void Camera::OpenVideoWriter() {
     if (this->_programConfig->saveChangeInVideo) {
 		// initialize recorder
 		int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
-		double fps = 25.0;  // framerate of the created video stream
+		double fps = 8;  // framerate of the created video stream
 		std::string filename =  "./" + this->_programConfig->imagesFolder + "/" + std::to_string(config->order) + "_" + Utils::GetTimeFormated() + ".avi"; // name of the output video file
 		outVideo.open(filename, codec, fps, RESIZERESOLUTION, true);
+
+
+		std::cout << "Created video output. FPS=" << fps<< std::endl;
 
 		// check if we succeeded
 		if (!outVideo.isOpened()) {

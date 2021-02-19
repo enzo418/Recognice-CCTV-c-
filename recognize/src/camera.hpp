@@ -103,8 +103,6 @@ private:
 
 	void ApplyBasicsTransformations();
 
-	void OpenVideoWriter();
-
 	void ChangeTheStateAndAlert(std::chrono::time_point<std::chrono::high_resolution_clock>& now);
 
 public:
@@ -114,6 +112,8 @@ public:
 	void ReleaseChangeVideo();
 
 	void AppendFrameToVideo(cv::Mat& frame);
+
+	void OpenVideoWriter();
 	
 public:
 	std::chrono::time_point<std::chrono::high_resolution_clock>

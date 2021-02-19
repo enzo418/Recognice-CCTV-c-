@@ -308,7 +308,7 @@ void Recognize::StartNotificationsSender() {
 						const std::string gifPath = root + ".gif";
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
-						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
+						const bool saveChangeVideo = this->programConfig.saveVideoOfChange;
 
 						eraseGifs = true;
 
@@ -329,6 +329,9 @@ void Recognize::StartNotificationsSender() {
 
 								cv::imwrite(location, frames[i]);
 
+								// this if introduces from 20% to 50% extra of cpu time
+								// doesn't really matter too much since we are talking of
+								// about 50 ~ 200 ms more in my tests with 20 frames.
 								if (saveChangeVideo)
 									camera->AppendFrameToVideo(frames[i]);
 							}
