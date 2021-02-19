@@ -1060,13 +1060,14 @@ window.addEventListener("focus", function (event) {
 function previousNotification() {
 	var $i = notificationPaginator.index > 0 ? notificationPaginator.index - 1 : notificationPaginator.elements.length - 1;
 	changeCurrentElementNotification($i);
+	window.scrollTo(0,document.body.scrollHeight);
 }
 
 // Helper function that updates the current index to the next one and calls a function to change the notification displayed
 function nextNotification() {
 	var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
 	changeCurrentElementNotification($i);
-}
+	window.scrollTo(0,document.body.scrollHeight);}
 
 // updates the number of notifications shown on the buttons to change notification
 function updateNotificationsNumberPaginator() {
