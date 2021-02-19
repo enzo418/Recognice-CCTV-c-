@@ -534,13 +534,12 @@ namespace ConfigurationFile {
 				} catch (std::invalid_argument e) {
 					sucess = false;
 				}
-			} else if (id == "savechangeinvideo") {
-				config.saveChangeInVideo = value == "1";
-			} else if (id == "drawchangefoundbetweenframes") {
-				config.drawChangeFoundBetweenFrames = value == "1";
-			} else {
-				sucess = false;
-			}
+		} else if (id == "savechangeinvideo") {
+			config.saveChangeInVideo = value == "1";
+		} else if (id == "drawchangefoundbetweenframes") {
+			config.drawChangeFoundBetweenFrames = value == "1";
+		} else {
+			sucess = false;
 		}
 		
 		return sucess;

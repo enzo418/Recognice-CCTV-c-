@@ -22,6 +22,8 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 
 	// allocate a empty lastFrame to avoid checking if is empty every time
 	this->lastFrame = cv::Mat(this->config->roi.size(), CV_8UC1);
+
+	this->msBetweenFrames = this->_programConfig->msBetweenFrame;
 }
 
 Camera::~Camera() {}
@@ -41,7 +43,8 @@ void Camera::OpenVideoWriter() {
 		// check if we succeeded
 		if (!outVideo.isOpened()) {
 			std::cerr 	<< "Could not open the output video file for write"
-						<< "\n\tFileName: " << filename;
+						<< "\n\tFileName: " << filename
+						<< std::endl;
 		}
 	}
 }
