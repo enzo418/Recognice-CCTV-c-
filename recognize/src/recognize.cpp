@@ -318,7 +318,7 @@ void Recognize::StartNotificationsSender() {
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName));
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, camera->config->cameraName, true));
 						}
 
 						if (sendGif) {

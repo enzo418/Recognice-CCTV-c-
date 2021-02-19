@@ -139,7 +139,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
+				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", true);
 				this->pendingNotifications.push_back(imn);
 				
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
