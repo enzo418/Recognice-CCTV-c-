@@ -75,8 +75,8 @@
 				]
 			},
 			{
-				"name": "Gif",
-				"id": "group-gif",
+				"name": "Media",
+				"id": "group-media",
 				"elements": [
 					{
 						"target": "gifResizePercentage",
@@ -89,6 +89,12 @@
 					{
 						"target": "gifFrames",
 						"type": "string",
+						"hidden": false,
+						"placeholder": ""
+					},
+					{
+						"target": "saveChangeInVideo",
+						"type": "boolean",
 						"hidden": false,
 						"placeholder": ""
 					}
@@ -171,6 +177,12 @@
 						"type": "string",
 						"hidden": false,
 						"placeholder": "10..8"
+					},
+					{
+						"target": "drawChangeFoundBetweenFrames",
+						"type": "boolean",
+						"hidden": false,
+						"placeholder": ""
 					}
 				],
 				"groups": [

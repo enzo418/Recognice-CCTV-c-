@@ -171,6 +171,14 @@
 		"framesToAnalyzeChangeValidity": {
 			"label": "Number of frames to analyze when checking for the validity of the change detected.\nSyntax is: <framesBefore>..<framesAfter>",
 			"description": ""
+		},
+		"saveChangeInVideo": {
+			"label": "Should the program save the change (GIF) into a raw video",
+			"description": "The video is MPJEG encoded with .avi extension, \nthe quality of the GIF doesn't change the output quality of the video."
+		},
+		"drawChangeFoundBetweenFrames": {
+			"label": "Should the program draw each change detected on the frames into the resulting GIF/video",
+			"description": "Only works for GIF/Videos."
 		}
 	}
 }

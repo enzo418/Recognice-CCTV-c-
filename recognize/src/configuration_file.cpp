@@ -368,9 +368,9 @@ namespace ConfigurationFile {
 			
 			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0")
 
-			<< "\n\nsavechangeinvideo=" << (cfg.saveChangeInVideo ? "1" : "0")
+			<< "\n\nsaveChangeInVideo=" << (cfg.saveChangeInVideo ? "1" : "0")
 
-			<< "\n\ndrawchangefoundbetweenframes=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0");
+			<< "\n\ndrawChangeFoundBetweenFrames=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0");
 			 			
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
