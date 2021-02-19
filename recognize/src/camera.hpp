@@ -89,6 +89,8 @@ private:
 
 	FindingInfo lastFinding;
 
+	cv::VideoWriter outVideo;
+
 	void UpdateThreshold();
 
 	// ==================
@@ -101,11 +103,17 @@ private:
 
 	void ApplyBasicsTransformations();
 
+	void OpenVideoWriter();
+
 	void ChangeTheStateAndAlert(std::chrono::time_point<std::chrono::high_resolution_clock>& now);
 
 public:
 	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog);
 	~Camera();
+
+	void ReleaseChangeVideo();
+
+	void AppendFrameToVideo(cv::Mat& frame);
 	
 public:
 	std::chrono::time_point<std::chrono::high_resolution_clock>

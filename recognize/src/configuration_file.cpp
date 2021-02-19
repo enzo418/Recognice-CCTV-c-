@@ -193,6 +193,12 @@ namespace ConfigurationFile {
 			<< "\n; If not active, the program will just verify if the detected change is not in an ignored area."
 			<< "\n;analizeBeforeAfterChangeFrames=boolean"
 
+			<< "\n\n; Should the program save the GIF into a .avi (video) file?"
+			<< "\n;saveChangeInVideo=boolean"
+			
+			<< "\n\n; Should the program draw the change found?"
+			<< "\n;drawChangeFoundBetweenFrames=boolean"
+
 			<< "\n\n; If so, then how much frames before and after should be considered."
 			<< "\n; The syntax is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
@@ -360,8 +366,12 @@ namespace ConfigurationFile {
 			<< "\nlocalnotifications_sendGifWhenDetectChange=" << (cfg.localNotificationsConfig.sendGifWhenDetectChange ?  "1" : "0")
 			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0")
 			
-			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0");
-			
+			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0")
+
+			<< "\n\nsavechangeinvideo=" << (cfg.saveChangeInVideo ? "1" : "0")
+
+			<< "\n\ndrawchangefoundbetweenframes=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0");
+			 			
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
 				
@@ -524,6 +534,10 @@ namespace ConfigurationFile {
 				} catch (std::invalid_argument e) {
 					sucess = false;
 				}
+			} else if (id == "savechangeinvideo") {
+				config.saveChangeInVideo = value == "1";
+			} else if (id == "drawchangefoundbetweenframes") {
+				config.drawChangeFoundBetweenFrames = value == "1";
 			} else {
 				sucess = false;
 			}

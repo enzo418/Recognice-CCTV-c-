@@ -131,6 +131,10 @@ struct ProgramConfiguration {
 	bool analizeBeforeAfterChangeFrames = true;
 
 	NumberFramesBeforeAfter framesToAnalyzeChangeValidity;
+
+	bool saveChangeInVideo = false;
+
+	bool drawChangeFoundBetweenFrames = false;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

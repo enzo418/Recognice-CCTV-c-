@@ -308,6 +308,7 @@ void Recognize::StartNotificationsSender() {
 						const std::string gifPath = root + ".gif";
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
+						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
 
 						eraseGifs = true;
 
@@ -327,7 +328,13 @@ void Recognize::StartNotificationsSender() {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
 
 								cv::imwrite(location, frames[i]);
+
+								if (saveChangeVideo)
+									camera->AppendFrameToVideo(frames[i]);
 							}
+							
+							if (saveChangeVideo)
+								camera->ReleaseChangeVideo();
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 

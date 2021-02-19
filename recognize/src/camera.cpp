@@ -5,6 +5,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
 		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
+		this->OpenVideoWriter();
 	}
 
 	this->Connect();
@@ -27,6 +28,31 @@ Camera::~Camera() {}
 
 void Camera::Connect() {
 	this->capturer.open(this->config->url);
+}
+
+void Camera::OpenVideoWriter() {
+    if (this->_programConfig->saveChangeInVideo) {
+		// initialize recorder
+		int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
+		double fps = 25.0;  // framerate of the created video stream
+		std::string filename =  "./" + this->_programConfig->imagesFolder + "/" + std::to_string(config->order) + "_" + Utils::GetTimeFormated() + ".avi"; // name of the output video file
+		outVideo.open(filename, codec, fps, RESIZERESOLUTION, true);
+
+		// check if we succeeded
+		if (!outVideo.isOpened()) {
+			std::cerr 	<< "Could not open the output video file for write"
+						<< "\n\tFileName: " << filename;
+		}
+	}
+}
+
+void Camera::AppendFrameToVideo(cv::Mat& frame) {
+	this->outVideo << frame;
+}
+
+void Camera::ReleaseChangeVideo() {
+	this->outVideo.release();
+	this->OpenVideoWriter();
 }
 
 //std::thread Camera::StartDetection() {
@@ -255,7 +281,7 @@ void Camera::ReadFramesWithInterval() {
 				&& this->currentGifFrames->getState() == State::Initial) 
 			{
 				if (useNotifications) {
-					std::cout << "Change detected. Checking..."  << std::endl;
+					std::cout << "Change detected. Checking... Threshold: " << this->totalNonZeroPixels  << std::endl;
 
 					this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
 
