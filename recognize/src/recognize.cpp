@@ -308,7 +308,7 @@ void Recognize::StartNotificationsSender() {
 						const std::string gifPath = root + ".gif";
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
-						const bool saveChangeVideo = this->programConfig.saveVideoOfChange;
+						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
 
 						eraseGifs = true;
 
