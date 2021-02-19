@@ -284,6 +284,11 @@ namespace {
 								<< "Copied to: " << copy_path
 								<< std::endl;
 					
+					// create directory
+					std::filesystem::path path { copy_path };
+					std::filesystem::create_directories(path.parent_path());
+					
+					// copy file
 					fs::copy_file(file, copy_path);
 
 					// read file
