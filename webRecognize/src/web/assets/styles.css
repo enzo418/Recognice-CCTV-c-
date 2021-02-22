@@ -78,12 +78,17 @@ body, .section, html {
 	background-color: #05030a;
 }
 
-a.dropdown-item, button.dropdown-item {
+a.dropdown-item, button.dropdown-item, div.dropdown-item {
     padding-right: 3rem;
     text-align: inherit;
     white-space: nowrap;
     width: 100%;
     color: #fff;
+}
+
+div.dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: #0a0a0a;
 }
 
 .buttons-config-selector {

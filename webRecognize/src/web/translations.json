@@ -416,6 +416,7 @@
 		"the camera url is empty": "La url de la camara esta vacía",
 		"details": "Detalles",
 		"the copied file was invalid and now you have 2 invalid files": "El archivo copiado no era válido y ahora tienes 2 archivos no válidos",
-		"new notification": "Nueva notificacion"
+		"new notification": "Nueva notificacion",
+		"is it necessary to restart the page to change the language, restart now?": "Es necesario reiniciar la página para cambiar el idioma, ¿reiniciar ahora?"
 	}
 }

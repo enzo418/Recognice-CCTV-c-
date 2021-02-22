@@ -162,7 +162,7 @@ function _($key_string) {
 function changeLanguage($clicked_el) {
 	$lang_code = $clicked_el.dataset.lang;
 	localStorage.setItem("lang", $lang_code);
-	if (confirm(_("Need to restart the page in order to change the language, restart now?"))) {
+	if (confirm(_("Is it necessary to restart the page to change the language, restart now?"))) {
 		location.reload();
 	} else {
 		var drop_cont = document.getElementById('dropdown-language').querySelector('.dropdown-content');
