@@ -319,9 +319,12 @@ namespace Utils {
 		return ss.str();
 	}
 
-	static std::string FormatNotificationTextString(std::string& str, const std::string& name) {
-		// Implementation of a quick (to write) replace method
-		return str.replace(str.find("{N}"), 3, name);
+	static std::string FormatNotificationTextString(std::string str, const std::string& name) {
+		// size_t pos = str.find("{N}");
+		// if (pos != std::iterator::nps)
+		// // Implementation of a quick (to write) replace method
+		// return str.replace(, 3, name);
+		return name;
 	}
 };
 
