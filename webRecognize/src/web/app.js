@@ -443,13 +443,17 @@ $(function () {
 	});
 
 	$('#button-toggle-recognize').click(function () {
-		$(this).toggleClass('is-loading');
-		sendObj("change_recognize_state", { state: !RECOGNIZE_RUNNING });
-		
-		unfinishedRequests["change_recognize_state"] = () => {				
-			setTimeout(() => {
-				$(this).removeClass("is-loading");
-			}, 200);
+		if (FILE_PATH.length === 0 && !RECOGNIZE_RUNNING) {
+			createAlert("error", _("You can not start the recognize without selecting a configuration file"), 5000);
+		} else {
+			$(this).toggleClass('is-loading');
+			sendObj("change_recognize_state", { state: !RECOGNIZE_RUNNING });
+			
+			unfinishedRequests["change_recognize_state"] = () => {				
+				setTimeout(() => {
+					$(this).removeClass("is-loading");
+				}, 200);
+			}
 		}
 	});
 

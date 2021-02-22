@@ -418,6 +418,7 @@
 		"the copied file was invalid and now you have 2 invalid files": "El archivo copiado no era válido y ahora tienes 2 archivos no válidos",
 		"new notification": "Nueva notificacion",
 		"is it necessary to restart the page to change the language, restart now?": "Es necesario reiniciar la página para cambiar el idioma, ¿reiniciar ahora?",
-		"could not start the recognizer, check that the configuration file has active cameras.": "No se pudo iniciar el reconocedor, verifica que el archivo de configuracion tenga camaras activas."
+		"could not start the recognizer, check that the configuration file has active cameras.": "No se pudo iniciar el reconocedor, verifica que el archivo de configuración tenga camaras activas.",
+		"you can not start the recognize without selecting a configuration file": "No puedes iniciar el ronocedor sin antes haber seleccionado un archivo de configuración."
 	}
 }

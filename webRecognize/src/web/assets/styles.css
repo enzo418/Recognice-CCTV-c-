@@ -91,6 +91,11 @@ div.dropdown-item:hover {
     color: #0a0a0a;
 }
 
+div.dropdown-item.is-active {
+	background-color: #3273dc;
+    color: #fff;
+}
+
 .buttons-config-selector {
 	display: flex;
 	justify-content: space-between;
