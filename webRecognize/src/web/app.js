@@ -220,6 +220,12 @@ $(function () {
 
 		if (data.hasOwnProperty("configuration_file")) {
 			setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
+			
+			// if it was a copy
+			if ("need_copy_file" in unfinishedRequests) {
+				$('#modal-file-copy').toggleClass('is-active');
+				delete unfinishedRequests["need_copy_file"];
+			}
 
 			//  Add accordion program and cameras
 			CONFIGURATION_HEADERS = getHeadersFromStringConfig(data["configuration_file"]);
@@ -289,7 +295,12 @@ $(function () {
 
 		if (data.hasOwnProperty('request_reply')) {
 			var ob = data["request_reply"];
-			createAlert(ob["status"], ob["message"])
+			var $message = _(ob["message"]);
+			if (ob["extra"].length > 0 ) {
+				$message += `<br> ${_("Details")}: ${ob["extra"]}`;
+			}
+
+			createAlert(ob["status"], $message);
 			if (ob["trigger"].length > 0) {
 				// execute pending unifished request
 				Object.entries(unfinishedRequests).forEach($request => {
@@ -422,6 +433,12 @@ $(function () {
 		} else {
 			// else request the file
 			sendObj('need_config_file', { file: selected, is_new: false});
+			
+			unfinishedRequests["need_config_file"] = () => {				
+				setTimeout(() => {
+					$(this).removeClass("is-loading");
+				}, 200);
+			}
 		}
 	});
 
@@ -454,12 +471,21 @@ $(function () {
 		$('#modal-file').toggleClass('is-active');
 	});
 
-	$('#button-make-copy-file').click(function () {
+	$('#button-make-copy-file').click(function (event) {
+		event.preventDefault();
 		$(this).addClass("is-loading");
 		var selectedFile = FILE_PATH;
 		FILE_PATH = ROOT_CONFIGURATIONS_DIRECTORY + ($('#file-copy-name').val()).replace(/(\.\w+)+/, '') + ".ini";
 		sendObj('need_copy_file', { file: selectedFile, copy_path: FILE_PATH });
-		$('#modal-file-copy').toggleClass('is-active');
+				
+		unfinishedRequests["need_copy_file"] = () => {				
+			setTimeout(() => {
+				$(this).removeClass("is-loading");
+
+				$('#modal-file-copy').toggleClass('is-active');
+				$('#modal-file').toggleClass('is-active');
+			}, 200);
+		}
 	});
 
 	$('#button-cancel-file-name').click(function () {
@@ -570,11 +596,11 @@ function addCameraConfigurationElementsTab(val, i) {
 
 function changeRecognizeStatusElements(running) {
 	if (running) {
-		$('#button-toggle-recognize').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognize"));
-		$('#button-state-recognize').text(_("Recognize is running"));
+		$('#button-toggle-recognize').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognizer"));
+		$('#button-state-recognize').text(_("Recognizer is running"));
 	} else {
-		$('#button-toggle-recognize').removeClass("is-danger").addClass("is-sucess").text(_("Start recognize"));
-		$('#button-state-recognize').text(_("Recognize is not running"));
+		$('#button-toggle-recognize').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
+		$('#button-state-recognize').text(_("Recognizer is not running"));
 	}
 }
 

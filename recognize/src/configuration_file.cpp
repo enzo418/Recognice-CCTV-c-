@@ -36,7 +36,7 @@ namespace ConfigurationFile {
 	}
 
 	template<typename T>
-	T ReadNextConfiguration(std::istream& file, T& config) {
+	T ReadNextConfiguration(std::istream& file, T& config, std::string& error) {
 		std::string line;
 		size_t lineNumber = 0;
 
@@ -56,10 +56,11 @@ namespace ConfigurationFile {
 
 				if (id.size() > 0 && val.size() > 0) {
 					if (!ConfigurationFile::SaveIdVal(config, id, val)) {
-						std::cout 	<< "Invalid field of value in line: " << lineNumber 
-									<< ". Field: \"" << id << "\" value: \"" << val << "\"" << std::endl;
-						std::getchar();
-						exit(-1);
+						std::ostringstream ss;
+						ss 	<< "Invalid field of value in line: " << lineNumber 
+							<< ". Field: '" << id << "' value: '" << val << "'";
+						error = ss.str();						
+						break;
 					}
 				}
 			}
@@ -69,32 +70,32 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	Configurations ReadConfigurations(std::string filePath) {
+	Configurations ReadConfigurations(std::string filePath, std::string& error) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileRead(file, filePath);
 
-		Configurations cfgs = ReadConfigurationBuffer(file);
+		Configurations cfgs = ReadConfigurationBuffer(file, error);
 
 		file.close();
 		return cfgs;
 	}
 
 	// template <typename S>
-	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer) {		
+	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer, std::string& error) {		
 		std::string line;
 		Configurations cfgs;
-		while (std::getline(cfgBuffer, line)) {
+		while (std::getline(cfgBuffer, line) && error.length() == 0) {
 			if (line != "") {
 				if (line[0] == '[') {
 					line = line.substr(1, line.size() - 2);
 					Utils::toLowerCase(line);
 
 					if (line == "program") {
-						ConfigurationFile::ReadNextConfiguration(cfgBuffer, cfgs.programConfig);
+						ConfigurationFile::ReadNextConfiguration(cfgBuffer, cfgs.programConfig, error);
 					} else if (line == "camera") {
 						CameraConfiguration config;
-						ConfigurationFile::ReadNextConfiguration(cfgBuffer, config);
+						ConfigurationFile::ReadNextConfiguration(cfgBuffer, config, error);
 
 						if (config.noiseThreshold == 0) {
 							std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
@@ -106,7 +107,9 @@ namespace ConfigurationFile {
 			}
 		}
 		
-		ConfigurationFile::PreprocessConfigurations(cfgs);
+		if (error.length() == 0)
+			ConfigurationFile::PreprocessConfigurations(cfgs);
+
 		return cfgs;
 	}
 

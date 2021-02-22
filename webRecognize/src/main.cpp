@@ -84,10 +84,10 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
  * @param message message of the alert
  * @param trigger_query query that triggered the alert, should be the same as the query received
  */
-std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& trigger_query  = "") {
+std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& trigger_query  = "", const std::string& extra = "") {
 	std::string st = AlertStatus::OK == status ? "ok" : "error";
 
-	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"trigger", trigger_query}}));
+	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"trigger", trigger_query}, {"extra", extra}}));
 }
 
 bool recognize_running = false;
@@ -161,25 +161,31 @@ namespace {
 					const std::string file = root["file"].asString();
 					const bool isNew = root["is_new"].asBool();
 					std::cout << "File requested=" << file << std::endl;
+					std::string error;
 
 					// read file
-					Configurations cfgs = ConfigurationFile::ReadConfigurations(file);				
-					std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+					Configurations cfgs = ConfigurationFile::ReadConfigurations(file, error);
 
-					if (isNew) {
-						std::filesystem::path path { file };
-						
-						std::cout << "\tFile is new. Full path: " << path << std::endl;
+					if (error.length() == 0) {
+						std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
 
-						std::filesystem::create_directories(path.parent_path());
+						if (isNew) {
+							std::filesystem::path path { file };
+							
+							std::cout << "\tFile is new. Full path: " << path << std::endl;
 
-						ConfigurationFile::SaveConfigurations(cfgs, path.string());
+							std::filesystem::create_directories(path.parent_path());
+
+							ConfigurationFile::SaveConfigurations(cfgs, path.string());
+						}
+
+						// send payload
+						con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
+
+						connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, file));
+					} else {
+						con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", id, error));
 					}
-
-					// send payload
-					con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
-
-					connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, file));
 				} else if (id == "save_into_config_file") {
 					std::string file = connection_file[con->credentials()->username];
 					const std::string cfgString = root["configurations"].asString();
@@ -187,45 +193,59 @@ namespace {
 						<< "File=" << file
 						<< "Configuration size:\n" << cfgString.length() << std::endl;
 					
+					std::string error;
 					std::istringstream iss(cfgString);
-					Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss);
+					Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss, error);
 
-					std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
+					if (error.length() == 0) {
+						std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
 
-					ConfigurationFile::SaveConfigurations(configurations, file);
+						ConfigurationFile::SaveConfigurations(configurations, file);
 
-					con->send(GetAlertMessage(AlertStatus::OK, "file saved correctly!"));
+						con->send(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
+					} else {
+						con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", id, error));
+					}
 				} else if (id == "change_recognize_state") {
-					recognize_running = !recognize_running;
-					
+					bool success = true;
+
 					// was stopped, run it
-					if (recognize_running) {
+					if (!recognize_running) {
 						std::string file = connection_file[con->credentials()->username];
 						std::cout << "Starting recognize with file: " << file << std::endl;
-						Configurations configurations = ConfigurationFile::ReadConfigurations(file);
+						std::string error;
+						Configurations configurations = ConfigurationFile::ReadConfigurations(file, error);
 
-						std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
+						if (error.length() == 0) {
+							std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
 
-						fs::create_directories(configurations.programConfig.imagesFolder);
+							fs::create_directories(configurations.programConfig.imagesFolder);
 
-						lastMediaPath = configurations.programConfig.imagesFolder.substr(
-											SERVER_FILEPATH.size(), 
-											configurations.programConfig.imagesFolder.size()
-										);
+							lastMediaPath = configurations.programConfig.imagesFolder.substr(
+												SERVER_FILEPATH.size(), 
+												configurations.programConfig.imagesFolder.size()
+											);
 
-						recognize->Start(std::move(configurations), 
-											configurations.programConfig.showPreview, 
-											configurations.programConfig.telegramConfig.useTelegramBot);
-						
-						con->send(GetAlertMessage(AlertStatus::OK, "recognize started!"));
+							recognize->Start(std::move(configurations), 
+												configurations.programConfig.showPreview, 
+												configurations.programConfig.telegramConfig.useTelegramBot);
+							
+							con->send(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+						} else {
+							success = false;
+							con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", id, error));
+						}
 					} else { // was running, stop it
 						recognize->CloseAndJoin();
 
-						con->send(GetAlertMessage(AlertStatus::OK, "recognize stopped!"));
+						con->send(GetAlertMessage(AlertStatus::OK, "Recognizer stopped"));
 						std::cout << "Closed recognize" << std::endl;
 					}
 
-					sendEveryone(GetRecognizeStateJson());
+					if (success) {
+						recognize_running = !recognize_running;					
+						sendEveryone(GetRecognizeStateJson());
+					}
 				} else if (id == "get_camera_frame") {
 					const unsigned int index = root["index"].asUInt();
 					const int rotation = root["rotation"].asInt();
@@ -258,7 +278,7 @@ namespace {
 								encoded = base64_encode(enc_msg, buf.size());
 								cachedImages.insert({cacheKey, encoded});
 							} else {
-								con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: Couldn't open a connection with the camera.", id));
+								con->send(GetAlertMessage(AlertStatus::ERROR, "Could not open a connection to the camera", id));
 								error = true;
 							}
 						} else {
@@ -268,7 +288,7 @@ namespace {
 						if (!error)
 							con->send(GetJsonString("frame_camera", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));
 					} else {
-						con->send(GetAlertMessage(AlertStatus::ERROR, "ERROR: The camera url is empty.", id));
+						con->send(GetAlertMessage(AlertStatus::ERROR, "The camera url is empty", id));
 					}
 				} else if (id == "get_new_camera") {
 					CameraConfiguration cfg;
@@ -292,13 +312,18 @@ namespace {
 					fs::copy_file(file, copy_path);
 
 					// read file
-					Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path);				
-					std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
+					std::string error;
+					Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path, error);
+					if (error.length() == 0) {
+						std::string res = ConfigurationFile::ConfigurationsToString(cfgs);
 
-					// send payload
-					con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
+						// send payload
+						con->send(GetJsonString("configuration_file", Json::Value(res).toStyledString()));
 
-					connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, copy_path));
+						connection_file.insert(std::pair<std::string, std::string>(con->credentials()->username, copy_path));
+					} else {
+						con->send(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", id, error));
+					}
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}
