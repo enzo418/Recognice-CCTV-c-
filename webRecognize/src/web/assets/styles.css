@@ -286,6 +286,10 @@ label {
 	font-size: 1.2rem;
 }
 
+#notifications-page .header .notifications-configuration-item p {
+	display: inline;
+}
+
 #notifications-content .box {
     background-color: #191a1b;
 	border: 1px solid #00858629;

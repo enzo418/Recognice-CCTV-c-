@@ -173,7 +173,7 @@ function changeLanguage($clicked_el) {
 
 function translateDOMElements() {
 	document.querySelectorAll('[data-translation]').forEach(el => {
-		el.innerText = _(el.innerText);
+		el.innerText = _(el.dataset.translation.trim());
 	});
 }
 
@@ -539,7 +539,7 @@ function createNewNotification($type, $content, $sendPush) {
 	this.notificationPaginator.elements.push($not[0]);
 
 	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
-		Push.create("Alert!", {
+		Push.create(_("New notification"), {
 			body: "...",
 			icon: '/assets/favicon.svg',
 			link: '/#',
