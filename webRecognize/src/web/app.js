@@ -30,9 +30,7 @@ const getCameraContainerTemplate = (i, camera) => `
 const getProgramContainerTemplate = () => `
 <div class="card" id="program">
 	<header class="card-header">
-		<p class="card-header-title">
-			Program configuration
-		</p>
+		<p class="card-header-title" data-translation="Program configuration">Program configuration</p>
 	</header>
 	<div class="card-content program-config-content">
 

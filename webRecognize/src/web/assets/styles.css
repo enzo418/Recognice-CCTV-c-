@@ -95,10 +95,13 @@ a.dropdown-item, button.dropdown-item {
 
 .buttons-config-selector .button.is-success {
 	background-color: #38adad;
+}
+
+.buttons-config-selector .button {
 	margin: 0.5rem 0;
 }
 
-.buttons-config-selector .button.is-success.is-hovered, .button.is-success:hover {
+.buttons-config-selector .button.is-hovered, .button:hover {
     background-color: #3ec46d;
     border-color: transparent;
     color: #fff;
