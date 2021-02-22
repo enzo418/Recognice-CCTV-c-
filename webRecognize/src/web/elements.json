@@ -131,7 +131,7 @@
 					{	
 						"target": "authUsersToSendActions",
 						"type": "string",
-						"hidden": false,
+						"hidden": true,
 						"placeholder": ""
 					}
 				]
@@ -142,7 +142,7 @@
 					{	
 						"target": "sendimageofallcameras",
 						"type": "boolean",
-						"hidden": false,
+						"hidden": true,
 						"placeholder": ""
 					},
 					{	

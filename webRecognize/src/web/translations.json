@@ -6,7 +6,7 @@
 		},
 		"msBetweenFrameAfterChange": {
 			"label": "Milliseconds between frames after detecting a change",
-			"description": "Same as <msBetweenFrame>. But only will be applied after detecting a change in the frames."
+			"description": "Same as <msBetweenFrame>. But only will be applied after\ndetecting a change in the frames."
 		},
 		"outputResolution": {
 			"label": "Output or Preview resolution, leave on 0,0 to use auto-size",
@@ -34,7 +34,7 @@
 		},
 		"useLocalNotifications": {
 			"label": "Use local notifications",
-			"description": "If checked, the program will send notifications to the webpage, which will send a push notification to you."
+			"description": "If checked, the program will send notifications to the webpage,\n which will send a push notification to you."
 		},
 		"telegramBotApi": {
 			"label": "Api key of the telegram bot",
@@ -93,7 +93,7 @@
 			"description": ""
 		},
 		"detectionMethod": {
-			"label": "Select the detection method\n 0: HOG Descriptor, uses built in opencv HOG Descriptor.\n 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG.",
+			"label": "Select the detection method<br> 0: HOG Descriptor, uses built in opencv HOG Descriptor.<br> 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG.",
 			"description": ""
 		},
 		"gifFrames": {
@@ -114,7 +114,7 @@
 		},
 		"roi": {
 			"label": "Region of interest",
-			"description": "ROI (Region of interest) crop each image that the camera sends. Syntax is: <p_x>,<p_y>,<widht>,<height>"
+			"description": "ROI (Region of interest) crop each image that the camera sends.\n Syntax is: <p_x>,<p_y>,<widht>,<height>"
 		},
 		"hitThreshold": {
 			"label": "Hit threshold",
@@ -133,24 +133,24 @@
 			"description": "The syntax is <nframesBefore>..<nframesAfter>"
 		},
 		"type": {
-			"label": "Camera type\n0   : Disabled, Camera is disabled, doesn't show or process frames.\n1   : Sentry, Only sends notifications.\n2   : Active, Same as Sentry but try to recognize a person in the frames selected on \"framesToAnalyze\"",
+			"label": "Camera type <br>0   : Disabled, Camera is disabled, doesn't show or process frames.<br>1   : Sentry, Only sends notifications.<br>2   : Active, Same as Sentry but try to recognize a person in the frames selected on \"framesToAnalyze\"",
 			"description": ""
 		},
 		"thresholdNoise": {
 			"label": "Noise threshold",
-			"description": "Used to remove noise (single scattered pixels). Between 30 and 50 is a general good value."
+			"description": "Used to remove noise (single scattered pixels).\n Between 30 and 50 is a general good value."
 		},
 		"minimumThreshold": {
 			"label": "Minimum threshold",
-			"description": "Minimum number of different pixels between the last 2 frames. Is used to leave a margin of \"error\"."
+			"description": "Minimum number of different pixels between the last 2 frames.\n Is used to leave a margin of 'error'."
 		},
 		"increaseTresholdFactor": {
 			"label": "Factor to increase threshold by",
-			"description": "Since the app is calculating the average change of pixels between the last two images you need to leave a margin to avoid sending notifications over small or insignificant changes. A general good value is between 1.04 (4%) and 1.30 (30%) of the average change."
+			"description": "Since the app is calculating the average change of pixels\nbetween the last two images you need to leave a margin to avoid sending\nnotifications over small or insignificant changes.\n A general good value is between 1.04 (4%) and 1.30 (30%) of the average change."
 		},
 		"updateThresholdFrequency": {
 			"label": "Update threshold frequency",
-			"description": "This tells the app how frequent (seconds) to update the average pixels change between the last two frames.\n On camera where there is fast changing objects is good to leave this value low, e.g. 5."
+			"description": "This tells the app how frequent (seconds) to update the\naverage pixels change between the last two frames.\n On camera where there is fast changing objects is good to leave this value low, e.g. 5."
 		},
 		"thresholdFindingsOnIgnoredArea": {
 			"label": "Threshold findings on ignored area",
@@ -158,7 +158,7 @@
 		},
 		"minPercentageAreaNeededToIgnore": {
 			"label": "Minimum percentage area needed to ignore the change",
-			"description": "Maybe the object didn't match with all the ignored area, so is better to leave a margin for \"errors\".\nRecommended value: between 90 and 100."
+			"description": "Maybe the object didn't match with all the ignored area,\nso is better to leave a margin for 'errors'.\nRecommended value: between 90 and 100."
 		},
 		"ignoredAreas": {
 			"label": "List of ignored areas",
@@ -231,7 +231,7 @@
 		},
 		"sendimageofallcameras": {
 			"label": "Enviar una imagen de todas las camaras cuando ocurra un cambio",
-			"description": "Solo funciona si activa \"enviar imagen luego de producirse un cambio\""
+			"description": "Solo funciona si activa 'enviar imagen luego de producirse un cambio'"
 		},
 		"secondsBetweenImage": {
 			"label": "Segundos a esperar antes de enviar otra notificacion con una imagen (o GIF)",
@@ -266,7 +266,7 @@
 			"description": ""
 		},
 		"authUsersToSendActions": {
-			"label": "Usuarios authorizados a enviar comandos al bot de telegram. Sintaxis: usuario_1,usuario_2,...,usuario_n",
+			"label": "Usuarios autorizado a enviar comandos al bot de telegram. Sintaxis: usuario_1,usuario_2,...,usuario_n",
 			"description": ""
 		},
 		"gifResizePercentage": {
@@ -274,12 +274,12 @@
 			"description": "Los cuadros van a ser redimensionados a % del valor de este campo"
 		},
 		"detectionMethod": {
-			"label": "Método para detectar objetos\n 0: HOG Descriptor, utiliza el método incorpado en opencv.\n 1: YOLO V4 DNN, utiliza la red neural de \"dark net\", es mas preciso que HOG.",
+			"label": "Método para detectar objetos<br> 0: HOG Descriptor, utiliza el método incorpado en opencv.<br> 1: YOLO V4 DNN, utiliza la red neural de \"dark net\", es mas preciso que HOG.",
 			"description": ""
 		},
 		"gifFrames": {
-			"label": "Cuantos cuadros utilizar para el GIF de la notificacion.\n La sintaxis es: <nCuadrosAntes>..<nCuadrosDespues>.\n'..' denota el cuadro en el cual se detecto el cambio (initial).",
-			"description": "Ten en cuenta que el GIF tardara <msEntreCuadros>*<nCuadrosDespues> ms en recolectar los cuadros,\n + el tiempo de conversion y tiempo de subida, lo cual puede hacer que tarde en llegar el GIF."
+			"label": "Cuantos cuadros utilizar para el GIF de la notificacion.<br> La sintaxis es: {nCuadrosAntes}..{nCuadrosDespues}. <br>'..' denota el cuadro en el cual se detecto el cambio (initial).",
+			"description": "Ten en cuenta que el GIF tardara <msEntreCuadros>*<nCuadrosDespues> ms\nen recolectar los cuadros, + el tiempo de conversion y tiempo de subida,\nlo cual puede hacer que tarde en llegar el GIF."
 		},
 		"imagesFolder": {
 			"label": "Carpeta donde se van a guardar las imagenes",
@@ -295,7 +295,7 @@
 		},
 		"roi": {
 			"label": "Region de interes de la camara",
-			"description": "ROI (Region of interest) recorta cada cuadro que se toma de la camara. La sintaxis es: <p_x>,<p_y>,<ancho>,<alto>"
+			"description": "ROI (Region of interest) recorta cada cuadro que\nse toma de la camara. La sintaxis es: <p_x>,<p_y>,<ancho>,<alto>"
 		},
 		"hitThreshold": {
 			"label": "Hit threshold",
@@ -314,32 +314,32 @@
 			"description": "La sintaxis es <nCuadrosAntes>..<nCuadrosDespues>"
 		},
 		"type": {
-			"label": "Tipo de cámara\n0   : Deshabilitada, La cámara está desactivada, no se muestra ni procesa fotogramas.\n1   : Sentinela, Solo envia notificaciones sin buscar personas en los cuadros.\n2   : Activa, Igual que Sentry pero intenta reconocer a una persona en los fotogramas seleccionados.",
-			"description": "Los fotogramas a analizar una persona se lecciona en \"Cantidad de fotogramas para buscar una persona antes y despues del cambio detectado\""
+			"label": "Tipo de cámara<br>0   : Deshabilitada, La cámara está desactivada, no se muestra ni procesa fotogramas.<br>1   : Sentinela, Solo envia notificaciones sin buscar personas en los cuadros.<br>2   : Activa, Igual que Sentry pero intenta reconocer a una persona en los fotogramas seleccionados.",
+			"description": "Los fotogramas a analizar una persona se lecciona en\n'Cantidad de fotogramas para buscar una persona antes y despues del cambio detectado'"
 		},
 		"thresholdNoise": {
 			"label": "Umbral/Limite de ruido a eliminar, mientras el valor sea mas alto,\n mas estrico el filtro para eliminar el ruido del cambio",
-			"description": "Es utilizado para quitar el ruido de la diferencia entre los cuadros (pixeles separadados de los demas). Entre 30 y 50 son valores comunes."
+			"description": "Es utilizado para quitar el ruido de la diferencia entre los\ncuadros (pixeles separadados de los demas). Entre 30 y 50 son valores comunes."
 		},
 		"minimumThreshold": {
 			"label": "Limite de cambio minimo",
-			"description": "Minimo numero de diferencia de pixeles entre los ultimos 2 cuadros. Es utilizado para dejar un margen de \"error\" al eliminar al ruido.\nDepende del ruido normal de la camara.\nSi se supera se envia una notificacion."
+			"description": "Minimo numero de diferencia de pixeles entre los ultimos 2 cuadros.\nEs utilizado para dejar un margen de 'error' al eliminar al ruido.\nDepende del ruido normal de la camara.\nSi se supera se envia una notificacion."
 		},
 		"increaseTresholdFactor": {
 			"label": "Factor a incrementar el limite de cambio",
-			"description": "Dado que la aplicación calcula el cambio medio de píxeles entre los dos ultimos fotogramas, debe dejar un \nmargen para evitar el envío de notificaciones sobre cambios pequeños o insignificantes.\n Un buen valor general es entre 1,04 (4%) y 1,30 (30%) del cambio medio."
+			"description": "Dado que la aplicación calcula el cambio medio de píxeles\nentre los dos ultimos fotogramas, debe dejar un margen para evitar el envío\nde notificaciones sobre cambios pequeños o insignificantes.\n Un buen valor general es entre 1.04 (4%) y 1.30 (30%) del cambio medio."
 		},
 		"updateThresholdFrequency": {
 			"label": "Frecuencia a actualizar el limite de cambio",
-			"description": "Esto le dice a la aplicación la frecuencia (segundos) para actualizar el promedio de cambio de píxeles entre los dos últimos cuadros.\nEn camaras donde hay objetos que cambian rápidamente es bueno dejar este valor bajo, por ejemplo, 5."
+			"description": "Esto le dice a la aplicación la frecuencia (segundos) para\nactualizar el promedio de cambio de píxeles entre los dos últimos cuadros.\nEn camaras donde hay objetos que cambian rápidamente es bueno dejar este valor bajo, por ejemplo, 5."
 		},
 		"thresholdFindingsOnIgnoredArea": {
 			"label": "Limite de objetos en area ignorada para ignorar el cambio",
-			"description": "Cuántos objetos o cambios en áreas ignoradas son necesarios para no enviar una notificación sobre el cambio"
+			"description": "Cuántos objetos o cambios en áreas ignoradas son necesarios\npara no enviar una notificación sobre el cambio"
 		},
 		"minPercentageAreaNeededToIgnore": {
 			"label": "Porcentaje mínimo de superficie necesario para ignorar el cambio",
-			"description": "Tal vez el objeto no coincida con toda el área ignorada seleccionada, por lo que es mejor dejar un margen para los \"errores\".\nValor recomendado: entre 90 y 100."
+			"description": "Tal vez el objeto no coincida con toda el área ignorada seleccionada,\n por lo que es mejor dejar un margen para los 'errores'.\nValor recomendado: entre 90 y 100."
 		},
 		"ignoredAreas": {
 			"label": "Lista de areas ignoradas",
@@ -347,15 +347,15 @@
 		},
 		"analizeBeforeAfterChangeFrames": {
 			"label": "Analizar los marcos anteriores y posteriores al cambio para decicidir si enviar la notificacion",
-			"description": "Si el programa debe analizar los <nCuadrosAntes> fotogramas antes y los <nCuadrosDespues> después de que se produzca un cambio"
+			"description": "Si el programa debe analizar los \n<nCuadrosAntes> fotogramas antes y los <nCuadrosDespues> después de que se produzca un cambio"
 		},
 		"framesToAnalyzeChangeValidity": {
-			"label": "Número de tramas que se analizan al comprobar la validez del cambio detectado.\nLa sintaxis es: <nCuadrosAntes>..<nCuadrosDespues>, \"..\" denota el frame donde se detecto el cambio",
+			"label": "Número de cuadros que se analizan al comprobar la validez del cambio detectado. <br> La sintaxis es: {nCuadrosAntes}..{nCuadrosDespues}, \"..\" denota el frame donde se detecto el cambio <br>",
 			"description": ""
 		},
 		"saveChangeInVideo": {
 			"label": "¿Debe el programa guardar el cambio detectado (GIF) en un video local?",
-			"description": "El vídeo está codificado en MPJEG con extensión .avi, la calidad del GIF no cambia la calidad de salida del vídeo."
+			"description": "El vídeo está codificado en MPJEG con\nextensión .avi, la calidad del GIF no cambia la calidad de salida del vídeo."
 		},
 		"drawChangeFoundBetweenFrames": {
 			"label": "¿Debe el programa dibujar cada cambio detectado en los fotogramas en el GIF/vídeo resultante?",
