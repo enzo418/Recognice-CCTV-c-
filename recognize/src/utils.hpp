@@ -318,5 +318,10 @@ namespace Utils {
 		ss << roi.x << "," << roi.y << "," << roi.width << "," << roi.height;
 		return ss.str();
 	}
+
+	static std::string FormatNotificationTextString(std::string& str, const std::string& name) {
+		// Implementation of a quick (to write) replace method
+		return str.replace(str.find("{N}"), 3, name);
+	}
 };
 

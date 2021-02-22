@@ -331,6 +331,10 @@ namespace ConfigurationFile {
 
 	std::string GetConfigurationString(ProgramConfiguration& cfg) {
 		std::ostringstream ss;
+
+		std::string& messageOnTextNotification = cfg.messageOnTextNotification;
+		Utils::trim(messageOnTextNotification);
+		messageOnTextNotification = messageOnTextNotification.size() > 0 ? messageOnTextNotification : "Movement on camera ${N}";
 		
 		// Write header
 		ss  << "\n\n[PROGRAM]"
@@ -370,8 +374,10 @@ namespace ConfigurationFile {
 
 			<< "\n\nsaveChangeInVideo=" << (cfg.saveChangeInVideo ? "1" : "0")
 
-			<< "\n\ndrawChangeFoundBetweenFrames=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0");
-			 			
+			<< "\n\ndrawChangeFoundBetweenFrames=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0")
+
+			<< "\n\nmessageOnTextNotification=" << messageOnTextNotification;
+
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
 				
@@ -539,6 +545,8 @@ namespace ConfigurationFile {
 			config.saveChangeInVideo = value == "1";
 		} else if (id == "drawchangefoundbetweenframes") {
 			config.drawChangeFoundBetweenFrames = value == "1";
+		}  else if (id == "messageontextnotification") {
+			config.messageOnTextNotification = value;
 		} else {
 			sucess = false;
 		}

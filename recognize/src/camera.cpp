@@ -171,7 +171,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", true);
+				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), true);
 				this->pendingNotifications.push_back(imn);
 				
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -189,7 +189,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
 			)
 		{
-			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
+			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName));
 			this->pendingNotifications.push_back(imn);
 			this->lastTextSended = std::chrono::high_resolution_clock::now();
 		}

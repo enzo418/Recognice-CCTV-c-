@@ -135,6 +135,8 @@ struct ProgramConfiguration {
 	bool saveChangeInVideo = false;
 
 	bool drawChangeFoundBetweenFrames = false;
+
+	std::string messageOnTextNotification = "Movement detected on camera {N}";
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

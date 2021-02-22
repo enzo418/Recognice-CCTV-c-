@@ -183,6 +183,12 @@
 						"type": "boolean",
 						"hidden": false,
 						"placeholder": ""
+					},
+					{
+						"target": "messageOnTextNotification",
+						"type": "string",
+						"hidden": false,
+						"placeholder": "Movement on camera {N}"
 					}
 				],
 				"groups": [
