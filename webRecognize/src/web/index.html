@@ -34,15 +34,41 @@
 		<div id="navbar-status" class="navbar-menu">
 			<div class="navbar-start">
 				<a class="navbar-item">
-					<h1 id="button-state-recognize">Recognize is not running</h1>
+					<h1 id="button-state-recognize" data-translation="recognize is not running">Recognize is not running</h1>
 				</a>
 
 				<a class="navbar-item">
-					<button class="button is-success" id="button-toggle-recognize">Start Recognize</button>
+					<button class="button is-success" id="button-toggle-recognize" data-translation="Start Recognize">Start Recognize</button>
 				</a>
 
 				<a class="navbar-item">
-					<h1 id="button-current-page" onclick="togglePage()">Show notifications page</h1>
+					<h1 id="button-current-page" onclick="togglePage()" data-translation="Show notifications page">Show notifications page</h1>
+				</a>
+
+				<a class="navbar-item">
+					<div class="dropdown" id="dropdown-language">
+						<div class="dropdown-trigger" >
+							<button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+								<span class="icon is-small">
+									<i class="fas fa-globe" aria-hidden="true"></i>
+								</span>
+								<span data-translation="Language">Language</span>
+								<span class="icon is-small">
+									<i class="fas fa-angle-down" aria-hidden="true"></i>
+								</span>
+							</button>
+						</div>
+						<div class="dropdown-menu" id="dropdown-menu" role="menu">
+							<div class="dropdown-content">
+								<a class="dropdown-item is-active" data-lang="en" onclick="changeLanguage(this)">
+									English
+								</a>
+								<a class="dropdown-item" data-lang="es" onclick="changeLanguage(this)">
+									Español
+								</a>
+							</div>
+						</div>
+					</div>
 				</a>
 			</div>
 		</div>
@@ -55,7 +81,7 @@
 				<div class="tabs is-boxed">
 					<ul>
 					<li class="is-active" data-config="program" id="tab-program" onclick="onTabClick(event)">
-						<a><span>Program configuration</span></a>
+						<a><span data-translation="Program configuration">Program configuration</span></a>
 					</li>
 					</ul>
 				</div>
@@ -66,27 +92,27 @@
 						<span class="icon is-small">
 							<i class="fas fa-plus"></i>
 						</span>
-					<span>Add new camera</span></button>
+					<span data-translation="Add new camera">Add new camera</span></button>
 
 					<button class="button is-success" onclick="saveIntoFile()">
 						<span class="icon is-small">
 							<i class="fas fa-save"></i>
 						</span>
-					<span>Save configurations into file</span></button>
+					<span data-translation="Save configurations into file">Save configurations into file</span></button>
 				</div>
 			</div>
 			<div id="notifications-page" class="is-hidden">
 				<div class="header">
-					<h1 class="title">Notifications</h1>
+					<h1 class="title" data-translation="Notifications">Notifications</h1>
 					
 					<div class="notifications-configuration">
-						<label class="notifications-configuration-item checkbox">
+						<label class="notifications-configuration-item checkbox" data-translation="Send push notifications">
 							<input type="checkbox" onclick="togglePush()" id="toggle-push" checked>
 							<i class="fas fa-bell"></i>
 							Send push notifications
 						</label>
 
-						<label class="notifications-configuration-item checkbox">
+						<label class="notifications-configuration-item checkbox" data-translation="Play sound on notification">
 							<input type="checkbox" onclick="toggleNotificationSound()" id="toggle-notification-sound" checked>
 							<i class="fas fa-volume-off"></i>
 							Play sound on notification
@@ -113,7 +139,7 @@
 	</section>
 
 	<div class="pageloader is-active" id="pageloader">
-		<span class="title">Esperando al servidor...</span>
+		<span class="title" data-translation="Waiting a response from the server">Waiting a response from the server...</span>
 	</div>
 
 	<!-- Modal File -->
@@ -124,14 +150,14 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Select a configuration file to open</p>
+					<p data-translation="Select a configuration file to open">Select a configuration file to open</p>
 				</div>
 				<div class="message-body">
 					<!-- Dropdown -->
 					<div class="dropdown" id="dropdown-file">
 						<div class="dropdown-trigger">
 							<button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
-								<span id="dropdown-current-file-element">new</span>
+								<span id="dropdown-current-file-element" data-translation="new">new</span>
 								<span class="icon is-small">
 									<i class="fas fa-angle-down" aria-hidden="true"></i>
 								</span>
@@ -139,9 +165,10 @@
 						</div>
 						<div class="dropdown-menu" id="dropdown-menu" role="menu">
 							<div class="dropdown-content">
-								<a class="dropdown-item is-active">
+								<a class="dropdown-item is-active" data-translation="new">
 									new
 								</a>
+								<hr class="dropdown-divider">
 							</div>
 						</div>
 					</div>
@@ -150,14 +177,14 @@
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Just wanna see notifications</span>
+							<span data-translation="Just wanna see notifications">Just wanna see notifications</span>
 						</button>
 
 						<button class="button is-success" id="button-modal-make-copy-file">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Make a copy of this file and select it</span>
+							<span data-translation="Make a copy of this file and select it">Make a copy of this file and select it</span>
 						</button>
 
 						<button class="button is-success" id="button-select-config-file">
@@ -180,10 +207,10 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Set the name of the copy</p>
+					<p data-translation="Set the name of the copy">Set the name of the copy</p>
 				</div>
 				<div class="message-body">
-					<label for="file-copy-name">Insert the new name of the copied file:</label>
+					<label for="file-copy-name" data-translation="Insert the new name of the copied file">Insert the new name of the copied file</label>
 					<div class="file-copy-container">
 						<span class="root-dir-configurations"></span>
 						<input class="input" type="text" name="file-copy-name" id="file-copy-name">	
@@ -195,7 +222,7 @@
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Cancel</span>
+							<span data-translation="Cancel">Cancel</span>
 						</button>
 
 						<button class="button is-success" id="button-make-copy-file">
@@ -218,11 +245,11 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Select the name of the file</p>
+					<p data-translation="Select the name of the file">Select the name of the file</p>
 				</div>
 				<div class="message-body">
 					
-					<label for="new-file-name">Insert the name of the new file (without extension)</label>
+					<label for="new-file-name" data-translation="Insert the name of the new file (without extension)">Insert the name of the new file (without extension)</label>
 					<div class="new-file-name-container">
 						<span class="root-dir-configurations"></span>
 						<input class="input" type="text" name="new-file-name" id="new-file-name">
@@ -234,7 +261,7 @@
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Cancel</span>
+							<span data-translation="Cancel">Cancel</span>
 						</button>
 
 						<button class="button is-success" id="button-selected-new-file-name">
@@ -257,7 +284,7 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Select the camera region of interest</p>
+					<p data-translation="Select the camera region of interest">Select the camera region of interest</p>
 				</div>
 				<div class="message-body">
 					
@@ -268,14 +295,14 @@
 							<span class="icon is-small">
 								<i class="fas fa-times"></i>
 							</span>
-							<span>Cancel</span>
+							<span data-translation="Cancel">Cancel</span>
 						</button>
 
 						<button class="button is-success" id="button-camera-save-roi" onclick="saveCameraROI(event, true)">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Save</span>
+							<span data-translation="Save">Save</span>
 						</button>
 					</div>
 				</div>
@@ -291,8 +318,8 @@
 			<!-- Message -->
 			<article class="message is-primary">
 				<div class="message-header">
-					<p>Select the ignored areas of the camera</p>
-					<button class="button" onclick="cnvAreas.removeAll()">Remove all</button>
+					<p data-translation="Select the ignored areas of the camera">Select the ignored areas of the camera</p>
+					<button class="button" onclick="cnvAreas.removeAll()" data-translation="Remove all">Remove all</button>
 				</div>
 				<div class="message-body">
 					
@@ -303,14 +330,14 @@
 							<span class="icon is-small">
 								<i class="fas fa-times"></i>
 							</span>
-							<span>Cancel</span>
+							<span data-translation="Cancel">Cancel</span>
 						</button>
 
 						<button class="button is-success" id="button-camera-save-igarea" onclick="saveCameraIgarea(event, true)">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>
-							<span>Save</span>
+							<span data-translation="Save">Save</span>
 						</button>
 					</div>
 				</div>

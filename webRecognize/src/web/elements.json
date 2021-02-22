@@ -33,7 +33,7 @@
 				]
 			},
 			{
-				"name": "output",
+				"name": "Output",
 				"elements": [					
 					{
 						"target": "outputResolution",

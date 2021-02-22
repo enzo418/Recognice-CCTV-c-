@@ -11,9 +11,17 @@ const getCameraContainerTemplate = (i, camera) => `
 
 	<footer class="card-footer">
 		<div class="card-footer-item footer-camera-buttons">
-			<button class="button button-select-camera-roi" onclick="selectCameraROI(event, ${i})">Select camera region of interest</button>
-			<button class="button button-select-camera-ignored-areas" onclick="selectCameraIgnoredAreas(event, ${i})">Select camera ignored areas</button>
-			<button class="button is-danger" onclick="deleteCamera(event, ${i})">Delete camera</button>
+			<button class="button button-select-camera-roi" 
+					onclick="selectCameraROI(event, ${i})"
+					data-translation="Select camera region of interest">Select camera region of interest</button>
+
+			<button class="button button-select-camera-ignored-areas" 
+					onclick="selectCameraIgnoredAreas(event, ${i})"
+					data-translation="Select camera ignored areas">Select camera ignored areas</button>
+
+			<button class="button is-danger" 
+					onclick="deleteCamera(event, ${i})"
+					data-translation="Delete camera">Delete camera</button>
 		</div>
 		</div>
 	</footer>
@@ -78,10 +86,12 @@ const getGroupTemplate = ($name, $id) => `
   <legend>${$name}</legend>
  </fieldset>`;
 
+var CURRENT_LANG = localStorage.getItem("lang") || "es";
 var FILE_PATH = ""; // file that the user requested at the start
 var ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
 var RECOGNIZE_RUNNING = false;
 var IS_NOTIFICATION_PAGE = false; // showing notitifcation page
+var CONFIGURATION_HEADERS = {};
 var ws;
 var lastConfigurationActive = "program"; // id of the element
 var cameras = []; // actual cameras as an dictionary
@@ -143,6 +153,32 @@ var currentNumberNotificationsWindowTitle = 0;
 
 var PendingElementsToToggleState = []; // array of {state: string, elements: [{id: string, on_checked: string, on_unchecked: string}]}
 
+function _($key_string) {
+	var lw = $key_string.toLowerCase();
+	if (lw in configurationsElements.translations[CURRENT_LANG])
+		return configurationsElements.translations[CURRENT_LANG][lw];
+	else
+		return $key_string;
+}
+
+function changeLanguage($clicked_el) {
+	$lang_code = $clicked_el.dataset.lang;
+	localStorage.setItem("lang", $lang_code);
+	if (confirm(_("Need to restart the page in order to change the language, restart now?"))) {
+		location.reload();
+	} else {
+		var drop_cont = document.getElementById('dropdown-language').querySelector('.dropdown-content');
+		[...drop_cont.children].forEach(el => el.classList.remove('is-active'));
+		$clicked_el.classList.add('is-active');
+	}
+}
+
+function translateDOMElements() {
+	document.querySelectorAll('[data-translation]').forEach(el => {
+		el.innerText = _(el.innerText);
+	});
+}
+
 $(function () {
 	ws = new WebSocket('ws://' + document.location.host + '/file');
 
@@ -150,17 +186,10 @@ $(function () {
 		console.log('onopen');
 		$('#pageloader').removeClass("is-active");
 		$('#modal-file').addClass("is-active");
-
-		var dropdown = document.querySelector('#dropdown-file');
-		var dropdown_content = dropdown.querySelector('.dropdown-content');
-		dropdown.addEventListener('click', function (event) {
-			event.stopPropagation();
-			dropdown.classList.toggle('is-active');
-		});
 	};
 
 	ws.onclose = function () {
-		$('#message').text('Lost connection.');
+		$('#message').text(_('Lost connection'));
 		console.log('onclose');
 	};
 
@@ -192,42 +221,47 @@ $(function () {
 		}
 
 		if (data.hasOwnProperty("configuration_file")) {
-			console.log(data);
 			setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
 
 			//  Add accordion program and cameras
-			var headers = getHeadersFromStringConfig(data["configuration_file"]);
+			CONFIGURATION_HEADERS = getHeadersFromStringConfig(data["configuration_file"]);
 
-			cameras = headers.cameras;
+			// -- ADD PROGRAM CONFIGURATION TO THE CONFIGURATIONS
+			// create program configurations html-element	
+			var programEl = $(getProgramContainerTemplate());
+			var programContent = $(programEl).children('.program-config-content');
 
+			addGroups(configurationsElements.elements.program.groups, CONFIGURATION_HEADERS.program, programContent, configurationsElements.translations[CURRENT_LANG]);
+
+			$('#configurations').append(programEl);
+	
+			// -- ADD CAMERAS CONFIGURATIONS and tabs
+			CONFIGURATION_HEADERS["cameras"].forEach((val, i) => addCameraConfigurationElementsTab(val, i));
+
+			// Toggle elements that couldn't be disabled/enabled when needed
+			PendingElementsToToggleState.forEach(toggle => {
+				toggleStateElements(toggle.state, toggle.elements);
+			});
+
+			// translate new elements
+			translateDOMElements();
+		}
+
+		if (data.hasOwnProperty("recognize_state_changed")) {
+
+			// get Translations
 			getElementsTranslations().then(res => {
 				const [elements, translations] = res;
 				configurationsElements.elements = elements;
 				configurationsElements.translations = translations;
 
-				// -- ADD PROGRAM CONFIGURATION TO THE CONFIGURATIONS
-				// create program configurations html-element	
-				var programEl = $(getProgramContainerTemplate());
-				var programContent = $(programEl).children('.program-config-content');
+				// Translation
+				translateDOMElements();
 
-				addGroups(elements.program.groups, headers.program, programContent, translations.es);
-
-				$('#configurations').append(programEl);
-		
-				// -- ADD CAMERAS CONFIGURATIONS and tabs
-				headers["cameras"].forEach((val, i) => addCameraConfigurationElementsTab(val, i));
-
-				// Toggle elements that couldn't be disabled/enabled when needed
-				PendingElementsToToggleState.forEach(toggle => {
-					toggleStateElements(toggle.state, toggle.elements);
-				});
+				$('#button-toggle-recognize').removeClass('is-loading');
+				RECOGNIZE_RUNNING = data["recognize_state_changed"];
+				changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 			});
-		}
-
-		if (data.hasOwnProperty("recognize_state_changed")) {
-			$('#button-toggle-recognize').removeClass('is-loading');
-			RECOGNIZE_RUNNING = data["recognize_state_changed"];
-			changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 		}
 
 		if (data.hasOwnProperty("new_notification")) {
@@ -522,9 +556,7 @@ function addCameraConfigurationElementsTab(val, i) {
 	var camEl = $(getCameraContainerTemplate(i, val));
 	var camConten = $(camEl).children('.camera-config-content');
 
-	addGroups(configurationsElements.elements.camera.groups, val, camConten, configurationsElements.translations.es)
-	// // add each input element
-	// addTemplateElements(camConten, val, configurationsElements.elements.camera, configurationsElements.translations.es);
+	addGroups(configurationsElements.elements.camera.groups, val, camConten, configurationsElements.translations[CURRENT_LANG])
 
 	// add to configurations container
 	$('#configurations').append(camEl);
@@ -532,11 +564,11 @@ function addCameraConfigurationElementsTab(val, i) {
 
 function changeRecognizeStatusElements(running) {
 	if (running) {
-		$('#button-toggle-recognize').removeClass("is-sucess").addClass("is-danger").text("Stop recognize");
-		$('#button-state-recognize').text("Recognize is running");
+		$('#button-toggle-recognize').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognize"));
+		$('#button-state-recognize').text(_("Recognize is running"));
 	} else {
-		$('#button-toggle-recognize').removeClass("is-danger").addClass("is-sucess").text("Start recognize");
-		$('#button-state-recognize').text("Recognize is not running");
+		$('#button-toggle-recognize').removeClass("is-danger").addClass("is-sucess").text(_("Start recognize"));
+		$('#button-state-recognize').text(_("Recognize is not running"));
 	}
 }
 
@@ -609,9 +641,9 @@ function togglePage() {
 	$('#configuration-page').toggleClass("is-hidden");
 
 	if (IS_NOTIFICATION_PAGE) {
-		$('#button-current-page').text("Show configurations page");
+		$('#button-current-page').text(_("Show configurations page"));
 	} else {
-		$('#button-current-page').text("Show notifications page");
+		$('#button-current-page').text(_("Show notifications page"));
 	}
 }
 
@@ -702,7 +734,7 @@ function appendTemplateElement($jqElemRoot, $value, $element, $label, $descripti
 
 function addGroups($groups, $values, $jqElemRoot, $translations) {
 	[...$groups].forEach(group => {
-		var groupEl = $(getGroupTemplate(group.name, (group.id || "").toLowerCase() || group.name.toLowerCase()));
+		var groupEl = $(getGroupTemplate(_(group.name), (group.id || "").toLowerCase() || group.name.toLowerCase()));
 
 		if (group.groups) {
 			addGroups(group.groups, $values, groupEl, $translations);
@@ -870,6 +902,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
 	document.querySelector('#modal-igarea .modal-content').addEventListener('scroll', onResize, false);
+
+	// dropdowns
+	var dropdown_file = document.querySelector('#dropdown-file');
+	dropdown_file.addEventListener('click', function (event) {
+		event.stopPropagation();
+		dropdown_file.classList.toggle('is-active');
+	});
+
+	var dropdown_lang = document.querySelector('#dropdown-language');
+	dropdown_lang.addEventListener('click', function (event) {
+		event.stopPropagation();
+		dropdown_lang.classList.toggle('is-active');
+	});
+	
+	[...dropdown_lang.querySelector('.dropdown-content').children].forEach(el => {
+		if (el.dataset.lang != CURRENT_LANG)
+			el.classList.remove('is-active');
+		else
+			el.classList.add('is-active');
+	});
+
+	moment.locale(CURRENT_LANG);
 
 	// set ROI canvas listeners
 	cnvRoi.canvas = document.querySelector('#modal-roi canvas');
