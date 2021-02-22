@@ -218,7 +218,7 @@ namespace {
 
 						if (error.length() == 0) {
 							std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
-
+	
 							fs::create_directories(configurations.programConfig.imagesFolder);
 
 							lastMediaPath = configurations.programConfig.imagesFolder.substr(
@@ -226,11 +226,14 @@ namespace {
 												configurations.programConfig.imagesFolder.size()
 											);
 
-							recognize->Start(std::move(configurations), 
+							if (recognize->Start(std::move(configurations), 
 												configurations.programConfig.showPreview, 
-												configurations.programConfig.telegramConfig.useTelegramBot);
-							
-							con->send(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+												configurations.programConfig.telegramConfig.useTelegramBot)) {							
+								con->send(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+							} else {
+								success = false;
+								con->send(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", id, error));
+							}
 						} else {
 							success = false;
 							con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", id, error));

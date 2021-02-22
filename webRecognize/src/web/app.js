@@ -445,6 +445,12 @@ $(function () {
 	$('#button-toggle-recognize').click(function () {
 		$(this).toggleClass('is-loading');
 		sendObj("change_recognize_state", { state: !RECOGNIZE_RUNNING });
+		
+		unfinishedRequests["change_recognize_state"] = () => {				
+			setTimeout(() => {
+				$(this).removeClass("is-loading");
+			}, 200);
+		}
 	});
 
 	$('#button-just-notifications').click(function () {
@@ -844,14 +850,16 @@ function addNewCamera($ev) {
 }
 
 function deleteCamera($ev, $cameraIndex) {
-	$($ev.target).addClass("is-loading");
+	if (confirm(_("delete camera") + " " + cameras[$cameraIndex].cameraname + "?")) {
+		$($ev.target).addClass("is-loading");
 
-	lastConfigurationActive = "program";
-	cameras.splice($cameraIndex, 1);
-	document.getElementById('camera-' + $cameraIndex).remove();
-	document.getElementById('tab-camera-' + $cameraIndex).remove();
+		lastConfigurationActive = "program";
+		cameras.splice($cameraIndex, 1);
+		document.getElementById('camera-' + $cameraIndex).remove();
+		document.getElementById('tab-camera-' + $cameraIndex).remove();
 
-	document.getElementById('tab-program').click();
+		document.getElementById('tab-program').click();
+	}
 }
 
 function saveCameraROI($ev, save) {

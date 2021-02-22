@@ -4,7 +4,9 @@ Recognize::Recognize() {
 	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);
 }
 
-void Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
+bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
+	bool success = true;
+
 	this->close = false;
 	this->stop = false;
 	
@@ -27,7 +29,7 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 	if (this->camerasConfigs.size() == 0) {
 		/// TODO: throw custom exception
 		std::cout << "Cameras size 0. Exiting." << std::endl;
-		std::exit(-1);
+		return false;
 	}
 	
 	if (usesObjectDetection) {
@@ -91,6 +93,8 @@ void Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 		// Start a thread for save and upload the images captured    
 		this->threads.push_back(std::thread(&Recognize::StartNotificationsSender, this));
 	}
+
+	return success;
 }
 
 void Recognize::StartCamerasThreads() {
