@@ -397,6 +397,7 @@
 		"changes detection": "Deteccion de cambios",
 		"select camera region of interest": "Seleccionar la region de interes de la camara",
 		"select camera ignored areas": "Seleccionar las areas a ignorar de la camara",
-		"delete camera": "Eliminar camara"
+		"delete camera": "Eliminar camara",
+		"cannot create a copy of a non existing file": "No se puede crear una copia de un archivo inexistente"
 	}
 }

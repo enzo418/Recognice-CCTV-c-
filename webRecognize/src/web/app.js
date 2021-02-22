@@ -226,6 +226,8 @@ $(function () {
 			//  Add accordion program and cameras
 			CONFIGURATION_HEADERS = getHeadersFromStringConfig(data["configuration_file"]);
 
+			cameras = CONFIGURATION_HEADERS.cameras;
+
 			// -- ADD PROGRAM CONFIGURATION TO THE CONFIGURATIONS
 			// create program configurations html-element	
 			var programEl = $(getProgramContainerTemplate());
@@ -413,13 +415,15 @@ $(function () {
 		$(this).addClass("is-loading");
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText.trim();
 		FILE_PATH = selected;
-		var is_new = false;
-		if (selected == "new") {
+
+		// if new open modal to create new file
+		if (selected == _("new")) {
 			$('#modal-file-name').toggleClass('is-active');
 			$('#modal-file').toggleClass('is-active');
 			$(this).toggleClass("is-loading");	
 		} else {
-			sendObj('need_config_file', { file: selected, is_new});
+			// else request the file
+			sendObj('need_config_file', { file: selected, is_new: false});
 		}
 	});
 
@@ -438,9 +442,13 @@ $(function () {
 
 	$('#button-modal-make-copy-file').click(function () {
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
-		FILE_PATH = selected;
-		$('#modal-file-copy').toggleClass('is-active');
-		$('#modal-file').toggleClass('is-active');
+		if (selected !== _("new")) {
+			FILE_PATH = selected;
+			$('#modal-file-copy').toggleClass('is-active');
+			$('#modal-file').toggleClass('is-active');
+		} else {
+			createAlert("error", _("Cannot create a copy of a non existing file"), 3000);
+		}
 	});
 
 	$('#button-cancel-copy-file').click(function () {
@@ -764,9 +772,12 @@ function selectCameraROI($ev, $cameraIndex) {
 
 	frameRequestOrigin = "roi";
 
-	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
+	var cam = document.querySelector(`#camera-${$cameraIndex}`);
 
-	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url: cameras[$cameraIndex].url });
+	var rotation = parseInt(cam.querySelector(`input[name="rotation"]`).value);
+	var url = cam.querySelector(`input[name="url"]`).value || cameras[$cameraIndex].url;
+
+	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url });
 
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function () {
@@ -780,9 +791,13 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 
 	frameRequestOrigin = "ig-areas";
 
-	var rotation = parseInt(document.querySelector(`#camera-${$cameraIndex} input[name="rotation"]`).value);
+	var cam = document.querySelector(`#camera-${$cameraIndex}`);
 
-	var roi = document.querySelector('#camera-' + $cameraIndex).querySelector('input[name="roi"]').value;
+	var rotation = parseInt(cam.querySelector(`input[name="rotation"]`).value);
+
+	var roi = cam.querySelector('input[name="roi"]').value;
+
+	var url = cam.querySelector(`input[name="url"]`).value || cameras[$cameraIndex].url;
 
 	var parsedRoi = stringToRoi(roi);
 	if (parsedRoi) {
@@ -790,7 +805,7 @@ function selectCameraIgnoredAreas($ev, $cameraIndex) {
 		$(cnvAreas.canvas).attr("height", parsedRoi[3]);
 	}
 
-	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url: cameras[$cameraIndex].url, roi });
+	sendObj('get_camera_frame', { index: $cameraIndex, rotation, url, roi });
 
 	unfinishedRequests["get_camera_frame"] = function () {
 		setTimeout(function () {
