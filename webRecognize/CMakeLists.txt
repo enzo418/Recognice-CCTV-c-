@@ -9,6 +9,15 @@ if(APPLE)
     message(FATAL_ERROR "${PROJECT_NAME} does not support Apple platforms")
 endif()
 
+option(WITH_CUDA "Use cuda DNN" ON)
+
+if (WITH_CUDA)
+	MESSAGE(STATUS "WITH_CUDA")
+	add_definitions(-DWITH_CUDA)
+else()
+	MESSAGE(STATUS "NO CUDA")
+endif()
+
 # Opencv package
 find_package(OpenCV REQUIRED)
 

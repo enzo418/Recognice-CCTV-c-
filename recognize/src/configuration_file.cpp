@@ -36,7 +36,7 @@ namespace ConfigurationFile {
 	}
 
 	template<typename T>
-	T ReadNextConfiguration(std::istream& file, T& config) {
+	T ReadNextConfiguration(std::istream& file, T& config, std::string& error) {
 		std::string line;
 		size_t lineNumber = 0;
 
@@ -56,10 +56,11 @@ namespace ConfigurationFile {
 
 				if (id.size() > 0 && val.size() > 0) {
 					if (!ConfigurationFile::SaveIdVal(config, id, val)) {
-						std::cout 	<< "Invalid field of value in line: " << lineNumber 
-									<< ". Field: \"" << id << "\" value: \"" << val << "\"" << std::endl;
-						std::getchar();
-						exit(-1);
+						std::ostringstream ss;
+						ss 	<< "Invalid field of value in line: " << lineNumber 
+							<< ". Field: '" << id << "' value: '" << val << "'";
+						error = ss.str();						
+						break;
 					}
 				}
 			}
@@ -69,32 +70,32 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	Configurations ReadConfigurations(std::string filePath) {
+	Configurations ReadConfigurations(std::string filePath, std::string& error) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileRead(file, filePath);
 
-		Configurations cfgs = ReadConfigurationBuffer(file);
+		Configurations cfgs = ReadConfigurationBuffer(file, error);
 
 		file.close();
 		return cfgs;
 	}
 
 	// template <typename S>
-	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer) {		
+	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer, std::string& error) {		
 		std::string line;
 		Configurations cfgs;
-		while (std::getline(cfgBuffer, line)) {
+		while (std::getline(cfgBuffer, line) && error.length() == 0) {
 			if (line != "") {
 				if (line[0] == '[') {
 					line = line.substr(1, line.size() - 2);
 					Utils::toLowerCase(line);
 
 					if (line == "program") {
-						ConfigurationFile::ReadNextConfiguration(cfgBuffer, cfgs.programConfig);
+						ConfigurationFile::ReadNextConfiguration(cfgBuffer, cfgs.programConfig, error);
 					} else if (line == "camera") {
 						CameraConfiguration config;
-						ConfigurationFile::ReadNextConfiguration(cfgBuffer, config);
+						ConfigurationFile::ReadNextConfiguration(cfgBuffer, config, error);
 
 						if (config.noiseThreshold == 0) {
 							std::cout << "[Warning] camera option \"noiseThreshold\" is 0, this can cause problems." << std::endl;
@@ -106,7 +107,9 @@ namespace ConfigurationFile {
 			}
 		}
 		
-		ConfigurationFile::PreprocessConfigurations(cfgs);
+		if (error.length() == 0)
+			ConfigurationFile::PreprocessConfigurations(cfgs);
+
 		return cfgs;
 	}
 
@@ -130,8 +133,8 @@ namespace ConfigurationFile {
 	std::string GetConfigurationFileHeaderString() {
 		std::ostringstream ss;
 		
-		ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the sintaxis."
-			<< "\n; The variables are defined with the following sintaxis: <id>=<value>"
+		ss << "; This file contains the configurations for each camera and the program itself. You can change it freely, following the syntax."
+			<< "\n; The variables are defined with the following syntax: <id>=<value>"
 			<< "\n; You can use lowercase, uppercase, mixed, it doesn't mind."
 			<< "\n; Some variables need boolean values, 1 is true and 0 is false."
 			<< "\n; The program configuration is  declared with [PROGRAM]."
@@ -143,7 +146,7 @@ namespace ConfigurationFile {
 	std::string GetDocumentationString() {
 		std::ostringstream ss;
 
-	ss 		<< "\n; Variables will be explained with a comment above it and the sintaxis or type expected after ="
+	ss 		<< "\n; Variables will be explained with a comment above it and the syntax or type expected after ="
 			<< "\n; type can be: \n;\t - string\n;\t - number: integer (int) or decimal\n;\t - boolean: 1 for ON or 0 for OFF"
 			
 			/* Program doc */
@@ -174,15 +177,36 @@ namespace ConfigurationFile {
 			<< "\n;sendimageofallcameras=boolean"
 			<< "\n;secondsBetweenImage=int"
 			<< "\n;secondsBetweenMessage=int"
-			<< "\n;sendImageWhenDetectChange=boolean"
-			<< "\n;sendTextWhenDetectChange=boolean"
+			<< "\n;telegrambot_sendImageWhenDetectChange=boolean"
+			<< "\n;telegrambot_sendGifWhenDetectChange=boolean"
+			<< "\n;telegrambot_sendTextWhenDetectChange=boolean"
+
+			<< "\n;localnotifications_sendTextWhenDetectChange=boolean"
+			<< "\n;localnotifications_sendGifWhenDetectChange=boolean"
+			<< "\n;localnotifications_sendImageWhenDetectChange=boolean"			
 			
-			<< "\n\n; Authorized users to send actions from telegram. Sintaxis: user_1,user_2,...,user_n."
+			<< "\n\n; Authorized users to send actions from telegram. syntax: user_1,user_2,...,user_n."
 			<< "\n;authUsersToSendActions=string,string,..."
 			
 			<< "\n\n; This tells the app if send a image or a gif."
 			<< "\n;useGifInsteadOfImage=boolean"
+
+			<< "\n\n; Should the program analyze pre- and post-change images in order to verify the validity of the change?"
+			<< "\n; If active, the program will verify if each change is in an ignored area."
+			<< "\n; If not active, the program will just verify if the detected change is not in an ignored area."
+			<< "\n;analizeBeforeAfterChangeFrames=boolean"
+
+			<< "\n\n; Should the program save the GIF into a .avi (video) file?"
+			<< "\n;saveChangeInVideo=boolean"
 			
+			<< "\n\n; Should the program draw the change found?"
+			<< "\n;drawChangeFoundBetweenFrames=boolean"
+
+			<< "\n\n; If so, then how much frames before and after should be considered."
+			<< "\n; The syntax is: <nframesBefore>..<nframesAfter>."
+			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
+			<< "\n;framesToAnalyzeChangeValidity=integer..integer"
+
 			<< "\n\n; Selects the Quality of the gif. Values go from 0 to 100. 50 is means that the gif will be resized at half the resolution."
 			<< "\n;gifResizePercentage=int"
 			
@@ -191,7 +215,7 @@ namespace ConfigurationFile {
 			<< "\n; 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG."
 			<< "\n;detectionMethod=int"
 			
-			<< "\n\n; How much frames are going to be on the GIF. The sintaxis is: <nframesBefore>..<nframesAfter>."
+			<< "\n\n; How much frames are going to be on the GIF. The syntax is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n; Have in mind that the GIF will send <msBetweenFrame>*<nframesAfter> ms after the change (+ conversion and upload time)."
 			<< "\n;gifFrames=integer..integer"
@@ -203,7 +227,7 @@ namespace ConfigurationFile {
 			<< "\n\n;[CAMERA]"
 			<< "\n;cameraName=string"
 			<< "\n;url=string"
-			<< "\n\n; ROI (Region of interest) crop each image that the camera sends. Sintaxis is: <p_x>,<p_y>,<widht>,<height>"
+			<< "\n\n; ROI (Region of interest) crop each image that the camera sends. syntax is: <p_x>,<p_y>,<widht>,<height>"
 			<< "\n;roi=integer,integer,integer,integer"
 			
 			<< "\n\n; "
@@ -215,7 +239,7 @@ namespace ConfigurationFile {
 			<< "\n\n; Rotation (degrees)"
 			<< "\n;rotation=integer"
 			
-			<< "\n\n; Selects the frame to search a person on. The sintaxis is: <nframesBefore>..<nframesAfter>."
+			<< "\n\n; Selects the frame to search a person on. The syntax is: <nframesBefore>..<nframesAfter>."
 			<< "\n; \"..\" denotes the frame where the change was detected (initial)."
 			<< "\n;framesToAnalyze=integer..integer"
 				
@@ -253,7 +277,7 @@ namespace ConfigurationFile {
 			<< "\n; Recommended value: between 90 and 100."
 			<< "\n;minPercentageAreaNeededToIgnore=integer"
 		
-			<< "\n\n; List of ignored areas. Sintaxis: <p_x>,<p_y>,<widht>,<height>"
+			<< "\n\n; List of ignored areas. syntax: <p_x>,<p_y>,<widht>,<height>"
 			<< "\n; Also you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]"
 			<< "\n;ignoredAreas=integer,integer,integer,integer,...";
 			
@@ -310,6 +334,10 @@ namespace ConfigurationFile {
 
 	std::string GetConfigurationString(ProgramConfiguration& cfg) {
 		std::ostringstream ss;
+
+		std::string& messageOnTextNotification = cfg.messageOnTextNotification;
+		Utils::trim(messageOnTextNotification);
+		messageOnTextNotification = messageOnTextNotification.size() > 0 ? messageOnTextNotification : "Movement on camera ${N}";
 		
 		// Write header
 		ss  << "\n\n[PROGRAM]"
@@ -331,28 +359,40 @@ namespace ConfigurationFile {
 			if (!cfg.telegramConfig.chatId.empty())
 				ss << "\ntelegramChatId=" << cfg.telegramConfig.chatId;
 					
-		ss	<< "\nuseLocalNotifications=" << (cfg.useLocalNotifications ? "1" : "0")
-			
-			<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
+		ss	<< "\n\nuseTelegramBot=" << (cfg.telegramConfig.useTelegramBot ? "1" : "0")
 			<< "\nsendImageOfAllCameras=" << (cfg.sendImageOfAllCameras ?  "1" : "0")
 			<< "\nsecondsBetweenImage=" << cfg.secondsBetweenImage
 			<< "\nsecondsBetweenMessage=" << cfg.secondsBetweenMessage
-			<< "\nsendImageWhenDetectChange=" << (cfg.sendImageWhenDetectChange ?  "1" : "0")
-			<< "\nsendTextWhenDetectChange=" << (cfg.sendTextWhenDetectChange ?  "1" : "0")
-			<< "\nimagesFolder=" << cfg.imagesFolder;
+			<< "\ntelegrambot_sendImageWhenDetectChange=" << (cfg.telegramConfig.sendImageWhenDetectChange ?  "1" : "0")
+			<< "\ntelegrambot_sendGifWhenDetectChange=" << (cfg.telegramConfig.sendGifWhenDetectChange ?  "1" : "0")
+			<< "\ntelegrambot_sendTextWhenDetectChange=" << (cfg.telegramConfig.sendTextWhenDetectChange ?  "1" : "0")
+			<< "\nimagesFolder=" << cfg.imagesFolder
 			
+			<< "\n\nuseLocalNotifications=" << (cfg.localNotificationsConfig.useLocalNotifications ? "1" : "0")
+			<< "\nlocalnotifications_sendTextWhenDetectChange=" << (cfg.localNotificationsConfig.sendTextWhenDetectChange ?  "1" : "0")
+			<< "\nlocalnotifications_sendGifWhenDetectChange=" << (cfg.localNotificationsConfig.sendGifWhenDetectChange ?  "1" : "0")
+			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0")
+			
+			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0")
+
+			<< "\n\nsaveChangeInVideo=" << (cfg.saveChangeInVideo ? "1" : "0")
+
+			<< "\n\ndrawChangeFoundBetweenFrames=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0")
+
+			<< "\n\nmessageOnTextNotification=" << messageOnTextNotification;
+
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
 				
-			ss 	<< "\nuseGifInsteadOfImage=" << (cfg.useGifInsteadImage ?  "1" : "0")
-							
-				<< "\ngifResizePercentage=" << cfg.gifResizePercentage
+			ss 	<< "\ngifResizePercentage=" << cfg.gifResizePercentage
 								
 				<< "\ndetectionMethod=" << cfg.detectionMethod;
 			
-		
 		if (cfg.numberGifFrames.framesBefore != -1 && cfg.numberGifFrames.framesAfter != -1)
 			ss << "\ngifFrames=" << cfg.numberGifFrames.framesBefore << ".."  << cfg.numberGifFrames.framesAfter;
+
+		if (cfg.framesToAnalyzeChangeValidity.framesBefore != -1 && cfg.framesToAnalyzeChangeValidity.framesAfter != -1)
+			ss << "\nframesToAnalyzeChangeValidity=" << cfg.framesToAnalyzeChangeValidity.framesBefore << ".."  << cfg.framesToAnalyzeChangeValidity.framesAfter;
 
 		return ss.str();
 	}
@@ -427,8 +467,12 @@ namespace ConfigurationFile {
 		} else if (id == "showprocessedframes" || id == "showprocessedimages") {
 			Utils::toLowerCase(value);
 			config.showProcessedFrames = value == "0" ? false : true;
-		} else if (id == "sendimagewhendetectchange" || id == "sendimageafterdetectigchange"){
-			config.sendImageWhenDetectChange = value == "0" ? false : true;
+		} else if (id == "telegrambot_sendimagewhendetectchange" || id == "telegrambot_sendimageafterdetectigchange"){
+			config.telegramConfig.sendImageWhenDetectChange = value == "1";
+		} else if (id == "telegrambot_sendgifwhendetectchange" || id == "telegrambot_sendgifafterchange") {
+			config.telegramConfig.sendGifWhenDetectChange = value == "1";
+		} else if (id == "telegrambot_sendtextwhendetectchange" || id == "telegrambot_sendtextafterchange") {
+			config.telegramConfig.sendTextWhenDetectChange = value == "1";
 		} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 			Utils::toLowerCase(value);
 			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
@@ -443,9 +487,6 @@ namespace ConfigurationFile {
 			} catch (std::invalid_argument e) {
 				sucess = false;
 			}
-		} else if (id == "usegifinsteadofimage" || id == "usegif") {
-			Utils::toLowerCase(value);
-			config.useGifInsteadImage = value == "0" ? false : true;
 		} else if (id == "gifresizepercentage" || id == "gifresize") {
 			try {
 				ulong val = std::stoi(value);
@@ -474,9 +515,6 @@ namespace ConfigurationFile {
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
 			config.showIgnoredAreas = value == "0" ? false : true;
-		} else if (id == "sendtextwhendetectchange" || id == "sendtextafterchange") {
-			Utils::toLowerCase(value);
-			config.sendTextWhenDetectChange = value == "0" ? false : true;
 		} else if (id == "detectionmethod") {
 			try {
 				config.detectionMethod = (DetectionMethod)std::stoi(value);
@@ -485,8 +523,35 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "imagesfolder" || id == "mediafolder") {
 			config.imagesFolder = value;
-		} else if (id == "usenotifications" || id == "sendnotifications") {
-			config.useLocalNotifications = value == "1";
+		} else if (id == "uselocalnotifications") {
+			config.localNotificationsConfig.useLocalNotifications = value == "1";
+		} else if (id == "localnotifications_sendtextwhendetectchange" || id == "localnotification_sendtextwhendetectchange") {
+			config.localNotificationsConfig.sendTextWhenDetectChange = value == "1";
+		} else if (id == "localnotifications_sendimagewhendetectchange" || id == "localnotification_sendimagewhendetectchange") {
+			config.localNotificationsConfig.sendImageWhenDetectChange = value == "1";
+		} else if (id == "localnotifications_sendgifwhendetectchange" || id == "localnotification_sendgifwhendetectchange") {
+			config.localNotificationsConfig.sendGifWhenDetectChange = value == "1";
+		} else if (id == "analizebeforeafterchangeframes") {
+			config.analizeBeforeAfterChangeFrames = value == "1";
+		} else if (id == "framestoanalyzechangevalidity") {
+			std::vector<std::string> results = Utils::GetRange(value);
+			size_t sz = results.size();
+			if (sz == 3) {
+				try {
+					config.framesToAnalyzeChangeValidity.framesBefore = size_t(std::stol(results[0]));
+					config.framesToAnalyzeChangeValidity.framesAfter = size_t(std::stol(results[2]));
+				} catch (std::invalid_argument e) {
+					sucess = false;
+				}
+			}
+		} else if (id == "savechangeinvideo") {
+			config.saveChangeInVideo = value == "1";
+		} else if (id == "drawchangefoundbetweenframes") {
+			config.drawChangeFoundBetweenFrames = value == "1";
+		}  else if (id == "messageontextnotification") {
+			config.messageOnTextNotification = value;
+		} else {
+			sucess = false;
 		}
 		
 		return sucess;

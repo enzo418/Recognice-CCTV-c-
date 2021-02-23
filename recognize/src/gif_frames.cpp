@@ -5,8 +5,8 @@ GifFrames::GifFrames(ProgramConfiguration* program, CameraConfiguration* cameraC
 {	
 	this->state = State::Initial;
 
-	this->framesBefore = this->program->numberGifFrames.framesBefore;
-	this->framesAfter = this->program->numberGifFrames.framesAfter;
+	this->framesBefore = std::max(this->program->numberGifFrames.framesBefore, this->program->framesToAnalyzeChangeValidity.framesBefore);
+	this->framesAfter = std::max(this->program->numberGifFrames.framesAfter, this->program->framesToAnalyzeChangeValidity.framesAfter);
 	
 	const size_t nframes = this->framesBefore + this->framesAfter;
 
@@ -34,47 +34,53 @@ void GifFrames::addFrame(cv::Mat& frame) {
 }
 
 void GifFrames::framesToSingleVectors() {
-	const size_t ammountOfFrames = this->framesBefore + this->framesAfter;
-	size_t i = 0;
+	size_t currFrame = 0;
 
 	while (!this->before.empty()) {
 		this->frames.push_back(std::move(this->before.front()));
+		
+		if (currFrame < this->program->framesToAnalyzeChangeValidity.framesBefore) {
+			FrameDescriptor fd;
+			fd.frame = this->frames.back().clone();
+			if (camera->rotation != 0)
+				ImageManipulation::RotateImage(fd.frame, camera->rotation);
 
-		FrameDescriptor fd;
-		fd.frame = this->frames.back().clone();
-		if (camera->rotation != 0)
-			ImageManipulation::RotateImage(fd.frame, camera->rotation);
+			fd.frame = fd.frame(camera->roi);
 
-		fd.frame = fd.frame(camera->roi);
+			cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
 
-		cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
-
-		this->framesTransformed.push_back(std::move(fd));
+			this->framesTransformed.push_back(std::move(fd));
+		}
 
 		this->before.pop();
+		currFrame++;
 	}
 	
+	currFrame = 0;
 	while (!this->after.empty()) {
 		this->frames.push_back(std::move(this->after.front()));
 
-		FrameDescriptor fd;
-		fd.frame = this->frames.back().clone();
+		if (currFrame < this->program->framesToAnalyzeChangeValidity.framesAfter) {
+			FrameDescriptor fd;
+			fd.frame = this->frames.back().clone();
 
-		if (camera->rotation != 0)
-			ImageManipulation::RotateImage(fd.frame, camera->rotation);
+			if (camera->rotation != 0)
+				ImageManipulation::RotateImage(fd.frame, camera->rotation);
 
-		fd.frame = fd.frame(camera->roi);
+			fd.frame = fd.frame(camera->roi);
 
-		cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
+			cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
 
-		this->framesTransformed.push_back(std::move(fd));
+			this->framesTransformed.push_back(std::move(fd));
+		}
 
 		this->after.pop();
+		currFrame++;
 	}
 }
 
 /// TODO: RETURN REF OR PNT
-std::vector<cv::Mat> GifFrames::getFrames(bool applyTransformations) {
+std::vector<cv::Mat> GifFrames::getGifFrames(bool applyTransformations) {
 	return frames;
 }
 
@@ -91,7 +97,7 @@ void GifFrames::detectedChange() {
 bool GifFrames::isValid() {
 	this->state = State::Wait;
 	
-	const size_t ammountOfFrames = this->framesBefore + this->framesAfter;	
+	const size_t ammountOfFrames = this->program->framesToAnalyzeChangeValidity.framesBefore + this->program->framesToAnalyzeChangeValidity.framesAfter;	
 	const double minPercentageAreaIgnore = camera->minPercentageAreaNeededToIgnore / 100;
 
 	cv::Mat* frameCero;
@@ -112,7 +118,7 @@ bool GifFrames::isValid() {
 	//// Process frames
 
 	bool p1Saved = false;
-	for (size_t i = 1; i < frames.size(); i++) {
+	for (size_t i = 1; i < ammountOfFrames; i++) {
 		cv::absdiff(framesTransformed[i-1].frame, framesTransformed[i].frame, diff);
 		
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
@@ -146,15 +152,20 @@ bool GifFrames::isValid() {
 					
 					inters.x += camera->roi.x;
 					inters.y += camera->roi.y;
-					cv::rectangle(frames[i], inters, cv::Scalar(255, 0, 0), 1);
+					if (program->drawChangeFoundBetweenFrames)
+						cv::rectangle(frames[i], inters, cv::Scalar(255, 0, 0), 1);
 				}
 			}
 			
-			cv::Rect bnd = finding.rect.boundingRect();
-			bnd.x += camera->roi.x;
-			bnd.y += camera->roi.y;
-			cv::rectangle(frames[i], bnd, cv::Scalar(255,255,170), 1);
-
+			// draw change (bounding rectangle)
+			if (program->drawChangeFoundBetweenFrames) {
+				cv::Rect bnd = finding.rect.boundingRect();
+				bnd.x += camera->roi.x;
+				bnd.y += camera->roi.y;
+				cv::rectangle(frames[i], bnd, cv::Scalar(255,255,170), 1);
+			}
+			
+			// draw change (rotated/original)
 			// for (int j = 0; j < 4; j++) {			
 			// 	cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
 			// }
@@ -214,4 +225,9 @@ bool GifFrames::isValid() {
 
 std::string GifFrames::getText() {
 	return this->debugMessage;
+}
+
+
+size_t GifFrames::indexMiddleFrame() {
+	return this->framesAfter == 0 ? this->framesBefore : this->framesBefore + 1;
 }

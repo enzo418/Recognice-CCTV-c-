@@ -60,7 +60,7 @@ class GifFrames {
 
 		std::string debugMessage;
 
-		// origianl frames
+		// original frames
 		std::vector<cv::Mat> frames;
 
 		// frames used to get the diff between the findings
@@ -73,7 +73,7 @@ class GifFrames {
 
 		void addFrame(cv::Mat& frame);
 
-		std::vector<cv::Mat> getFrames(bool applyTransformations = false);
+		std::vector<cv::Mat> getGifFrames(bool applyTransformations = false);
 
 		State getState();
 
@@ -82,4 +82,6 @@ class GifFrames {
 		void detectedChange();
 
 		bool isValid();
+
+		size_t indexMiddleFrame();
 };

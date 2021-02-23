@@ -1,8 +1,11 @@
 #include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
-	if (programConfig->useGifInsteadImage) {
+	if (this->_programConfig->analizeBeforeAfterChangeFrames 
+		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
+		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
+		this->OpenVideoWriter();
 	}
 
 	this->Connect();
@@ -19,12 +22,43 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 
 	// allocate a empty lastFrame to avoid checking if is empty every time
 	this->lastFrame = cv::Mat(this->config->roi.size(), CV_8UC1);
+
+	this->msBetweenFrames = this->_programConfig->msBetweenFrame;
 }
 
 Camera::~Camera() {}
 
 void Camera::Connect() {
 	this->capturer.open(this->config->url);
+}
+
+void Camera::OpenVideoWriter() {
+    if (this->_programConfig->saveChangeInVideo) {
+		// initialize recorder
+		int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
+		double fps = 8;  // framerate of the created video stream
+		std::string filename =  "./" + this->_programConfig->imagesFolder + "/" + std::to_string(config->order) + "_" + Utils::GetTimeFormated() + ".avi"; // name of the output video file
+		outVideo.open(filename, codec, fps, RESIZERESOLUTION, true);
+
+
+		std::cout << "Created video output. FPS=" << fps<< std::endl;
+
+		// check if we succeeded
+		if (!outVideo.isOpened()) {
+			std::cerr 	<< "Could not open the output video file for write"
+						<< "\n\tFileName: " << filename
+						<< std::endl;
+		}
+	}
+}
+
+void Camera::AppendFrameToVideo(cv::Mat& frame) {
+	this->outVideo << frame;
+}
+
+void Camera::ReleaseChangeVideo() {
+	this->outVideo.release();
+	this->OpenVideoWriter();
 }
 
 //std::thread Camera::StartDetection() {
@@ -34,7 +68,14 @@ void Camera::Connect() {
 // Cuts the image, applies the desired rotation and the converts the image to white and black.
 void Camera::ApplyBasicsTransformations() {
 	// if use gif is true, it's already resized
-	if (!this->_programConfig->useGifInsteadImage)
+	if ((	this->_programConfig->telegramConfig.useTelegramBot 
+			|| this->_programConfig->localNotificationsConfig.useLocalNotifications
+		)	
+		&& !(this->_programConfig->analizeBeforeAfterChangeFrames 
+			|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
+			|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange
+			)
+		)
 		cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 	
 	this->frameToShow = this->frame.clone();
@@ -73,6 +114,12 @@ void Camera::CalculateNonZeroPixels() {
 		cv::Mat d2;
 		// place diff image on top the frame img
 		cv::addWeighted(frame, 1, diff, 8, 12, d2);
+
+		if (this->_programConfig->showIgnoredAreas) { 
+			// Draw ignored areas
+			for (auto&& i : this->config->ignoredAreas)
+				cv::rectangle(d2, i, cv::Scalar(255,0,255));
+		}
 		
 		this->frames->try_enqueue(std::move(d2));
 	}
@@ -109,27 +156,40 @@ void Camera::UpdateThreshold() {
 void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) {
 	// Play a sound
 	// this->pendingNotifications.push_back(Notification::Notification());
+
+	const bool sendGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
+							|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
 	
-	if (this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage) {
+	if (sendGif || this->_programConfig->analizeBeforeAfterChangeFrames) {
 		this->currentGifFrames->detectedChange();
-	} else {
-		// Send message with image
-		auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
-		if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-			if(this->_programConfig->sendImageWhenDetectChange && !this->_programConfig->useGifInsteadImage){                  
-				Notification::Notification imn(this->frameToShow, "Movimiento detectado en esta camara.", false);
-				this->pendingNotifications.push_back(imn);
-			}
-			
-			this->lastImageSended = std::chrono::high_resolution_clock::now();
-		}
 	}
-	
-	// Send text message
-	auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
-	if (intervalFrames >= this->_programConfig->secondsBetweenMessage && !(this->_programConfig->sendImageWhenDetectChange && this->_programConfig->useGifInsteadImage)) {
-		if (this->_programConfig->sendTextWhenDetectChange){
-			Notification::Notification imn("Movimiento detectado en la camara " + this->config->cameraName);
+
+	if (!this->_programConfig->analizeBeforeAfterChangeFrames) {
+		if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
+			|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
+		{
+			// Send message with image
+			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
+			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
+				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), true);
+				this->pendingNotifications.push_back(imn);
+				
+				this->lastImageSended = std::chrono::high_resolution_clock::now();
+			}
+		}
+		
+		// Send text message
+		auto intervalFrames = (now - this->lastTextSended) / std::chrono::seconds(1);
+		if (intervalFrames >= this->_programConfig->secondsBetweenMessage 
+			&& 	(
+					this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
+					|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
+				)
+			&& !(this->_programConfig->telegramConfig.sendGifWhenDetectChange
+				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
+			)
+		{
+			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName));
 			this->pendingNotifications.push_back(imn);
 			this->lastTextSended = std::chrono::high_resolution_clock::now();
 		}
@@ -148,7 +208,10 @@ void Camera::ReadFramesWithInterval() {
 	const bool showPreview = this->_programConfig->showPreview;   
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
 	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
-	const bool useGifInsteadImg = this->_programConfig->useGifInsteadImage;
+	const bool useNotifications = this->_programConfig->telegramConfig.useTelegramBot 
+								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
+	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
+						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -185,7 +248,7 @@ void Camera::ReadFramesWithInterval() {
 			// }
 
 			// Once a new frame is ready, update buffer frames
-			if (useGifInsteadImg) {
+			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready
@@ -223,31 +286,33 @@ void Camera::ReadFramesWithInterval() {
 			if (this->totalNonZeroPixels > this->config->changeThreshold 
 				&& this->currentGifFrames->getState() == State::Initial) 
 			{
-				std::cout << "Change detected. Checking..."  << std::endl;
+				if (useNotifications) {
+					std::cout << "Change detected. Checking... Threshold: " << this->totalNonZeroPixels  << std::endl;
 
-				this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
+					this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
 
-				size_t overlappingFindings = 0;
-				// since gif does this (check if change inside an ignored area) for each frame... 
-				// only do it if user wants a image				
-				if (!useGifInsteadImg) {
-					this->lastFinding = FindRect(diff);
-					
-					for (auto &&i : this->config->ignoredAreas) {
-						cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
-						if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->config->minPercentageAreaNeededToIgnore) {
-							overlappingFindings += 1;
+					size_t overlappingFindings = 0;
+					// since gif does this (check if change inside an ignored area) for each frame... 
+					// only do it if user wants a image				
+					if (!this->_programConfig->analizeBeforeAfterChangeFrames && !useGif) {
+						this->lastFinding = FindRect(diff);
+						
+						for (auto &&i : this->config->ignoredAreas) {
+							cv::Rect inters = this->lastFinding.rect.boundingRect() & i;
+							if (inters.area() >= this->lastFinding.rect.boundingRect().area() * this->config->minPercentageAreaNeededToIgnore) {
+								overlappingFindings += 1;
+							}
 						}
 					}
-				}
 
-				if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
-					// is valid, send an alert
-					this->ChangeTheStateAndAlert(now);
+					if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
+						// is valid, send an alert
+						this->ChangeTheStateAndAlert(now);
+					}
+					
+					if (framesLeft < maxFramesLeft)
+						framesLeft += numberFramesToAdd;
 				}
-				
-				if (framesLeft < maxFramesLeft)
-					framesLeft += numberFramesToAdd;
 			}
 
 			if (framesLeft == 0)
@@ -257,7 +322,7 @@ void Camera::ReadFramesWithInterval() {
 			if (showPreview && !showProcessedImages) {
 				if (showIgnoredAreas) { 
 					// Draw ignored areas
-					for (auto i : this->config->ignoredAreas) {
+					for (auto&& i : this->config->ignoredAreas) {
 						i.x += this->config->roi.x;
 						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}

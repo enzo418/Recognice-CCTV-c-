@@ -55,23 +55,33 @@ int main(int argc, char* argv[]){
 		pathConfig = parser.get<std::string>("config_path");
 	}
 
+	std::string error;
 	// Get the cameras and program configurations
-	Configurations cfgs = ConfigurationFile::ReadConfigurations(pathConfig);
+	Configurations cfgs = ConfigurationFile::ReadConfigurations(pathConfig, error);
 
-	assert(cfgs.camerasConfigs.size() != 0);
+	if (error.length() == 0) {
+		assert(cfgs.camerasConfigs.size() != 0);
 
-	Recognize recognize;
+		Recognize recognize;
 
-	recognize.Start(std::ref(cfgs), false, cfgs.programConfig.telegramConfig.useTelegramBot);
+		if (recognize.Start(std::ref(cfgs), false, cfgs.programConfig.telegramConfig.useTelegramBot)) {
 
-	std::thread prev = std::thread(&Recognize::StartPreviewCameras, &recognize);
+			std::thread prev = std::thread(&Recognize::StartPreviewCameras, &recognize);
 
-	// signal(SIGINT, signal_callback_handler);
+			// signal(SIGINT, signal_callback_handler);
 
-	std::cout << "Press a key to stop the program.\n";
-	std::getchar();
+			std::cout << "Press a key to stop the program.\n";
+			std::getchar();
 
-	recognize.CloseAndJoin();
+			recognize.CloseAndJoin();
 
-	prev.join();
+			prev.join();
+		} else {
+			std::cerr << "Error. Couldn't start the recognizer, check the configuration file." << std::endl;
+			exit(-1);
+		}
+	} else {
+		std::cerr << "Error. The configuration file is not valid." << std::endl;
+		exit(-1);
+	}
 }

@@ -8,6 +8,13 @@ namespace Notification {
 			this->filename = Utils::GetTimeFormated() + ".jpg";	
 	}
 
+	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command) 
+		: 	filename(mediaPath), 
+			text(caption),
+			build_media_command(build_command) {
+		this->type = Type::GIF;
+	}
+
 	Notification::Notification(std::string text) : text(text) {
 		this->type = Type::TEXT;
 	}
@@ -21,12 +28,20 @@ namespace Notification {
 			std::string location = programConfig.imagesFolder + "/" + this->filename;
 			cv::imwrite("./" + location, this->image);
 
-			if (programConfig.telegramConfig.useTelegramBot)
+			if (programConfig.telegramConfig.useTelegramBot 
+					&& programConfig.telegramConfig.sendImageWhenDetectChange)
 				TelegramBot::SendMediaToChat(location, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);	
 
 			return location;	
+		} else if (this->type == Type::GIF) {
+			if (programConfig.telegramConfig.useTelegramBot
+					&& programConfig.telegramConfig.sendGifWhenDetectChange)
+				TelegramBot::SendMediaToChat(this->filename, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+			
+			return this->filename;
 		} else if (this->type == Type::TEXT) {
-			if (programConfig.telegramConfig.useTelegramBot) {
+			if (programConfig.telegramConfig.useTelegramBot
+					&& programConfig.telegramConfig.sendTextWhenDetectChange) {
 				TelegramBot::SendMessageToChat(this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);				
 			}
 			return this->text;
@@ -42,5 +57,9 @@ namespace Notification {
 			return this->text;
 		else
 			return "SOUND";
+	}
+
+	void Notification::buildMedia() {
+		std::system(this->build_media_command.c_str());
 	}
 }

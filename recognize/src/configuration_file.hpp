@@ -38,14 +38,14 @@ namespace ConfigurationFile {
 	std::string GetConfigurationString(CamerasConfigurations& cfg);
 
 	template<typename T>
-	T ReadNextConfiguration(std::istream& cfgBuffer, T& config);
+	T ReadNextConfiguration(std::istream& cfgBuffer, T& config, std::string& error);
 
 	/**
 	* @brief Read configurations stream
 	* @param cfgBuffer type with that uses ios
 	*/
 	// template <typename S>
-	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer);
+	Configurations ReadConfigurationBuffer(std::istream& cfgBuffer, std::string& error);
 
 	std::string ConfigurationsToString(Configurations& cfgs);
 
@@ -61,9 +61,10 @@ namespace ConfigurationFile {
 
 	/**
 	* @brief Reads a file configuration and returns it
-	* @param fileName Optinal, leave if you want to use the last file used.
+	* @param fileName Filename
+	* @param error Error, if any.
 	*/
-	Configurations ReadConfigurations(std::string filePath);
+	Configurations ReadConfigurations(std::string filePath, std::string& error);
 
 	/**
 	* @brief Writes the configuration into a file

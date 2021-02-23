@@ -12,7 +12,7 @@ struct NumberFramesBeforeAfter {
 };
 
 struct CameraConfiguration {
-	std::string cameraName = "NEW CAMERA";
+	std::string cameraName = "new_camera";
 
 	// url or path to the camera / video
 	std::string url;
@@ -33,7 +33,7 @@ struct CameraConfiguration {
 	int changeThreshold = 1000;
 
 	// The type of the camera. See definition.
-	CAMERATYPE type;
+	CAMERATYPE type = CAMERA_DISABLED;
 
 	// Time to wait from the time a person reaches the point of entry or exit until they reach the other point
 	int secondsWaitEntryExit = 1;
@@ -88,17 +88,13 @@ struct ProgramConfiguration {
 	// seconds to waait until send another message.
 	int secondsBetweenMessage = 15;
 
-	// if should send a image when the threshold change was passed.
-	bool sendImageWhenDetectChange;
-	
-	// if should send a text message when the threshold change was passed.
-	bool sendTextWhenDetectChange;
-
 	// resolution of the preview
 	cv::Size outputResolution;
 
 	// telefram bot config
 	TelegramBotConfig telegramConfig;
+
+	LocalNotificationsConfig localNotificationsConfig;
 
 	// show preview of the cameras
 	bool showPreview;
@@ -120,9 +116,7 @@ struct ProgramConfiguration {
 
 	// relative folder to save the imgs of the changes / detections
 	std::string imagesFolder = "saved_imgs";
-
-	bool useGifInsteadImage = true;
-
+	
 	ushort gifResizePercentage = 60;
 
 	NumberFramesBeforeAfter numberGifFrames;
@@ -139,6 +133,15 @@ struct ProgramConfiguration {
 	bool showPreviewOnWeb = true;
 
 	bool showPreviewOnThisComputer = true;
+	bool analizeBeforeAfterChangeFrames = true;
+
+	NumberFramesBeforeAfter framesToAnalyzeChangeValidity;
+
+	bool saveChangeInVideo = false;
+
+	bool drawChangeFoundBetweenFrames = false;
+
+	std::string messageOnTextNotification = "Movement detected on camera {N}";
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;
