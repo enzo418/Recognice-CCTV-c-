@@ -157,7 +157,7 @@ namespace {
 				for (auto &&img : res) {
 					// Serialize the input image to a stringstream
 					std::vector<uchar> buf;
-					cv::imencode(".jpg", a, buf);
+					cv::imencode(".jpg", a, buf, {cv::IMWRITE_JPEG_QUALITY, 50});
 					auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
 					std::string encoded = base64_encode(enc_msg, buf.size());
 
