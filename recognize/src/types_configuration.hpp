@@ -132,7 +132,7 @@ struct ProgramConfiguration {
 
 	bool showPreviewOnWeb = true;
 
-	bool showPreviewOnThisComputer = true;
+	bool showPreviewOnThisComputer = false;
 	
 	bool analizeBeforeAfterChangeFrames = true;
 

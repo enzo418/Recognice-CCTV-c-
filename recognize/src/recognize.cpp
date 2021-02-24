@@ -78,7 +78,7 @@ bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 	this->indexMainThreadCameras = this->threads.size();
 	this->StartCamerasThreads();
 
-	if (startPreviewThread) {
+	if (startPreviewThread || programConfig.showPreviewOnWeb) {
 		std::cout << "pushed thread of preview in " << this->threads.size() << std::endl;
 		// Start the thread to show the images captured.
 		this->threads.push_back(std::thread(&Recognize::StartPreviewCameras, this));
@@ -209,10 +209,11 @@ void Recognize::StartPreviewCameras() {
 	//  Main loop 
 	// ============
 
-	cv::namedWindow("Preview Cameras");
+	if (programConfig.showPreviewOnThisComputer)
+		cv::namedWindow("Preview Cameras");
 
 	cv::Mat dequeRes;
-	while (!stop && programConfig.showPreview) {
+	while (!stop && (programConfig.showPreview || programConfig.showPreviewOnWeb)) {
 		if (this->cameras.size() == amountCameras) {
 			// if all cameras are in sentry state
 			bool allCamerasInSentry = true;
@@ -243,7 +244,7 @@ void Recognize::StartPreviewCameras() {
 				res = ImageManipulation::StackImages(&frames[0], amountCameras, stackHSize);
 				size = 0;
   				
-				if (isFirstIteration) {
+				if (programConfig.showPreviewOnThisComputer && isFirstIteration) {
 					cv::startWindowThread();
 					isFirstIteration = false;
 				}
