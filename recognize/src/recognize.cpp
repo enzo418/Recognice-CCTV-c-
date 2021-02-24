@@ -211,6 +211,8 @@ void Recognize::StartPreviewCameras() {
 
 	if (programConfig.showPreviewOnThisComputer)
 		cv::namedWindow("Preview Cameras");
+	
+	std::cout << "[P] Show preview on web? "<< programConfig.showPreviewOnWeb << std::endl;
 
 	cv::Mat dequeRes;
 	while (!stop && (programConfig.showPreview || programConfig.showPreviewOnWeb)) {
@@ -273,7 +275,7 @@ void Recognize::StartPreviewCameras() {
 				if (programConfig.showPreviewOnWeb) {
 					// std::cout << "[R] Enque?\n";
 					this->frames->try_enqueue(std::move(res));
-					// std::cout << "[R] Enqued!\n";
+					// std::cout << "[PR] Enqued!\n";
 				}
 			}
 		}

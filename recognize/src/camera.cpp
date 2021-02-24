@@ -319,7 +319,7 @@ void Camera::ReadFramesWithInterval() {
 				this->msBetweenFrames = this->_programConfig->msBetweenFrame;
 			
 			// push a new frame to display.
-			if (showPreview && !showProcessedImages) {
+			if ((showPreview || this->_programConfig->showPreviewOnWeb) && !showProcessedImages) {
 				if (showIgnoredAreas) { 
 					// Draw ignored areas
 					for (auto&& i : this->config->ignoredAreas) {
