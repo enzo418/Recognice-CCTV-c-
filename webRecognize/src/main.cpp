@@ -358,16 +358,22 @@ namespace {
 				}
 				// std::cout << "[M] Queue clear!\n";
 
+				auto start = std::chrono::high_resolution_clock::now();
+
 				Json::Value arr;
 				for (auto &&img : res) {
 					// Serialize the input image to a stringstream
 					std::vector<uchar> buf;
-					cv::imencode(".jpg", a, buf, {cv::IMWRITE_JPEG_QUALITY, 50});
+					cv::imencode(".jpg", a, buf, {cv::IMWRITE_JPEG_QUALITY, 20});
 					auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
 					std::string encoded = base64_encode(enc_msg, buf.size());
 
 					arr.append(encoded);
 				}
+				
+				auto end = std::chrono::high_resolution_clock::now();
+
+				std::cout << "[" << Utils::GetTimeFormated() << "] Encoded " << res.size() << " images in " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";
 
 				sendEveryone(GetJsonString("new_image", arr.toStyledString()));
 				

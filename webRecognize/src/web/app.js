@@ -151,6 +151,9 @@ var currentNumberNotificationsWindowTitle = 0;
 
 var PendingElementsToToggleState = []; // array of {state: string, elements: [{id: string, on_checked: string, on_unchecked: string}]}
 
+var PENDING_FRAMES = [];
+var FRAME_UPDATER_INTERVAL = 0;
+
 function _($key_string) {
 	var lw = $key_string.toLowerCase();
 	if (lw in configurationsElements.translations[CURRENT_LANG])
@@ -254,6 +257,7 @@ $(function () {
 		}
 
 		if (data.hasOwnProperty("recognize_state_changed")) {
+			RECOGNIZE_RUNNING = data["recognize_state_changed"];
 
 			// get Translations
 			getElementsTranslations().then(res => {
@@ -265,9 +269,23 @@ $(function () {
 				translateDOMElements();
 
 				$('#button-toggle-recognize').removeClass('is-loading');
-				RECOGNIZE_RUNNING = data["recognize_state_changed"];
 				changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 			});
+
+			// if (RECOGNIZE_RUNNING) {
+			// 	const FRAME_RATE = 20;
+			// 	const MS_BETWEEN_FRAME = 1000 / FRAME_RATE;
+
+			// 	FRAME_UPDATER_INTERVAL = setInterval(() => {
+			// 		console.log("Pending frames: ", PENDING_FRAMES.length);
+			// 		if (PENDING_FRAMES.length > 0) {						
+			// 			var im = PENDING_FRAMES.shift();
+			// 			$('#frame').attr("src","data:image/png;base64," + im);
+			// 		}
+			// 	}, MS_BETWEEN_FRAME);
+			// } else {
+			// 	clearInterval(FRAME_UPDATER_INTERVAL);
+			// }
 		}
 		if (data.hasOwnProperty("new_notification")) {
 			var ob = data["new_notification"];
@@ -312,21 +330,28 @@ $(function () {
 		}
 
 		if (data.hasOwnProperty("new_image")) {
+			if (data["new_image"]) {
+				PENDING_FRAMES.concat(data["new_image"]);
+				console.log("Pushed " + data["new_image"].length + " frames.");
+			}
+
 			// console.log(data);
 			// $('#frame').attr("src","data:image/png;base64," + data["new_image"]);
+			
+			const FRAME_RATE = 2;
+			const MS_BETWEEN_FRAME = 1000 / FRAME_RATE;
 			data["new_image"].forEach(im => {
 				setTimeout(() => {
 					$('#frame').attr("src","data:image/png;base64," + im);
-				}, 30);
-				// var canvas = document.getElementById('canvas');
-				// var ctx = canvas.getContext('2d');
-				// var img = new Image();
-				
+				}, MS_BETWEEN_FRAME);
+			// 	// var canvas = document.getElementById('canvas');
+			// 	// var ctx = canvas.getContext('2d');
+			// 	// var img = new Image();
 
-				// img.src = "data:image/png;base64," + im;
-				// img.onload = function () {
-				// 	setTimeout(() => ctx.drawImage(img,0,0), 30);
-				// }
+			// 	// img.src = "data:image/png;base64," + im;
+			// 	// img.onload = function () {
+			// 	// 	setTimeout(() => ctx.drawImage(img,0,0), 30);
+			// 	// }
 			});
 		}
 		
