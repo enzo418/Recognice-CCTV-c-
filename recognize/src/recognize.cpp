@@ -244,8 +244,9 @@ void Recognize::StartPreviewCameras() {
 				res = ImageManipulation::StackImages(&frames[0], amountCameras, stackHSize);
 				size = 0;
   				
-				if (programConfig.showPreviewOnThisComputer && isFirstIteration) {
-					cv::startWindowThread();
+				if (isFirstIteration) {
+					if (programConfig.showPreviewOnThisComputer)
+						cv::startWindowThread();
 					isFirstIteration = false;
 				}
 
