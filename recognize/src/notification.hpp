@@ -14,17 +14,20 @@ namespace Notification {
 			std::string filename = "test.jpg";
 			std::string build_media_command;
 			
+			// path to the video that trigger the notification
+			std::string videoPath;
+			
 		public:
 			Type type;
 
 			// Creates a image + text notification
-			Notification(cv::Mat& image, std::string caption, bool save = false);
+			Notification(cv::Mat& image, std::string caption, const std::string& videoPath, bool save = false);
 
 			// Creates a Gif notificatoin with caption + a command to build the media
-			Notification(std::string mediaPath, std::string caption, std::string build_command);
+			Notification(std::string mediaPath, std::string caption, std::string build_command, const std::string& videoPath);
 			
 			// Creates a text notification
-			Notification(std::string text);
+			Notification(std::string text, const std::string& videoPath);
 			
 			// Creates a sound notification
 			Notification();
@@ -32,6 +35,8 @@ namespace Notification {
 			std::string send(ProgramConfiguration& programConfig);
 
 			std::string getString();
+
+			std::string getVideoPath();
 
 			void buildMedia();
 	};

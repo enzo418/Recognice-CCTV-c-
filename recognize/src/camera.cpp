@@ -5,7 +5,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
 		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
-		// this->OpenVideoWriter();
+		this->OpenVideoWriter();
 	}
 
 	this->Connect();
@@ -32,21 +32,24 @@ void Camera::Connect() {
 	this->capturer.open(this->config->url);
 }
 
-void Camera::OpenVideoWriter(const std::string& path) {
+void Camera::OpenVideoWriter(bool overwriteLastVideo) {
     if (this->_programConfig->saveChangeInVideo) {
 		// initialize recorder
 		// int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
 		int codec = cv::VideoWriter::fourcc('x', '2', '6', '4');
 		double fps = 8.0;  // framerate of the created video stream
-		std::string filename = path; // name of the output video file
-		outVideo.open(filename, codec, fps, RESIZERESOLUTION, true);
+
+		if (!overwriteLastVideo)
+			lastVideoPath = "./" + this->_programConfig->imagesFolder + "/" + std::to_string(this->config->order) + "_" + std::to_string(clock()) + ".mp4"; // name of the output video file
+
+		outVideo.open(lastVideoPath, codec, fps, RESIZERESOLUTION, true);
 
 		std::cout << "Created video output. FPS=" << fps<< std::endl;
 
 		// check if we succeeded
 		if (!outVideo.isOpened()) {
 			std::cerr 	<< "Could not open the output video file for write"
-						<< "\n\tFileName: " << filename
+						<< "\n\tFileName: " << lastVideoPath
 						<< std::endl;
 		}
 	}
@@ -56,9 +59,9 @@ void Camera::AppendFrameToVideo(cv::Mat& frame) {
 	this->outVideo << frame;
 }
 
-void Camera::ReleaseChangeVideo() {
+void Camera::ReleaseChangeVideo(bool overwriteLastVideo) {
 	this->outVideo.release();
-	// this->OpenVideoWriter();
+	this->OpenVideoWriter(overwriteLastVideo);
 }
 
 //std::thread Camera::StartDetection() {
@@ -162,16 +165,14 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 	
 	if (sendGif || this->_programConfig->analizeBeforeAfterChangeFrames) {
 		this->currentGifFrames->detectedChange();
-	}
-
-	if (!this->_programConfig->analizeBeforeAfterChangeFrames) {
+	} else {
 		if (this->_programConfig->localNotificationsConfig.sendImageWhenDetectChange
 			|| this->_programConfig->telegramConfig.sendImageWhenDetectChange) 
 		{
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), true);
+				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->lastVideoPath, true);
 				this->pendingNotifications.push_back(imn);
 				
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -189,7 +190,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
 			)
 		{
-			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName));
+			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->lastVideoPath);
 			this->pendingNotifications.push_back(imn);
 			this->lastTextSended = std::chrono::high_resolution_clock::now();
 		}
@@ -212,6 +213,10 @@ void Camera::ReadFramesWithInterval() {
 								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
 	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
 						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
+
+	const bool saveChangeVideo = this->_programConfig->saveChangeInVideo;
+
+	const int maxVideoMinutesLength = 5;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -240,7 +245,7 @@ void Camera::ReadFramesWithInterval() {
 
 		if (shouldProcessFrame) {
 			// If the frame is not valid try resetting the connection with the camera
-			// if (this->frame.rows == 0) {                
+			// if (this->frame.rows == 0) {
 			// 	capture.release();
 			// 	capture.open(this->config->url);
 			// 	assert(capture.isOpened());
@@ -308,10 +313,17 @@ void Camera::ReadFramesWithInterval() {
 					if (overlappingFindings < this->config->thresholdFindingsOnIgnoredArea) {
 						// is valid, send an alert
 						this->ChangeTheStateAndAlert(now);
+						this->videoLocked = true;
 					}
 					
 					if (framesLeft < maxFramesLeft)
 						framesLeft += numberFramesToAdd;
+				}
+			} else if (!this->videoLocked) {
+				auto minutesDiff = std::chrono::duration_cast<std::chrono::minutes>(now - this->lastVideoStartTime).count();
+				if (minutesDiff > maxVideoMinutesLength) {
+					this->ReleaseChangeVideo(true);
+					this->lastVideoStartTime = std::chrono::high_resolution_clock::now();
 				}
 			}
 
@@ -327,6 +339,9 @@ void Camera::ReadFramesWithInterval() {
 						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}
 				}
+				
+				if (saveChangeVideo)
+					outVideo.write(this->frameToShow);
 				
 				this->frames->try_enqueue(std::move(this->frameToShow));  // Will only succeed if the queue has an empty slot (never allocates)
 			}

@@ -1,7 +1,7 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>>(100);
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string>>>(100);
 }
 
 bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -305,32 +305,37 @@ void Recognize::StartNotificationsSender() {
 						// -----------------------------------------------------------
 						// Take before and after frames and combine them into a .gif
 						// -----------------------------------------------------------
+						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
+
 						const std::string identifier = std::to_string(clock());
 						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
 						const std::string imagesIdentifier = imageFolder + std::to_string(camera->config->order);
 						const std::string root = imageFolder + identifier;
-						const std::string gifPath = root + ".gif";
+						const std::string gifPath = saveChangeVideo ? camera->lastVideoPath.substr(0, camera->lastVideoPath.length() - 4) + ".gif" : root + ".gif";
+						
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
-						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
 
 						eraseGifs = true;
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
-												
+
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
 							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
-							camera->pendingNotifications.push_back(Notification::Notification(message));
+							camera->pendingNotifications.push_back(Notification::Notification(message, camera->lastVideoPath));
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true));
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, camera->lastVideoPath, true));
+						}
+
+						// Release video and unlock it
+						if (saveChangeVideo) {
+							camera->ReleaseChangeVideo(false);
+							camera->videoLocked = false;
 						}
 
 						if (sendGif) {
-							if (saveChangeVideo)
-								camera->OpenVideoWriter(root + ".mkv");
-
 							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
@@ -340,16 +345,16 @@ void Recognize::StartNotificationsSender() {
 								// this if introduces from 20% to 50% extra of cpu time
 								// doesn't really matter too much since we are talking of
 								// about 50 ~ 200 ms more in my tests with 20 frames.
-								if (saveChangeVideo)
-									camera->AppendFrameToVideo(frames[i]);
+								// if (saveChangeVideo)
+								// 	camera->AppendFrameToVideo(frames[i]);
 							}
 							
-							if (saveChangeVideo)
-								camera->ReleaseChangeVideo();
+							// if (saveChangeVideo)
+							// 	camera->ReleaseChangeVideo();
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
-							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command));
+							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, camera->lastVideoPath));
 
 							camera->lastImageSended = std::chrono::high_resolution_clock::now();
 						} 
@@ -406,9 +411,10 @@ void Recognize::StartNotificationsSender() {
 				)
 				{
 					this->notificationWithMedia->try_emplace(
-							std::pair<Notification::Type, std::string>(
+							std::tuple<Notification::Type, std::string, std::string>(
 								notf.type, 
-								data
+								data,
+								notf.getVideoPath()
 								)
 						);
 				}

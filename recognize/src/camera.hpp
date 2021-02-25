@@ -91,6 +91,8 @@ private:
 
 	cv::VideoWriter outVideo;
 
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastVideoStartTime = std::chrono::high_resolution_clock::now();
+
 	void UpdateThreshold();
 
 	// ==================
@@ -109,11 +111,11 @@ public:
 	Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog);
 	~Camera();
 
-	void ReleaseChangeVideo();
+	void ReleaseChangeVideo(bool overwriteLastVideo = false);
 
 	void AppendFrameToVideo(cv::Mat& frame);
 
-	void OpenVideoWriter(const std::string& path);
+	void OpenVideoWriter(bool overwriteLastVideo = false);
 	
 public:
 	std::chrono::time_point<std::chrono::high_resolution_clock>
@@ -139,6 +141,14 @@ public:
 	
 	// Current state of the camera sentry, detecting or detected.
 	NISTATE state;
+
+	std::string lastVideoPath;
+	
+	// bit to know if it's ok to release the video and ovewrite it,
+	// when a change is detected this variable is set to true and
+	// when the notification thread determines if the change was
+	// valid or not sets this to false
+	bool videoLocked = false;
 
 	void Connect();	
 };

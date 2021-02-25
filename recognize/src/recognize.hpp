@@ -17,6 +17,7 @@
 #include <unordered_map> // To get a unique file id from a camera url
 #include <signal.h> // to catch ctrl c signal
 #include <memory>
+#include <tuple>
 
 #include "image_manipulation.hpp"
 #include "utils.hpp"
@@ -69,7 +70,7 @@ public:
 	std::vector<std::unique_ptr<Camera>> cameras;
 
 	// keep a record of the notifications sended with media
-	std::unique_ptr<moodycamel::ReaderWriterQueue<std::pair<Notification::Type, std::string>>> notificationWithMedia;
+	std::unique_ptr<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string>>> notificationWithMedia;
 
 	Recognize(void);
 	~Recognize() = default;

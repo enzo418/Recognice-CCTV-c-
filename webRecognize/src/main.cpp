@@ -25,6 +25,7 @@
 #include <iostream>
 #include <filesystem>
 #include <map>
+#include <tuple>
 
 #include <fmt/core.h>
 #include <fmt/color.h>
@@ -345,20 +346,23 @@ namespace {
 		// sample on how to implement a tick function
 		void Tick() {
 			server->execute([this] {
-				std::pair<Notification::Type, std::string> media;
+				std::tuple<Notification::Type, std::string, std::string> media;
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
 					std::string query = "";
+					Notification::Type type; std::string content; std::string videoPath;
 
-					if (media.first == Notification::IMAGE || media.first == Notification::GIF) {
+					std::tie(type, content, videoPath) = media;
+
+					if (type == Notification::IMAGE || type == Notification::GIF) {
 						query = "image";
-						std::size_t found = media.second.find_last_of("/\\");
-						media.second = lastMediaPath + "/" + media.second.substr(found+1);
-					} else if (media.first == Notification::TEXT)
+						std::size_t found = content.find_last_of("/\\");
+						content = lastMediaPath + "/" + content.substr(found+1);
+					} else if (type == Notification::TEXT)
 						query = "text";
-					else if (media.first == Notification::SOUND)
+					else if (type == Notification::SOUND)
 						query = "sound";
 
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\"}}", query, media.second);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"video\":\"{2}\"}}", query, content, videoPath);
 					query = fmt::format("{{\"new_notification\": {}}}", body);
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number)

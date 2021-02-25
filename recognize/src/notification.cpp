@@ -1,21 +1,30 @@
 #include "notification.hpp"
 
 namespace Notification {
-	Notification::Notification(cv::Mat& img, std::string caption, bool save) : image(img), text(caption)  {
+	Notification::Notification(cv::Mat& img, std::string caption, const std::string& videoPath, bool save) 
+		: 	image(img), 
+			text(caption),
+			videoPath(videoPath)
+	{
 		this->type = Type::IMAGE;
 
 		if (save) 
 			this->filename = Utils::GetTimeFormated() + ".jpg";	
 	}
 
-	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command) 
+	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, const std::string& videoPath) 
 		: 	filename(mediaPath), 
 			text(caption),
-			build_media_command(build_command) {
+			build_media_command(build_command),
+			videoPath(videoPath)
+	{
 		this->type = Type::GIF;
 	}
 
-	Notification::Notification(std::string text) : text(text) {
+	Notification::Notification(std::string text, const std::string& videoPath) 
+		: 	text(text),
+			videoPath(videoPath)
+	{
 		this->type = Type::TEXT;
 	}
 
@@ -57,6 +66,10 @@ namespace Notification {
 			return this->text;
 		else
 			return "SOUND";
+	}
+	
+	std::string Notification::getVideoPath() {
+		return this->videoPath;
 	}
 
 	void Notification::buildMedia() {
