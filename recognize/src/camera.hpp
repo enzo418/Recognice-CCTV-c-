@@ -113,7 +113,7 @@ public:
 
 	void AppendFrameToVideo(cv::Mat& frame);
 
-	void OpenVideoWriter();
+	void OpenVideoWriter(const std::string& path);
 	
 public:
 	std::chrono::time_point<std::chrono::high_resolution_clock>

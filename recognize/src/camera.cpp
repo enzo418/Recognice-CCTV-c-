@@ -5,7 +5,7 @@ Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programC
 		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
 		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
-		this->OpenVideoWriter();
+		// this->OpenVideoWriter();
 	}
 
 	this->Connect();
@@ -32,14 +32,14 @@ void Camera::Connect() {
 	this->capturer.open(this->config->url);
 }
 
-void Camera::OpenVideoWriter() {
+void Camera::OpenVideoWriter(const std::string& path) {
     if (this->_programConfig->saveChangeInVideo) {
 		// initialize recorder
-		int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
-		double fps = 8;  // framerate of the created video stream
-		std::string filename =  "./" + this->_programConfig->imagesFolder + "/" + std::to_string(config->order) + "_" + Utils::GetTimeFormated() + ".avi"; // name of the output video file
+		// int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
+		int codec = cv::VideoWriter::fourcc('x', '2', '6', '4');
+		double fps = 8.0;  // framerate of the created video stream
+		std::string filename = path; // name of the output video file
 		outVideo.open(filename, codec, fps, RESIZERESOLUTION, true);
-
 
 		std::cout << "Created video output. FPS=" << fps<< std::endl;
 
@@ -58,7 +58,7 @@ void Camera::AppendFrameToVideo(cv::Mat& frame) {
 
 void Camera::ReleaseChangeVideo() {
 	this->outVideo.release();
-	this->OpenVideoWriter();
+	// this->OpenVideoWriter();
 }
 
 //std::thread Camera::StartDetection() {

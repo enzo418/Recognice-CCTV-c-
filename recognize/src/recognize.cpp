@@ -328,6 +328,9 @@ void Recognize::StartNotificationsSender() {
 						}
 
 						if (sendGif) {
+							if (saveChangeVideo)
+								camera->OpenVideoWriter(root + ".mkv");
+
 							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
