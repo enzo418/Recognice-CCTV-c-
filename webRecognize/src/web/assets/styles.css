@@ -393,3 +393,12 @@ legend {
 .new-file-name-container span, .file-copy-container span {
 	color: rgb(199 199 199);
 }
+
+.container-notification-video {
+	display:flex;
+	flex-direction: column;
+}
+
+.container-notification-video button {
+	margin-bottom: 1rem;
+}

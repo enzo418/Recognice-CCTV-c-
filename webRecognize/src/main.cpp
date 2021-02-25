@@ -96,6 +96,7 @@ size_t connections_number = 0;
 std::map<std::string, std::string> connection_file;
 std::vector<std::string> lastNotificationsSended;
 std::map<std::string, std::string> cachedImages; // map of single images from the cameras in cache
+Configurations current_configurations;
 
 const std::string SERVER_FILEPATH = "../src/web";
 
@@ -216,8 +217,10 @@ namespace {
 						std::cout << "Starting recognize with file: " << file << std::endl;
 						std::string error;
 						Configurations configurations = ConfigurationFile::ReadConfigurations(file, error);
-
+						
 						if (error.length() == 0) {
+							current_configurations = configurations;
+
 							std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
 	
 							fs::create_directories(configurations.programConfig.imagesFolder);
@@ -353,9 +356,16 @@ namespace {
 
 					std::tie(type, content, videoPath) = media;
 
+					std::size_t found;
+					
+					if (current_configurations.programConfig.saveChangeInVideo) {
+						found = videoPath.find_last_of("/\\");
+						videoPath = lastMediaPath + "/" + videoPath.substr(found+1);
+					}
+
 					if (type == Notification::IMAGE || type == Notification::GIF) {
 						query = "image";
-						std::size_t found = content.find_last_of("/\\");
+						found = content.find_last_of("/\\");
 						content = lastMediaPath + "/" + content.substr(found+1);
 					} else if (type == Notification::TEXT)
 						query = "text";

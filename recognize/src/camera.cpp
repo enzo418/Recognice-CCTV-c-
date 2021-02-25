@@ -36,7 +36,7 @@ void Camera::OpenVideoWriter(bool overwriteLastVideo) {
     if (this->_programConfig->saveChangeInVideo) {
 		// initialize recorder
 		// int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
-		int codec = cv::VideoWriter::fourcc('x', '2', '6', '4');
+		int codec = cv::VideoWriter::fourcc('H', '2', '6', '4');
 		double fps = 8.0;  // framerate of the created video stream
 
 		if (!overwriteLastVideo)
@@ -245,12 +245,14 @@ void Camera::ReadFramesWithInterval() {
 
 		if (shouldProcessFrame) {
 			// If the frame is not valid try resetting the connection with the camera
-			// if (this->frame.rows == 0) {
-			// 	capture.release();
-			// 	capture.open(this->config->url);
-			// 	assert(capture.isOpened());
-			// 	continue;
-			// }
+			if (this->frame.rows == 0) {
+				capture.release();
+				capture.open(this->config->url);
+				
+				// TODO: PUSH ERROR TO VECTOR OF RECOGNIZE
+				assert(capture.isOpened());
+				continue;
+			}
 
 			// Once a new frame is ready, update buffer frames
 			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif) {
@@ -320,8 +322,8 @@ void Camera::ReadFramesWithInterval() {
 						framesLeft += numberFramesToAdd;
 				}
 			} else if (!this->videoLocked) {
-				auto minutesDiff = std::chrono::duration_cast<std::chrono::minutes>(now - this->lastVideoStartTime).count();
-				if (minutesDiff > maxVideoMinutesLength) {
+				auto minutesDiff = std::chrono::duration_cast<std::chrono::minutes>(this->now - this->lastVideoStartTime).count();
+				if (minutesDiff >= maxVideoMinutesLength) {
 					this->ReleaseChangeVideo(true);
 					this->lastVideoStartTime = std::chrono::high_resolution_clock::now();
 				}
@@ -353,5 +355,6 @@ void Camera::ReadFramesWithInterval() {
 
 	std::cout << "Closed connection with " << camName << std::endl;
 
+	outVideo.release();
 	capture.release();
 }

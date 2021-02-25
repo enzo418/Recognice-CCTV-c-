@@ -355,9 +355,11 @@ void Recognize::StartNotificationsSender() {
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, camera->lastVideoPath));
-
-							camera->lastImageSended = std::chrono::high_resolution_clock::now();
 						} 
+						
+						camera->lastImageSended = std::chrono::high_resolution_clock::now();
+					} else {
+						camera->videoLocked = false;
 					}
 
 					delete gif;

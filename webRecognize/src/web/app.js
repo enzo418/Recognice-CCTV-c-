@@ -57,8 +57,8 @@ const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => 
 	</label>
 </div>`;
 
-const getNotificationTemplate = (type, text) => `
-<div class="box ${(type == "text" && "text-notification") || ""}">
+const getNotificationTemplate = (type, text, videoUrl) => `
+<div class="box ${(type == "text" && "text-notification") || ""}" data-video="${videoUrl}">
 ${(type == "image" &&
 		`<figure class="image">
 		<img src="" data-src="${text}" alt="Image">
@@ -274,13 +274,15 @@ $(function () {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				createNewNotification(ob["type"], ob["content"], true);
+				createNewNotification(ob["type"], ob["content"], true, ob["video"]);
 				createAlert("ok", "New notification", 1500);
 			}
 
 			// only change if user is watching the last one
-			if (notificationPaginator.index === notificationPaginator.elements.length - 1)
+			if (notificationPaginator.index === notificationPaginator.elements.length - 1) {
 				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+				updateVideoUrl();
+			}
 
 			if (PLAY_SOUND_NOTIFICATION) {
 				var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
@@ -541,8 +543,8 @@ function deleteAlert($ev) {
 	($ev.target.parentNode).remove();
 }
 
-function createNewNotification($type, $content, $sendPush) {
-	var $not = $(getNotificationTemplate($type, $content));
+function createNewNotification($type, $content, $sendPush, $videoUrl) {
+	var $not = $(getNotificationTemplate($type, $content, $videoUrl));
 
 	$('.navigator-notification').removeClass('is-hidden');
 
@@ -686,6 +688,24 @@ function togglePage() {
 		$('#button-current-page').text(_("Show configurations page"));
 	} else {
 		$('#button-current-page').text(_("Show notifications page"));
+	}
+}
+
+function toggleVideo() {
+	updateVideoUrl();
+	$('#notification-video').toggleClass('is-hidden');
+}
+
+function updateVideoUrl() {
+	var new_url = notificationPaginator.elements[notificationPaginator.index].dataset.video;
+	if (new_url.length == 0) {
+		$('#button-toggle-video').addClass("is-hidden");
+	} else {
+		$('#button-toggle-video').removeClass("is-hidden");
+
+		var vid = $('#notification-video');
+		if (vid.attr("src") != new_url)
+			vid.attr("src", new_url)
 	}
 }
 
@@ -1199,6 +1219,7 @@ function changeCurrentElementNotification($i) {
 	notificationPaginator.index = $i;
 
 	updateNotificationsNumberPaginator();
+	updateVideoUrl();
 }
 
 function getRandomArbitrary(min, max) {
