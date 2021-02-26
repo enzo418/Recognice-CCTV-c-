@@ -62,6 +62,8 @@ void Camera::OpenVideoWriter(bool overwriteLastVideo) {
 						<< "\n\tFileName: " << videosPath[currentIndexVideoPath]
 						<< std::endl;
 		}
+
+		this->lastVideoStartTime = this->now;
 	}
 }
 
@@ -346,7 +348,6 @@ void Camera::ReadFramesWithInterval() {
 					std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
 					<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
 					this->ReleaseAndOpenChangeVideo(true);
-					this->lastVideoStartTime = this->now;
 				}
 			}
 

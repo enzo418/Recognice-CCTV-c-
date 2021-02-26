@@ -306,7 +306,6 @@ void Recognize::StartNotificationsSender() {
 							&& gif->isValid()) {
 						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
 						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
-						
 						const std::string identifier = std::to_string(clock());
 
 						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
@@ -321,16 +320,18 @@ void Recognize::StartNotificationsSender() {
 
 							camera->videosPath[camera->currentIndexVideoPath] = "";
 
+							// get file2 video length before starting the new video
+							auto file2VideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
+
 							// Release current video and and unlock overwrite
 							camera->ReleaseAndOpenChangeVideo(false);
+
 							camera->videoLocked = false;
 
-							auto currentVideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
-
-							std::cout << "\n[V] Length of the current video: " << currentVideoLength << "\n";
+							std::cout << "\n[V] Length of the current video: " << file2VideoLength << "\n";
 
 							// if the older video exist
-							if (file1.has_filename() && currentVideoLength >= 2) {
+							if (file1.has_filename() && file2VideoLength >= 2) {
 								std::cout << "\n[V] Video has 2 files.\n";
 
 								// command to concat the files from list.txt
@@ -355,7 +356,7 @@ void Recognize::StartNotificationsSender() {
 											<< "\n[V] Last video path: " << camera->lastSendedVideoPath << std::endl
 											<< "\n[V] File2: " << file2.string() << std::endl
 											<< std::endl;
-								if (currentVideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
+								if (file2VideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
 									videoPath = camera->lastSendedVideoPath;
 								} else {
 									videoPath = file2.string();
