@@ -346,33 +346,25 @@ namespace {
 			}
 		}
 
-		// sample on how to implement a tick function
 		void Tick() {
 			server->execute([this] {
-				std::tuple<Notification::Type, std::string, std::string> media;
+				std::tuple<Notification::Type, std::string, std::string, ulong> media;
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
 					std::string query = "";
-					Notification::Type type; std::string content; std::string videoPath;
+					Notification::Type type; std::string content; std::string videoPath; ulong group_id;
 
-					std::tie(type, content, videoPath) = media;
+					std::tie(type, content, videoPath, group_id) = media;
 
-					std::size_t found;
-					
-					if (current_configurations.programConfig.saveChangeInVideo) {
-						found = videoPath.find_last_of("/\\");
-						videoPath = lastMediaPath + "/" + videoPath.substr(found+1);
-					}
-
-					if (type == Notification::IMAGE || type == Notification::GIF) {
+					if (type == Notification::IMAGE || type == Notification::GIF || type == Notification::VIDEO) {
 						query = "image";
-						found = content.find_last_of("/\\");
+						std::size_t found = content.find_last_of("/\\");
 						content = lastMediaPath + "/" + content.substr(found+1);
 					} else if (type == Notification::TEXT)
 						query = "text";
 					else if (type == Notification::SOUND)
 						query = "sound";
 
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"video\":\"{2}\"}}", query, content, videoPath);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\"}}", query, content, videoPath);
 					query = fmt::format("{{\"new_notification\": {}}}", body);
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number)
