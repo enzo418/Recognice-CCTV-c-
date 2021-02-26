@@ -1,10 +1,14 @@
 #include "notification.hpp"
 
 namespace Notification {
-	Notification::Notification(cv::Mat& img, std::string caption, const std::string& videoPath, bool save) 
+	
+	// ---------------
+	//  Constructors
+	// ---------------
+	Notification::Notification(cv::Mat& img, std::string caption, bool save, ulong videoPath) 
 		: 	image(img), 
 			text(caption),
-			videoPath(videoPath)
+			group_id(group_id)
 	{
 		this->type = Type::IMAGE;
 
@@ -12,18 +16,26 @@ namespace Notification {
 			this->filename = Utils::GetTimeFormated() + ".jpg";	
 	}
 
-	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, const std::string& videoPath) 
+	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, ulong group_id) 
 		: 	filename(mediaPath), 
 			text(caption),
 			build_media_command(build_command),
-			videoPath(videoPath)
+			group_id(group_id)
 	{
 		this->type = Type::GIF;
 	}
 
-	Notification::Notification(std::string text, const std::string& videoPath) 
+	Notification::Notification(std::string mediaPath, std::string caption, ulong group_id) 
+		: 	filename(mediaPath), 
+			text(caption),
+			group_id(group_id)
+	{
+		this->type = Type::GIF;
+	}
+
+	Notification::Notification(std::string text, ulong group_id) 
 		: 	text(text),
-			videoPath(videoPath)
+			group_id(group_id)
 	{
 		this->type = Type::TEXT;
 	}
@@ -32,6 +44,32 @@ namespace Notification {
 		this->type = Type::SOUND;
 	}
 
+	// --------------------------
+	//  Named contructors idiom
+	// --------------------------
+	inline Notification Notification::Image(cv::Mat& image, std::string caption, bool save, ulong group_id) {
+		return Notification(image, caption, save, group_id);
+	}
+
+	inline Notification Notification::Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id) {
+		return Notification(mediaPath, caption, build_command, group_id);
+	}
+
+	inline Notification Notification::Video(std::string mediaPath, std::string caption, ulong group_id) {
+		return Notification(mediaPath, caption, group_id);
+	}
+
+	inline Notification Notification::Text(std::string text, ulong group_id) {
+		return Notification(text, group_id);
+	}
+
+	inline Notification Notification::Sound() {
+		return Notification();
+	}
+	
+	// ----------------
+	//  Public Methods
+	// ----------------
 	std::string Notification::send(ProgramConfiguration& programConfig) {
 		if (this->type == Type::IMAGE && this->image.rows != 0) {			
 			std::string location = programConfig.imagesFolder + "/" + this->filename;
@@ -69,7 +107,11 @@ namespace Notification {
 	}
 	
 	std::string Notification::getVideoPath() {
-		return this->videoPath;
+		return this->filename;
+	}
+
+	ulong Notification::getGroupId() {
+		return this->group_id;
 	}
 
 	void Notification::buildMedia() {

@@ -188,8 +188,24 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->videosPath[!currentIndexVideoPath], true);
-				this->pendingNotifications.push_back(imn);
+				this->pendingNotifications.push_back(
+					Notification::Notification(
+						this->frameToShow, 
+						Utils::FormatNotificationTextString(
+							this->_programConfig->messageOnTextNotification, 
+							this->config->cameraName
+							),
+						true,
+						0)
+					// Notification::Notification::Image(
+					// 	this->frameToShow, 
+					// 	Utils::FormatNotificationTextString(
+					// 		this->_programConfig->messageOnTextNotification, 
+					// 		this->config->cameraName
+					// 		),
+					// 	true,
+					// 	0)
+				);
 				
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
 			}
@@ -202,12 +218,27 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 					this->_programConfig->localNotificationsConfig.sendTextWhenDetectChange
 					|| this->_programConfig->telegramConfig.sendTextWhenDetectChange
 				)
-			&& !(this->_programConfig->telegramConfig.sendGifWhenDetectChange
-				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
+			&& /* If is using gif then don't send since, it will send text if the gif is valid*/
+				!(this->_programConfig->telegramConfig.sendGifWhenDetectChange
+				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)
 			)
 		{
-			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->videosPath[!currentIndexVideoPath]);
-			this->pendingNotifications.push_back(imn);
+			this->pendingNotifications.push_back(
+				Notification::Notification(
+					Utils::FormatNotificationTextString(
+						this->_programConfig->messageOnTextNotification, 
+						this->config->cameraName
+					),
+					0
+				)
+				// Notification::Notification::Text(
+				// 	Utils::FormatNotificationTextString(
+				// 		this->_programConfig->messageOnTextNotification, 
+				// 		this->config->cameraName
+				// 	),
+				// 	0
+				// )
+			);
 			this->lastTextSended = std::chrono::high_resolution_clock::now();
 		}
 	}

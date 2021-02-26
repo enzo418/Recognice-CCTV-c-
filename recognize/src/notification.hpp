@@ -5,7 +5,7 @@
 #include "telegram_bot.hpp"
 
 namespace Notification {
-	enum Type {SOUND = 0, TEXT, IMAGE, GIF};
+	enum Type {SOUND = 0, TEXT, IMAGE, GIF, VIDEO};
 
 	class Notification {
 		private:
@@ -14,29 +14,48 @@ namespace Notification {
 			std::string filename = "test.jpg";
 			std::string build_media_command;
 			
-			// path to the video that trigger the notification
-			std::string videoPath;
+			// if a notification is sended with others, then use this id to group them
+			ulong group_id;
 			
+		// private:
 		public:
-			Type type;
-
 			// Creates a image + text notification
-			Notification(cv::Mat& image, std::string caption, const std::string& videoPath, bool save = false);
+			Notification(cv::Mat& image, std::string caption, bool save, ulong group_id = 0);
 
 			// Creates a Gif notificatoin with caption + a command to build the media
-			Notification(std::string mediaPath, std::string caption, std::string build_command, const std::string& videoPath);
+			Notification(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
+			
+			// Creates a Video notification with caption
+			Notification(std::string mediaPath, std::string caption, ulong group_id = 0);
 			
 			// Creates a text notification
-			Notification(std::string text, const std::string& videoPath);
+			Notification(std::string text, ulong group_id = 0);
 			
 			// Creates a sound notification
 			Notification();
+
+		public:
+			// named constructors idiom
+			static Notification Image(cv::Mat& image, std::string caption, bool save, ulong group_id = 0);
+
+			static Notification Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
+
+			static Notification Video(std::string mediaPath, std::string caption, ulong group_id = 0);
+
+			static Notification Text(std::string text, ulong group_id = 0);
+
+			static Notification Sound();
+		
+		public:
+			Type type;
 
 			std::string send(ProgramConfiguration& programConfig);
 
 			std::string getString();
 
 			std::string getVideoPath();
+
+			ulong getGroupId();
 
 			void buildMedia();
 	};

@@ -1,7 +1,7 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string>>>(100);
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string, ulong>>>(100);
 }
 
 bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -304,9 +304,12 @@ void Recognize::StartNotificationsSender() {
 					if (gif->getState() == State::Ready 
 							&& intervalFrames >= this->programConfig.secondsBetweenImage
 							&& gif->isValid()) {
+						this->currentGroupID += 1;
+
 						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
 						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
-						const std::string identifier = std::to_string(clock());
+						const ulong& group_id = this->currentGroupID;
+						const std::string identifier = std::to_string(group_id);
 
 						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
 
@@ -362,6 +365,8 @@ void Recognize::StartNotificationsSender() {
 									videoPath = file2.string();
 								}
 							}
+
+							camera->pendingNotifications.push_back(Notification::Notification(videoPath, camera->config->cameraName, group_id));
 						} else {
 							// clear it so we don't show anything on the webpage
 							videoPath = "";
@@ -383,11 +388,11 @@ void Recognize::StartNotificationsSender() {
 
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
 							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
-							camera->pendingNotifications.push_back(Notification::Notification(message, videoPath));
+							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, videoPath, true));
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
 						}
 
 						if (sendGif) {
@@ -409,7 +414,7 @@ void Recognize::StartNotificationsSender() {
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
-							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, videoPath));
+							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, group_id));
 						} 
 						
 						camera->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -468,10 +473,11 @@ void Recognize::StartNotificationsSender() {
 				)
 				{
 					this->notificationWithMedia->try_emplace(
-							std::tuple<Notification::Type, std::string, std::string>(
+							std::tuple<Notification::Type, std::string, std::string, ulong>(
 								notf.type, 
 								data,
-								notf.getVideoPath()
+								notf.getVideoPath(),
+								notf.getGroupId()
 								)
 						);
 				}
