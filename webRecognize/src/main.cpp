@@ -356,7 +356,8 @@ namespace {
 					std::tie(type, content, group_id) = media;
 
 					if (type == Notification::IMAGE || type == Notification::GIF || type == Notification::VIDEO) {
-						query = "image";
+						query = type == Notification::VIDEO ? "video" : "image";
+						
 						std::size_t found = content.find_last_of("/\\");
 						content = lastMediaPath + "/" + content.substr(found+1);
 					} else if (type == Notification::TEXT)

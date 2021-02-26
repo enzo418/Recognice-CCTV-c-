@@ -57,14 +57,24 @@ const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => 
 	</label>
 </div>`;
 
-const getNotificationTemplate = (type, text, group_id) => `
-<div class="box ${(type == "text" && "text-notification") || ""}" data-group="${group_id}">
-${(type == "image" &&
+const getNotificationGroupTemplate = (group_id) => `
+<div id="${group_id}" class="box"></div>
+`
+
+const getNotificationTemplate = (type, text) => `
+<div class="box ${(type == "text" && "text-notification") || ""}">
+	${(type == "image" &&
 		`<figure class="image">
 		<img src="" data-src="${text}" alt="Image">
 	</figure>`
 	) || ""}
-${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
+	
+	${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
+	
+	${(type == "video" &&
+	`<video width="640" height="360" preload="metadata" controls data-src="${text}"></video>`
+	) || ""}
+
 <h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
 </div>`;
 
@@ -274,14 +284,13 @@ $(function () {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				createNewNotification(ob["type"], ob["content"], true, ob["video"]);
+				createNewNotification(ob["type"], ob["content"], true, ob["video"], ob["group"]);
 				createAlert("ok", "New notification", 1500);
 			}
 
 			// only change if user is watching the last one
 			if (notificationPaginator.index === notificationPaginator.elements.length - 1) {
 				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
-				updateVideoUrl();
 			}
 
 			if (PLAY_SOUND_NOTIFICATION) {
@@ -405,7 +414,7 @@ $(function () {
 			var ob = data["last_notifications"]["notifications"];
 			ob.forEach(not => {
 				if (not["type"] !== "sound")
-					createNewNotification(not["type"], not["content"], false)
+					createNewNotification(not["type"], not["content"], false, not["group"])
 			});
 
 			changeCurrentElementNotification(notificationPaginator.elements.length - 1);
@@ -543,12 +552,30 @@ function deleteAlert($ev) {
 	($ev.target.parentNode).remove();
 }
 
-function createNewNotification($type, $content, $sendPush, $videoUrl) {
-	var $not = $(getNotificationTemplate($type, $content, $videoUrl));
+function createNewNotification($type, $content, $sendPush, $groupID) {
+	var $not = $(getNotificationTemplate($type, $content));
 
 	$('.navigator-notification').removeClass('is-hidden');
+	
+	if ($groupID > 0) {
+		let found = notificationPaginator.elements.find(el => el.id && el.id == $groupID);
+		if (found) {
+			found.root.append($not);
+		} else {
+			var root = $(getNotificationGroupTemplate($groupID));
+			
+			this.notificationPaginator.elements.push(
+				{
+					"id": $groupID, 
+					"root": root
+				}
+			);
 
-	this.notificationPaginator.elements.push($not[0]);
+			root.append($not);
+		}
+	} else {
+		this.notificationPaginator.elements.push($not[0]);
+	}
 
 	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
 		Push.create(_("New notification"), {
@@ -689,24 +716,6 @@ function togglePage() {
 	} else {
 		$('#button-current-page').text(_("Show notifications page"));
 	}
-}
-
-function toggleVideo() {
-	updateVideoUrl();
-	$('#notification-video').toggleClass('is-hidden');
-}
-
-function updateVideoUrl() {
-	// var new_url = notificationPaginator.elements[notificationPaginator.index].dataset.video;
-	// if (new_url.length == 0) {
-	// 	$('#button-toggle-video').addClass("is-hidden");
-	// } else {
-	// 	$('#button-toggle-video').removeClass("is-hidden");
-
-	// 	var vid = $('#notification-video');
-	// 	if (vid.attr("src") != new_url)
-	// 		vid.attr("src", new_url)
-	// }
 }
 
 function getElementsTranslations() {
@@ -1203,23 +1212,61 @@ function updateNotificationsNumberPaginator() {
 // removes the notifications elements from the container and append the requested
 function changeCurrentElementNotification($i) {
 	var $not = $('#notifications-content');
-
+	
+	// remove all the soruces from the images of all childrends of the notification container
 	[...$not[0].children].forEach(el => {
-		el.getElementsByTagName("img")[0].dataset.src = el.getElementsByTagName("img")[0].src;
-		el.getElementsByTagName("img")[0].src = "";
+		var img = el.getElementsByTagName("img")[0];
+		if (img) {
+			img.dataset.src = img.src;
+			img.src = "";
+		}
+
+		var videos = el.getElementsByTagName("video");
+		if (videos.length > 0) {
+			[...videos].forEach(vid => {
+				vid.dataset.src = vid.src;
+				vid.src = "";
+			});
+		}
 	});
 
+	// remove the childrends from the tree
 	$not.empty();
-
+	
 	var el = notificationPaginator.elements[$i];
-	if (el.getElementsByTagName("img").length > 0)
-		el.getElementsByTagName("img")[0].src = el.getElementsByTagName("img")[0].dataset.src;
 
+	if (el.id) el = el.root[0];
+
+	const loadVideos = function () {
+		var videos = el.getElementsByTagName("video");
+		if (videos.length > 0) {
+			[...videos].forEach(vid => {
+				vid.src = vid.dataset.src;
+			});
+		}
+	};
+
+	if (el.getElementsByTagName("img").length > 0) {
+		var img = el.getElementsByTagName("img")[0];
+		if (img) {
+			// set src for the image elements
+			img.src = img.dataset.src;
+			
+			// set src for the video elements
+			img.onload = loadVideos
+		} else {
+			loadVideos();
+		}
+	}
+
+	// append notification
 	$not.append(el);
+
+	// update current index
 	notificationPaginator.index = $i;
 
+	// update before/after notifications left
 	updateNotificationsNumberPaginator();
-	updateVideoUrl();
 }
 
 function getRandomArbitrary(min, max) {

@@ -92,6 +92,8 @@ namespace Notification {
 				TelegramBot::SendMessageToChat(this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey);				
 			}
 			return this->text;
+		}  else if (this->type == Type::VIDEO) {
+			return this->filename;
 		} else {
 			return "sound";
 		}

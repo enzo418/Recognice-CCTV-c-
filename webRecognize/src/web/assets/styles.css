@@ -305,6 +305,10 @@ label {
 	border: 1px solid #00858629;
 }	
 
+.box video {
+	width: 100%;
+}
+
 .hour {
 	color: #ffffff;
     align-self: flex-end;
