@@ -57,8 +57,8 @@ const getCheckBoxItemTemplate = ($name, $checked, $label, $tooltip, $hidden) => 
 	</label>
 </div>`;
 
-const getNotificationTemplate = (type, text, videoUrl) => `
-<div class="box ${(type == "text" && "text-notification") || ""}" data-video="${videoUrl}">
+const getNotificationTemplate = (type, text, group_id) => `
+<div class="box ${(type == "text" && "text-notification") || ""}" data-group="${group_id}">
 ${(type == "image" &&
 		`<figure class="image">
 		<img src="" data-src="${text}" alt="Image">

@@ -470,6 +470,10 @@ void Recognize::StartNotificationsSender() {
 							notf.type == Notification::GIF
 							&& this->programConfig.localNotificationsConfig.sendGifWhenDetectChange
 					)
+					|| (
+						notf.type == Notification::VIDEO
+						/**&& send video as notification? */
+					)
 				)
 				{
 					this->notificationWithMedia->try_emplace(
