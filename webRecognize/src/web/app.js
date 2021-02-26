@@ -697,16 +697,16 @@ function toggleVideo() {
 }
 
 function updateVideoUrl() {
-	var new_url = notificationPaginator.elements[notificationPaginator.index].dataset.video;
-	if (new_url.length == 0) {
-		$('#button-toggle-video').addClass("is-hidden");
-	} else {
-		$('#button-toggle-video').removeClass("is-hidden");
+	// var new_url = notificationPaginator.elements[notificationPaginator.index].dataset.video;
+	// if (new_url.length == 0) {
+	// 	$('#button-toggle-video').addClass("is-hidden");
+	// } else {
+	// 	$('#button-toggle-video').removeClass("is-hidden");
 
-		var vid = $('#notification-video');
-		if (vid.attr("src") != new_url)
-			vid.attr("src", new_url)
-	}
+	// 	var vid = $('#notification-video');
+	// 	if (vid.attr("src") != new_url)
+	// 		vid.attr("src", new_url)
+	// }
 }
 
 function getElementsTranslations() {

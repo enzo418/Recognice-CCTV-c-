@@ -30,7 +30,7 @@ namespace Notification {
 			text(caption),
 			group_id(group_id)
 	{
-		this->type = Type::GIF;
+		this->type = Type::VIDEO;
 	}
 
 	Notification::Notification(std::string text, ulong group_id) 
