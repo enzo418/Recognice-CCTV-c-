@@ -286,6 +286,8 @@ void Recognize::StartNotificationsSender() {
 	const bool useNotifications = this->programConfig.telegramConfig.useTelegramBot
 									|| this->programConfig.localNotificationsConfig.useLocalNotifications;
 
+	std::filesystem::path cwd = std::filesystem::current_path().string() + "/";
+
 	while (!stop && useNotifications) {
 		for (auto &&camera : cameras) {
 
@@ -302,16 +304,70 @@ void Recognize::StartNotificationsSender() {
 					if (gif->getState() == State::Ready 
 							&& intervalFrames >= this->programConfig.secondsBetweenImage
 							&& gif->isValid()) {
-						// -----------------------------------------------------------
-						// Take before and after frames and combine them into a .gif
-						// -----------------------------------------------------------
 						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
-
-						const std::string identifier = std::to_string(clock());
 						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
+						
+						const std::string identifier = std::to_string(clock());
+
+						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
+
+						if (saveChangeVideo) {
+							// -------------------------------------------
+							//  Concat the two camera videos into a video
+							// -------------------------------------------
+
+							std::filesystem::path file1 = (cwd / std::filesystem::path(camera->videosPath[!camera->currentIndexVideoPath])).lexically_normal();
+							std::filesystem::path file2 = (cwd / std::filesystem::path(camera->videosPath[camera->currentIndexVideoPath])).lexically_normal();
+
+							camera->videosPath[camera->currentIndexVideoPath] = "";
+
+							// Release current video and and unlock overwrite
+							camera->ReleaseAndOpenChangeVideo(false);
+							camera->videoLocked = false;
+
+							// if the older video exist
+							if (file1.has_filename()) {
+								std::cout << "\n[V] Video has 2 files.\n";
+
+								// command to concat the files from list.txt
+								std::string ffmpegCommand = "ffmpeg -y -f concat -safe 0 -i list.txt -c copy " + videoPath;
+
+								// command to create the list of videos to concat
+								std::string listCommand("echo \"file '" + file1.string() + "'\nfile '" + file2.string() + "'\" > list.txt");
+
+								std::cout << "[F] LIST-COMMAND: " << listCommand << "\n"
+											<< "    FFMPEG-COMMAND: " << ffmpegCommand << std::endl << std::endl;
+
+								// create list
+								std::system(listCommand.c_str());
+
+								// concat videos
+								std::system(ffmpegCommand.c_str());
+
+								camera->lastSendedVideoPath = videoPath;
+							} else {
+								// else if there is only 1 video check if the length is > 5, if not send the last one else send the newest
+								auto currentVideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
+								std::cout << "\n[V] Video has 1 file, its length is: " << currentVideoLength << std::endl 
+											<< "\n[V] Last video path: " << camera->lastSendedVideoPath << std::endl
+											<< std::endl;
+								if (currentVideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
+									videoPath = camera->lastSendedVideoPath;
+								} else {
+									videoPath = file2.string();
+								}
+							}
+						} else {
+							// clear it so we don't show anything on the webpage
+							videoPath = "";
+						}
+
+						// -----------------------------------------------------------
+						//  Take before and after frames and combine them into a .gif
+						// -----------------------------------------------------------
 						const std::string imagesIdentifier = imageFolder + std::to_string(camera->config->order);
 						const std::string root = imageFolder + identifier;
-						const std::string gifPath = saveChangeVideo ? camera->lastVideoPath.substr(0, camera->lastVideoPath.length() - 4) + ".gif" : root + ".gif";
+						const std::string gifPath = saveChangeVideo ? videoPath.substr(0, videoPath.length() - 4) + ".gif" : root + ".gif";
 						
 						std::string location;
 						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
@@ -322,17 +378,11 @@ void Recognize::StartNotificationsSender() {
 
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
 							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
-							camera->pendingNotifications.push_back(Notification::Notification(message, camera->lastVideoPath));
+							camera->pendingNotifications.push_back(Notification::Notification(message, videoPath));
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexMiddleFrame()];
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, camera->lastVideoPath, true));
-						}
-
-						// Release video and unlock it
-						if (saveChangeVideo) {
-							camera->ReleaseChangeVideo(false);
-							camera->videoLocked = false;
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, videoPath, true));
 						}
 
 						if (sendGif) {
@@ -354,7 +404,7 @@ void Recognize::StartNotificationsSender() {
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
-							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, camera->lastVideoPath));
+							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, videoPath));
 						} 
 						
 						camera->lastImageSended = std::chrono::high_resolution_clock::now();

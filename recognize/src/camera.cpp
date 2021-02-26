@@ -38,18 +38,28 @@ void Camera::OpenVideoWriter(bool overwriteLastVideo) {
 		// int codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
 		int codec = cv::VideoWriter::fourcc('H', '2', '6', '4');
 		double fps = 8.0;  // framerate of the created video stream
+		
+		std::cout << "\n[V] Files before: " 
+					<< videosPath[currentIndexVideoPath] << ", " << videosPath[!currentIndexVideoPath]
+					<< std::endl;
 
-		if (!overwriteLastVideo)
-			lastVideoPath = "./" + this->_programConfig->imagesFolder + "/" + std::to_string(this->config->order) + "_" + std::to_string(clock()) + ".mp4"; // name of the output video file
+		currentIndexVideoPath = !currentIndexVideoPath;
+		if (videosPath[currentIndexVideoPath].length() == 0 || !overwriteLastVideo) {		
+			videosPath[currentIndexVideoPath] = this->_programConfig->imagesFolder + "/" + std::to_string(this->config->order) + "_" + std::to_string(clock()) + ".mp4"; // name of the output video file
+		}
 
-		outVideo.open(lastVideoPath, codec, fps, RESIZERESOLUTION, true);
+		std::cout << "\n[V] Files now: " 
+					<< videosPath[currentIndexVideoPath] << ", " << videosPath[!currentIndexVideoPath]
+					<< std::endl;
+		
+		outVideo.open(videosPath[currentIndexVideoPath], codec, fps, RESIZERESOLUTION, true);
 
 		std::cout << "Created video output. FPS=" << fps<< std::endl;
 
 		// check if we succeeded
 		if (!outVideo.isOpened()) {
 			std::cerr 	<< "Could not open the output video file for write"
-						<< "\n\tFileName: " << lastVideoPath
+						<< "\n\tFileName: " << videosPath[currentIndexVideoPath]
 						<< std::endl;
 		}
 	}
@@ -59,7 +69,11 @@ void Camera::AppendFrameToVideo(cv::Mat& frame) {
 	this->outVideo << frame;
 }
 
-void Camera::ReleaseChangeVideo(bool overwriteLastVideo) {
+void Camera::ReleaseChangeVideo() {
+	this->outVideo.release();
+}
+
+void Camera::ReleaseAndOpenChangeVideo(bool overwriteLastVideo) {
 	this->outVideo.release();
 	this->OpenVideoWriter(overwriteLastVideo);
 }
@@ -172,7 +186,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 			// Send message with image
 			auto intervalFrames = (now - this->lastImageSended) / std::chrono::seconds(1);
 			if (intervalFrames >= this->_programConfig->secondsBetweenImage) {
-				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->lastVideoPath, true);
+				Notification::Notification imn(this->frameToShow, Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->videosPath[!currentIndexVideoPath], true);
 				this->pendingNotifications.push_back(imn);
 				
 				this->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -190,7 +204,7 @@ void Camera::ChangeTheStateAndAlert(std::chrono::system_clock::time_point& now) 
 				|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange)/* If is using gif then don't send since, it will send text if the gif is valid*/
 			)
 		{
-			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->lastVideoPath);
+			Notification::Notification imn(Utils::FormatNotificationTextString(this->_programConfig->messageOnTextNotification, this->config->cameraName), this->videosPath[!currentIndexVideoPath]);
 			this->pendingNotifications.push_back(imn);
 			this->lastTextSended = std::chrono::high_resolution_clock::now();
 		}
@@ -216,7 +230,12 @@ void Camera::ReadFramesWithInterval() {
 
 	const bool saveChangeVideo = this->_programConfig->saveChangeInVideo;
 
-	const int maxVideoMinutesLength = 5;
+	// this is the max length of the full ouput video of the change,
+	// doesn't mean it will be exactly <maxVideoMinutesLength> minutes long.
+	const int maxVideoMinutesLength = 1;
+	
+	// Split the max length by 2 since we use 2 videos
+	const int singleVideoMaxSecondsLength = maxVideoMinutesLength * 60 / 2;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -322,10 +341,12 @@ void Camera::ReadFramesWithInterval() {
 						framesLeft += numberFramesToAdd;
 				}
 			} else if (!this->videoLocked) {
-				auto minutesDiff = std::chrono::duration_cast<std::chrono::minutes>(this->now - this->lastVideoStartTime).count();
-				if (minutesDiff >= maxVideoMinutesLength) {
-					this->ReleaseChangeVideo(true);
-					this->lastVideoStartTime = std::chrono::high_resolution_clock::now();
+				auto minutesDiff = std::chrono::duration_cast<std::chrono::seconds>(this->now - this->lastVideoStartTime).count();
+				if (minutesDiff >= singleVideoMaxSecondsLength) {
+					std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
+					<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
+					this->ReleaseAndOpenChangeVideo(true);
+					this->lastVideoStartTime = this->now;
 				}
 			}
 

@@ -18,6 +18,7 @@
 #include <signal.h> // to catch ctrl c signal
 #include <memory>
 #include <tuple>
+#include <filesystem>
 
 #include "image_manipulation.hpp"
 #include "utils.hpp"
