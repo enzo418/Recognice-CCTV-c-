@@ -284,7 +284,7 @@ $(function () {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				createNewNotification(ob["type"], ob["content"], true, ob["video"], ob["group"]);
+				createNewNotification(ob["type"], ob["content"], true, ob["group"]);
 				createAlert("ok", "New notification", 1500);
 			}
 
@@ -1248,15 +1248,14 @@ function changeCurrentElementNotification($i) {
 
 	if (el.getElementsByTagName("img").length > 0) {
 		var img = el.getElementsByTagName("img")[0];
-		if (img) {
-			// set src for the image elements
-			img.src = img.dataset.src;
-			
-			// set src for the video elements
-			img.onload = loadVideos
-		} else {
-			loadVideos();
-		}
+		
+		// set src for the image elements
+		img.src = img.dataset.src;
+		
+		// set src for the video elements
+		img.onload = loadVideos;
+	} else {
+		loadVideos();
 	}
 
 	// append notification
