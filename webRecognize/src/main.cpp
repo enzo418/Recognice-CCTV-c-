@@ -348,12 +348,12 @@ namespace {
 
 		void Tick() {
 			server->execute([this] {
-				std::tuple<Notification::Type, std::string, std::string, ulong> media;
+				std::tuple<Notification::Type, std::string, ulong> media;
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
 					std::string query = "";
-					Notification::Type type; std::string content; std::string videoPath; ulong group_id;
+					Notification::Type type; std::string content; ulong group_id;
 
-					std::tie(type, content, videoPath, group_id) = media;
+					std::tie(type, content, group_id) = media;
 
 					if (type == Notification::IMAGE || type == Notification::GIF || type == Notification::VIDEO) {
 						query = "image";
@@ -364,7 +364,7 @@ namespace {
 					else if (type == Notification::SOUND)
 						query = "sound";
 
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\"}}", query, content, videoPath);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\"}}", query, content, group_id);
 					query = fmt::format("{{\"new_notification\": {}}}", body);
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number)

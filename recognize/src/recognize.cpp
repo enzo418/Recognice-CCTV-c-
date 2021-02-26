@@ -1,7 +1,7 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string, ulong>>>(100);
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, ulong>>>(100);
 }
 
 bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -473,10 +473,9 @@ void Recognize::StartNotificationsSender() {
 				)
 				{
 					this->notificationWithMedia->try_emplace(
-							std::tuple<Notification::Type, std::string, std::string, ulong>(
+							std::tuple<Notification::Type, std::string, ulong>(
 								notf.type, 
 								data,
-								notf.getVideoPath(),
 								notf.getGroupId()
 								)
 						);

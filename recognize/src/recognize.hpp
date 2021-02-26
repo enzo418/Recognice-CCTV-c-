@@ -74,7 +74,7 @@ public:
 	std::vector<std::unique_ptr<Camera>> cameras;
 
 	// keep a record of the notifications sended with media
-	std::unique_ptr<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string, ulong>>> notificationWithMedia;
+	std::unique_ptr<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, ulong>>> notificationWithMedia;
 
 	Recognize(void);
 	~Recognize() = default;

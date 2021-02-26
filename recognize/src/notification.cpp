@@ -106,10 +106,6 @@ namespace Notification {
 			return "SOUND";
 	}
 	
-	std::string Notification::getVideoPath() {
-		return this->filename;
-	}
-
 	ulong Notification::getGroupId() {
 		return this->group_id;
 	}

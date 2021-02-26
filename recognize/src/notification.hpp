@@ -53,8 +53,6 @@ namespace Notification {
 
 			std::string getString();
 
-			std::string getVideoPath();
-
 			ulong getGroupId();
 
 			void buildMedia();
