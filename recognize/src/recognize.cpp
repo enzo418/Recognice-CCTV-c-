@@ -325,17 +325,21 @@ void Recognize::StartNotificationsSender() {
 							camera->ReleaseAndOpenChangeVideo(false);
 							camera->videoLocked = false;
 
+							auto currentVideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
+
+							std::cout << "\n[V] Length of the current video: " << currentVideoLength << "\n";
+
 							// if the older video exist
-							if (file1.has_filename()) {
+							if (file1.has_filename() && currentVideoLength >= 2) {
 								std::cout << "\n[V] Video has 2 files.\n";
 
 								// command to concat the files from list.txt
-								std::string ffmpegCommand = "ffmpeg -y -f concat -safe 0 -i list.txt -c copy " + videoPath;
+								std::string ffmpegCommand = "ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i list.txt -c copy " + videoPath;
 
 								// command to create the list of videos to concat
 								std::string listCommand("echo \"file '" + file1.string() + "'\nfile '" + file2.string() + "'\" > list.txt");
 
-								std::cout << "[F] LIST-COMMAND: " << listCommand << "\n"
+								std::cout << "[F] LIST-COMMAND: " << listCommand << "\n\n"
 											<< "    FFMPEG-COMMAND: " << ffmpegCommand << std::endl << std::endl;
 
 								// create list
@@ -347,9 +351,9 @@ void Recognize::StartNotificationsSender() {
 								camera->lastSendedVideoPath = videoPath;
 							} else {
 								// else if there is only 1 video check if the length is > 5, if not send the last one else send the newest
-								auto currentVideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
-								std::cout << "\n[V] Video has 1 file, its length is: " << currentVideoLength << std::endl 
+								std::cout << "\n[V] Video has 1 file" << std::endl 
 											<< "\n[V] Last video path: " << camera->lastSendedVideoPath << std::endl
+											<< "\n[V] File2: " << file2.string() << std::endl
 											<< std::endl;
 								if (currentVideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
 									videoPath = camera->lastSendedVideoPath;
