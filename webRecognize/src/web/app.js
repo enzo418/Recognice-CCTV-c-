@@ -72,7 +72,7 @@ const getNotificationTemplate = (type, text) => `
 	${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
 	
 	${(type == "video" &&
-	`<video width="640" height="360" preload="metadata" controls data-src="${text}"></video>`
+	`<video width="640" height="360" preload="metadata" src="" controls data-src="${text}"></video>`
 	) || ""}
 
 <h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
@@ -105,6 +105,8 @@ var lastConfigurationActive = "program"; // id of the element
 var cameras = []; // actual cameras as an dictionary
 var unfinishedRequests = {}; 	// dict of unfinished request where key is the request and key a function to
 // execute when we receive it.
+
+var isFirstNotification = true;
 
 var SEND_PUSH_NOTIFICATIONS = window.localStorage.getItem("send_push") === "true";
 var PLAY_SOUND_NOTIFICATION = window.localStorage.getItem("play_sound_notification") === "true";
@@ -288,9 +290,11 @@ $(function () {
 				createAlert("ok", "New notification", 1500);
 			}
 
+			var same_group = (notificationPaginator.elements[notificationPaginator.index].id || -1) === ob["group"];
 			// only change if user is watching the last one
 			if (notificationPaginator.index === notificationPaginator.elements.length - 1) {
-				changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+				changeCurrentElementNotification(notificationPaginator.elements.length - 1, !isFirstNotification && same_group);	
+				isFirstNotification = false;
 			}
 
 			if (PLAY_SOUND_NOTIFICATION) {
@@ -555,14 +559,18 @@ function deleteAlert($ev) {
 function createNewNotification($type, $content, $sendPush, $groupID) {
 	var $not = $(getNotificationTemplate($type, $content));
 
+	console.log("Create notification with: ", {"type": $type, "content": $content, "group": $groupID}, $not[0]);
+
 	$('.navigator-notification').removeClass('is-hidden');
 	
 	if ($groupID > 0) {
 		let found = notificationPaginator.elements.find(el => el.id && el.id == $groupID);
 		if (found) {
 			found.root.append($not);
-		} else {
+		} else {			
 			var root = $(getNotificationGroupTemplate($groupID));
+			
+			console.log("Group doesn't exist... creating a new one with id", $groupID, root);
 			
 			this.notificationPaginator.elements.push(
 				{
@@ -1210,37 +1218,44 @@ function updateNotificationsNumberPaginator() {
 }
 
 // removes the notifications elements from the container and append the requested
-function changeCurrentElementNotification($i) {
+function changeCurrentElementNotification($i, $only_update_src = false) {
 	var $not = $('#notifications-content');
 	
-	// remove all the soruces from the images of all childrends of the notification container
-	[...$not[0].children].forEach(el => {
-		var img = el.getElementsByTagName("img")[0];
-		if (img) {
-			img.dataset.src = img.src;
-			img.src = "";
-		}
+	if (!$only_update_src) {
+		// remove all the soruces from the images of all childrends of the notification container
+		[...$not[0].children].forEach(el => {
+			var img = el.getElementsByTagName("img")[0];
+			if (img) {
+				img.dataset.src = img.src;
+				img.src = "";
+			}
 
-		var videos = el.getElementsByTagName("video");
-		if (videos.length > 0) {
-			[...videos].forEach(vid => {
-				vid.dataset.src = vid.src;
-				vid.src = "";
-			});
-		}
-	});
+			var videos = el.getElementsByTagName("video");
+			if (videos.length > 0) {
+				[...videos].forEach(vid => {
+					vid.dataset.src = vid.src;
+					vid.src = "";
 
-	// remove the childrends from the tree
-	$not.empty();
+					setTimeout(() => vid.load(), 800);					
+				});
+			}
+		});
+
+		// remove the childrends from the tree
+		$not.empty();
+	}
 	
 	var el = notificationPaginator.elements[$i];
 
 	if (el.id) el = el.root[0];
 
+	console.log({root: el, only_update_src: $only_update_src});
+
 	const loadVideos = function () {
 		var videos = el.getElementsByTagName("video");
 		if (videos.length > 0) {
 			[...videos].forEach(vid => {
+				console.log("video:", {dataset: vid.dataset, video: vid, src: vid.dataset.src})
 				vid.src = vid.dataset.src;
 			});
 		}
@@ -1258,14 +1273,16 @@ function changeCurrentElementNotification($i) {
 		loadVideos();
 	}
 
-	// append notification
-	$not.append(el);
+	if (!$only_update_src) {
+		// append notification
+		$not.append(el);
 
-	// update current index
-	notificationPaginator.index = $i;
+		// update current index
+		notificationPaginator.index = $i;
 
-	// update before/after notifications left
-	updateNotificationsNumberPaginator();
+		// update before/after notifications left
+		updateNotificationsNumberPaginator();
+	}
 }
 
 function getRandomArbitrary(min, max) {

@@ -367,6 +367,11 @@ void Recognize::StartNotificationsSender() {
 							}
 
 							camera->pendingNotifications.push_back(Notification::Notification(videoPath, camera->config->cameraName, group_id));
+
+							// This works because the max length of the video is < than time between image notification 
+							// else this brokes
+							camera->sendChangeVideoContinuation = true;
+							camera->continuation_group_id = group_id;
 						} else {
 							// clear it so we don't show anything on the webpage
 							videoPath = "";

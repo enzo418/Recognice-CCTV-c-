@@ -265,10 +265,10 @@ void Camera::ReadFramesWithInterval() {
 
 	// this is the max length of the full ouput video of the change,
 	// doesn't mean it will be exactly <maxVideoMinutesLength> minutes long.
-	const int maxVideoMinutesLength = 1;
+	const int maxVideoLengthSeconds = 20;
 	
 	// Split the max length by 2 since we use 2 videos
-	const int singleVideoMaxSecondsLength = maxVideoMinutesLength * 60 / 2;
+	const double singleVideoMaxSecondsLength = maxVideoLengthSeconds / 2;
 
 	cv::VideoCapture capture(this->config->url);
 
@@ -376,9 +376,19 @@ void Camera::ReadFramesWithInterval() {
 			} else if (!this->videoLocked) {
 				auto minutesDiff = std::chrono::duration_cast<std::chrono::seconds>(this->now - this->lastVideoStartTime).count();
 				if (minutesDiff >= singleVideoMaxSecondsLength) {
-					std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
-					<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
-					this->ReleaseAndOpenChangeVideo(true);
+					if (this->sendChangeVideoContinuation /**&&  Wants continuation video? */) {
+						std::string fileName = this->videosPath[this->currentIndexVideoPath];
+						this->ReleaseAndOpenChangeVideo(false);
+						this->pendingNotifications.push_back(Notification::Notification(fileName, camName, this->continuation_group_id));
+
+						this->sendChangeVideoContinuation = false;
+						this->continuation_group_id = 0;
+					} else {
+						std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
+						<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
+
+						this->ReleaseAndOpenChangeVideo(true);
+					}
 				}
 			}
 

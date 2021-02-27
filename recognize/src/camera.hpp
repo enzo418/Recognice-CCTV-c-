@@ -144,6 +144,8 @@ public:
 
 	std::string lastSendedVideoPath;
 
+	/// TODO: Move video vars to a struct
+
 	// The program will rotate over two video files to have 1 that
 	// complies with the desired length (unless there was a recent)
 	// change and a video were sent already
@@ -157,6 +159,9 @@ public:
 	bool videoLocked = false;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> lastVideoStartTime = std::chrono::high_resolution_clock::now();
+
+	bool sendChangeVideoContinuation = false;
+	ulong continuation_group_id = 0;
 
 	void Connect();	
 };
