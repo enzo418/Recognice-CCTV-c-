@@ -72,7 +72,7 @@ const getNotificationTemplate = (type, text) => `
 	${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
 	
 	${(type == "video" &&
-	`<video width="640" height="360" preload="metadata" src="" controls data-src="${text}"></video>`
+	`<video width="640" height="360" preload="metadata" src="" controls data-videosrc="${text}"></video>`
 	) || ""}
 
 <h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
@@ -988,6 +988,20 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}, 10 * 1000);
 
+	setInterval(() => {
+		var $not = $('#notifications-content');
+	
+		var videos = $not[0].getElementsByTagName("video");
+		if (videos.length > 0) {
+			[...videos].forEach(vid => {
+				if (isNaN(vid.duration)) {
+					// console.log(vid, vid.src, "NaN")
+					vid.load(); 
+				}
+			});
+		}
+	}, 2000);
+
 	document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
 	document.querySelector('#modal-igarea .modal-content').addEventListener('scroll', onResize, false);
 
@@ -1233,10 +1247,8 @@ function changeCurrentElementNotification($i, $only_update_src = false) {
 			var videos = el.getElementsByTagName("video");
 			if (videos.length > 0) {
 				[...videos].forEach(vid => {
-					vid.dataset.src = vid.src;
+					vid.dataset.videosrc = vid.src;
 					vid.src = "";
-
-					setTimeout(() => vid.load(), 800);					
 				});
 			}
 		});
@@ -1255,8 +1267,10 @@ function changeCurrentElementNotification($i, $only_update_src = false) {
 		var videos = el.getElementsByTagName("video");
 		if (videos.length > 0) {
 			[...videos].forEach(vid => {
-				console.log("video:", {dataset: vid.dataset, video: vid, src: vid.dataset.src})
-				vid.src = vid.dataset.src;
+				if (vid.src === window.location.href) {
+					console.log("video:", {dataset: vid.dataset, video: vid, src: vid.dataset.videosrc})
+					vid.src = vid.dataset.videosrc;
+				}
 			});
 		}
 	};
