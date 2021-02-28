@@ -276,7 +276,7 @@ $(function () {
 				// Translation
 				translateDOMElements();
 
-				$('#button-toggle-recognize').removeClass('is-loading');
+				$('#button-toggle-recognizer').removeClass('is-loading');
 				RECOGNIZE_RUNNING = data["recognize_state_changed"];
 				changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 			});
@@ -457,7 +457,7 @@ $(function () {
 		}
 	});
 
-	$('#button-toggle-recognize').click(function () {
+	$('#button-toggle-recognizer').click(function () {
 		if (FILE_PATH.length === 0 && !RECOGNIZE_RUNNING) {
 			createAlert("error", _("You can not start the recognize without selecting a configuration file"), 5000);
 		} else {
@@ -643,11 +643,11 @@ function addCameraConfigurationElementsTab(val, i) {
 
 function changeRecognizeStatusElements(running) {
 	if (running) {
-		$('#button-toggle-recognize').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognizer"));
-		$('#button-state-recognize').text(_("Recognizer is running"));
+		$('#button-toggle-recognizerr').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognizer"));
+		$('#button-state-recognizer').text(_("Recognizer is running"));
 	} else {
-		$('#button-toggle-recognize').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
-		$('#button-state-recognize').text(_("Recognizer is not running"));
+		$('#button-toggle-recognizerr').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
+		$('#button-state-recognizer').text(_("Recognizer is not running"));
 	}
 }
 
