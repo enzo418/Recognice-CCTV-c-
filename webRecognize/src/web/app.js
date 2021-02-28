@@ -184,8 +184,12 @@ function changeLanguage($clicked_el) {
 }
 
 function translateDOMElements() {
-	document.querySelectorAll('[data-translation]').forEach(el => {
-		el.innerText = _(el.dataset.translation.trim());
+	document.querySelectorAll('[data-translation],[data-translatecontent]').forEach(el => {
+		if (el.dataset.translatecontent === "true") {
+			el.innerText = _(el.innerText.trim());
+		} else {
+			el.innerText = _(el.dataset.translation.trim());
+		}
 	});
 }
 
@@ -274,7 +278,7 @@ $(function () {
 				configurationsElements.translations = translations;
 
 				// Translation
-				translateDOMElements();
+				// translateDOMElements();
 
 				$('#button-toggle-recognizer').removeClass('is-loading');
 				RECOGNIZE_RUNNING = data["recognize_state_changed"];
@@ -643,10 +647,10 @@ function addCameraConfigurationElementsTab(val, i) {
 
 function changeRecognizeStatusElements(running) {
 	if (running) {
-		$('#button-toggle-recognizerr').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognizer"));
+		$('#button-toggle-recognizer').removeClass("is-sucess").addClass("is-danger").text(_("Stop recognizer"));
 		$('#button-state-recognizer').text(_("Recognizer is running"));
 	} else {
-		$('#button-toggle-recognizerr').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
+		$('#button-toggle-recognizer').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
 		$('#button-state-recognizer').text(_("Recognizer is not running"));
 	}
 }
