@@ -135,6 +135,9 @@ bool GifFrames::isValid() {
 				p1 = finding.center;
 				p1Saved = true;
 			}
+
+			if (this->firstFrameWithDescriptor == -1)
+				this->firstFrameWithDescriptor = i;
 			
 			totalArea += finding.area;
 
@@ -230,4 +233,8 @@ std::string GifFrames::getText() {
 
 size_t GifFrames::indexMiddleFrame() {
 	return this->framesAfter == 0 ? this->framesBefore : this->framesBefore + 1;
+}
+
+size_t GifFrames::indexFirstFrameWithChangeDetected(){
+	return this->firstFrameWithDescriptor == -1 ? this->indexMiddleFrame() : this->firstFrameWithDescriptor;
 }
