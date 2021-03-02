@@ -450,10 +450,10 @@ void Recognize::StartNotificationsSender() {
 				}
 			}
 			
+			size_t size = camera->pendingNotifications.size();
+			
 			// iterate types priority
-			for (auto type : notificationTypesPriority) {
-				size_t size = camera->pendingNotifications.size();
-				
+			for (auto&& type : notificationTypesPriority) {				
 				// iterate notifications vector
 				for (size_t i = 0; i < size; i++) {
 					Notification::Notification& notf = camera->pendingNotifications[i];
@@ -510,8 +510,9 @@ void Recognize::StartNotificationsSender() {
 				}
 			}
 
-			// This proc shouldn't clear all the notifcations since it's a multithread process :p
-			camera->pendingNotifications.clear();
+			camera->pendingNotifications.erase(camera->pendingNotifications.begin(), camera->pendingNotifications.begin() + size);
+			// // This proc shouldn't clear all the notifcations since it's a multithread process :p
+			// camera->pendingNotifications.clear();
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
