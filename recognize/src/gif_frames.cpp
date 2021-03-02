@@ -119,6 +119,9 @@ bool GifFrames::isValid() {
 	const cv::Point2f roiCenter = cv::Point2f(camera->roi.x + camera->roi.width / 2, camera->roi.y + camera->roi.height / 2);
 	const cv::Point2f frameCenter = cv::Point2f(0 + 640 / 2, 0 + 360 / 2);
 
+	const double maxRoiCenterDisantce = cv::norm(roiCenter- cv::Point2f(camera->roi.br().x, camera->roi.br().y));
+	const double maxFrameCenterDisantce = cv::norm(cv::Point(0,0) - cv::Point(RESIZERESOLUTION.width, RESIZERESOLUTION.height));
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -145,7 +148,7 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 
-			const double closeMag = cv::norm(roiCenter-finding.rect.center);
+			const double closeMag = Utils::map(cv::norm(roiCenter-finding.rect.center), 0, maxRoiCenterDisantce, 0, 1);
 
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
@@ -179,7 +182,6 @@ bool GifFrames::isValid() {
 				
 				// rotated
 				cv::rectangle(frames[i], rotated, cv::Scalar(255,255,170), 1);
-
 				
 				cv::putText(frames[i], std::to_string(closeMag), cv::Point(rotated.x, rotated.y - 10), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255,255,255), 1, 2);
 			}
