@@ -156,7 +156,7 @@ bool GifFrames::isValid() {
 					inters.x += camera->roi.x;
 					inters.y += camera->roi.y;
 					if (program->drawChangeFoundBetweenFrames)
-						cv::rectangle(frames[i], inters, cv::Scalar(255, 0, 0), 1);
+						cv::rectangle(frames[i], Utils::RotateRect(inters, camera->rotation * -1), cv::Scalar(255, 0, 0), 1);
 				}
 			}
 			
@@ -165,7 +165,8 @@ bool GifFrames::isValid() {
 				cv::Rect bnd = finding.rect.boundingRect();
 				bnd.x += camera->roi.x;
 				bnd.y += camera->roi.y;
-				cv::rectangle(frames[i], bnd, cv::Scalar(255,255,170), 1);
+
+				cv::rectangle(frames[i], Utils::RotateRect(bnd, camera->rotation * -1), cv::Scalar(255,255,170), 1);
 			}
 			
 			// draw change (rotated/original)

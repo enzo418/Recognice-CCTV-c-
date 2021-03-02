@@ -8,6 +8,7 @@
 #include "types_configuration.hpp"
 #include "image_manipulation.hpp"
 #include "change_descriptor.hpp"
+#include "utils.hpp"
 
 enum State  { 	
 				Initial = 0, /** Initial state: updating "before" frames **/

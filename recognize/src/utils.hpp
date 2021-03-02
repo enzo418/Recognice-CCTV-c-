@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <time.h>
 #include <ctime>
+#include <cmath>
 #include <stdio.h>
 #include <regex>
 #include <opencv2/opencv.hpp>
@@ -328,6 +329,13 @@ namespace Utils {
 		}
 
 		return name;
+	}
+
+	static cv::Rect RotateRect(cv::Rect& rect, double angle) {
+		double radians = angle * M_PI / 180;
+		double x = cos(radians) * rect.x + sin(radians) * rect.x;
+		double y = -sin(radians) * rect.y + cos(radians) * rect.y;
+		return cv::Rect(cv::Point(x,y), rect.size());
 	}
 };
 
