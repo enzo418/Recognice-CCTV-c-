@@ -173,7 +173,7 @@ bool GifFrames::isValid() {
 					inters.x += camera->roi.x;
 					inters.y += camera->roi.y;
 					if (program->drawChangeFoundBetweenFrames)
-						cv::rectangle(frames[i], Utils::RotateRect(inters, camera->rotation * -1 * closeMag), cv::Scalar(255, 0, 0), 1);
+						cv::rectangle(frames[i], Utils::RotateRect(inters, camera->rotation, roiCenter), cv::Scalar(255, 0, 0), 1);
 				}
 			}
 			
@@ -183,7 +183,7 @@ bool GifFrames::isValid() {
 				bnd.x += camera->roi.x;
 				bnd.y += camera->roi.y;
 
-				cv::Rect rotated = Utils::RotateRect(bnd, camera->rotation * -1 * closeMag);
+				cv::Rect rotated = Utils::RotateRect(bnd, camera->rotation, roiCenter);
 				
 				// original
 				cv::rectangle(frames[i], bnd, cv::Scalar(0,0,255), 1);
