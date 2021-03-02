@@ -115,6 +115,10 @@ bool GifFrames::isValid() {
 
 	FindingInfo* lastValidFind = nullptr;
 
+
+	const cv::Point2f roiCenter = cv::Point2f(camera->roi.x + camera->roi.width / 2, camera->roi.y + camera->roi.height / 2);
+	const cv::Point2f frameCenter = cv::Point2f(0 + 640 / 2, 0 + 360 / 2);
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -141,6 +145,8 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 
+			const double closeMag = cv::norm(roiCenter-finding.rect.center);
+
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
 //			for (int j = 0; j < 4; j++) {
@@ -156,7 +162,7 @@ bool GifFrames::isValid() {
 					inters.x += camera->roi.x;
 					inters.y += camera->roi.y;
 					if (program->drawChangeFoundBetweenFrames)
-						cv::rectangle(frames[i], Utils::RotateRect(inters, camera->rotation * -1), cv::Scalar(255, 0, 0), 1);
+						cv::rectangle(frames[i], Utils::RotateRect(inters, camera->rotation * -1 * closeMag), cv::Scalar(255, 0, 0), 1);
 				}
 			}
 			
@@ -165,12 +171,17 @@ bool GifFrames::isValid() {
 				cv::Rect bnd = finding.rect.boundingRect();
 				bnd.x += camera->roi.x;
 				bnd.y += camera->roi.y;
+
+				cv::Rect rotated = Utils::RotateRect(bnd, camera->rotation * -1 * closeMag);
 				
 				// original
 				cv::rectangle(frames[i], bnd, cv::Scalar(0,0,255), 1);
 				
 				// rotated
-				cv::rectangle(frames[i], Utils::RotateRect(bnd, camera->rotation * -1), cv::Scalar(255,255,170), 1);
+				cv::rectangle(frames[i], rotated, cv::Scalar(255,255,170), 1);
+
+				
+				cv::putText(frames[i], std::to_string(closeMag), cv::Point(rotated.x, rotated.y - 10), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255,255,255), 1, 2);
 			}
 			
 			// draw change (rotated/original)
