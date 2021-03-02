@@ -401,6 +401,10 @@ void Camera::ReadFramesWithInterval() {
 			if (framesLeft == 0)
 				this->msBetweenFrames = this->_programConfig->msBetweenFrame;
 			
+				
+			if (saveChangeVideo)
+				outVideo.write(this->frameToShow);
+
 			// push a new frame to display.
 			if (showPreview && !showProcessedImages) {
 				if (showIgnoredAreas) { 
@@ -410,9 +414,6 @@ void Camera::ReadFramesWithInterval() {
 						cv::rectangle(this->frameToShow, i, cv::Scalar(255,0,255));
 					}
 				}
-				
-				if (saveChangeVideo)
-					outVideo.write(this->frameToShow);
 				
 				this->frames->try_enqueue(std::move(this->frameToShow));  // Will only succeed if the queue has an empty slot (never allocates)
 			}
