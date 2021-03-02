@@ -122,6 +122,12 @@ bool GifFrames::isValid() {
 	const double maxRoiCenterDisantce = cv::norm(roiCenter- cv::Point2f(camera->roi.br().x, camera->roi.br().y));
 	const double maxFrameCenterDisantce = cv::norm(cv::Point(0,0) - cv::Point(RESIZERESOLUTION.width, RESIZERESOLUTION.height));
 
+	std::cout << "Roi Center: " << roiCenter 
+	<< "\nFrame Center: " << frameCenter 
+	<< "\nMaxRoiCenterDistance: " << maxRoiCenterDisantce
+	<< "\nMaxFrameCenterDistance: " << maxFrameCenterDisantce
+	<< std::endl;
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -136,6 +142,8 @@ bool GifFrames::isValid() {
 		framesTransformed[i].finding = finding;
 
 		totalNonPixels += cv::countNonZero(diff);
+
+		cv::circle(frames[i], roiCenter, 2, cv::Scalar(0, 255, 0), -1);
 
 		if (finding.isGoodMatch) {
 			if (!p1Saved) {
@@ -183,7 +191,7 @@ bool GifFrames::isValid() {
 				// rotated
 				cv::rectangle(frames[i], rotated, cv::Scalar(255,255,170), 1);
 				
-				cv::putText(frames[i], std::to_string(closeMag), cv::Point(rotated.x, rotated.y - 10), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255,255,255), 1, 2);
+				cv::putText(frames[i], std::to_string(closeMag), cv::Point(rotated.x, rotated.y - 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, 2);
 			}
 			
 			// draw change (rotated/original)
