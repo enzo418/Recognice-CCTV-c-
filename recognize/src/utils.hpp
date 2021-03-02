@@ -331,10 +331,16 @@ namespace Utils {
 		return name;
 	}
 
-	static cv::Rect RotateRect(cv::Rect& rect, double angle) {
+	static cv::Rect RotateRect(const cv::Rect& rect, double angle, const cv::Point& around) {
 		double radians = angle * M_PI / 180;
-		double x = cos(radians) * rect.x + sin(radians) * rect.x;
-		double y = -sin(radians) * rect.y + cos(radians) * rect.y;
+		// double x = cos(radians) * rect.x + sin(radians) * rect.x;
+		// double y = -sin(radians) * rect.y + cos(radians) * rect.y;
+
+		// PWR = 		((W - CW) * cos(g)) - ((CH - H) * sin(g)) + CW
+		// PHR = CH  -	((CH - H) * cos(g)) + ((W - CW) * sin(g))
+		double x = 				((rect.x - around.x) * cos(angle)) - ((around.y - rect.y) * sin(angle)) + around.x;
+		double y = around.y  -	((around.y - rect.y) * cos(angle)) + ((rect.x - around.x) * sin(angle));
+
 		return cv::Rect(cv::Point(x,y), rect.size());
 	}
 
