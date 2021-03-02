@@ -518,7 +518,7 @@ void Recognize::StartNotificationsSender() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 	
-	std::cout << "Notifiaction thread closed" << std::endl;
+	std::cout << "Notification thread closed" << std::endl;
 }
 
 void Recognize::CloseAndJoin() {
