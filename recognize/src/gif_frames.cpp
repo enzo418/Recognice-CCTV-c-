@@ -196,7 +196,9 @@ bool GifFrames::isValid() {
 				// original (rotated)
 				cv::Point2f vertices[4];
 				finding.rect.points(vertices);
-				for (int j = 0; j < 4; j++) {			
+				for (int j = 0; j < 4; j++) {
+					vertices[j].x += camera->roi.x;
+					vertices[j].y += camera->roi.y;
 					cv::line(frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(0,255,0), 1);
 				}
 
