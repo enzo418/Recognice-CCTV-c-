@@ -165,7 +165,11 @@ bool GifFrames::isValid() {
 				cv::Rect bnd = finding.rect.boundingRect();
 				bnd.x += camera->roi.x;
 				bnd.y += camera->roi.y;
-
+				
+				// original
+				cv::rectangle(frames[i], bnd, cv::Scalar(0,0,255), 1);
+				
+				// rotated
 				cv::rectangle(frames[i], Utils::RotateRect(bnd, camera->rotation * -1), cv::Scalar(255,255,170), 1);
 			}
 			
