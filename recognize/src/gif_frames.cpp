@@ -148,7 +148,7 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 
-			const double closeMag = Utils::map(cv::norm(roiCenter-finding.rect.center), 0, maxRoiCenterDisantce, 0, 1);
+			const double closeMag = Utils::mapValues(cv::norm(roiCenter-finding.rect.center), 0, maxRoiCenterDisantce, 0, 1);
 
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
