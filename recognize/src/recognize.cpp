@@ -288,6 +288,15 @@ void Recognize::StartNotificationsSender() {
 
 	std::filesystem::path cwd = std::filesystem::current_path().string() + "/";
 
+	// Order to send the notifications based on type notification
+	Notification::Type notificationTypesPriority[] = {
+			Notification::TEXT, 
+			Notification::SOUND, 
+			Notification::IMAGE, 
+			Notification::VIDEO, 
+			Notification::GIF
+	};
+
 	while (!stop && useNotifications) {
 		for (auto &&camera : cameras) {
 
@@ -440,54 +449,64 @@ void Recognize::StartNotificationsSender() {
 					}
 				}
 			}
-
-			size_t size = camera->pendingNotifications.size();
-			for (size_t i = 0; i < size; i++) {
-				std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
-				Notification::Notification& notf = camera->pendingNotifications[i];
+			
+			// iterate types priority
+			for (auto type : notificationTypesPriority) {
+				size_t size = camera->pendingNotifications.size();
 				
-				// Since merging multiple images into one file is cpu intensive, 
-				// and can take up to a few seconds on different processors, 
-				// the media types (gif/videos) need to be converted as they are sent, 
-				// so that they don't delay the rest of the notifications in the queue. 
-				// A different solution is to build it in another thread, 
-				// but it requires coordination. And I think it is an overkill.
-				if (notf.type == Notification::GIF) {				
-					notf.buildMedia();
-				}
+				// iterate notifications vector
+				for (size_t i = 0; i < size; i++) {
+					Notification::Notification& notf = camera->pendingNotifications[i];
+					
+					if (notf.type == type && !notf.sended) {
+						std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
+						
+						// Since merging multiple images into one file is cpu intensive, 
+						// and can take up to a few seconds on different processors, 
+						// the media types (gif/videos) need to be converted as they are sent, 
+						// so that they don't delay the rest of the notifications in the queue. 
+						// A different solution is to build it in another thread, 
+						// but it requires coordination. And I think it is an overkill.
+						if (notf.type == Notification::GIF) {				
+							notf.buildMedia();
+						}
 
-				// send to telegram
-				std::string data = notf.send(programConfig);
-				
-				// send to local
-				if (programConfig.localNotificationsConfig.useLocalNotifications
-					&& notf.type == Notification::SOUND
-					|| (
-							notf.type == Notification::IMAGE
-							&& this->programConfig.localNotificationsConfig.sendImageWhenDetectChange
-						)
-					|| (
-							// check if user wants text messages in local notifications
-							notf.type == Notification::TEXT 
-							&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange
-						)					
-					|| (
-							notf.type == Notification::GIF
-							&& this->programConfig.localNotificationsConfig.sendGifWhenDetectChange
-					)
-					|| (
-						notf.type == Notification::VIDEO
-						/**&& send video as notification? */
-					)
-				)
-				{
-					this->notificationWithMedia->try_emplace(
-							std::tuple<Notification::Type, std::string, ulong>(
-								notf.type, 
-								data,
-								notf.getGroupId()
+						// send to telegram
+						std::string data = notf.send(programConfig);
+						
+						// send to local
+						if (programConfig.localNotificationsConfig.useLocalNotifications
+							&& notf.type == Notification::SOUND
+							|| (
+									notf.type == Notification::IMAGE
+									&& this->programConfig.localNotificationsConfig.sendImageWhenDetectChange
 								)
-						);
+							|| (
+									// check if user wants text messages in local notifications
+									notf.type == Notification::TEXT 
+									&& this->programConfig.localNotificationsConfig.sendTextWhenDetectChange
+								)					
+							|| (
+									notf.type == Notification::GIF
+									&& this->programConfig.localNotificationsConfig.sendGifWhenDetectChange
+							)
+							|| (
+								notf.type == Notification::VIDEO
+								/**&& send video as notification? */
+							)
+						)
+						{
+							this->notificationWithMedia->try_emplace(
+									std::tuple<Notification::Type, std::string, ulong>(
+										notf.type, 
+										data,
+										notf.getGroupId()
+										)
+								);
+						}
+
+						notf.sended = true;
+					}
 				}
 			}
 

@@ -49,6 +49,8 @@ namespace Notification {
 		public:
 			Type type;
 
+			bool sended;
+
 			std::string send(ProgramConfiguration& programConfig);
 
 			std::string getString();
