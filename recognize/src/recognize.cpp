@@ -400,31 +400,6 @@ void Recognize::StartNotificationsSender() {
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
 
-						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
-							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
-							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
-						
-							// image notification
-							cv::Mat detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
-
-							std::vector<cv::Point> trace = gif->getFindingTrace();
-
-							for (auto &&p : trace) {
-								p.x += camera->config->roi.x;
-								p.y += camera->config->roi.y;								
-							}
-							
-							for (size_t i = 0; i < trace.size(); i++) {
-								cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
-								
-								if (i + 1 < trace.size()) {
-									cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
-								}
-							}
-							
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
-						}
-
 						if (sendGif) {
 							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
@@ -445,7 +420,32 @@ void Recognize::StartNotificationsSender() {
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, group_id));
-						} 
+						}
+
+						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
+							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
+							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
+						
+							// image notification
+							cv::Mat& detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
+
+							std::vector<cv::Point> trace = gif->getFindingTrace();
+
+							for (auto &&p : trace) {
+								p.x += camera->config->roi.x;
+								p.y += camera->config->roi.y;								
+							}
+							
+							for (size_t i = 0; i < trace.size(); i++) {
+								cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
+								
+								if (i + 1 < trace.size()) {
+									cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
+								}
+							}
+							
+							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
+						}
 						
 						camera->lastImageSended = std::chrono::high_resolution_clock::now();
 					} else {
