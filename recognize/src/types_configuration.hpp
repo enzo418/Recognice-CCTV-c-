@@ -73,7 +73,9 @@ struct {
 	}
 }less_than_order;
 
-enum DetectionMethod {None = -1, HogDescriptor = 0, YoloDNN_V4};
+enum DetectionMethod {DoNotUse = 0, HogDescriptor = 1, YoloDNN_V4};
+
+enum DrawTraceOn {None = 0, Image, Gif, Both};
 
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
@@ -138,8 +140,13 @@ struct ProgramConfiguration {
 
 	std::string messageOnTextNotification = "Movement detected on camera {N}";
 
-	// if the program should draw on the notification image the trace of the change found
-	bool drawTraceChangeFoundOnImage = true;
+	/* If the program should draw on the notification the trace of the change found on: 
+	/* 	- 0: none
+	/*  - 1: image
+	/*  - 2: gif
+	/* 	- 3: both
+	*/
+	DrawTraceOn drawTraceOfChangeFoundOn = DrawTraceOn::Both;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

@@ -51,7 +51,7 @@ private:
 
 	std::vector<cv::Mat*> AnalizeLastFramesSearchBugs(Camera& camera);
 	
-	DetectionMethod lastDetectionMethod = DetectionMethod::None;
+	DetectionMethod lastDetectionMethod = DetectionMethod::DoNotUse;
 	
 	cv::dnn::Net* net;
 	std::vector<std::string> output_names;

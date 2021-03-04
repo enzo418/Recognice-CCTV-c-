@@ -191,8 +191,8 @@
 						"placeholder": "Movement on camera {N}"
 					},
 					{
-						"target": "drawTraceChangeFoundOnImage",
-						"type": "boolean",
+						"target": "drawTraceOfChangeFoundOn",
+						"type": "number",
 						"hidden": false
 					}
 				],

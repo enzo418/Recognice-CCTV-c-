@@ -196,8 +196,8 @@ namespace ConfigurationFile {
 			<< "\n; If not active, the program will just verify if the detected change is not in an ignored area."
 			<< "\n;analizeBeforeAfterChangeFrames=boolean"
 
-			<< "\n\n; If the program should draw on the notification image the trace of the change found"
-			<< "\n;drawTraceChangeFoundOnImage=boolean"
+			<< "\n\n; If the program should draw on the notification the trace of the change found on: \n;  - 0: none\n;  - 1: image\n;  - 2: gif\n;  - 3: both"
+			<< "\n;drawTraceOfChangeFoundOn=int"
 
 			<< "\n\n; Should the program save the GIF into a .avi (video) file?"
 			<< "\n;saveChangeInVideo=boolean"
@@ -214,8 +214,9 @@ namespace ConfigurationFile {
 			<< "\n;gifResizePercentage=int"
 			
 			<< "\n\n; Select the detection method"
-			<< "\n; 0: HOG Descriptor, uses built in opencv HOG Descriptor."
-			<< "\n; 1: YOLO V4 DNN, uses darknet neural net, more precise than HOG."
+			<< "\n; 0: Do not try detect a person."
+			<< "\n; 1: HOG Descriptor, uses built in opencv HOG Descriptor."
+			<< "\n; 2: YOLO V4 DNN, uses darknet neural net, more precise than HOG."
 			<< "\n;detectionMethod=int"
 			
 			<< "\n\n; How much frames are going to be on the GIF. The syntax is: <nframesBefore>..<nframesAfter>."
@@ -384,7 +385,7 @@ namespace ConfigurationFile {
 
 			<< "\n\nmessageOnTextNotification=" << messageOnTextNotification
 
-			<< "\n\ndrawTraceChangeFoundOnImage="  << (cfg.drawTraceChangeFoundOnImage ? "1" : "0");
+			<< "\n\ndrawTraceOfChangeFoundOn="  << (int)cfg.drawTraceOfChangeFoundOn;
 
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
@@ -555,8 +556,13 @@ namespace ConfigurationFile {
 			config.drawChangeFoundBetweenFrames = value == "1";
 		}  else if (id == "messageontextnotification") {
 			config.messageOnTextNotification = value;
-		}  else if (id == "drawtracechangefoundonimage") {
-			config.drawTraceChangeFoundOnImage = value == "1";
+		}  else if (id == "drawtraceofchangefoundon") {
+			try {
+				int val = std::stoi(value);
+				config.drawTraceOfChangeFoundOn = (DrawTraceOn)val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else {
 			sucess = false;
 		}

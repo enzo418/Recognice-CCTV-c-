@@ -140,6 +140,16 @@ bool GifFrames::isValid() {
 				this->firstFrameWithDescriptor = i;
 			
 			totalArea += finding.area;
+			
+			// draw trace
+			if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+				|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+				cv::circle(frames[i], finding.center, 2, cv::Scalar(0, 0, 255), -1);
+
+				if (this->findingTrace.size() > 0) {
+					cv::line(frames[i], this->findingTrace[this->findingTrace.size() - 1], finding.center, cv::Scalar(0,255,0));
+				}
+			}
 
 			this->findingTrace.push_back(finding.center);
 
