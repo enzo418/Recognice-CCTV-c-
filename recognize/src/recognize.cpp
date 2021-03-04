@@ -408,7 +408,8 @@ void Recognize::StartNotificationsSender() {
 							// image notification
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
-							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image) { // draw trace
+							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
+								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
 								std::vector<cv::Point> trace = gif->getFindingTrace();
 
 								// correct position of the points
