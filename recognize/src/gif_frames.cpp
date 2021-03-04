@@ -141,21 +141,7 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 			
-			cv::Point centerRepositioned = cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y);
-
-			this->findingTrace.push_back(centerRepositioned);
-
-			// draw trace
-			if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-				|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
-				for (size_t i = 0; i < this->findingTrace.size(); i++) {
-					cv::circle(frames[i], this->findingTrace[i], 5, cv::Scalar(0, 0, 255), -1);
-					
-					if (i + 1 < this->findingTrace.size()) {
-						cv::line(frames[i], this->findingTrace[i], this->findingTrace[i+1], cv::Scalar(0,255,0));
-					}
-				}
-			}
+			this->findingTrace.push_back(cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y));
 
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
@@ -198,6 +184,18 @@ bool GifFrames::isValid() {
 			lastValidFind = &framesTransformed[i].finding;
 
 			p2 = finding.center;
+		}
+
+		// draw trace
+		if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+			|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+			for (size_t i = 0; i < this->findingTrace.size(); i++) {
+				cv::circle(frames[i], this->findingTrace[i], 5, cv::Scalar(0, 0, 255), -1);
+				
+				if (i + 1 < this->findingTrace.size()) {
+					cv::line(frames[i], this->findingTrace[i], this->findingTrace[i+1], cv::Scalar(0,255,0));
+				}
+			}
 		}
 	}
 
