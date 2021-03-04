@@ -147,8 +147,12 @@ bool GifFrames::isValid() {
 			totalArea += finding.area;
 			
 			if (offset + i >= 0) {
-				const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, camera->rotation, imageCenter);
-				const cv::Rect rotatedFinding(rotatedCenter, finding.rect.size);
+				const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, camera->rotation, cv::Point(0,0));
+				const cv::Rect rotatedFinding(
+					cv::Point(
+						rotatedCenter.x - finding.rect.size.width / 2,
+						rotatedCenter.y - finding.rect.size.height / 2
+					), finding.rect.size);
 				std::cout 	<< "[GIF] Rotated center: " << rotatedCenter
 							<< "\n      From: " << finding.center
 							<< "\n      With angle: " << camera->rotation
