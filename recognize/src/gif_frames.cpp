@@ -36,10 +36,15 @@ void GifFrames::addFrame(cv::Mat& frame) {
 void GifFrames::framesToSingleVectors() {
 	size_t currFrame = 0;
 
+	// number of frames to wait until start saving the frames to analyze,
+	// it's done like this to save the last <framesBefore> frames instead
+	// of the first <framesBefore> of the before queue.
+	size_t waitFrames = this->before.size() - this->program->framesToAnalyzeChangeValidity.framesBefore;
+
 	while (!this->before.empty()) {
 		this->frames.push_back(std::move(this->before.front()));
 		
-		if (currFrame < this->program->framesToAnalyzeChangeValidity.framesBefore) {
+		if (waitFrames <= 0) {
 			FrameDescriptor fd;
 			fd.frame = this->frames.back().clone();
 			if (camera->rotation != 0)
@@ -54,6 +59,7 @@ void GifFrames::framesToSingleVectors() {
 
 		this->before.pop();
 		currFrame++;
+		waitFrames--;
 	}
 	
 	currFrame = 0;
