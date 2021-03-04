@@ -193,7 +193,9 @@
 					{
 						"target": "drawTraceOfChangeFoundOn",
 						"type": "number",
-						"hidden": false
+						"hidden": false,
+						"min": 0,
+						"max": 3
 					}
 				],
 				"groups": [
