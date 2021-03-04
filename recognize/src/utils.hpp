@@ -331,13 +331,12 @@ namespace Utils {
 		return name;
 	}
 
-	static cv::Rect RotateRectAround(const cv::Rect& rect, int theta, const cv::Point& around) {
+	static cv::Point RotatePointAround(const cv::Point& point, int theta, const cv::Point& around) {
 		const double rad = theta * M_PI / 180;
 		const double cosThetha = cos(rad), sinThehta = sin(rad);
-		// maybe use the center of the rect as x and y?
-		const double x2 = cosThetha * (rect.x - around.x) - sinThehta * (rect.y - around.y);
-		const double y2 = sinThehta * (rect.x - around.x) + cosThetha * (rect.y - around.y);
-		return cv::Rect(cv::Point(x2, y2), rect.size());
+		const double x2 = cosThetha * (point.x - around.x) + sinThehta * (point.y - around.y);
+		const double y2 = -sinThehta * (point.x - around.x) + cosThetha * (point.y - around.y);
+		return cv::Point(x2, y2);
 	}
 };
 
