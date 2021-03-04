@@ -405,13 +405,13 @@ void Recognize::StartNotificationsSender() {
 							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
 						
 							// image notification
-							cv::Mat& detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
+							cv::Mat detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
 
 							std::vector<cv::Point> trace = gif->getFindingTrace();
 							for (size_t i = 0; i < trace.size(); i++) {
 								trace[i].x += camera->config->roi.x;
 								trace[i].y += camera->config->roi.y;
-								
+
 								cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
 								
 								if (i + 1 < trace.size()) {
