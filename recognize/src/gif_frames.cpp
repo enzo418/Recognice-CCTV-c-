@@ -225,22 +225,23 @@ bool GifFrames::isValid() {
 
 				pointsDrawn.push_back(std::get<2>(currFinding));
 
-				// draw all the trace points (finding center) and the lines between them
-				if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-					|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
-					for (size_t j = 0; j < pointsDrawn.size(); j++) {
-						cv::circle(frame, pointsDrawn[j], 2, cv::Scalar(0, 0, 255), -1);
-						
-						if (j + 1 < pointsDrawn.size()) {
-							cv::line(frame, pointsDrawn[j], pointsDrawn[j+1], cv::Scalar(0,255,0));
-						}
-					}
-				}
-
 				// go to next finding
 				if (currFinding_i + 1 < this->findings.size()) {
 					currFinding_i += 1;
 					currFinding = this->findings[currFinding_i];
+				}
+			}
+
+
+			// draw all the trace points (finding center) and the lines between them
+			if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+				|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+				for (size_t j = 0; j < pointsDrawn.size(); j++) {
+					cv::circle(frame, pointsDrawn[j], 2, cv::Scalar(0, 0, 255), -1);
+					
+					if (j + 1 < pointsDrawn.size()) {
+						cv::line(frame, pointsDrawn[j], pointsDrawn[j+1], cv::Scalar(0,255,0));
+					}
 				}
 			}
 		}
