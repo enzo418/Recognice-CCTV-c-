@@ -373,6 +373,19 @@ label {
 	bottom: 20%;
 }
 
+.buton-uttermost-start, .buton-uttermost-end {
+	width: 20%;
+	color: rgb(255 155 0);
+}
+
+.buton-uttermost-start {
+	margin-right: 0.5rem;
+}
+
+.buton-uttermost-end {
+	margin-left: 0.5rem;
+}
+
 .navigator-notification span {
     margin-left: 0.2rem;
 }

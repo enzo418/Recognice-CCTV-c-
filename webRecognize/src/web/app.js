@@ -1229,6 +1229,13 @@ function nextNotification() {
 	changeCurrentElementNotification($i);
 	window.scrollTo(0,document.body.scrollHeight);}
 
+// Helper to go to the start or end of the notification collection
+function gotoUttermost(uttermost = 'end') {
+	var $i = uttermost == 'end' ? notificationPaginator.elements.length - 1 : 0;
+	changeCurrentElementNotification($i);
+	window.scrollTo(0,document.body.scrollHeight);
+}
+
 // updates the number of notifications shown on the buttons to change notification
 function updateNotificationsNumberPaginator() {
 	$('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
