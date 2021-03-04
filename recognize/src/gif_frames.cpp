@@ -199,7 +199,7 @@ bool GifFrames::isValid() {
 		if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
 			|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
 			for (size_t j = 0; j < this->findingTrace.size(); j++) {
-				cv::circle(frames[i], this->findingTrace[j], 1, cv::Scalar(0, 0, 255), -1);
+				cv::circle(frames[i], this->findingTrace[j], 2, cv::Scalar(0, 0, 255), -1);
 				
 				if (j + 1 < this->findingTrace.size()) {
 					cv::line(frames[i], this->findingTrace[j], this->findingTrace[j+1], cv::Scalar(0,255,0));
