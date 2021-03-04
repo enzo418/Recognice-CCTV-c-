@@ -120,6 +120,8 @@ bool GifFrames::isValid() {
 
 	const int offset = this->program->numberGifFrames.framesBefore - this->program->framesToAnalyzeChangeValidity.framesBefore;
 
+	const cv::Point imageCenter = cv::Point(RESIZERESOLUTION.width / 2, RESIZERESOLUTION.height / 2);
+	// const cv::Point imageCenter = cv::Point(camera->roi.width / 2, camera->roi.height / 2);
 
 	//// Process frames
 
@@ -144,14 +146,21 @@ bool GifFrames::isValid() {
 
 			totalArea += finding.area;
 			
-			if (offset + i >= 0)
+			if (offset + i >= 0) {
+				const cv::Rect rotatedFinding = Utils::RotateRectAround(finding.rect.boundingRect(), camera->rotation, imageCenter);
+				const cv::Point centerRotated = cv::Point(
+						rotatedFinding.x + rotatedFinding.width / 2,
+						rotatedFinding.y + rotatedFinding.height / 2
+					);
+
 				this->findings.push_back(
 					std::make_tuple(
 						offset + i, // finding index on "frames" member
-						finding, 
-						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)
+						rotatedFinding, 
+						cv::Point(centerRotated.x + this->camera->roi.x, centerRotated.y + this->camera->roi.y)
 					)
 				);
+			}
 
 			// check if finding is overlapping with a ignored area
 			for (auto &&j : camera->ignoredAreas) {					
@@ -199,7 +208,7 @@ bool GifFrames::isValid() {
 								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif;
 		
 		size_t currFinding_i = 0; 
-		std::tuple<size_t, FindingInfo, cv::Point> currFinding = this->findings[currFinding_i];
+		std::tuple<size_t, cv::Rect, cv::Point> currFinding = this->findings[currFinding_i];
 		bool savedFirstFrameWithFinding = false;
 
 		std::vector<cv::Point> pointsDrawn;
@@ -217,7 +226,7 @@ bool GifFrames::isValid() {
 
 				// draw finding rectangle
 				if (program->drawChangeFoundBetweenFrames) {
-					cv::Rect bnd = std::get<1>(currFinding).rect.boundingRect();
+					cv::Rect bnd = std::get<1>(currFinding);
 					bnd.x += camera->roi.x;
 					bnd.y += camera->roi.y;
 					cv::rectangle(frame, bnd, cv::Scalar(255,255,170), 1);
@@ -281,6 +290,6 @@ cv::Mat& GifFrames::firstFrameWithChangeDetected(){
 	return this->firstFrameWithDescription;
 }
 
-std::vector<std::tuple<size_t, FindingInfo, cv::Point>> GifFrames::getFindingsTrace() {
+std::vector<std::tuple<size_t, cv::Rect, cv::Point>> GifFrames::getFindingsTrace() {
 	return this->findings;
 }

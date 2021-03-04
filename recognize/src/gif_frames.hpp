@@ -8,6 +8,7 @@
 #include "types_configuration.hpp"
 #include "image_manipulation.hpp"
 #include "change_descriptor.hpp"
+#include "utils.hpp"
 
 enum State  { 	
 				Initial = 0, /** Initial state: updating "before" frames **/
@@ -71,7 +72,7 @@ class GifFrames {
 
 		void framesToSingleVectors();
 
-		std::vector<std::tuple<size_t, FindingInfo, cv::Point>> findings;
+		std::vector<std::tuple<size_t, cv::Rect, cv::Point>> findings;
 
 	public:
 		GifFrames(ProgramConfiguration* programConfig, CameraConfiguration* cameraConfig);
@@ -92,5 +93,5 @@ class GifFrames {
 
 		cv::Mat& firstFrameWithChangeDetected();
 
-		std::vector<std::tuple<size_t, FindingInfo, cv::Point>> getFindingsTrace();
+		std::vector<std::tuple<size_t, cv::Rect, cv::Point>> getFindingsTrace();
 };

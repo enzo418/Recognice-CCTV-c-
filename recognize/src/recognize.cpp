@@ -412,11 +412,11 @@ void Recognize::StartNotificationsSender() {
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
-								std::vector<std::tuple<size_t, FindingInfo, cv::Point>> trace = gif->getFindingsTrace();
+								std::vector<std::tuple<size_t, cv::Rect, cv::Point>> trace = gif->getFindingsTrace();
 
 								// draw finding rectangle
 								if (this->programConfig.drawChangeFoundBetweenFrames) {
-									cv::Rect bnd = std::get<1>(trace[0]).rect.boundingRect();
+									cv::Rect bnd = std::get<1>(trace[0]);
 									bnd.x += camera->config->roi.x;
 									bnd.y += camera->config->roi.y;
 									cv::rectangle(detected_frame, bnd, cv::Scalar(255,255,170), 1);
