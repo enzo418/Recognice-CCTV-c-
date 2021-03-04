@@ -147,7 +147,7 @@ bool GifFrames::isValid() {
 			totalArea += finding.area;
 			
 			if (offset + i >= 0) {
-				const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, camera->rotation, cv::Point(0,0));
+				const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, -1 * camera->rotation, cv::Point(0,0));
 				const cv::Rect rotatedFinding(
 					cv::Point(
 						rotatedCenter.x - finding.rect.size.width / 2,
@@ -306,6 +306,6 @@ cv::Mat& GifFrames::firstFrameWithChangeDetected(){
 	return this->firstFrameWithDescription;
 }
 
-std::vector<std::tuple<size_t, cv::Rect, cv::Point>> GifFrames::getFindingsTrace() {
+std::vector<std::tuple<size_t, cv::Rect, cv::Point, cv::Point>> GifFrames::getFindingsTrace() {
 	return this->findings;
 }
