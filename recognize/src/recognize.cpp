@@ -406,6 +406,16 @@ void Recognize::StartNotificationsSender() {
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
+
+							std::vector<cv::Point> trace = gif->getFindingTrace();
+							for (size_t i = 0; i < trace.size(); i++) {
+								cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
+								
+								if (i + 1 < trace.size()) {
+									cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
+								}
+							}
+							
 							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
 						}
 

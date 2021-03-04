@@ -71,6 +71,8 @@ class GifFrames {
 
 		void framesToSingleVectors();
 
+		std::vector<cv::Point> findingTrace;
+
 	public:
 		GifFrames(ProgramConfiguration* programConfig, CameraConfiguration* cameraConfig);
 
@@ -89,4 +91,6 @@ class GifFrames {
 		size_t indexMiddleFrame();
 
 		size_t indexFirstFrameWithChangeDetected();
+
+		std::vector<cv::Point> getFindingTrace();
 };

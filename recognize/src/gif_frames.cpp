@@ -141,6 +141,8 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 
+			this->findingTrace.push_back(finding.center);
+
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
 //			for (int j = 0; j < 4; j++) {
@@ -237,4 +239,8 @@ size_t GifFrames::indexMiddleFrame() {
 
 size_t GifFrames::indexFirstFrameWithChangeDetected(){
 	return this->firstFrameWithDescriptor == -1 ? this->indexMiddleFrame() : this->firstFrameWithDescriptor;
+}
+
+std::vector<cv::Point> GifFrames::getFindingTrace() {
+	return this->findingTrace;
 }
