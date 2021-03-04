@@ -141,7 +141,7 @@ bool GifFrames::isValid() {
 			
 			totalArea += finding.area;
 			
-			cv::Point centerRepositioned = cv::Point(finding.center.x + this->camera->roi.x, finding.center.x + this->camera->roi.x);
+			cv::Point centerRepositioned = cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y);
 
 			this->findingTrace.push_back(centerRepositioned);
 
