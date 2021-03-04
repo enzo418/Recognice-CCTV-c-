@@ -143,17 +143,19 @@ bool GifFrames::isValid() {
 			
 			cv::Point centerRepositioned = cv::Point(finding.center.x + this->camera->roi.x, finding.center.x + this->camera->roi.x);
 
+			this->findingTrace.push_back(centerRepositioned);
+
 			// draw trace
 			if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
 				|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
-				cv::circle(frames[i], centerRepositioned, 2, cv::Scalar(0, 0, 255), -1);
-
-				if (this->findingTrace.size() > 0) {
-					cv::line(frames[i], this->findingTrace[this->findingTrace.size() - 1], centerRepositioned, cv::Scalar(0,255,0));
+				for (size_t i = 0; i < this->findingTrace.size(); i++) {
+					cv::circle(frames[i], this->findingTrace[i], 5, cv::Scalar(0, 0, 255), -1);
+					
+					if (i + 1 < this->findingTrace.size()) {
+						cv::line(frames[i], this->findingTrace[i], this->findingTrace[i+1], cv::Scalar(0,255,0));
+					}
 				}
 			}
-
-			this->findingTrace.push_back(centerRepositioned);
 
 //			cv::Point2f vertices[4];
 //			finding.rect.points(vertices);
