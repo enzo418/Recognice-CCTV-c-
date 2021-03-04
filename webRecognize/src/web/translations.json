@@ -183,6 +183,10 @@
 		"messageOnTextNotification": {
 			"label": "Message/String to send when a text for a notification is needed.<br> To insert the name of the camera use {N}, e.g. Movement on camera {N}",
 			"description": ""
+		},
+		"drawTraceChangeFoundOnImage": {
+			"label": "Draw on the notification image the trace (points connected by lines) of the changes found",
+			"description": ""
 		}
 	}, "es": {
 		"msBetweenFrame" : {
@@ -367,6 +371,10 @@
 		},
 		"messageOnTextNotification": {
 			"label": "Mensaje/Candea a enviar cuando se envie una notificacion con texto.<br>Utiliza {N} para insertar el nombre de la camara, por ejemplo: Movimiento en la camara con nombre {N}",
+			"description": ""
+		},
+		"drawTraceChangeFoundOnImage": {
+			"label": "Dibujar en la imagen de la notificación el rastro (puntos conectados por lineas) de los cambios encontrados",
 			"description": ""
 		},
 		"recognizer is not running": "El ronocedor esta parado.",

@@ -196,6 +196,9 @@ namespace ConfigurationFile {
 			<< "\n; If not active, the program will just verify if the detected change is not in an ignored area."
 			<< "\n;analizeBeforeAfterChangeFrames=boolean"
 
+			<< "\n\n; If the program should draw on the notification image the trace of the change found"
+			<< "\n;drawTraceChangeFoundOnImage=boolean"
+
 			<< "\n\n; Should the program save the GIF into a .avi (video) file?"
 			<< "\n;saveChangeInVideo=boolean"
 			
@@ -379,7 +382,9 @@ namespace ConfigurationFile {
 
 			<< "\n\ndrawChangeFoundBetweenFrames=" << (cfg.drawChangeFoundBetweenFrames ? "1" : "0")
 
-			<< "\n\nmessageOnTextNotification=" << messageOnTextNotification;
+			<< "\n\nmessageOnTextNotification=" << messageOnTextNotification
+
+			<< "\n\ndrawTraceChangeFoundOnImage="  << (cfg.drawTraceChangeFoundOnImage ? "1" : "0");
 
 			if (!cfg.authUsersToSendActions.empty())
 				ss << "\nauthUsersToSendActions=" << Utils::VectorToCommaString(cfg.authUsersToSendActions);			
@@ -550,6 +555,8 @@ namespace ConfigurationFile {
 			config.drawChangeFoundBetweenFrames = value == "1";
 		}  else if (id == "messageontextnotification") {
 			config.messageOnTextNotification = value;
+		}  else if (id == "drawtracechangefoundonimage") {
+			config.drawTraceChangeFoundOnImage = value == "1";
 		} else {
 			sucess = false;
 		}

@@ -189,6 +189,11 @@
 						"type": "string",
 						"hidden": false,
 						"placeholder": "Movement on camera {N}"
+					},
+					{
+						"target": "drawTraceChangeFoundOnImage",
+						"type": "boolean",
+						"hidden": false
 					}
 				],
 				"groups": [

@@ -137,6 +137,9 @@ struct ProgramConfiguration {
 	bool drawChangeFoundBetweenFrames = false;
 
 	std::string messageOnTextNotification = "Movement detected on camera {N}";
+
+	// if the program should draw on the notification image the trace of the change found
+	bool drawTraceChangeFoundOnImage = true;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

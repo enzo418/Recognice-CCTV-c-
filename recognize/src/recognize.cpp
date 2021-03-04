@@ -423,24 +423,29 @@ void Recognize::StartNotificationsSender() {
 						}
 
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
+							// text notification
 							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
 							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
 						
 							// image notification
 							cv::Mat& detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
 
-							std::vector<cv::Point> trace = gif->getFindingTrace();
+							if (this->programConfig.drawTraceChangeFoundOnImage) { // draw trace
+								std::vector<cv::Point> trace = gif->getFindingTrace();
 
-							for (auto &&p : trace) {
-								p.x += camera->config->roi.x;
-								p.y += camera->config->roi.y;								
-							}
-							
-							for (size_t i = 0; i < trace.size(); i++) {
-								cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
-								
-								if (i + 1 < trace.size()) {
-									cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
+								// correct position of the points
+								for (auto &&p : trace) {
+									p.x += camera->config->roi.x;
+									p.y += camera->config->roi.y;								
+								}
+
+								// draw the center points and the line between them
+								for (size_t i = 0; i < trace.size(); i++) {
+									cv::circle(detected_frame, trace[i], 5, cv::Scalar(0, 0, 255), -1);
+									
+									if (i + 1 < trace.size()) {
+										cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
+									}
 								}
 							}
 							
