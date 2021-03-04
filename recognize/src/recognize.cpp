@@ -408,22 +408,29 @@ void Recognize::StartNotificationsSender() {
 							// image notification
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
+							/// REMEMBER TO DRAW THE FINDING RECTANGLE, SINCE WE DO NOT DOIT ANYMORE IN GIF
+
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
-								std::vector<cv::Point> trace = gif->getFindingTrace();
+								std::vector<std::tuple<size_t, FindingInfo, cv::Point>> trace = gif->getFindingsTrace();
 
-								// correct position of the points
-								// for (auto &&p : trace) {
-								// 	p.x += camera->config->roi.x;
-								// 	p.y += camera->config->roi.y;								
-								// }
+								// draw finding rectangle
+								if (this->programConfig.drawChangeFoundBetweenFrames) {
+									cv::Rect bnd = std::get<1>(trace[0]).rect.boundingRect();
+									bnd.x += camera->config->roi.x;
+									bnd.y += camera->config->roi.y;
+									cv::rectangle(detected_frame, bnd, cv::Scalar(255,255,170), 1);
+								}
 
-								// draw the center points and the line between them
-								for (size_t i = 0; i < trace.size(); i++) {
-									cv::circle(detected_frame, trace[i], 2, cv::Scalar(0, 0, 255), -1);
-									
-									if (i + 1 < trace.size()) {
-										cv::line(detected_frame, trace[i], trace[i+1], cv::Scalar(0,255,0));
+								// draw all the trace (finding center) points and the lines between them
+								if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+									|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+									for (size_t j = 0; j < trace.size(); j++) {
+										cv::circle(detected_frame, std::get<2>(trace[j]), 2, cv::Scalar(0, 0, 255), -1);
+										
+										if (j + 1 < trace.size()) {
+											cv::line(detected_frame, std::get<2>(trace[j]), std::get<2>(trace[j+1]), cv::Scalar(0,255,0));
+										}
 									}
 								}
 							}

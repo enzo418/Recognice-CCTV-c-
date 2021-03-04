@@ -34,16 +34,14 @@ void GifFrames::addFrame(cv::Mat& frame) {
 }
 
 void GifFrames::framesToSingleVectors() {
-	size_t currFrame = 0;
-
 	// number of frames to wait until start saving the frames to analyze,
 	// it's done like this to save the last <framesBefore> frames instead
 	// of the first <framesBefore> of the before queue.
-	size_t waitFrames = this->before.size() - this->program->framesToAnalyzeChangeValidity.framesBefore;
+	int waitFrames = this->before.size() - this->program->framesToAnalyzeChangeValidity.framesBefore;
 
 	while (!this->before.empty()) {
 		this->frames.push_back(std::move(this->before.front()));
-		
+
 		if (waitFrames <= 0) {
 			FrameDescriptor fd;
 			fd.frame = this->frames.back().clone();
@@ -54,15 +52,14 @@ void GifFrames::framesToSingleVectors() {
 
 			cv::cvtColor(fd.frame, fd.frame, cv::COLOR_BGR2GRAY);
 
-			this->framesTransformed.push_back(std::move(fd));
+			this->framesTransformed.push_back(std::move(fd));			
 		}
 
 		this->before.pop();
-		currFrame++;
 		waitFrames--;
 	}
-	
-	currFrame = 0;
+
+	size_t currFrame = 0;
 	while (!this->after.empty()) {
 		this->frames.push_back(std::move(this->after.front()));
 
@@ -121,7 +118,8 @@ bool GifFrames::isValid() {
 
 	FindingInfo* lastValidFind = nullptr;
 
-	bool firstFinding = true;
+	const int offset = this->program->numberGifFrames.framesBefore - this->program->framesToAnalyzeChangeValidity.framesBefore;
+
 
 	//// Process frames
 
@@ -144,50 +142,23 @@ bool GifFrames::isValid() {
 				p1Saved = true;
 			}
 
-			if (firstFinding && !program->drawChangeFoundBetweenFrames) {
-				frames[i].copyTo(this->firstFrameWithDescription);
-				firstFinding = false;
-			}
-			
 			totalArea += finding.area;
 			
-			this->findingTrace.push_back(cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y));
+			if (offset + i >= 0)
+				this->findings.push_back(
+					std::make_tuple(
+						offset + i, // finding index on "frames" member
+						finding, 
+						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)
+					)
+				);
 
-//			cv::Point2f vertices[4];
-//			finding.rect.points(vertices);
-//			for (int j = 0; j < 4; j++) {
-//				vertices[j].x += camera->roi.x;
-//			}
-			
 			// check if finding is overlapping with a ignored area
 			for (auto &&j : camera->ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & j;
 				if (inters.area() >= finding.rect.boundingRect().area() * minPercentageAreaIgnore) {
 					overlappingFindings += 1;
-					
-					inters.x += camera->roi.x;
-					inters.y += camera->roi.y;
-					if (program->drawChangeFoundBetweenFrames)
-						cv::rectangle(frames[i], inters, cv::Scalar(255, 0, 0), 1);
 				}
-			}
-			
-			// draw change (bounding rectangle)
-			if (program->drawChangeFoundBetweenFrames) {
-				cv::Rect bnd = finding.rect.boundingRect();
-				bnd.x += camera->roi.x;
-				bnd.y += camera->roi.y;
-				cv::rectangle(frames[i], bnd, cv::Scalar(255,255,170), 1);
-			}
-			
-			// draw change (rotated/original)
-			// for (int j = 0; j < 4; j++) {			
-			// 	cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
-			// }
-
-			if (firstFinding && program->drawChangeFoundBetweenFrames) {
-				frames[i].copyTo(this->firstFrameWithDescription);
-				firstFinding = false;
 			}
 
 			if (lastValidFind != nullptr) {
@@ -199,18 +170,6 @@ bool GifFrames::isValid() {
 			lastValidFind = &framesTransformed[i].finding;
 
 			p2 = finding.center;
-		}
-
-		// draw trace
-		if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-			|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
-			for (size_t j = 0; j < this->findingTrace.size(); j++) {
-				cv::circle(frames[i], this->findingTrace[j], 2, cv::Scalar(0, 0, 255), -1);
-				
-				if (j + 1 < this->findingTrace.size()) {
-					cv::line(frames[i], this->findingTrace[j], this->findingTrace[j+1], cv::Scalar(0,255,0));
-				}
-			}
 		}
 	}
 
@@ -230,8 +189,61 @@ bool GifFrames::isValid() {
 	//// Check if it's valid
 	if (validFrames != 0 && this->avrgDistanceFrames <= 120 && overlappingFindings < camera->thresholdFindingsOnIgnoredArea) {
 		valid = true;
-
 		this->state = State::Send;
+		
+		// ---------------------------------------
+		//  Draw trace and findings on the frames
+		// ---------------------------------------
+
+		const bool drawTrace = this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif;
+		
+		size_t currFinding_i = 0; 
+		std::tuple<size_t, FindingInfo, cv::Point> currFinding = this->findings[currFinding_i];
+		bool savedFirstFrameWithFinding = false;
+
+		std::vector<cv::Point> pointsDrawn;
+
+		for (size_t i = 0; i < frames.size(); i++) {
+			cv::Mat& frame = frames[i];
+			
+			// if current finding "frames" index is i
+			if (std::get<0>(currFinding) == i) {
+				// save the first frame in which a change has been found
+				if (!savedFirstFrameWithFinding) {
+					frame.copyTo(this->firstFrameWithDescription);
+					savedFirstFrameWithFinding = true;
+				}
+
+				// draw finding rectangle
+				if (program->drawChangeFoundBetweenFrames) {
+					cv::Rect bnd = std::get<1>(currFinding).rect.boundingRect();
+					bnd.x += camera->roi.x;
+					bnd.y += camera->roi.y;
+					cv::rectangle(frame, bnd, cv::Scalar(255,255,170), 1);
+				}
+
+				pointsDrawn.push_back(std::get<2>(currFinding));
+
+				// draw all the trace points (finding center) and the lines between them
+				if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
+					|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+					for (size_t j = 0; j < pointsDrawn.size(); j++) {
+						cv::circle(frame, pointsDrawn[j], 2, cv::Scalar(0, 0, 255), -1);
+						
+						if (j + 1 < pointsDrawn.size()) {
+							cv::line(frame, pointsDrawn[j], pointsDrawn[j+1], cv::Scalar(0,255,0));
+						}
+					}
+				}
+
+				// go to next finding
+				if (currFinding_i + 1 < this->findings.size()) {
+					currFinding_i += 1;
+					currFinding = this->findings[currFinding_i];
+				}
+			}
+		}
 	} else {
 		this->state = State::Cancelled;
 		// this->state = State::Send; // uncomment to send it any way
@@ -268,6 +280,6 @@ cv::Mat& GifFrames::firstFrameWithChangeDetected(){
 	return this->firstFrameWithDescription;
 }
 
-std::vector<cv::Point> GifFrames::getFindingTrace() {
-	return this->findingTrace;
+std::vector<std::tuple<size_t, FindingInfo, cv::Point>> GifFrames::getFindingsTrace() {
+	return this->findings;
 }

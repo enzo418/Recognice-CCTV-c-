@@ -71,7 +71,7 @@ class GifFrames {
 
 		void framesToSingleVectors();
 
-		std::vector<cv::Point> findingTrace;
+		std::vector<std::tuple<size_t, FindingInfo, cv::Point>> findings;
 
 	public:
 		GifFrames(ProgramConfiguration* programConfig, CameraConfiguration* cameraConfig);
@@ -92,5 +92,5 @@ class GifFrames {
 
 		cv::Mat& firstFrameWithChangeDetected();
 
-		std::vector<cv::Point> getFindingTrace();
+		std::vector<std::tuple<size_t, FindingInfo, cv::Point>> getFindingsTrace();
 };
