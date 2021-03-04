@@ -65,9 +65,9 @@ class GifFrames {
 
 		// frames used to get the diff between the findings
 		std::vector<FrameDescriptor> framesTransformed;
-
+		
 		// first frame of "after" in which a difference was found
-		long firstFrameWithDescriptor = -1;
+		cv::Mat firstFrameWithDescription;
 
 		void framesToSingleVectors();
 
@@ -90,7 +90,7 @@ class GifFrames {
 
 		size_t indexMiddleFrame();
 
-		size_t indexFirstFrameWithChangeDetected();
+		cv::Mat& firstFrameWithChangeDetected();
 
 		std::vector<cv::Point> getFindingTrace();
 };

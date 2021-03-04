@@ -400,35 +400,13 @@ void Recognize::StartNotificationsSender() {
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
 
-						if (sendGif) {
-							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
-							for (size_t i = 0; i < frames.size(); i++) {
-								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
-
-								cv::imwrite(location, frames[i]);
-
-								// this if introduces from 20% to 50% extra of cpu time
-								// doesn't really matter too much since we are talking of
-								// about 50 ~ 200 ms more in my tests with 20 frames.
-								// if (saveChangeVideo)
-								// 	camera->AppendFrameToVideo(frames[i]);
-							}
-							
-							// if (saveChangeVideo)
-							// 	camera->ReleaseChangeVideo();
-
-							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
-
-							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, group_id));
-						}
-
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
 							// text notification
 							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
 							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
 						
 							// image notification
-							cv::Mat& detected_frame = frames[gif->indexFirstFrameWithChangeDetected()];
+							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image) { // draw trace
 								std::vector<cv::Point> trace = gif->getFindingTrace();
@@ -450,6 +428,28 @@ void Recognize::StartNotificationsSender() {
 							}
 							
 							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
+						}
+
+						if (sendGif) {
+							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
+							for (size_t i = 0; i < frames.size(); i++) {
+								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
+
+								cv::imwrite(location, frames[i]);
+
+								// this if introduces from 20% to 50% extra of cpu time
+								// doesn't really matter too much since we are talking of
+								// about 50 ~ 200 ms more in my tests with 20 frames.
+								// if (saveChangeVideo)
+								// 	camera->AppendFrameToVideo(frames[i]);
+							}
+							
+							// if (saveChangeVideo)
+							// 	camera->ReleaseChangeVideo();
+
+							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
+
+							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, group_id));
 						}
 						
 						camera->lastImageSended = std::chrono::high_resolution_clock::now();

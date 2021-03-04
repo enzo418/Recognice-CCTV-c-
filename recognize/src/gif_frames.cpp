@@ -115,6 +115,8 @@ bool GifFrames::isValid() {
 
 	FindingInfo* lastValidFind = nullptr;
 
+	bool firstFinding = true;
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -136,8 +138,10 @@ bool GifFrames::isValid() {
 				p1Saved = true;
 			}
 
-			if (this->firstFrameWithDescriptor == -1)
-				this->firstFrameWithDescriptor = i;
+			if (firstFinding && !program->drawChangeFoundBetweenFrames) {
+				frames[i].copyTo(this->firstFrameWithDescription);
+				firstFinding = false;
+			}
 			
 			totalArea += finding.area;
 			
@@ -175,6 +179,11 @@ bool GifFrames::isValid() {
 			// 	cv::line(*frames[i], vertices[j], vertices[(j+1)%4], cv::Scalar(255,255,170), 1);
 			// }
 
+			if (firstFinding && program->drawChangeFoundBetweenFrames) {
+				frames[i].copyTo(this->firstFrameWithDescription);
+				firstFinding = false;
+			}
+
 			if (lastValidFind != nullptr) {
 				validFrames++;
 				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
@@ -190,7 +199,7 @@ bool GifFrames::isValid() {
 		if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
 			|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
 			for (size_t j = 0; j < this->findingTrace.size(); j++) {
-				cv::circle(frames[i], this->findingTrace[j], 5, cv::Scalar(0, 0, 255), -1);
+				cv::circle(frames[i], this->findingTrace[j], 1, cv::Scalar(0, 0, 255), -1);
 				
 				if (j + 1 < this->findingTrace.size()) {
 					cv::line(frames[i], this->findingTrace[j], this->findingTrace[j+1], cv::Scalar(0,255,0));
@@ -249,8 +258,8 @@ size_t GifFrames::indexMiddleFrame() {
 	return this->framesAfter == 0 ? this->framesBefore : this->framesBefore + 1;
 }
 
-size_t GifFrames::indexFirstFrameWithChangeDetected(){
-	return this->firstFrameWithDescriptor == -1 ? this->indexMiddleFrame() : this->firstFrameWithDescriptor;
+cv::Mat& GifFrames::firstFrameWithChangeDetected(){
+	return this->firstFrameWithDescription;
 }
 
 std::vector<cv::Point> GifFrames::getFindingTrace() {
