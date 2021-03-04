@@ -412,7 +412,7 @@ void Recognize::StartNotificationsSender() {
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
-								std::vector<std::tuple<size_t, cv::Rect, cv::Point>> trace = gif->getFindingsTrace();
+								std::vector<std::tuple<size_t, cv::Rect, cv::Point, cv::Point>> trace = gif->getFindingsTrace();
 
 								// draw finding rectangle
 								if (this->programConfig.drawChangeFoundBetweenFrames) {

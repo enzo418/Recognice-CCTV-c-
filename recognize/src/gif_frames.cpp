@@ -168,7 +168,8 @@ bool GifFrames::isValid() {
 					std::make_tuple(
 						offset + i, // finding index on "frames" member
 						rotatedFinding, 
-						cv::Point(rotatedCenter.x + this->camera->roi.x, rotatedCenter.y + this->camera->roi.y)
+						cv::Point(rotatedCenter.x + this->camera->roi.x, rotatedCenter.y + this->camera->roi.y),
+						finding.center
 					)
 				);
 			}
@@ -219,7 +220,7 @@ bool GifFrames::isValid() {
 								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif;
 		
 		size_t currFinding_i = 0; 
-		std::tuple<size_t, cv::Rect, cv::Point> currFinding = this->findings[currFinding_i];
+		std::tuple<size_t, cv::Rect, cv::Point, cv::Point> currFinding = this->findings[currFinding_i];
 		bool savedFirstFrameWithFinding = false;
 
 		std::vector<cv::Point> pointsDrawn;
@@ -234,6 +235,10 @@ bool GifFrames::isValid() {
 					frame.copyTo(this->firstFrameWithDescription);
 					savedFirstFrameWithFinding = true;
 				}
+
+				/// -- Test
+				cv::circle(frame, std::get<3>(currFinding), 3, cv::Scalar(255, 50, 50), -1);
+				/// -- Test
 
 				// draw finding rectangle
 				if (program->drawChangeFoundBetweenFrames) {
