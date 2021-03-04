@@ -374,7 +374,7 @@
 			"description": ""
 		},
 		"drawTraceOfChangeFoundOn": {
-			"label": "(Cuando se envie un notificacion) Dibujar el rastro de los cambios encontrados en:<br>  - 0: ninguna<br>  - 1: imagen<br>  - 2: gif\n;  - 3: ambas",
+			"label": "(Cuando se envie un notificacion) Dibujar el rastro de los cambios encontrados en:<br>  - 0: ninguna<br>  - 1: imagen<br>  - 2: gif<br>  - 3: ambas",
 			"description": ""
 		},
 		"recognizer is not running": "El ronocedor esta parado.",
