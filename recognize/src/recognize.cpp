@@ -434,10 +434,10 @@ void Recognize::StartNotificationsSender() {
 								std::vector<cv::Point> trace = gif->getFindingTrace();
 
 								// correct position of the points
-								for (auto &&p : trace) {
-									p.x += camera->config->roi.x;
-									p.y += camera->config->roi.y;								
-								}
+								// for (auto &&p : trace) {
+								// 	p.x += camera->config->roi.x;
+								// 	p.y += camera->config->roi.y;								
+								// }
 
 								// draw the center points and the line between them
 								for (size_t i = 0; i < trace.size(); i++) {
