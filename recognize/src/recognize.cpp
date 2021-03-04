@@ -410,6 +410,8 @@ void Recognize::StartNotificationsSender() {
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
+								std::cout << "Drawing trace" << std::endl;
+								
 								std::vector<cv::Point> trace = gif->getFindingTrace();
 
 								// correct position of the points
