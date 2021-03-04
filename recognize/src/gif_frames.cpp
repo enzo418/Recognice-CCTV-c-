@@ -169,7 +169,7 @@ bool GifFrames::isValid() {
 						offset + i, // finding index on "frames" member
 						rotatedFinding, 
 						cv::Point(rotatedCenter.x + this->camera->roi.x, rotatedCenter.y + this->camera->roi.y),
-						finding.center
+						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)
 					)
 				);
 			}
