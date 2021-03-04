@@ -332,11 +332,15 @@ namespace Utils {
 	}
 
 	static cv::Point RotatePointAround(const cv::Point& point, int theta, const cv::Point& around) {
-		const double rad = theta * M_PI / 180;
-		const double cosThetha = cos(rad), sinThehta = sin(rad);
-		const double x2 = cosThetha * (point.x - around.x) + sinThehta * (point.y - around.y);
-		const double y2 = -sinThehta * (point.x - around.x) + cosThetha * (point.y - around.y);
-		return cv::Point(x2, y2);
+		// const double rad = theta * M_PI / 180;
+		// const double cosThetha = cos(rad), sinThehta = sin(rad);
+		// const double x2 = cosThetha * (point.x - around.x) + sinThehta * (point.y - around.y);
+		// const double y2 = -sinThehta * (point.x - around.x) + cosThetha * (point.y - around.y);
+		// return cv::Point(x2, y2);
+		
+		/// TODO: this
+
+		return point;
 	}
 };
 
