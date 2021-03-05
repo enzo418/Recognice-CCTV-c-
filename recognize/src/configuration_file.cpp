@@ -183,7 +183,8 @@ namespace ConfigurationFile {
 
 			<< "\n;localnotifications_sendTextWhenDetectChange=boolean"
 			<< "\n;localnotifications_sendGifWhenDetectChange=boolean"
-			<< "\n;localnotifications_sendImageWhenDetectChange=boolean"			
+			<< "\n;localnotifications_sendImageWhenDetectChange=boolean"
+			<< "\n;localnotifications_sendVideoWhenDetectChange=boolean"
 			
 			<< "\n\n; Authorized users to send actions from telegram. syntax: user_1,user_2,...,user_n."
 			<< "\n;authUsersToSendActions=string,string,..."
@@ -370,12 +371,15 @@ namespace ConfigurationFile {
 			<< "\ntelegrambot_sendImageWhenDetectChange=" << (cfg.telegramConfig.sendImageWhenDetectChange ?  "1" : "0")
 			<< "\ntelegrambot_sendGifWhenDetectChange=" << (cfg.telegramConfig.sendGifWhenDetectChange ?  "1" : "0")
 			<< "\ntelegrambot_sendTextWhenDetectChange=" << (cfg.telegramConfig.sendTextWhenDetectChange ?  "1" : "0")
-			<< "\nimagesFolder=" << cfg.imagesFolder
+			<< "\ntelegrambot_sendVideoWhenDetectChange=" << (cfg.telegramConfig.sendVideoWhenDetectChange ?  "1" : "0")
+			
+			<< "\n\nimagesFolder=" << cfg.imagesFolder
 			
 			<< "\n\nuseLocalNotifications=" << (cfg.localNotificationsConfig.useLocalNotifications ? "1" : "0")
 			<< "\nlocalnotifications_sendTextWhenDetectChange=" << (cfg.localNotificationsConfig.sendTextWhenDetectChange ?  "1" : "0")
 			<< "\nlocalnotifications_sendGifWhenDetectChange=" << (cfg.localNotificationsConfig.sendGifWhenDetectChange ?  "1" : "0")
 			<< "\nlocalnotifications_sendImageWhenDetectChange=" << (cfg.localNotificationsConfig.sendImageWhenDetectChange ?  "1" : "0")
+			<< "\nlocalnotifications_sendVideoWhenDetectChange=" << (cfg.localNotificationsConfig.sendVideoWhenDetectChange ?  "1" : "0")
 			
 			<< "\n\nanalizeBeforeAfterChangeFrames=" << (cfg.analizeBeforeAfterChangeFrames ? "1" : "0")
 
@@ -479,6 +483,8 @@ namespace ConfigurationFile {
 			config.telegramConfig.sendGifWhenDetectChange = value == "1";
 		} else if (id == "telegrambot_sendtextwhendetectchange" || id == "telegrambot_sendtextafterchange") {
 			config.telegramConfig.sendTextWhenDetectChange = value == "1";
+		} else if (id == "telegrambot_sendvideowhendetectchange" || id == "telegrambot_sendvideoafterchange") {
+			config.telegramConfig.sendVideoWhenDetectChange = value == "1";
 		} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 			Utils::toLowerCase(value);
 			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
@@ -537,6 +543,8 @@ namespace ConfigurationFile {
 			config.localNotificationsConfig.sendImageWhenDetectChange = value == "1";
 		} else if (id == "localnotifications_sendgifwhendetectchange" || id == "localnotification_sendgifwhendetectchange") {
 			config.localNotificationsConfig.sendGifWhenDetectChange = value == "1";
+		} else if (id == "localnotifications_sendvideowhendetectchange" || id == "localnotification_sendvideowhendetectchange") {
+			config.localNotificationsConfig.sendVideoWhenDetectChange = value == "1";
 		} else if (id == "analizebeforeafterchangeframes") {
 			config.analizeBeforeAfterChangeFrames = value == "1";
 		} else if (id == "framestoanalyzechangevalidity") {

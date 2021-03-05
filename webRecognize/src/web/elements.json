@@ -220,6 +220,12 @@
 								"type": "boolean",
 								"hidden": false,
 								"placeholder": ""
+							},
+							{	
+								"target": "telegrambot_sendVideoWhenDetectChange",
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
 							}
 						]
 					},
@@ -241,6 +247,12 @@
 							},
 							{	
 								"target": "localnotifications_sendtextwhendetectchange" ,
+								"type": "boolean",
+								"hidden": false,
+								"placeholder": ""
+							},
+							{	
+								"target": "localnotifications_sendVideowhendetectchange" ,
 								"type": "boolean",
 								"hidden": false,
 								"placeholder": ""

@@ -71,6 +71,9 @@
 		"telegrambot_sendtextwhendetectchange": {
 			"label": "Send a text alert when the program detectes a change",
 			"description": ""
+		},"telegrambot_sendvideowhendetectchange": {
+			"label": "Send a video alert when the program detectes a change",
+			"description": ""
 		},
 		"localnotifications_sendimagewhendetectchange": {
 			"label": "Send a image when the program detectes a change",
@@ -82,6 +85,9 @@
 		},
 		"localnotifications_sendtextwhendetectchange": {
 			"label": "Send a text alert when the program detectes a change",
+			"description": ""
+		},"localnotifications_sendvideowhendetectchange": {
+			"label": "Send a video alert when the program detectes a change",
 			"description": ""
 		},
 		"authUsersToSendActions": {
@@ -260,6 +266,9 @@
 		"telegrambot_sendtextwhendetectchange": {
 			"label": "Enviar una notificacion con TEXTO cuando ocurra un cambio",
 			"description": ""
+		},"telegrambot_sendVideowhendetectchange": {
+			"label": "Enviar una notificacion con VIDEO cuando ocurra un cambio",
+			"description": ""
 		},
 		"localnotifications_sendimagewhendetectchange": {
 			"label": "Enviar una notificacion con una IMAGEN cuando ocurra un cambio",
@@ -271,6 +280,10 @@
 		},
 		"localnotifications_sendtextwhendetectchange": {
 			"label": "Enviar una notificacion con TEXTO cuando ocurra un cambio",
+			"description": ""
+		},
+		"localnotifications_sendvideowhendetectchange": {
+			"label": "Enviar una notificacion con VIDEO cuando ocurra un cambio",
 			"description": ""
 		},
 		"authUsersToSendActions": {
