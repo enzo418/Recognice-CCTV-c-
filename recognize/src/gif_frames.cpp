@@ -147,17 +147,17 @@ bool GifFrames::isValid() {
 			totalArea += finding.area;
 			
 			if (offset + i >= 0) {
-				const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, -1 * camera->rotation, cv::Point(0,0));
-				const cv::Rect rotatedFinding(
-					cv::Point(
-						rotatedCenter.x - finding.rect.size.width / 2,
-						rotatedCenter.y - finding.rect.size.height / 2
-					), finding.rect.size);
-				std::cout 	<< "[GIF] Rotated center: " << rotatedCenter
-							<< "\n      From: " << finding.center
-							<< "\n      With angle: " << camera->rotation
-							<< "\n      Around: " << imageCenter
-							<< std::endl;
+				// const cv::Point rotatedCenter = Utils::RotatePointAround(finding.center, -1 * camera->rotation, cv::Point(0,0));
+				// const cv::Rect rotatedFinding(
+				// 	cv::Point(
+				// 		rotatedCenter.x - finding.rect.size.width / 2,
+				// 		rotatedCenter.y - finding.rect.size.height / 2
+				// 	), finding.rect.size);
+				// std::cout 	<< "[GIF] Rotated center: " << rotatedCenter
+				// 			<< "\n      From: " << finding.center
+				// 			<< "\n      With angle: " << camera->rotation
+				// 			<< "\n      Around: " << imageCenter
+				// 			<< std::endl;
 
 				// const cv::Point centerRotated = cv::Point(
 				// 		rotatedFinding.x + rotatedFinding.width / 2,
@@ -167,9 +167,8 @@ bool GifFrames::isValid() {
 				this->findings.push_back(
 					std::make_tuple(
 						offset + i, // finding index on "frames" member
-						rotatedFinding, 
-						cv::Point(rotatedCenter.x + this->camera->roi.x, rotatedCenter.y + this->camera->roi.y),
-						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)
+						finding.rect.boundingRect(), 
+						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)						
 					)
 				);
 			}
@@ -220,7 +219,7 @@ bool GifFrames::isValid() {
 								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif;
 		
 		size_t currFinding_i = 0; 
-		std::tuple<size_t, cv::Rect, cv::Point, cv::Point> currFinding = this->findings[currFinding_i];
+		std::tuple<size_t, cv::Rect, cv::Point> currFinding = this->findings[currFinding_i];
 		bool savedFirstFrameWithFinding = false;
 
 		std::vector<cv::Point> pointsDrawn;
@@ -235,10 +234,6 @@ bool GifFrames::isValid() {
 					frame.copyTo(this->firstFrameWithDescription);
 					savedFirstFrameWithFinding = true;
 				}
-
-				/// -- Test
-				cv::circle(frame, std::get<3>(currFinding), 3, cv::Scalar(255, 50, 50), -1);
-				/// -- Test
 
 				// draw finding rectangle
 				if (program->drawChangeFoundBetweenFrames) {
@@ -306,6 +301,6 @@ cv::Mat& GifFrames::firstFrameWithChangeDetected(){
 	return this->firstFrameWithDescription;
 }
 
-std::vector<std::tuple<size_t, cv::Rect, cv::Point, cv::Point>> GifFrames::getFindingsTrace() {
+std::vector<std::tuple<size_t, cv::Rect, cv::Point>> GifFrames::getFindingsTrace() {
 	return this->findings;
 }
