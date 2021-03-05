@@ -93,6 +93,10 @@ namespace Notification {
 			}
 			return this->text;
 		}  else if (this->type == Type::VIDEO) {
+			if (programConfig.telegramConfig.useTelegramBot
+					&& programConfig.telegramConfig.sendVideoWhenDetectChange) {
+				TelegramBot::SendMediaToChat(this->filename, this->text, programConfig.telegramConfig.chatId, programConfig.telegramConfig.apiKey, true);
+			}
 			return this->filename;
 		} else {
 			return "sound";

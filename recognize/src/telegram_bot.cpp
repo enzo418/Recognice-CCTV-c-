@@ -140,6 +140,13 @@ void TelegramBot::SendMessageToChat(const std::string& message, std::string& cha
 }
 
 void TelegramBot::SendMediaToChat(const std::string& imagePath, const std::string& caption, std::string& chatID, std::string& apiKey, bool isAnimation){
+	// ---------
+	// You can use this method to send an image by setting "isAnimation" parameter to false.
+	// 		Source: https://core.telegram.org/bots/api#sendphoto
+	// ---------
+	// If "isAnimation" is true, then use this method to send animation files (GIF or H.264/MPEG-4 AVC video without sound).**
+	// 		Source: https://core.telegram.org/bots/api#sendanimation
+	// ---------
 	std::string url("https://api.telegram.org/bot" + apiKey + (isAnimation ? "/sendAnimation" : "/sendphoto"));
 
 	CURL* curl = curl_easy_init();

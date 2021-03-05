@@ -286,6 +286,9 @@ void Recognize::StartNotificationsSender() {
 	const bool useNotifications = this->programConfig.telegramConfig.useTelegramBot
 									|| this->programConfig.localNotificationsConfig.useLocalNotifications;
 
+	const bool sendVideo = this->programConfig.telegramConfig.sendVideoWhenDetectChange
+						|| this->programConfig.localNotificationsConfig.sendVideoWhenDetectChange;
+
 	std::filesystem::path cwd = std::filesystem::current_path().string() + "/";
 
 	// Order to send the notifications based on type notification
@@ -447,7 +450,7 @@ void Recognize::StartNotificationsSender() {
 
 						//  Send GIF frames as video
 						// --------------------------
-						if (true /*TODO: programcfg->sendvideonotf*/){							
+						if (sendVideo) {
 
 							//  Open video
 							// -------------
@@ -551,7 +554,7 @@ void Recognize::StartNotificationsSender() {
 							)
 							|| (
 								notf.type == Notification::VIDEO
-								/**&& send video as notification? */
+								&& this->programConfig.localNotificationsConfig.sendVideoWhenDetectChange
 							)
 						)
 						{

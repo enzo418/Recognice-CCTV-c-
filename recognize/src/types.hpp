@@ -111,6 +111,9 @@ struct TelegramBotConfig {
 	
 	// if should send a text message when the threshold change was passed.
 	bool sendTextWhenDetectChange;
+	
+	// if should send a video notification when the threshold change was passed.
+	bool sendVideoWhenDetectChange;
 };
 
 struct LocalNotificationsConfig {
@@ -124,6 +127,9 @@ struct LocalNotificationsConfig {
 	
 	// if should send a text message when the threshold change was passed.
 	bool sendTextWhenDetectChange;
+
+	// if should send a video notification when the threshold change was passed.
+	bool sendVideoWhenDetectChange;
 };
 
 // struct UntrustedFinding {
