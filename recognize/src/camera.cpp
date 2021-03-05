@@ -263,8 +263,8 @@ void Camera::ReadFramesWithInterval() {
 	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
 						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
 	
-	const bool sendVideo = this->_programConfig.telegramConfig.sendVideoWhenDetectChange
-						|| this->_programConfig.localNotificationsConfig.sendVideoWhenDetectChange;
+	const bool sendVideo = this->_programConfig->telegramConfig.sendVideoWhenDetectChange
+						|| this->_programConfig->localNotificationsConfig.sendVideoWhenDetectChange;
 
 	const bool saveChangeVideo = this->_programConfig->saveChangeInVideo;
 
