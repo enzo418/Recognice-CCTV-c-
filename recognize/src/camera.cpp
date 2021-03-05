@@ -262,6 +262,9 @@ void Camera::ReadFramesWithInterval() {
 								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
 	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
 						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
+	
+	const bool sendVideo = this->_programConfig.telegramConfig.sendVideoWhenDetectChange
+						|| this->_programConfig.localNotificationsConfig.sendVideoWhenDetectChange;
 
 	const bool saveChangeVideo = this->_programConfig->saveChangeInVideo;
 
@@ -309,7 +312,7 @@ void Camera::ReadFramesWithInterval() {
 			}
 
 			// Once a new frame is ready, update buffer frames
-			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif) {
+			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif || sendVideo) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready

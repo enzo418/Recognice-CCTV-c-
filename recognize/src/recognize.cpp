@@ -288,6 +288,12 @@ void Recognize::StartNotificationsSender() {
 
 	const bool sendVideo = this->programConfig.telegramConfig.sendVideoWhenDetectChange
 						|| this->programConfig.localNotificationsConfig.sendVideoWhenDetectChange;
+		
+	const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
+
+	const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
+
+	const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
 
 	std::filesystem::path cwd = std::filesystem::current_path().string() + "/";
 
@@ -301,9 +307,17 @@ void Recognize::StartNotificationsSender() {
 	};
 
 	while (!stop && useNotifications) {
+		// iterate over the cameras
 		for (auto &&camera : cameras) {
 
-			if (sendGif || programConfig.analizeBeforeAfterChangeFrames) {
+			// if is needed there are frames saved
+			if (sendGif || programConfig.analizeBeforeAfterChangeFrames || sendVideo) {				
+				const std::string caption_message = Utils::FormatNotificationTextString(
+														this->programConfig.messageOnTextNotification, 
+														camera->config->cameraName
+													);
+
+				// iterate over current gifs availables
 				size_t sz = camera->gifsReady.size();
 				for (size_t i = 0; i < sz; i++) {
 					bool eraseGifs = false;
@@ -316,23 +330,24 @@ void Recognize::StartNotificationsSender() {
 					if (gif->getState() == State::Ready 
 							&& intervalFrames >= this->programConfig.secondsBetweenImage
 							&& gif->isValid()) {
+						
+						// since we found a gif valid, erase all the others and get new gifs
+						eraseGifs = true;
+
 						this->currentGroupID += 1;
 
-						const bool saveChangeVideo = this->programConfig.saveChangeInVideo;
-						const std::string imageFolder = "./" + programConfig.imagesFolder + "/" ;
+						// Current group id is a identifier for notifications that have the same origin,
+						// it's represented in one single element on the frontend to denote that.
 						const ulong& group_id = this->currentGroupID;
 						const std::string identifier = std::to_string(group_id);
 
 						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
 						
-						const std::string caption_message = Utils::FormatNotificationTextString(
-																this->programConfig.messageOnTextNotification, 
-																camera->config->cameraName
-															);
-							
+						//  Save a video longer that GIF - **Currently on testing**
+						// ---------------------------------------------------------
 						if (saveChangeVideo) {
 							// -------------------------------------------
-							//  Concat the two camera videos into a video
+							//  Concat the two videos from the camera into a video
 							// -------------------------------------------
 
 							std::filesystem::path file1 = (cwd / std::filesystem::path(camera->videosPath[!camera->currentIndexVideoPath])).lexically_normal();
@@ -394,25 +409,23 @@ void Recognize::StartNotificationsSender() {
 							videoPath = "";
 						}
 
-						// -----------------------------------------------------------
-						//  Take before and after frames and combine them into a .gif
-						// -----------------------------------------------------------
 						const std::string imagesIdentifier = imageFolder + std::to_string(camera->config->order);
 						const std::string root = imageFolder + identifier;
 						const std::string gifPath = saveChangeVideo ? videoPath.substr(0, videoPath.length() - 4) + ".gif" : root + ".gif";
 						
 						std::string location;
-						const size_t gframes = programConfig.numberGifFrames.framesAfter + programConfig.numberGifFrames.framesBefore;
-
-						eraseGifs = true;
 
 						std::vector<cv::Mat> frames = gif->getGifFrames();
 
+						//  Send the notifications requested since the changes found are valid
+						// --------------------------------------------------------------------
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
-							// text notification
+							//  Text notification
+							// -------------------
 							camera->pendingNotifications.push_back(Notification::Notification(caption_message, group_id));
 						
-							// image notification
+							//  Image notification
+							// --------------------
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
@@ -477,6 +490,8 @@ void Recognize::StartNotificationsSender() {
 							);
 						}
 
+						//  Write frames into single files and save the command to build .gif
+						// -------------------------------------------------------------------
 						if (sendGif) {
 							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
