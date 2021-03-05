@@ -321,7 +321,12 @@ void Recognize::StartNotificationsSender() {
 						const std::string identifier = std::to_string(group_id);
 
 						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
-
+						
+						const std::string caption_message = Utils::FormatNotificationTextString(
+																this->programConfig.messageOnTextNotification, 
+																camera->config->cameraName
+															);
+							
 						if (saveChangeVideo) {
 							// -------------------------------------------
 							//  Concat the two camera videos into a video
@@ -402,13 +407,10 @@ void Recognize::StartNotificationsSender() {
 
 						if (this->programConfig.analizeBeforeAfterChangeFrames) {// text notification
 							// text notification
-							std::string message = Utils::FormatNotificationTextString(this->programConfig.messageOnTextNotification, camera->config->cameraName);
-							camera->pendingNotifications.push_back(Notification::Notification(message, group_id));
+							camera->pendingNotifications.push_back(Notification::Notification(caption_message, group_id));
 						
 							// image notification
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
-
-							/// REMEMBER TO DRAW THE FINDING RECTANGLE, SINCE WE DO NOT DOIT ANYMORE IN GIF
 
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
@@ -435,25 +437,49 @@ void Recognize::StartNotificationsSender() {
 								}
 							}
 							
-							camera->pendingNotifications.push_back(Notification::Notification(detected_frame, message, true, group_id));
+							camera->pendingNotifications.push_back(
+								Notification::Notification(
+									detected_frame, 
+									caption_message, 
+									true, 
+									group_id));
+						}
+
+						//  Send GIF frames as video
+						// --------------------------
+						if (true /*TODO: programcfg->sendvideonotf*/){							
+
+							//  Open video
+							// -------------
+							const int fourc = cv::VideoWriter::fourcc('H', '2', '6', '4');
+							const double fps = 8.0;
+							const std::string path = imageFolder + std::to_string(camera->config->order) + "_" + identifier + "_notification.mp4";
+							cv::VideoWriter videoNotf(path, fourc, fps, RESIZERESOLUTION, true);
+							
+							//  Write frames
+							// --------------
+							for (size_t i = 0; i < frames.size(); i++) {
+								videoNotf.write(frames[i]);
+							}
+
+							//  Release and save notification
+							// --------------------------------
+							videoNotf.release();
+							camera->pendingNotifications.push_back(
+								Notification::Notification(
+									path, 
+									caption_message, 
+									group_id
+								)
+							);
 						}
 
 						if (sendGif) {
 							// This for sentence is "quite" fast so we can do it here and notifications will not be delayed
 							for (size_t i = 0; i < frames.size(); i++) {
 								location = imagesIdentifier + "_" + std::to_string((int)i) + ".jpg";
-
 								cv::imwrite(location, frames[i]);
-
-								// this if introduces from 20% to 50% extra of cpu time
-								// doesn't really matter too much since we are talking of
-								// about 50 ~ 200 ms more in my tests with 20 frames.
-								// if (saveChangeVideo)
-								// 	camera->AppendFrameToVideo(frames[i]);
 							}
-							
-							// if (saveChangeVideo)
-							// 	camera->ReleaseChangeVideo();
 
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
@@ -478,7 +504,11 @@ void Recognize::StartNotificationsSender() {
 					}
 				}
 			}
-			
+		}
+
+		//  Send all the notifications with priorities
+		// --------------------------------------------
+		for (auto &&camera : cameras) {
 			size_t size = camera->pendingNotifications.size();
 			
 			// iterate types priority
@@ -539,10 +569,9 @@ void Recognize::StartNotificationsSender() {
 				}
 			}
 
-			camera->pendingNotifications.erase(camera->pendingNotifications.begin(), camera->pendingNotifications.begin() + size);
-			// // This proc shouldn't clear all the notifcations since it's a multithread process :p
-			// camera->pendingNotifications.clear();
+			camera->pendingNotifications.erase(camera->pendingNotifications.begin(), camera->pendingNotifications.begin() + size);			
 		}
+		
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
