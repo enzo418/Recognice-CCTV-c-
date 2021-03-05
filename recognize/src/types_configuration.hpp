@@ -75,7 +75,7 @@ struct {
 
 enum DetectionMethod {DoNotUse = 0, HogDescriptor = 1, YoloDNN_V4};
 
-enum DrawTraceOn {None = 0, Image, Gif, Both};
+enum DrawTraceOn {None = 0, Image, Gif, Video, All};
 
 struct ProgramConfiguration {
 	// milliseconds to wait until get a new frame from the camera
@@ -144,9 +144,10 @@ struct ProgramConfiguration {
 	/* 	- 0: none
 	/*  - 1: image
 	/*  - 2: gif
-	/* 	- 3: both
+	/* 	- 3: video
+	/*  - 4: all
 	*/
-	DrawTraceOn drawTraceOfChangeFoundOn = DrawTraceOn::Both;
+	DrawTraceOn drawTraceOfChangeFoundOn = DrawTraceOn::All;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

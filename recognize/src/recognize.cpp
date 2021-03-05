@@ -428,27 +428,24 @@ void Recognize::StartNotificationsSender() {
 							// --------------------
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
-							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image 
-								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both) { // draw trace
-								std::vector<std::tuple<size_t, cv::Rect, cv::Point>> trace = gif->getFindingsTrace();
+							std::vector<std::tuple<size_t, cv::Rect, cv::Point>> trace = gif->getFindingsTrace();
 
-								// draw finding rectangle
-								if (this->programConfig.drawChangeFoundBetweenFrames) {
-									cv::Rect bnd = std::get<1>(trace[0]);
-									bnd.x += camera->config->roi.x;
-									bnd.y += camera->config->roi.y;
-									cv::rectangle(detected_frame, bnd, cv::Scalar(255,255,170), 1);
-								}
+							// draw finding rectangle
+							if (this->programConfig.drawChangeFoundBetweenFrames) {
+								cv::Rect bnd = std::get<1>(trace[0]);
+								bnd.x += camera->config->roi.x;
+								bnd.y += camera->config->roi.y;
+								cv::rectangle(detected_frame, bnd, cv::Scalar(255,255,170), 1);
+							}
 
-								// draw all the trace (finding center) points and the lines between them
-								if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-									|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
-									for (size_t j = 0; j < trace.size(); j++) {
-										cv::circle(detected_frame, std::get<2>(trace[j]), 2, cv::Scalar(0, 0, 255), -1);
-										
-										if (j + 1 < trace.size()) {
-											cv::line(detected_frame, std::get<2>(trace[j]), std::get<2>(trace[j+1]), cv::Scalar(0,255,0));
-										}
+							// draw all the trace (finding center) points and the lines between them
+							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::All 
+								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image) {
+								for (size_t j = 0; j < trace.size(); j++) {
+									cv::circle(detected_frame, std::get<2>(trace[j]), 2, cv::Scalar(0, 0, 255), -1);
+									
+									if (j + 1 < trace.size()) {
+										cv::line(detected_frame, std::get<2>(trace[j]), std::get<2>(trace[j+1]), cv::Scalar(0,255,0));
 									}
 								}
 							}

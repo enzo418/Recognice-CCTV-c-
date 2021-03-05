@@ -215,8 +215,9 @@ bool GifFrames::isValid() {
 		//  Draw trace and findings on the frames
 		// ---------------------------------------
 
-		const bool drawTrace = this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif;
+		const bool drawTrace = this->program->drawTraceOfChangeFoundOn == DrawTraceOn::All 
+								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif
+								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Video;
 		
 		size_t currFinding_i = 0; 
 		std::tuple<size_t, cv::Rect, cv::Point> currFinding = this->findings[currFinding_i];
@@ -252,10 +253,8 @@ bool GifFrames::isValid() {
 				}
 			}
 
-
 			// draw all the trace points (finding center) and the lines between them
-			if (this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Both 
-				|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Gif) {
+			if (drawTrace) {
 				for (size_t j = 0; j < pointsDrawn.size(); j++) {
 					cv::circle(frame, pointsDrawn[j], 2, cv::Scalar(0, 0, 255), -1);
 					
