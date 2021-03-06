@@ -64,6 +64,9 @@ struct CameraConfiguration {
 
 	// how much % of the finding needs to be inside the ignored area to ignore it
 	double minPercentageAreaNeededToIgnore = 95.0;
+
+	// Discriminators of points (center of a finding) to determine if the change is valid or not
+	std::vector<PointsDiscriminatorArea> pointDiscriminators;
 };
 
 // to be able to sort the array of configs

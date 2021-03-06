@@ -342,5 +342,57 @@ namespace Utils {
 
 		// return point;
 	}
+
+	static const std::vector<std::string> GetTokensDiscriminatorArea(const std::string& s, ushort& numberDiscriminator) {
+		std::regex r("(-)?(?:(allow|deny):)?([0-9]+)");
+        std::vector<std::string> results;
+		ushort numberDiscriminator = 0;
+        for(std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r); i != std::sregex_iterator(); ++i)  { 
+			std::smatch m = *i; 
+			for(int j = 0; j < m.size(); j++) {
+				const std::string& str = m[j].str();
+				if (!str.empty() && j != 0) {
+					numberDiscriminator += str == "-" ? 1 : 0;
+					results.push_back(str);
+				}
+			}
+        }
+
+		return results;
+	}
+
+	static bool String2DiscriminatorArea(const std::string& s, std::vector<PointsDiscriminatorArea>& discriminators) {
+		bool sucess = true;
+
+		ushort numberDiscriminator;
+		const std::vector<std::string> tokens = GetTokensDiscriminatorArea(s, numberDiscriminator);
+		
+		discriminators.resize(numberDiscriminator);
+		ushort currDisc = 0;
+		
+		bool isNewPoint = true;
+		for (size_t i = 0; i < tokens.size(); i++) {
+			const std::string& tk = tokens[i];
+			if (tk == "-") {
+				currDisc++;
+			} else if (tk == "allow" || tk == "deny") {
+				discriminators[currDisc].type == (tk == "allow" ? DiscriminatorType::Allow : DiscriminatorType::Deny);
+			} else {
+				// parse the string to a integer, we are sure it is an intenger
+				int n_x = std::stoi(tk);
+				
+				// we also know that this token is x and the next one is y
+				int n_y = std::stoi(tokens[i+1]);
+
+				// push the new point
+				discriminators[currDisc].points.push_back(cv::Point(n_x, n_y));
+
+				// skip the next token since we already use it as n_y
+				i++;
+			}
+		}
+
+		return sucess;	
+	}
 };
 

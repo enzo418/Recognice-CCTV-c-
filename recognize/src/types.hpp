@@ -90,6 +90,13 @@ struct AreasDelimiters {
 	};
 };
 
+enum DiscriminatorType {Deny = 0, Allow};
+
+struct PointsDiscriminatorArea {
+	std::vector<cv::Point> points; // points that describes the polygon
+	DiscriminatorType type; // allow points inside this area or deny them?
+};
+
 // ===============
 //  Program types
 // ===============
