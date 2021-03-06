@@ -333,7 +333,10 @@ namespace ConfigurationFile {
 		
 		if (cfg.ignoredAreas.size() > 0)
 			ss << "\nignoredAreas=" << Utils::IgnoredAreasToString(cfg.ignoredAreas);
-
+		
+		if (cfg.pointDiscriminators.size() > 0)
+			ss << "\npointsDiscriminators=" << Utils::DiscriminatorArea2String(cfg.pointDiscriminators);
+			
 		return ss.str();
 	}
 
@@ -708,6 +711,10 @@ namespace ConfigurationFile {
 			} catch (std::invalid_argument e) {
 				sucess = false;
 			}
+		} else if (id == "pointsdiscriminators" || id == "pointsdiscriminatorarea") {
+			sucess = Utils::String2DiscriminatorArea(value, config.pointDiscriminators);
+		} else {
+			sucess = false;
 		}
 		
 		return sucess;
