@@ -12,12 +12,13 @@
 	<link rel="stylesheet" href="assets/styles.css">
 
 	<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" sizes="any">
-
+	
 	<script async src="assets/push.min.js"></script>
 	<script async src="assets/fontawesome.js"></script>
 	<script src='assets/moment.min.js'></script>
 	<script src='assets/bulma-collapsible.min.js'></script>
 	<script src='assets/jquery.min.js'></script>
+	<script src='assets/simplify.js'></script>	
 	<script src='app.js'></script>
 </head>
 
@@ -340,6 +341,57 @@
 						</button>
 
 						<button class="button is-success" id="button-camera-save-igarea" onclick="saveCameraIgarea(event, true)">
+							<span class="icon is-small">
+								<i class="fas fa-check"></i>
+							</span>
+							<span data-translation="Save">Save</span>
+						</button>
+					</div>
+				</div>
+			</article>
+		</div>
+	</div>
+
+	<!-- Modal exclusivity areas -->
+	<div class="modal" id="modal-exclusivity-areas" data-index="">
+		<div class="modal-background"></div>
+		<div class="modal-content container is-fullhd">
+
+			<!-- Message -->
+			<article class="message is-primary">
+				<div class="message-header">
+					<p data-translation="Select the exclusivity areas of the camera">Select the exclusivity areas of the camera</p>
+					
+					<div class="message-header-button">
+						<button class="button sizable" onclick="hndlExclAreas.closeCurrentPoly()" data-translation="Close polygon">Close polygon</button>
+						<button class="button sizable" onclick="hndlExclAreas.aproxPoly()" data-translation="Aproximate polygon curve(s)">Aproximate polygon curve(s)</button>
+						
+						<div id="toggle-exclusivity-area-type" class="buttons has-addons">
+							<button class="button" data-type="allow">Allow points inside this poly</button>
+							<button class="button is-warning is-selected" data-type="deny">Deny points inside this poly</button>
+						</div>
+
+						<div class="undo-redo sizable">
+							<button class="button" onclick="hndlExclAreas.undo()"><i class="fas fa-undo"></i><p>Undo</p></button>
+							<button class="button" onclick="hndlExclAreas.redo()"><p>Redo</p><i class="fas fa-redo"></i></button>
+						</div>
+
+						<button class="button sizable" onclick="hndlExclAreas.removeAll()" data-translation="Remove all">Remove all</button>
+					</div>
+				</div>
+				<div class="message-body">
+					
+					<canvas width="640" height="360"></canvas>
+
+					<div class="buttons-exclusivity-areas">
+						<button class="button is-danger" id="button-camera-discard-exclusivity-areas" onclick="hndlExclAreas.save(event, false)">
+							<span class="icon is-small">
+								<i class="fas fa-times"></i>
+							</span>
+							<span data-translation="Cancel">Cancel</span>
+						</button>
+
+						<button class="button is-success" id="button-camera-save-exclusivity-areas" onclick="hndlExclAreas.save(event, true)">
 							<span class="icon is-small">
 								<i class="fas fa-check"></i>
 							</span>

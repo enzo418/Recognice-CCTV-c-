@@ -18,6 +18,10 @@ const getCameraContainerTemplate = (i, camera) => `
 			<button class="button button-select-camera-ignored-areas" 
 					onclick="selectCameraIgnoredAreas(event, ${i})"
 					data-translation="Select camera ignored areas">Select camera ignored areas</button>
+			
+			<button class="button button-select-camera-exclusivity-areas" 
+					onclick="hndlExclAreas.openModal(event, ${i})"
+					data-translation="Select camera exclusivity areas">Select camera exclusivity areas</button>
 
 			<button class="button is-danger" 
 					onclick="deleteCamera(event, ${i})"
@@ -151,6 +155,100 @@ var cnvAreas = {
 		image.onload = () => this.ctx.drawImage(image, 0, 0);
 
 		image.src = "data:image/jpg;base64," + this.lastImage;
+	}
+}
+
+// Handler exclusivity areas
+var hndlExclAreas = {
+	canvas: null,
+	ctx: null,
+	lastImage: "",
+	x: 0,
+	y: 0,
+	areas: [], // area: {lt: {x, y}, width, height}
+	current: {
+		points: [],
+		color: "",
+		aproximated: false
+	},
+	areasString: "",
+	colors: {
+		allow: "Chartreuse",
+		deny: "Crimson"
+	},
+	lastUndoEvents: [], // array of { type: string [point or area], obj: Object }
+	removeAll: function () {
+		this.areas = [];
+		this.areasString = "";
+		this.current = {
+			points: [],
+			color: ""
+		};
+
+		this.redraw();
+
+		/// TODO
+
+		// var camindex = $('#modal-igarea').data("index");
+		// document.querySelector('#camera-' + camindex)
+		// 	.querySelector('input[name="ignoredareas"]')
+		// 	.value = "";
+
+		// var image = new Image();
+		// image.onload = () => this.ctx.drawImage(image, 0, 0);
+
+		// image.src = "data:image/jpg;base64," + this.lastImage;
+	},
+	save: function ($e, $save) {
+		/// TODO
+
+		// var camindex = $('#modal-roi')[0].dataset["index"];
+		// var camera = document.querySelector('#camera-' + camindex);
+
+		// if (save) {
+		// 	var roiInput = camera.querySelector('input[name="roi"]');
+		// 	roiInput.value = cnvRoi.roi;
+		// }
+
+		// cnvRoi.x = cnvRoi.y = 0;
+
+		// camera.querySelector('.button-select-camera-roi').classList.remove('is-loading');
+		// $('#modal-roi').toggleClass('is-active');
+	},
+	openModal: function ($ev, $cameraIndex) {
+		$($ev.target).addClass("is-loading");
+
+		frameRequestOrigin = "exclusivity-areas";
+	
+		var cam = document.querySelector(`#camera-${$cameraIndex}`);
+	
+		var rotation = parseInt(cam.querySelector(`input[name="rotation"]`).value);
+	
+		var roi = cam.querySelector('input[name="roi"]').value;
+	
+		var url = cam.querySelector(`input[name="url"]`).value || cameras[$cameraIndex].url;
+	
+		var parsedRoi = stringToRoi(roi);
+		if (parsedRoi) {
+			$(hndlExclAreas.canvas).attr("width", parsedRoi[2])
+			$(hndlExclAreas.canvas).attr("height", parsedRoi[3]);
+		}
+	
+		sendObj('get_camera_frame', { index: $cameraIndex, rotation, url, roi });
+	
+		unfinishedRequests["get_camera_frame"] = function () {
+			setTimeout(function () {
+				$($ev.target).removeClass("is-loading");
+			}, 500);
+		}
+	},
+	closeCurrentPoly: function () {}, // Defined in the events,
+	aproxPoly: function () {}, // Defined in the events,
+	redraw: function () {}, // Defined in the events,
+	redo: function () {}, // Defined in the events,
+	undo: function () {}, // Defined in the events,
+	getTypeSelected: function() {
+		return document.getElementById('toggle-exclusivity-area-type').querySelector('.is-selected').dataset.type;
 	}
 }
 
@@ -365,7 +463,7 @@ $(function () {
 				image.src = "data:image/jpg;base64," + frame;
 
 				cnvRoi.lastImage = frame;
-			} else {
+			} else if (frameRequestOrigin === "ig-areas") {
 				cnvAreas.areas = [];
 
 				var modal = document.querySelector('#modal-igarea');
@@ -407,6 +505,48 @@ $(function () {
 				image.src = "data:image/jpg;base64," + frame;
 
 				cnvAreas.lastImage = frame;
+			} else if (frameRequestOrigin === "exclusivity-areas") {
+				hndlExclAreas.areas = [];
+
+				var modal = document.querySelector('#modal-exclusivity-areas');
+
+				modal.classList.add('is-active');
+
+				modal.dataset.index = index;
+
+				var image = new Image();
+				image.onload = function () {
+					hndlExclAreas.ctx.drawImage(image, 0, 0);
+
+					// hndlExclAreas.ctx.strokeStyle = "Red";
+					// hndlExclAreas.ctx.lineWidth = 5;
+
+					// var camera = document.querySelector('#camera-' + index);
+					// var igAreas = camera.querySelector('input[name="ignoredareas"]');
+					// hndlExclAreas.areasString = igAreas.value;
+					// if (hndlExclAreas.areasString.length > 0) {
+					// 	var numbers = hndlExclAreas.areasString.match(/\d+/g).map(i => parseInt(i));
+					// 	if (numbers.length % 4 === 0) {
+					// 		for (var base = 0; base < numbers.length; base += 4) {
+					// 			const color = hndlExclAreas.colors[getRandomArbitrary(0, hndlExclAreas.colors.length)];
+					// 			const lt = { x: numbers[base + 0], y: numbers[base + 1] },
+					// 				width = numbers[base + 2],
+					// 				heigth = numbers[base + 3];
+
+					// 			hndlExclAreas.areas.push({ lt, width, heigth, color });
+
+					// 			hndlExclAreas.ctx.strokeStyle = color;
+					// 			hndlExclAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);
+					// 		}
+					// 	}
+					// }
+
+					// console.log("areas loaded: ", hndlExclAreas.areas.length);
+					onResize();
+				};
+				image.src = "data:image/jpg;base64," + frame;
+
+				hndlExclAreas.lastImage = frame;
 			}
 		}
 
@@ -924,6 +1064,7 @@ function saveCameraROI($ev, save) {
 
 function saveCameraIgarea($ev, save) {
 	var camindex = $('#modal-igarea')[0].dataset["index"]; // $('#modal-igarea').data("index"); <-- bugged
+	var camindex = $('#modal-igarea')[0].dataset["index"]; // $('#modal-igarea').data("index"); <-- bugged
 	var camera = document.querySelector('#camera-' + camindex);
 
 	if (save) {
@@ -937,6 +1078,7 @@ function saveCameraIgarea($ev, save) {
 
 	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');
 	$('#modal-igarea').toggleClass('is-active');
+	$('#modal-igarea').toggleClass('is-active');
 }
 
 function onResize() {
@@ -947,6 +1089,10 @@ function onResize() {
 	var bounds = cnvAreas.canvas.getBoundingClientRect()
 	cnvAreas.x = bounds.left;
 	cnvAreas.y = bounds.top;
+
+	var bounds = hndlExclAreas.canvas.getBoundingClientRect()
+	hndlExclAreas.x = bounds.left;
+	hndlExclAreas.y = bounds.top;
 }
 
 function getRectangleDimensions($p1, $p2) {
@@ -1008,6 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
 	document.querySelector('#modal-igarea .modal-content').addEventListener('scroll', onResize, false);
+	document.querySelector('#modal-exclusivity-areas .modal-content').addEventListener('scroll', onResize, false);
 
 	// dropdowns
 	var dropdown_file = document.querySelector('#dropdown-file');
@@ -1204,6 +1351,157 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		cnvAreas.canvas.addEventListener("mouseup", relesed, false);
 		cnvAreas.canvas.addEventListener("touchend", relesed, false);
+	});
+
+	$(function () {
+		hndlExclAreas.canvas = document.querySelector('#modal-exclusivity-areas canvas');
+		hndlExclAreas.ctx = hndlExclAreas.canvas.getContext('2d');
+		var buttonInOut = document.getElementById('toggle-exclusivity-area-type');
+
+		// area type button
+		buttonInOut.onclick = function(e) {
+			[...this.children].forEach(ch => ch.classList.remove('is-selected', 'is-warning'));
+			e.target.classList.add('is-selected', 'is-warning')
+		}
+
+		function redraw($should_close_path, $draw_saved_areas = true) {
+			var image = new Image();
+				image.onload = function () {
+					hndlExclAreas.ctx.drawImage(image, 0, 0);
+
+					//  Draw the lines that connects the points
+					// -----------------------------------------
+					hndlExclAreas.ctx.beginPath();
+					
+					hndlExclAreas.ctx.lineWidth = 5;
+					hndlExclAreas.ctx.strokeStyle = "Green";
+					
+					if (hndlExclAreas.current.points.length > 1) {
+						var first = hndlExclAreas.current.points[0];
+						hndlExclAreas.ctx.moveTo(first.x, first.y);
+						
+						for (let index = 1; index < hndlExclAreas.current.points.length; index++) {
+							const element = hndlExclAreas.current.points[index];
+							
+							hndlExclAreas.ctx.lineTo(element.x, element.y);
+						}
+					}
+
+					if ($should_close_path)
+						hndlExclAreas.ctx.closePath();
+
+					hndlExclAreas.ctx.stroke();
+
+					//  Draw the points
+					// -----------------
+					hndlExclAreas.ctx.beginPath();
+
+					hndlExclAreas.ctx.strokeStyle = "Red";
+					hndlExclAreas.current.points.forEach(point => {
+						hndlExclAreas.ctx.moveTo(point.x, point.y);
+						hndlExclAreas.ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+					});
+
+					hndlExclAreas.ctx.stroke();
+					
+					//  Draw the areas saved
+					// ----------------------
+					if ($draw_saved_areas) {
+						hndlExclAreas.areas.forEach(area => {
+							hndlExclAreas.ctx.beginPath();
+							hndlExclAreas.ctx.strokeStyle = area.color;
+							var first = area.points[0];
+							hndlExclAreas.ctx.moveTo(first.x, first.y);
+							
+							for (let index = 1; index < area.points.length; index++) {
+								const element = area.points[index];
+								
+								hndlExclAreas.ctx.lineTo(element.x, element.y);
+							}
+							
+							hndlExclAreas.ctx.closePath();
+							hndlExclAreas.ctx.stroke();
+						});
+					}
+				};
+
+				image.src = "data:image/jpg;base64," + hndlExclAreas.lastImage;
+		}
+
+		hndlExclAreas.redraw = redraw;
+
+		// Click or touch pressed
+		function pressed(e) {
+			e.preventDefault();
+			e = (e.touches || [])[0] || e; // get touch (mobile) or fall to e (mouse)
+			const x = e.clientX - hndlExclAreas.x;
+			const y = e.clientY - hndlExclAreas.y;
+
+			hndlExclAreas.current.points.push({x, y});
+
+			hndlExclAreas.lastUndoEvents = [];
+			
+			redraw(false);
+		}
+
+		hndlExclAreas.closeCurrentPoly = function () {
+			/// TODO: Check if it's a complex polygon, e.g. has intersection between lines of the poly
+
+			if (!this.current.aproximated) {
+				if (confirm(_("Aproximate polygon curve(s)? It can increases the program perfomance."))) {
+					this.aproxPoly();
+				}
+			}
+
+			var type = this.getTypeSelected()
+			this.areas.push({type: type, points: this.current.points, color: hndlExclAreas.colors[type]});
+			this.current = {
+				points: [],
+				color: "",
+				aproximated: false
+			};
+			redraw(true);
+		};
+
+		window.epsilon = 5;
+		hndlExclAreas.aproxPoly = function () {
+			const epsilon = window.epsilon;
+			
+			// Simplify curve using https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm,
+			// since i'am lazy, i use the optimized version from https://github.com/mourner/simplify-js			
+			hndlExclAreas.current.points = simplify(hndlExclAreas.current.points, epsilon, false);
+			
+			this.current.aproximated = true;
+
+			redraw(true);
+		};
+
+		hndlExclAreas.undo = function () {
+			if (this.current.points.length > 0) {
+				this.lastUndoEvents.push({type: 'point', obj: this.current.points.pop()});
+			} else {
+				this.lastUndoEvents.push({type: 'area', obj: this.areas.pop()});
+			}
+
+			redraw(false);
+		}
+
+		hndlExclAreas.redo = function () {
+			const last = this.lastUndoEvents.pop();
+
+			if (last && last.type.length > 0) {
+				if (last.type === 'point') {
+					this.current.points.push(last.obj);
+				} else if (last.type === 'area') {
+					this.areas.push(last.obj);
+				}
+			}
+
+			redraw(false);
+		}
+
+		hndlExclAreas.canvas.addEventListener("mousedown", pressed, false);
+		hndlExclAreas.canvas.addEventListener("touchstart", pressed, false);
 	});
 });
 
