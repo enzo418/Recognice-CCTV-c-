@@ -394,5 +394,22 @@ namespace Utils {
 
 		return sucess;	
 	}
+
+	static const std::string DiscriminatorArea2String(std::vector<PointsDiscriminatorArea>& discriminators) {
+		std::string s;
+		bool isFirst = true;
+		for (auto &&d : discriminators) {			
+			s += (isFirst ? "" : "-");
+			s += (d.type == DiscriminatorType::Allow ? "allow" : "deny");
+			s += ":";
+			
+			for (auto &&p : d.points) {
+				s += std::to_string(p.x) + "," + std::to_string(p.y) + ",";
+			}
+			
+			s.pop_back(); // remove last ,
+			isFirst = false;
+		}		
+	}
 };
 
