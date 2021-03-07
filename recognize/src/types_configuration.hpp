@@ -67,6 +67,9 @@ struct CameraConfiguration {
 
 	// Discriminators of points (center of a finding) to determine if the change is valid or not
 	std::vector<PointsDiscriminatorArea> pointDiscriminators;
+
+	double minPercentageInsideAllowDiscriminator = 80;
+	double maxPercentageInsideDenyDiscriminator = 10;
 };
 
 // to be able to sort the array of configs

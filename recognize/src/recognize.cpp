@@ -481,7 +481,8 @@ void Recognize::StartNotificationsSender() {
 							camera->pendingNotifications.push_back(
 								Notification::Notification(
 									path, 
-									caption_message, 
+									// caption_message, 
+									gif->getText(),
 									group_id
 								)
 							);

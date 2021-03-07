@@ -106,7 +106,7 @@ bool GifFrames::isValid() {
 	cv::Mat* frameCero;
 	cv::Mat diff;
 	
-	size_t validFrames = 0;
+	size_t totalPairFindingMeasured = 0;
 	double totalDistance = 0;
 	double totalAreaDifference = 0;
 	double totalArea = 0;
@@ -122,6 +122,10 @@ bool GifFrames::isValid() {
 
 	const cv::Point imageCenter = cv::Point(RESIZERESOLUTION.width / 2, RESIZERESOLUTION.height / 2);
 	// const cv::Point imageCenter = cv::Point(camera->roi.width / 2, camera->roi.height / 2);
+
+	ushort findingsInsideAllowedAreas = 0;	
+	ushort findingsInsideDeniedAreas = 0;
+	ushort totalValidFindings = 0;
 
 	//// Process frames
 
@@ -139,6 +143,8 @@ bool GifFrames::isValid() {
 		totalNonPixels += cv::countNonZero(diff);
 
 		if (finding.isGoodMatch) {
+			totalValidFindings++;
+
 			if (!p1Saved) {
 				p1 = finding.center;
 				p1Saved = true;
@@ -181,8 +187,16 @@ bool GifFrames::isValid() {
 				}
 			}
 
+			for (auto &&discriminator : camera->pointDiscriminators) {
+				double res = cv::pointPolygonTest(discriminator.points, finding.center, false);
+				if (discriminator.type == DiscriminatorType::Allow && res > 0) 
+					findingsInsideAllowedAreas += 1;
+				else if (discriminator.type == DiscriminatorType::Deny && res > 0)
+					findingsInsideDeniedAreas += 1;
+			}
+			
 			if (lastValidFind != nullptr) {
-				validFrames++;
+				totalPairFindingMeasured++;
 				totalDistance += euclideanDist(framesTransformed[i].finding.center, lastValidFind->center);
 				totalAreaDifference += abs(framesTransformed[i].finding.area - lastValidFind->area);
 			}
@@ -198,16 +212,34 @@ bool GifFrames::isValid() {
 
 	this->debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	this->debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
-	this->debugMessage += "\nAverage area: " + std::to_string(totalArea / validFrames);
-	if (validFrames != 0) {
-		this->avrgDistanceFrames = totalDistance / validFrames;
-		this->avrgAreaDifference = totalAreaDifference / validFrames;
+	this->debugMessage += "\nAverage area: " + std::to_string(totalArea / totalPairFindingMeasured) + " VALID FINDINGS: " + std::to_string(totalValidFindings);
+	this->debugMessage += "\nFindings inside allowed area: " + std::to_string(findingsInsideAllowedAreas) + " | Findings inside denied areas: " + std::to_string(findingsInsideDeniedAreas);
+	if (totalPairFindingMeasured > 1) {
+		this->avrgDistanceFrames = totalDistance / totalPairFindingMeasured;
+		this->avrgAreaDifference = totalAreaDifference / totalPairFindingMeasured;
 	}
+	
 
 	bool valid = false;
 
+	double taA;
+	double taD;
+
+	if (totalValidFindings > 0) {
+		taA = findingsInsideAllowedAreas * 100 / totalValidFindings;
+		taD = findingsInsideDeniedAreas * 100 / totalValidFindings;
+	}
+
+	this->debugMessage += "\nFindings inside allowed: " + std::to_string(taA) + "% vs. needed: " + std::to_string(camera->minPercentageInsideAllowDiscriminator) + "%";
+	this->debugMessage += "\nFindings inside denied: " + std::to_string(taD) + "% vs. max: " + std::to_string(camera->maxPercentageInsideDenyDiscriminator) + "%";
+
 	//// Check if it's valid
-	if (validFrames != 0 && this->avrgDistanceFrames <= 120 && overlappingFindings < camera->thresholdFindingsOnIgnoredArea) {
+	if (totalValidFindings > 0
+		&& this->avrgDistanceFrames <= 120 
+		&& overlappingFindings < camera->thresholdFindingsOnIgnoredArea
+		&& taA >= camera->minPercentageInsideAllowDiscriminator
+		&& taD < camera->maxPercentageInsideDenyDiscriminator) 
+	{
 		valid = true;
 		this->state = State::Send;
 		
@@ -263,24 +295,32 @@ bool GifFrames::isValid() {
 					}
 				}
 			}
+
+			// draw the discraminator areas (bad way)
+			// std::vector<std::vector<cv::Point>> points;
+			// for (auto &&dis : camera->pointDiscriminators) {
+			// 	points.push_back(dis.points);
+			// }
+
+			// cv::drawContours(frame, points, -1, cv::Scalar(255, 20, 10));			
 		}
 	} else {
 		this->state = State::Cancelled;
 		// this->state = State::Send; // uncomment to send it any way
 
 		// This if is only for debuggin purposes
-		if (validFrames == 0) {
+		if (totalPairFindingMeasured == 0) {
 			this->avrgDistanceFrames = 0;
 			this->avrgAreaDifference = 0;
 			this->debugMessage += "\nCancelled due 0 valid frames found.";
 		} else if (this->avrgDistanceFrames > 120) {
 			this->debugMessage += "\nCancelled due avrg distance: " + std::to_string(this->avrgDistanceFrames);
 		} else {
-			this->debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of " + std::to_string(camera->thresholdFindingsOnIgnoredArea) + " validFrames needed.";
+			this->debugMessage += "\nCancelled due to overlapping with ignored areas: " +  std::to_string(overlappingFindings) + " of " + std::to_string(camera->thresholdFindingsOnIgnoredArea) + " totalPairFindingMeasured needed.";
 		}
 	}
 
-	this->debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(this->avrgDistanceFrames) + "\naverage area difference: " + std::to_string(this->avrgAreaDifference) + "\n Valid frames: " + std::to_string(validFrames) + "\n overlapeds: " + std::to_string(overlappingFindings);
+	this->debugMessage += "\nAverage distance between 2 frames finding: " + std::to_string(this->avrgDistanceFrames) + "\naverage area difference: " + std::to_string(this->avrgAreaDifference) + "\n Valid frames: " + std::to_string(totalPairFindingMeasured) + "\n overlapeds: " + std::to_string(overlappingFindings);
 	
 	std::cout << this->debugMessage << std::endl;
 

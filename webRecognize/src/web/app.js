@@ -1108,7 +1108,6 @@ function saveCameraIgarea($ev, save) {
 
 	camera.querySelector('.button-select-camera-ignored-areas').classList.remove('is-loading');
 	$('#modal-igarea').toggleClass('is-active');
-	$('#modal-igarea').toggleClass('is-active');
 }
 
 function onResize() {
