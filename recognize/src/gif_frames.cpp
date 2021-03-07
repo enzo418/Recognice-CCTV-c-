@@ -128,7 +128,7 @@ bool GifFrames::isValid() {
 	ushort totalValidFindings = 0;
 
 	auto start = std::chrono::high_resolution_clock::now();
-	double timeProcessingDiscriminantAreas = 0;
+	double timeMeasuringSomething = 0;
 
 	//// Process frames
 
@@ -182,6 +182,7 @@ bool GifFrames::isValid() {
 				);
 			}
 
+			auto s = std::chrono::high_resolution_clock::now();
 			// check if finding is overlapping with a ignored area
 			for (auto &&j : camera->ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & j;
@@ -189,8 +190,10 @@ bool GifFrames::isValid() {
 					overlappingFindings += 1;
 				}
 			}
+			
+			auto e = std::chrono::high_resolution_clock::now();
 
-			auto s = std::chrono::high_resolution_clock::now();
+			timeMeasuringSomething += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
 
 			for (auto &&discriminator : camera->pointDiscriminators) {
 				double res = cv::pointPolygonTest(discriminator.points, finding.center, false);
@@ -199,10 +202,6 @@ bool GifFrames::isValid() {
 				else if (discriminator.type == DiscriminatorType::Deny && res > 0)
 					findingsInsideDeniedAreas += 1;
 			}
-			
-			auto e = std::chrono::high_resolution_clock::now();
-			
-			timeProcessingDiscriminantAreas += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
 			
 			if (lastValidFind != nullptr) {
 				totalPairFindingMeasured++;
@@ -218,14 +217,14 @@ bool GifFrames::isValid() {
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto timeProcessingGif = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000;
-	timeProcessingDiscriminantAreas /= 1000;
+	timeMeasuringSomething /= 1000;
 
 	double displacementX = abs(p1.x - p2.x);
 	double displacementY = abs(p1.y - p2.y);
 
 	double avrgArea = 0;
 
-	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time processing discriminators: " + std::to_string(timeProcessingDiscriminantAreas) + " ms" + " -- discrimator represents the " + std::to_string(timeProcessingDiscriminantAreas * 100 / timeProcessingGif) + "% of the total";
+	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time processing ignored areas intersection: " + std::to_string(timeMeasuringSomething) + " ms" + " -- discrimator represents the " + std::to_string(timeMeasuringSomething * 100 / timeProcessingGif) + "% of the total";
 	this->debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	this->debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
 	this->debugMessage += "\nFindings inside allowed area: " + std::to_string(findingsInsideAllowedAreas) + " | Findings inside denied areas: " + std::to_string(findingsInsideDeniedAreas);
