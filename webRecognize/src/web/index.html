@@ -366,7 +366,7 @@
 						<button class="button sizable" onclick="hndlExclAreas.closeCurrentPoly()" data-translation="Close polygon">Close polygon</button>
 						<button class="button sizable" onclick="hndlExclAreas.aproxPoly()" data-translation="Aproximate polygon curve(s)">Aproximate polygon curve(s)</button>
 						
-						<div id="toggle-exclusivity-area-type" class="buttons has-addons">
+						<div id="toggle-exclusivity-area-type" class="buttons has-addons selection">
 							<button class="button" data-type="allow">Allow points inside this poly</button>
 							<button class="button is-warning is-selected" data-type="deny">Deny points inside this poly</button>
 						</div>
@@ -377,6 +377,12 @@
 						</div>
 
 						<button class="button sizable" onclick="hndlExclAreas.removeAll()" data-translation="Remove all">Remove all</button>
+						
+						<button class="button sizable selection is-hidden" onclick="hndlExclAreas.select.removeSelected()" data-translation="Remove this area">Remove this area</button>
+
+						<button class="button sizable" onclick="hndlExclAreas.select.startSelectMode()" data-translation="Select area">Select area</button>
+						
+						<button class="button sizable selection is-hidden" onclick="hndlExclAreas.select.exitSelectionMode()" data-translation="Exit from selectoin mode">Exit from selectoin mode</button>
 					</div>
 				</div>
 				<div class="message-body">

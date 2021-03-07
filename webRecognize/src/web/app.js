@@ -160,6 +160,11 @@ var cnvAreas = {
 
 // Handler exclusivity areas
 var hndlExclAreas = {
+	selectors: {
+		modal: '#modal-exclusivity-areas',
+		headerButtons: '.message-header-button',
+		typeSelectorContainer: '#toggle-exclusivity-area-type'
+	},
 	canvas: null,
 	ctx: null,
 	lastImage: "",
@@ -176,14 +181,57 @@ var hndlExclAreas = {
 		deny: "Crimson"
 	},
 	lastUndoEvents: [], // array of { type: string [point or area], obj: Object }
+	select: {
+		areaSelectedIndex: null,
+		selectModeActive: false,
+		startSelectMode: function () {
+			hndlExclAreas.select.selectModeActive = true;
+		},
+		onSelect: function () {
+			[...document.querySelector(`${hndlExclAreas.selectors.modal} ${hndlExclAreas.selectors.headerButtons}`).children]
+			.forEach(el => {
+				if (el.classList.contains('selection')) {
+					el.classList.remove('is-hidden');
+				} else {
+					el.classList.add('is-hidden');
+				}
+			});
+			
+			// set selection type to the same as the area
+			if (hndlExclAreas.getTypeSelected() != hndlExclAreas.areas[hndlExclAreas.select.areaSelectedIndex].type) {
+				$(hndlExclAreas.selectors.typeSelectorContainer + ' .button').toggleClass('is-selected is-warning');
+			}
+		},
+		removeSelected: function () {
+			hndlExclAreas.lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(hndlExclAreas.select.areaSelectedIndex, 1)})
+			hndlExclAreas.redraw();
+			hndlExclAreas.select.exitSelectionMode();			
+		},
+		exitSelectionMode: function () {
+			[...document.querySelector(`${hndlExclAreas.selectors.modal} ${hndlExclAreas.selectors.headerButtons}`).children]
+			.forEach(el => {
+				if (el.classList.contains('selection') && el.id != hndlExclAreas.selectors.typeSelectorContainer.substr(1, hndlExclAreas.selectors.typeSelectorContainer.length)) {
+					el.classList.add('is-hidden');
+				} else {
+					el.classList.remove('is-hidden');
+				}
+			});
+			hndlExclAreas.select.selectModeActive = false;
+			hndlExclAreas.select.areaSelectedIndex = null;
+		}
+	},
 	removeAll: function () {
-		this.areas = [];
-		this.areasString = "";
-		this.current = {
+		if (hndlExclAreas.areas.length == 0)
+			return;
+
+		lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(0, hndlExclAreas.areas.length)})
+
+		hndlExclAreas.areasString = "";
+		hndlExclAreas.current = {
 			points: []
 		};
 
-		this.redraw();
+		hndlExclAreas.redraw();
 
 		var camindex = $('#modal-exclusivity-areas').data("index");
 		document.querySelector('#camera-' + camindex)
@@ -243,11 +291,124 @@ var hndlExclAreas = {
 			}, 500);
 		}
 	},
-	closeCurrentPoly: function () {}, // Saves the poly drawn into the areas collection		- Defined in the events listener.
-	aproxPoly: function () {}, // Aproximates the curves of the poly						- Defined in the events listener.
-	redraw: function () {}, // Draws the canvas with the areas and current points			- Defined in the events listener.
-	redo: function () {}, // Redo last undo													- Defined in the events listener.
-	undo: function () {}, // Undo last action												- Defined in the events listener.
+	closeCurrentPoly: function () { // Saves the poly drawn into the areas collection
+		/// TODO: Check if it's a complex polygon, e.g. has intersection between lines of the poly
+
+		if (hndlExclAreas.current.points.length == 0)
+			return;
+
+		if (!hndlExclAreas.current.aproximated) {
+			if (confirm(_("Aproximate polygon curve(s)? It can increases the program perfomance."))) {
+				hndlExclAreas.aproxPoly();
+			}
+		}
+
+		var type = hndlExclAreas.getTypeSelected()
+		hndlExclAreas.areas.push({type: type, points: hndlExclAreas.current.points});
+		hndlExclAreas.current = {
+			points: [],
+			color: "",
+			aproximated: false
+		};
+		hndlExclAreas.redraw(true);
+	},
+	aproxPoly: function () { // Aproximates the curves of the poly.
+		const epsilon = window.epsilon;
+		
+		// Simplify curve using https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm,
+		// since i'am lazy, i use the optimized version from https://github.com/mourner/simplify-js			
+		hndlExclAreas.current.points = simplify(hndlExclAreas.current.points, epsilon, false);
+		
+		this.current.aproximated = true;
+
+		hndlExclAreas.redraw(true);
+	}, 
+	redraw: function ($should_close_path, $draw_saved_areas = true) { // Draws the canvas with the areas and current points
+		var image = new Image();
+			image.onload = function () {
+				hndlExclAreas.ctx.drawImage(image, 0, 0);
+
+				//  Draw the lines that connects the points
+				// -----------------------------------------
+				hndlExclAreas.ctx.beginPath();
+				
+				hndlExclAreas.ctx.lineWidth = 5;
+				hndlExclAreas.ctx.strokeStyle = "Green";
+				
+				if (hndlExclAreas.current.points.length > 1) {
+					var first = hndlExclAreas.current.points[0];
+					hndlExclAreas.ctx.moveTo(first.x, first.y);
+					
+					for (let index = 1; index < hndlExclAreas.current.points.length; index++) {
+						const element = hndlExclAreas.current.points[index];
+						
+						hndlExclAreas.ctx.lineTo(element.x, element.y);
+					}
+				}
+
+				if ($should_close_path)
+					hndlExclAreas.ctx.closePath();
+
+				hndlExclAreas.ctx.stroke();
+
+				//  Draw the points
+				// -----------------
+				hndlExclAreas.ctx.beginPath();
+
+				hndlExclAreas.ctx.strokeStyle = "Red";
+				hndlExclAreas.current.points.forEach(point => {
+					hndlExclAreas.ctx.moveTo(point.x, point.y);
+					hndlExclAreas.ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+				});
+
+				hndlExclAreas.ctx.stroke();
+				
+				//  Draw the areas saved
+				// ----------------------
+				if ($draw_saved_areas) {
+					hndlExclAreas.areas.forEach(area => {
+						hndlExclAreas.ctx.beginPath();
+						hndlExclAreas.ctx.strokeStyle = hndlExclAreas.colors[area.type];
+						var first = area.points[0];
+						hndlExclAreas.ctx.moveTo(first.x, first.y);
+						
+						for (let index = 1; index < area.points.length; index++) {
+							const element = area.points[index];
+							
+							hndlExclAreas.ctx.lineTo(element.x, element.y);
+						}
+						
+						hndlExclAreas.ctx.closePath();
+						hndlExclAreas.ctx.stroke();
+					});
+				}
+			};
+
+			image.src = "data:image/jpg;base64," + hndlExclAreas.lastImage;
+	}, 
+	redo: function () { // Redo last undo
+		const last = this.lastUndoEvents.pop();
+
+		if (last && last.type.length > 0) {
+			if (last.type === 'point') {
+				this.current.points.push(last.obj);
+			} else if (last.type === 'area') {
+				this.areas.push(last.obj);
+			} else if (last.type === 'areas-removed')
+				this.areas = this.areas.concat(last.obj);
+		}
+
+		hndlExclAreas.redraw(false);
+	},
+	undo: function () { // Undo last action
+		if (this.current.points.length > 0) {
+			this.lastUndoEvents.push({type: 'point', obj: this.current.points.pop()});
+		} else {
+			this.lastUndoEvents.push({type: 'area', obj: this.areas.pop()});
+		}
+
+		hndlExclAreas.redraw(false);
+	},
 	getTypeSelected: function() {
 		return document.getElementById('toggle-exclusivity-area-type').querySelector('.is-selected').dataset.type;
 	},
@@ -1390,74 +1551,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		// area type button
 		buttonInOut.onclick = function(e) {
 			[...this.children].forEach(ch => ch.classList.remove('is-selected', 'is-warning'));
-			e.target.classList.add('is-selected', 'is-warning')
+			e.target.classList.add('is-selected', 'is-warning');
+
+			if (hndlExclAreas.select.selectModeActive) {
+				hndlExclAreas.areas[hndlExclAreas.select.areaSelectedIndex].type = hndlExclAreas.getTypeSelected();
+				hndlExclAreas.redraw();
+			}
 		}
-
-		function redraw($should_close_path, $draw_saved_areas = true) {
-			var image = new Image();
-				image.onload = function () {
-					hndlExclAreas.ctx.drawImage(image, 0, 0);
-
-					//  Draw the lines that connects the points
-					// -----------------------------------------
-					hndlExclAreas.ctx.beginPath();
-					
-					hndlExclAreas.ctx.lineWidth = 5;
-					hndlExclAreas.ctx.strokeStyle = "Green";
-					
-					if (hndlExclAreas.current.points.length > 1) {
-						var first = hndlExclAreas.current.points[0];
-						hndlExclAreas.ctx.moveTo(first.x, first.y);
-						
-						for (let index = 1; index < hndlExclAreas.current.points.length; index++) {
-							const element = hndlExclAreas.current.points[index];
-							
-							hndlExclAreas.ctx.lineTo(element.x, element.y);
-						}
-					}
-
-					if ($should_close_path)
-						hndlExclAreas.ctx.closePath();
-
-					hndlExclAreas.ctx.stroke();
-
-					//  Draw the points
-					// -----------------
-					hndlExclAreas.ctx.beginPath();
-
-					hndlExclAreas.ctx.strokeStyle = "Red";
-					hndlExclAreas.current.points.forEach(point => {
-						hndlExclAreas.ctx.moveTo(point.x, point.y);
-						hndlExclAreas.ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
-					});
-
-					hndlExclAreas.ctx.stroke();
-					
-					//  Draw the areas saved
-					// ----------------------
-					if ($draw_saved_areas) {
-						hndlExclAreas.areas.forEach(area => {
-							hndlExclAreas.ctx.beginPath();
-							hndlExclAreas.ctx.strokeStyle = hndlExclAreas.colors[area.type];
-							var first = area.points[0];
-							hndlExclAreas.ctx.moveTo(first.x, first.y);
-							
-							for (let index = 1; index < area.points.length; index++) {
-								const element = area.points[index];
-								
-								hndlExclAreas.ctx.lineTo(element.x, element.y);
-							}
-							
-							hndlExclAreas.ctx.closePath();
-							hndlExclAreas.ctx.stroke();
-						});
-					}
-				};
-
-				image.src = "data:image/jpg;base64," + hndlExclAreas.lastImage;
-		}
-
-		hndlExclAreas.redraw = redraw;
 
 		// Click or touch pressed
 		function pressed(e) {
@@ -1466,68 +1566,23 @@ document.addEventListener('DOMContentLoaded', () => {
 			const x = e.clientX - hndlExclAreas.x;
 			const y = e.clientY - hndlExclAreas.y;
 
-			hndlExclAreas.current.points.push({x, y});
+			if (!hndlExclAreas.select.selectModeActive) {
+				hndlExclAreas.current.points.push({x, y});
 
-			hndlExclAreas.lastUndoEvents = [];
-			
-			redraw(false);
-		}
-
-		hndlExclAreas.closeCurrentPoly = function () {
-			/// TODO: Check if it's a complex polygon, e.g. has intersection between lines of the poly
-
-			if (!this.current.aproximated) {
-				if (confirm(_("Aproximate polygon curve(s)? It can increases the program perfomance."))) {
-					this.aproxPoly();
+				hndlExclAreas.lastUndoEvents = [];
+				
+				hndlExclAreas.redraw(false);
+			} else {
+				for (var ia in hndlExclAreas.areas) {
+					if (pointPolygonTest(hndlExclAreas.areas[ia].points, {x, y}) > 0) {
+						hndlExclAreas.select.areaSelectedIndex = ia;
+						hndlExclAreas.select.onSelect();
+					}
 				}
 			}
-
-			var type = this.getTypeSelected()
-			this.areas.push({type: type, points: this.current.points});
-			this.current = {
-				points: [],
-				color: "",
-				aproximated: false
-			};
-			redraw(true);
-		};
+		}
 
 		window.epsilon = 5;
-		hndlExclAreas.aproxPoly = function () {
-			const epsilon = window.epsilon;
-			
-			// Simplify curve using https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm,
-			// since i'am lazy, i use the optimized version from https://github.com/mourner/simplify-js			
-			hndlExclAreas.current.points = simplify(hndlExclAreas.current.points, epsilon, false);
-			
-			this.current.aproximated = true;
-
-			redraw(true);
-		};
-
-		hndlExclAreas.undo = function () {
-			if (this.current.points.length > 0) {
-				this.lastUndoEvents.push({type: 'point', obj: this.current.points.pop()});
-			} else {
-				this.lastUndoEvents.push({type: 'area', obj: this.areas.pop()});
-			}
-
-			redraw(false);
-		}
-
-		hndlExclAreas.redo = function () {
-			const last = this.lastUndoEvents.pop();
-
-			if (last && last.type.length > 0) {
-				if (last.type === 'point') {
-					this.current.points.push(last.obj);
-				} else if (last.type === 'area') {
-					this.areas.push(last.obj);
-				}
-			}
-
-			redraw(false);
-		}
 
 		hndlExclAreas.canvas.addEventListener("mousedown", pressed, false);
 		hndlExclAreas.canvas.addEventListener("touchstart", pressed, false);
@@ -1639,4 +1694,55 @@ function changeCurrentElementNotification($i, $only_update_src = false) {
 
 function getRandomArbitrary(min, max) {
 	return Math.round(Math.random() * (max - min) + min);
+}
+
+// if point is inside the polygon it returns > 0, if outside < 0 else 0 if lies on an edge (or coincides with a vertex)
+function pointPolygonTest(pts, pt) {
+	// ray cast alg.
+    var points = [];
+
+    if (pts.length > 0 && typeof pts[0].x === "string") {
+        for (var i in pts)
+            points.push({x: parseInt(pts[i].x), y: parseInt(pts[i].y)});
+    } else {
+        points = pts;
+    }
+
+    var result = 0;
+    var i, total = points.length, counter = 0;
+
+    var ip = {x: Math.round(pt.x), y: Math.round(pt.y)};
+
+    if (total == 0)
+        return -1;
+
+    var v0, v = points[total-1];
+
+    for (i = 0; i < total; i++) {
+        v0 = v;
+        v = points[i];
+
+        if ((v0.y <= ip.y && v.y <= ip.y) ||
+            (v0.y > ip.y && v.y > ip.y) ||
+            (v0.x < ip.x && v.x < ip.x))
+        {
+            if	( ip.y == v.y && (ip.x == v.x || (ip.y == v0.y &&
+            	((v0.x <= ip.x && ip.x <= v.x) || (v.x <= ip.x && ip.x <= v0.x)))))
+                return 0;
+            continue;
+        }
+
+        var dist = 	Math.round((ip.y - v0.y)*(v.x - v0.x))
+                   - Math.round((ip.x - v0.x)*(v.y - v0.y));
+
+        if (dist == 0)
+            return 0;
+        if (v.y < v0.y)
+            dist = -dist;
+
+        counter += dist > 0;
+    }
+
+    result = counter % 2 == 0 ? -1 : 1;
+    return result;
 }

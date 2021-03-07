@@ -451,7 +451,7 @@ legend {
 	text-transform: capitalize;
 }
 
-@media only screen and (max-width: 771px) {
+@media only screen and (min-width: 500px) and (max-width: 771px) {
 	.card-content .configuration-group {
 		width: auto;
 	}
@@ -470,6 +470,21 @@ legend {
 	#modal-exclusivity-areas .message-header-button {		
 		flex-direction: column;
 	}	
+}
+
+@media only screen and (max-width: 500px) {
+	.card-content .configuration-group {
+		width: auto;
+	}
+
+	#modal-exclusivity-areas .message-header-button {		
+    	flex-wrap: wrap;
+	}
+
+	#modal-exclusivity-areas .message-header-button > .sizable {
+		width: 100%;
+		display: flex;
+	}
 }
 
 .new-file-name-container, .file-copy-container {
