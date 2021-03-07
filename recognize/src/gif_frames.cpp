@@ -134,14 +134,22 @@ bool GifFrames::isValid() {
 
 	bool p1Saved = false;
 	for (size_t i = 1; i < ammountOfFrames; i++) {
+		
 		cv::absdiff(framesTransformed[i-1].frame, framesTransformed[i].frame, diff);
 		
 		cv::GaussianBlur(diff, diff, cv::Size(3, 3), 10);
 
 		cv::threshold(diff, diff, camera->noiseThreshold, 255, cv::THRESH_BINARY);
 
+		auto s = std::chrono::high_resolution_clock::now();
+
 		FindingInfo finding = FindRect(diff);
 		framesTransformed[i].finding = finding;
+			
+		auto e = std::chrono::high_resolution_clock::now();
+
+		timeMeasuringSomething += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
+
 
 		totalNonPixels += cv::countNonZero(diff);
 
@@ -182,7 +190,6 @@ bool GifFrames::isValid() {
 				);
 			}
 
-			auto s = std::chrono::high_resolution_clock::now();
 			// check if finding is overlapping with a ignored area
 			for (auto &&j : camera->ignoredAreas) {					
 				cv::Rect inters = finding.rect.boundingRect() & j;
@@ -190,10 +197,6 @@ bool GifFrames::isValid() {
 					overlappingFindings += 1;
 				}
 			}
-			
-			auto e = std::chrono::high_resolution_clock::now();
-
-			timeMeasuringSomething += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
 
 			// this means < 0.0% of the time required in each iteration
 			for (auto &&discriminator : camera->pointDiscriminators) {
@@ -226,7 +229,7 @@ bool GifFrames::isValid() {
 	double avrgArea = 0;
 
 	this->debugMessage += "\nCamera name: " + camera->cameraName;
-	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time processing ignored areas intersection: " + std::to_string(timeMeasuringSomething) + " ms" + " -- discrimator represents the " + std::to_string(timeMeasuringSomething * 100 / timeProcessingGif) + "% of the total";
+	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time finding rect: " + std::to_string(timeMeasuringSomething) + " ms" + " -- it represents the " + std::to_string(timeMeasuringSomething * 100 / timeProcessingGif) + "% of the total";
 	this->debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	this->debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
 	this->debugMessage += "\nFindings inside allowed area: " + std::to_string(findingsInsideAllowedAreas) + " | Findings inside denied areas: " + std::to_string(findingsInsideDeniedAreas);
