@@ -224,7 +224,7 @@ var hndlExclAreas = {
 		if (hndlExclAreas.areas.length == 0)
 			return;
 
-		lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(0, hndlExclAreas.areas.length)})
+		hndlExclAreas.lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(0, hndlExclAreas.areas.length)})
 
 		hndlExclAreas.areasString = "";
 		hndlExclAreas.current = {
