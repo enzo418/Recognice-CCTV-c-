@@ -193,6 +193,10 @@
 		"drawTraceOfChangeFoundOn": {
 			"label": "(When sending a notification) Draw the trace of the change found on:<br>  - 0: none<br>  - 1: image<br>  - 2: gif<br>  - 3: video<br>  - 4: all",
 			"description": ""
+		},
+		"pointsDiscriminators": {
+			"label": "",
+			"description": ""
 		}
 	}, "es": {
 		"msBetweenFrame" : {
@@ -388,6 +392,10 @@
 		},
 		"drawTraceOfChangeFoundOn": {
 			"label": "(Cuando se envie un notificacion) Dibujar el rastro de los cambios encontrados en:<br>  - 0: ninguna<br>  - 1: imagen<br>  - 2: gif<br>  - 3: video<br>  - 4: todos",
+			"description": ""
+		},
+		"pointsDiscriminators": {
+			"label": "",
 			"description": ""
 		},
 		"recognizer is not running": "El ronocedor esta detenido.",

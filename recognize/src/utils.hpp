@@ -346,7 +346,7 @@ namespace Utils {
 	static const std::vector<std::string> GetTokensDiscriminatorArea(const std::string& s, ushort& numberDiscriminator) {
 		std::regex r("(-)?(?:(allow|deny):)?([0-9]+)");
         std::vector<std::string> results;
-		ushort numberDiscriminator = 0;
+		numberDiscriminator = 1; // always is >= 1 since s is not empty
         for(std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r); i != std::sregex_iterator(); ++i)  { 
 			std::smatch m = *i; 
 			for(int j = 0; j < m.size(); j++) {
@@ -376,7 +376,7 @@ namespace Utils {
 			if (tk == "-") {
 				currDisc++;
 			} else if (tk == "allow" || tk == "deny") {
-				discriminators[currDisc].type == (tk == "allow" ? DiscriminatorType::Allow : DiscriminatorType::Deny);
+				discriminators[currDisc].type = (tk == "allow" ? DiscriminatorType::Allow : DiscriminatorType::Deny);
 			} else {
 				// parse the string to a integer, we are sure it is an intenger
 				int n_x = std::stoi(tk);
@@ -409,7 +409,9 @@ namespace Utils {
 			
 			s.pop_back(); // remove last ,
 			isFirst = false;
-		}		
+		}
+		
+		return s;
 	}
 };
 

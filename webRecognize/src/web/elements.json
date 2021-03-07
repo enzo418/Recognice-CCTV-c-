@@ -338,7 +338,13 @@
 						"hidden": false,
 						"placeholder": "",
 						"min": 0
-					}					
+					},
+					{
+						"target": "pointsDiscriminators",
+						"type": "string",
+						"hidden": true,
+						"placeholder": ""						
+					}						
 				]
 			},
 			{

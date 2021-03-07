@@ -165,10 +165,9 @@ var hndlExclAreas = {
 	lastImage: "",
 	x: 0,
 	y: 0,
-	areas: [], // area: {lt: {x, y}, width, height}
+	areas: [], // area: {type: (allow|deny), points: []}
 	current: {
 		points: [],
-		color: "",
 		aproximated: false
 	},
 	areasString: "",
@@ -181,39 +180,36 @@ var hndlExclAreas = {
 		this.areas = [];
 		this.areasString = "";
 		this.current = {
-			points: [],
-			color: ""
+			points: []
 		};
 
 		this.redraw();
 
-		/// TODO
-
-		// var camindex = $('#modal-igarea').data("index");
-		// document.querySelector('#camera-' + camindex)
-		// 	.querySelector('input[name="ignoredareas"]')
-		// 	.value = "";
-
-		// var image = new Image();
-		// image.onload = () => this.ctx.drawImage(image, 0, 0);
-
-		// image.src = "data:image/jpg;base64," + this.lastImage;
+		var camindex = $('#modal-exclusivity-areas').data("index");
+		document.querySelector('#camera-' + camindex)
+			.querySelector('input[name="pointsdiscriminators"]')
+			.value = "";
 	},
 	save: function ($e, $save) {
-		/// TODO
+		var camindex = $('#modal-exclusivity-areas')[0].dataset["index"];
+		var camera = document.querySelector('#camera-' + camindex);
 
-		// var camindex = $('#modal-roi')[0].dataset["index"];
-		// var camera = document.querySelector('#camera-' + camindex);
+		if ($save) {
+			var discriminatorInput = camera.querySelector('input[name="pointsdiscriminators"]');
+			hndlExclAreas.areas2String();
+			discriminatorInput.value = this.areasString;
+		}
 
-		// if (save) {
-		// 	var roiInput = camera.querySelector('input[name="roi"]');
-		// 	roiInput.value = cnvRoi.roi;
-		// }
+		hndlExclAreas.x = hndlExclAreas.y = 0;
+		hndlExclAreas.areas = [];
+		hndlExclAreas.areasString = "";
+		hndlExclAreas.current = {
+			points: [],
+			color: ""
+		};
 
-		// cnvRoi.x = cnvRoi.y = 0;
-
-		// camera.querySelector('.button-select-camera-roi').classList.remove('is-loading');
-		// $('#modal-roi').toggleClass('is-active');
+		camera.querySelector('.button-select-camera-exclusivity-areas').classList.remove('is-loading');
+		$('#modal-exclusivity-areas').toggleClass('is-active');
 	},
 	openModal: function ($ev, $cameraIndex) {
 		$($ev.target).addClass("is-loading");
@@ -227,12 +223,17 @@ var hndlExclAreas = {
 		var roi = cam.querySelector('input[name="roi"]').value;
 	
 		var url = cam.querySelector(`input[name="url"]`).value || cameras[$cameraIndex].url;
+
+		var pointsDiscriminators = cam.querySelector(`input[name="pointsdiscriminators"]`).value || cameras[$cameraIndex].pointsdiscriminators;
 	
 		var parsedRoi = stringToRoi(roi);
 		if (parsedRoi) {
 			$(hndlExclAreas.canvas).attr("width", parsedRoi[2])
 			$(hndlExclAreas.canvas).attr("height", parsedRoi[3]);
 		}
+
+		// update this.areas
+		hndlExclAreas.string2areas(pointsDiscriminators);
 	
 		sendObj('get_camera_frame', { index: $cameraIndex, rotation, url, roi });
 	
@@ -242,13 +243,64 @@ var hndlExclAreas = {
 			}, 500);
 		}
 	},
-	closeCurrentPoly: function () {}, // Defined in the events,
-	aproxPoly: function () {}, // Defined in the events,
-	redraw: function () {}, // Defined in the events,
-	redo: function () {}, // Defined in the events,
-	undo: function () {}, // Defined in the events,
+	closeCurrentPoly: function () {}, // Saves the poly drawn into the areas collection		- Defined in the events listener.
+	aproxPoly: function () {}, // Aproximates the curves of the poly						- Defined in the events listener.
+	redraw: function () {}, // Draws the canvas with the areas and current points			- Defined in the events listener.
+	redo: function () {}, // Redo last undo													- Defined in the events listener.
+	undo: function () {}, // Undo last action												- Defined in the events listener.
 	getTypeSelected: function() {
 		return document.getElementById('toggle-exclusivity-area-type').querySelector('.is-selected').dataset.type;
+	},
+	areas2String: function() {
+		// Syntax to follow: (allow|deny):ap1_x,ap1_y,...,apn_x,apn_y-(allow|deny):bp1_x,bp1_y,...,bpn_x,bpn_y
+		hndlExclAreas.areasString = "";
+		var isFirst = true;
+		hndlExclAreas.areas.forEach(area => {
+			hndlExclAreas.areasString += (isFirst ? "" : "-") + area.type + ":";
+
+			area.points.forEach(p => {
+				hndlExclAreas.areasString += Math.round(p.x) + "," + Math.round(p.y) + ",";
+			});
+
+			hndlExclAreas.areasString = hndlExclAreas.areasString.slice(0, -1);
+			
+			isFirst = false;
+		});
+	},
+	string2areas: function($s) {
+		// Syntax to follow: (allow|deny):ap1_x,ap1_y,...,apn_x,apn_y-(allow|deny):bp1_x,bp1_y,...,bpn_x,bpn_y
+
+		if (!$s || $s.length === 0) {
+			// this.areas = [];
+			return;
+		}
+
+		var currAreaIndex = 0;
+		
+		this.areas.push({points: [], color: "", type: ""});
+
+		[...$s.matchAll(/(?<separator>-)?(?:(?<type>allow|deny):)?(?<point_coord>[0-9]+)/g)].forEach(match => {
+			if (match.groups.separator) {
+				// tokens.push(match.groups.separator);
+				currAreaIndex++;
+				this.areas.push({points: [], color: "", type: ""})
+			}
+			
+			if (match.groups.type) {
+				this.areas[currAreaIndex].type = match.groups.type;
+			}
+
+			if (match.groups.point_coord) {
+				if (this.areas[currAreaIndex].points.length > 0
+					&& this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y === null) {
+					this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y = match.groups.point_coord;
+				} else {
+					this.areas[currAreaIndex].points.push({x: match.groups.point_coord, y: null})
+				}
+			}
+		});
+
+		hndlExclAreas.areas = this.areas;
 	}
 }
 
@@ -506,47 +558,25 @@ $(function () {
 
 				cnvAreas.lastImage = frame;
 			} else if (frameRequestOrigin === "exclusivity-areas") {
-				hndlExclAreas.areas = [];
-
 				var modal = document.querySelector('#modal-exclusivity-areas');
 
 				modal.classList.add('is-active');
 
 				modal.dataset.index = index;
 
-				var image = new Image();
-				image.onload = function () {
-					hndlExclAreas.ctx.drawImage(image, 0, 0);
-
-					// hndlExclAreas.ctx.strokeStyle = "Red";
-					// hndlExclAreas.ctx.lineWidth = 5;
-
-					// var camera = document.querySelector('#camera-' + index);
-					// var igAreas = camera.querySelector('input[name="ignoredareas"]');
-					// hndlExclAreas.areasString = igAreas.value;
-					// if (hndlExclAreas.areasString.length > 0) {
-					// 	var numbers = hndlExclAreas.areasString.match(/\d+/g).map(i => parseInt(i));
-					// 	if (numbers.length % 4 === 0) {
-					// 		for (var base = 0; base < numbers.length; base += 4) {
-					// 			const color = hndlExclAreas.colors[getRandomArbitrary(0, hndlExclAreas.colors.length)];
-					// 			const lt = { x: numbers[base + 0], y: numbers[base + 1] },
-					// 				width = numbers[base + 2],
-					// 				heigth = numbers[base + 3];
-
-					// 			hndlExclAreas.areas.push({ lt, width, heigth, color });
-
-					// 			hndlExclAreas.ctx.strokeStyle = color;
-					// 			hndlExclAreas.ctx.strokeRect(lt.x, lt.y, width, heigth);
-					// 		}
-					// 	}
-					// }
-
-					// console.log("areas loaded: ", hndlExclAreas.areas.length);
-					onResize();
-				};
-				image.src = "data:image/jpg;base64," + frame;
+				// var image = new Image();
+				// image.onload = function () {
+				// 	hndlExclAreas.ctx.drawImage(image, 0, 0);
+					
+				// 	onResize();
+				// };
+				// image.src = "data:image/jpg;base64," + frame;
+				
+				onResize();
 
 				hndlExclAreas.lastImage = frame;
+
+				hndlExclAreas.redraw();
 			}
 		}
 
@@ -1409,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					if ($draw_saved_areas) {
 						hndlExclAreas.areas.forEach(area => {
 							hndlExclAreas.ctx.beginPath();
-							hndlExclAreas.ctx.strokeStyle = area.color;
+							hndlExclAreas.ctx.strokeStyle = hndlExclAreas.colors[area.type];
 							var first = area.points[0];
 							hndlExclAreas.ctx.moveTo(first.x, first.y);
 							
@@ -1454,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 
 			var type = this.getTypeSelected()
-			this.areas.push({type: type, points: this.current.points, color: hndlExclAreas.colors[type]});
+			this.areas.push({type: type, points: this.current.points});
 			this.current = {
 				points: [],
 				color: "",
