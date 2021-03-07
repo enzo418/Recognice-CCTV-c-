@@ -130,6 +130,8 @@ bool GifFrames::isValid() {
 	auto start = std::chrono::high_resolution_clock::now();
 	double timeMeasuringSomething = 0;
 
+	const bool usePointsDiscriminatorArea = camera->pointDiscriminators.size() > 0;
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -260,8 +262,11 @@ bool GifFrames::isValid() {
 		&& avrgArea > 1
 		&& this->avrgDistanceFrames <= 120 
 		&& overlappingFindings < camera->thresholdFindingsOnIgnoredArea
-		&& taA >= camera->minPercentageInsideAllowDiscriminator
-		&& taD < camera->maxPercentageInsideDenyDiscriminator) 
+		&& (!usePointsDiscriminatorArea ||
+				(taA >= camera->minPercentageInsideAllowDiscriminator
+				&& taD < camera->maxPercentageInsideDenyDiscriminator)
+			)
+		) 
 	{
 		valid = true;
 		this->state = State::Send;

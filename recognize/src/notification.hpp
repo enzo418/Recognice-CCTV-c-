@@ -16,6 +16,8 @@ namespace Notification {
 			
 			// if a notification is sended with others, then use this id to group them
 			ulong group_id;
+
+			std::vector<cv::Mat> framesVideo;
 			
 		// private:
 		public:
@@ -26,7 +28,7 @@ namespace Notification {
 			Notification(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
 			
 			// Creates a Video notification with caption
-			Notification(std::string mediaPath, std::string caption, ulong group_id = 0);
+			Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, ulong group_id = 0);
 			
 			// Creates a text notification
 			Notification(std::string text, ulong group_id = 0);
@@ -36,15 +38,15 @@ namespace Notification {
 
 		public:
 			// named constructors idiom
-			static Notification Image(cv::Mat& image, std::string caption, bool save, ulong group_id = 0);
+			// static Notification Image(cv::Mat& image, std::string caption, bool save, ulong group_id = 0);
 
-			static Notification Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
+			// static Notification Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
 
-			static Notification Video(std::string mediaPath, std::string caption, ulong group_id = 0);
+			// static Notification Video(std::string mediaPath, std::string caption, ulong group_id = 0);
 
-			static Notification Text(std::string text, ulong group_id = 0);
+			// static Notification Text(std::string text, ulong group_id = 0);
 
-			static Notification Sound();
+			// static Notification Sound();
 		
 		public:
 			Type type;

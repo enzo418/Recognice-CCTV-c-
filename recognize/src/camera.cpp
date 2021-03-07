@@ -385,19 +385,19 @@ void Camera::ReadFramesWithInterval() {
 								<< " has " << secondDiff << " of length, " << secondDiff - singleVideoMaxSecondsLength
 								<< "s more than needed. Send video continuation? " 
 								<< (this->sendChangeVideoContinuation ? "Yes" : "No") << "\n\n";
-					if (this->sendChangeVideoContinuation /**&&  Wants continuation video? */) {
-						std::string fileName = this->videosPath[this->currentIndexVideoPath];
-						this->ReleaseAndOpenChangeVideo(false);
-						this->pendingNotifications.push_back(Notification::Notification(fileName, camName, this->continuation_group_id));
+					// if (this->sendChangeVideoContinuation /**&&  Wants continuation video? */) {
+					// 	std::string fileName = this->videosPath[this->currentIndexVideoPath];
+					// 	this->ReleaseAndOpenChangeVideo(false);
+					// 	this->pendingNotifications.push_back(Notification::Notification(fileName, camName, this->continuation_group_id));
 
-						this->sendChangeVideoContinuation = false;
-						this->continuation_group_id = 0;
-					} else {
-						std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
-						<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
+					// 	this->sendChangeVideoContinuation = false;
+					// 	this->continuation_group_id = 0;
+					// } else {
+					// 	std::cout << "[V] Relased video " <<  (int)currentIndexVideoPath 
+					// 	<< ". Overwriting video " << (int)!currentIndexVideoPath << std::endl;
 
-						this->ReleaseAndOpenChangeVideo(true);
-					}
+					// 	this->ReleaseAndOpenChangeVideo(true);
+					// }
 				}
 			}
 

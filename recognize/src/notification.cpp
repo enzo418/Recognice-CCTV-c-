@@ -25,9 +25,10 @@ namespace Notification {
 		this->type = Type::GIF;
 	}
 
-	Notification::Notification(std::string mediaPath, std::string caption, ulong group_id) 
+	Notification::Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, ulong group_id) 
 		: 	filename(mediaPath), 
 			text(caption),
+			framesVideo(std::move(frames)),
 			group_id(group_id)
 	{
 		this->type = Type::VIDEO;
@@ -47,25 +48,25 @@ namespace Notification {
 	// --------------------------
 	//  Named contructors idiom
 	// --------------------------
-	inline Notification Notification::Image(cv::Mat& image, std::string caption, bool save, ulong group_id) {
-		return Notification(image, caption, save, group_id);
-	}
+	// inline Notification Notification::Image(cv::Mat& image, std::string caption, bool save, ulong group_id) {
+	// 	return Notification(image, caption, save, group_id);
+	// }
 
-	inline Notification Notification::Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id) {
-		return Notification(mediaPath, caption, build_command, group_id);
-	}
+	// inline Notification Notification::Gif(std::string mediaPath, std::string caption, std::string build_command, ulong group_id) {
+	// 	return Notification(mediaPath, caption, build_command, group_id);
+	// }
 
-	inline Notification Notification::Video(std::string mediaPath, std::string caption, ulong group_id) {
-		return Notification(mediaPath, caption, group_id);
-	}
+	// inline Notification Notification::Video(std::string mediaPath, std::string caption, ulong group_id) {
+	// 	return Notification(mediaPath, caption, group_id);
+	// }
 
-	inline Notification Notification::Text(std::string text, ulong group_id) {
-		return Notification(text, group_id);
-	}
+	// inline Notification Notification::Text(std::string text, ulong group_id) {
+	// 	return Notification(text, group_id);
+	// }
 
-	inline Notification Notification::Sound() {
-		return Notification();
-	}
+	// inline Notification Notification::Sound() {
+	// 	return Notification();
+	// }
 	
 	// ----------------
 	//  Public Methods
@@ -117,6 +118,21 @@ namespace Notification {
 	}
 
 	void Notification::buildMedia() {
-		std::system(this->build_media_command.c_str());
+		if (this->type == Type::GIF)
+			std::system(this->build_media_command.c_str());
+		else if (this->type == Type::VIDEO) {
+			//  Open video
+			// -------------
+			const int fourc = cv::VideoWriter::fourcc('H', '2', '6', '4');
+			const double fps = 8.0;			
+			cv::VideoWriter videoNotf(this->filename, fourc, fps, RESIZERESOLUTION, true);
+			
+			//  Write frames
+			// --------------
+			for (size_t i = 0; i < framesVideo.size(); i++)
+				videoNotf.write(framesVideo[i]);
+			
+			videoNotf.release();
+		}
 	}
 }

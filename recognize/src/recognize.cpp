@@ -350,60 +350,60 @@ void Recognize::StartNotificationsSender() {
 							//  Concat the two videos from the camera into a video
 							// -------------------------------------------
 
-							std::filesystem::path file1 = (cwd / std::filesystem::path(camera->videosPath[!camera->currentIndexVideoPath])).lexically_normal();
-							std::filesystem::path file2 = (cwd / std::filesystem::path(camera->videosPath[camera->currentIndexVideoPath])).lexically_normal();
+							// std::filesystem::path file1 = (cwd / std::filesystem::path(camera->videosPath[!camera->currentIndexVideoPath])).lexically_normal();
+							// std::filesystem::path file2 = (cwd / std::filesystem::path(camera->videosPath[camera->currentIndexVideoPath])).lexically_normal();
 
-							camera->videosPath[camera->currentIndexVideoPath] = "";
+							// camera->videosPath[camera->currentIndexVideoPath] = "";
 
-							// get file2 video length before starting the new video
-							auto file2VideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
+							// // get file2 video length before starting the new video
+							// auto file2VideoLength = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - camera->lastVideoStartTime).count();
 
-							// Release current video and and unlock overwrite
-							camera->ReleaseAndOpenChangeVideo(false);
+							// // Release current video and and unlock overwrite
+							// camera->ReleaseAndOpenChangeVideo(false);
 
-							camera->videoLocked = false;
+							// camera->videoLocked = false;
 
-							std::cout << "\n[V] Length of the current video: " << file2VideoLength << "\n";
+							// std::cout << "\n[V] Length of the current video: " << file2VideoLength << "\n";
 
-							// if the older video exist
-							if (file1.has_filename() && file2VideoLength >= 2) {
-								std::cout << "\n[V] Video has 2 files.\n";
+							// // if the older video exist
+							// if (file1.has_filename() && file2VideoLength >= 2) {
+							// 	std::cout << "\n[V] Video has 2 files.\n";
 
-								// command to concat the files from list.txt
-								std::string ffmpegCommand = "ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i list.txt -c copy " + videoPath;
+							// 	// command to concat the files from list.txt
+							// 	std::string ffmpegCommand = "ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i list.txt -c copy " + videoPath;
 
-								// command to create the list of videos to concat
-								std::string listCommand("echo \"file '" + file1.string() + "'\nfile '" + file2.string() + "'\" > list.txt");
+							// 	// command to create the list of videos to concat
+							// 	std::string listCommand("echo \"file '" + file1.string() + "'\nfile '" + file2.string() + "'\" > list.txt");
 
-								std::cout << "[F] LIST-COMMAND: " << listCommand << "\n\n"
-											<< "    FFMPEG-COMMAND: " << ffmpegCommand << std::endl << std::endl;
+							// 	std::cout << "[F] LIST-COMMAND: " << listCommand << "\n\n"
+							// 				<< "    FFMPEG-COMMAND: " << ffmpegCommand << std::endl << std::endl;
 
-								// create list
-								std::system(listCommand.c_str());
+							// 	// create list
+							// 	std::system(listCommand.c_str());
 
-								// concat videos
-								std::system(ffmpegCommand.c_str());
+							// 	// concat videos
+							// 	std::system(ffmpegCommand.c_str());
 
-								camera->lastSendedVideoPath = videoPath;
-							} else {
-								// else if there is only 1 video check if the length is > 5, if not send the last one else send the newest
-								std::cout << "\n[V] Video has 1 file" << std::endl 
-											<< "\n[V] Last video path: " << camera->lastSendedVideoPath << std::endl
-											<< "\n[V] File2: " << file2.string() << std::endl
-											<< std::endl;
-								if (file2VideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
-									videoPath = camera->lastSendedVideoPath;
-								} else {
-									videoPath = file2.string();
-								}
-							}
+							// 	camera->lastSendedVideoPath = videoPath;
+							// } else {
+							// 	// else if there is only 1 video check if the length is > 5, if not send the last one else send the newest
+							// 	std::cout << "\n[V] Video has 1 file" << std::endl 
+							// 				<< "\n[V] Last video path: " << camera->lastSendedVideoPath << std::endl
+							// 				<< "\n[V] File2: " << file2.string() << std::endl
+							// 				<< std::endl;
+							// 	if (file2VideoLength <= 5 && camera->lastSendedVideoPath.length() > 0) {
+							// 		videoPath = camera->lastSendedVideoPath;
+							// 	} else {
+							// 		videoPath = file2.string();
+							// 	}
+							// }
 
-							camera->pendingNotifications.push_back(Notification::Notification(videoPath, camera->config->cameraName, group_id));
+							// camera->pendingNotifications.push_back(Notification::Notification(videoPath, camera->config->cameraName, group_id));
 
-							// This works because the max length of the video is < than time between image notification 
-							// else this brokes
-							camera->sendChangeVideoContinuation = true;
-							camera->continuation_group_id = group_id;
+							// // This works because the max length of the video is < than time between image notification 
+							// // else this brokes
+							// camera->sendChangeVideoContinuation = true;
+							// camera->continuation_group_id = group_id;
 						} else {
 							// clear it so we don't show anything on the webpage
 							videoPath = "";
@@ -458,36 +458,6 @@ void Recognize::StartNotificationsSender() {
 									group_id));
 						}
 
-						//  Send GIF frames as video
-						// --------------------------
-						if (sendVideo) {
-
-							//  Open video
-							// -------------
-							const int fourc = cv::VideoWriter::fourcc('H', '2', '6', '4');
-							const double fps = 8.0;
-							const std::string path = imageFolder + std::to_string(camera->config->order) + "_" + identifier + "_notification.mp4";
-							cv::VideoWriter videoNotf(path, fourc, fps, RESIZERESOLUTION, true);
-							
-							//  Write frames
-							// --------------
-							for (size_t i = 0; i < frames.size(); i++) {
-								videoNotf.write(frames[i]);
-							}
-
-							//  Release and save notification
-							// --------------------------------
-							videoNotf.release();
-							camera->pendingNotifications.push_back(
-								Notification::Notification(
-									path, 
-									// caption_message, 
-									gif->getText(),
-									group_id
-								)
-							);
-						}
-
 						//  Write frames into single files and save the command to build .gif
 						// -------------------------------------------------------------------
 						if (sendGif) {
@@ -500,6 +470,23 @@ void Recognize::StartNotificationsSender() {
 							std::string command = "convert -resize " + std::to_string(programConfig.gifResizePercentage) + "% -delay 23 -loop 0 " + imagesIdentifier + "_{0.." + std::to_string(gframes-1) + "}.jpg " + gifPath;
 
 							camera->pendingNotifications.push_back(Notification::Notification(gifPath, gif->getText(), command, group_id));
+						}
+
+						//  Send GIF frames as video
+						// --------------------------
+						if (sendVideo) {
+							const std::string path = imageFolder + std::to_string(camera->config->order) + "_" + identifier + "_notification.mp4";
+							//  save notification  (call this the last op. with frames or it breaks. std.move)
+							// -------------------------------
+							camera->pendingNotifications.push_back(
+								Notification::Notification(
+									path, 
+									// caption_message, 
+									gif->getText(),
+									std::move(frames),
+									group_id
+								)
+							);
 						}
 						
 						camera->lastImageSended = std::chrono::high_resolution_clock::now();
@@ -542,9 +529,10 @@ void Recognize::StartNotificationsSender() {
 						// so that they don't delay the rest of the notifications in the queue. 
 						// A different solution is to build it in another thread, 
 						// but it requires coordination. And I think it is an overkill.
-						if (notf.type == Notification::GIF) {				
+						// The same happens with video.
+						// if (notf.type == Notification::GIF || notf.type == Notification::VIDEO) {				
 							notf.buildMedia();
-						}
+						// }
 
 						// send to telegram
 						std::string data = notf.send(programConfig);
@@ -572,12 +560,12 @@ void Recognize::StartNotificationsSender() {
 						)
 						{
 							this->notificationWithMedia->try_emplace(
-									std::tuple<Notification::Type, std::string, ulong>(
-										notf.type, 
-										data,
-										notf.getGroupId()
-										)
-								);
+								std::tuple<Notification::Type, std::string, ulong>(
+									notf.type, 
+									data,
+									notf.getGroupId()
+								)
+							);
 						}
 
 						notf.sended = true;
