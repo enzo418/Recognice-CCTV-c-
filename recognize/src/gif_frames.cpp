@@ -195,6 +195,7 @@ bool GifFrames::isValid() {
 
 			timeMeasuringSomething += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
 
+			// this means < 0.0% of the time required in each iteration
 			for (auto &&discriminator : camera->pointDiscriminators) {
 				double res = cv::pointPolygonTest(discriminator.points, finding.center, false);
 				if (discriminator.type == DiscriminatorType::Allow && res > 0) 
@@ -224,6 +225,7 @@ bool GifFrames::isValid() {
 
 	double avrgArea = 0;
 
+	this->debugMessage += "\nCamera name: " + camera->cameraName;
 	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time processing ignored areas intersection: " + std::to_string(timeMeasuringSomething) + " ms" + " -- discrimator represents the " + std::to_string(timeMeasuringSomething * 100 / timeProcessingGif) + "% of the total";
 	this->debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	this->debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
