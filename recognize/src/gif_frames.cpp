@@ -127,6 +127,9 @@ bool GifFrames::isValid() {
 	ushort findingsInsideDeniedAreas = 0;
 	ushort totalValidFindings = 0;
 
+	auto start = std::chrono::high_resolution_clock::now();
+	double timeProcessingDiscriminantAreas = 0;
+
 	//// Process frames
 
 	bool p1Saved = false;
@@ -187,6 +190,8 @@ bool GifFrames::isValid() {
 				}
 			}
 
+			auto s = std::chrono::high_resolution_clock::now();
+
 			for (auto &&discriminator : camera->pointDiscriminators) {
 				double res = cv::pointPolygonTest(discriminator.points, finding.center, false);
 				if (discriminator.type == DiscriminatorType::Allow && res > 0) 
@@ -194,6 +199,10 @@ bool GifFrames::isValid() {
 				else if (discriminator.type == DiscriminatorType::Deny && res > 0)
 					findingsInsideDeniedAreas += 1;
 			}
+			
+			auto e = std::chrono::high_resolution_clock::now();
+			
+			timeProcessingDiscriminantAreas += std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
 			
 			if (lastValidFind != nullptr) {
 				totalPairFindingMeasured++;
@@ -207,23 +216,32 @@ bool GifFrames::isValid() {
 		}
 	}
 
+	auto end = std::chrono::high_resolution_clock::now();
+	auto timeProcessingGif = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000;
+	timeProcessingDiscriminantAreas /= 1000;
+
 	double displacementX = abs(p1.x - p2.x);
 	double displacementY = abs(p1.y - p2.y);
 
+	double avrgArea = 0;
+
+	this->debugMessage += "\nPERFOMANCE | Time processing gif images: " + std::to_string(timeProcessingGif) + " ms -- Time processing discriminators: " + std::to_string(timeProcessingDiscriminantAreas) + " ms" + " -- discrimator represents the " + std::to_string(timeProcessingDiscriminantAreas * 100 / timeProcessingGif) + "% of the total";
 	this->debugMessage += "\ntotalNonPixels: " + std::to_string(totalNonPixels) + " totalAreaDifference: " + std::to_string(totalAreaDifference) + " total area % of non zero: " + std::to_string(totalAreaDifference * 100 / totalNonPixels);
 	this->debugMessage += "\nP1: [" + std::to_string(p1.x) + "," + std::to_string(p1.y) + "] P2: [" + std::to_string(p2.x) + "," + std::to_string(p2.y) + "] Distance: " + std::to_string(euclideanDist(p1, p2)) + "\n DisplX: " + std::to_string(displacementX) + " DisplY: " + std::to_string(displacementY);
-	this->debugMessage += "\nAverage area: " + std::to_string(totalArea / totalPairFindingMeasured) + " VALID FINDINGS: " + std::to_string(totalValidFindings);
 	this->debugMessage += "\nFindings inside allowed area: " + std::to_string(findingsInsideAllowedAreas) + " | Findings inside denied areas: " + std::to_string(findingsInsideDeniedAreas);
 	if (totalPairFindingMeasured > 1) {
 		this->avrgDistanceFrames = totalDistance / totalPairFindingMeasured;
 		this->avrgAreaDifference = totalAreaDifference / totalPairFindingMeasured;
+		avrgArea = totalArea / totalPairFindingMeasured;
 	}
+	
+	this->debugMessage += "\nAverage area: " + std::to_string(avrgArea) + " VALID FINDINGS: " + std::to_string(totalValidFindings);	
 	
 
 	bool valid = false;
 
-	double taA;
-	double taD;
+	double taA = 0;
+	double taD = 0;
 
 	if (totalValidFindings > 0) {
 		taA = findingsInsideAllowedAreas * 100 / totalValidFindings;
@@ -234,7 +252,8 @@ bool GifFrames::isValid() {
 	this->debugMessage += "\nFindings inside denied: " + std::to_string(taD) + "% vs. max: " + std::to_string(camera->maxPercentageInsideDenyDiscriminator) + "%";
 
 	//// Check if it's valid
-	if (totalValidFindings > 0
+	if (totalValidFindings > 1
+		&& avrgArea > 1
 		&& this->avrgDistanceFrames <= 120 
 		&& overlappingFindings < camera->thresholdFindingsOnIgnoredArea
 		&& taA >= camera->minPercentageInsideAllowDiscriminator

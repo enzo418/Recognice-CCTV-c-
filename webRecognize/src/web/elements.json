@@ -399,6 +399,25 @@
 						"placeholder": ""
 					}
 				]
+			},
+			{
+				"name": "Discriminator of points",
+				"elements": [
+					{
+						"target": "minpercentageinsideallowdiscriminator",
+						"type": "number",
+						"hidden": false,
+						"min": 0,
+						"max": 100
+					},
+					{
+						"target": "maxpercentageinsidedenydiscriminator",
+						"type": "number",
+						"hidden": false,
+						"min": 0,
+						"max": 100
+					}
+				]
 			}
 		]
 	}

@@ -284,8 +284,11 @@ namespace ConfigurationFile {
 		
 			<< "\n\n; List of ignored areas. syntax: <p_x>,<p_y>,<widht>,<height>"
 			<< "\n; Also you can use parentheses and brackets to make it more readable, e.g. [(16,25), (100,100)],[(100,150),(50,50)]"
-			<< "\n;ignoredAreas=integer,integer,integer,integer,...";
-			
+			<< "\n;ignoredAreas=integer,integer,integer,integer,..."
+
+			<< "\n\n; List of polygon that describes a area discriminator. syntax: (allowed|deny):p11_x, p11_y, ..., p1n_x, p1n_y-(allowed|deny):p21_x, p21_y, ..., p2n_x, p2n_y-..."
+			<< "\n;pointsdiscriminators=string";
+
 			// << "\n\n# == Areas delimiters (NOT IN USE RIGHT NOW)."
 			// << "\n\n; "
 			// << "\nsecondsWaitEntryExit=" << cfg.secondsWaitEntryExit
@@ -329,7 +332,11 @@ namespace ConfigurationFile {
 					
 			<< "\nthresholdFindingsOnIgnoredArea=" << cfg.thresholdFindingsOnIgnoredArea
 			
-			<< "\nminPercentageAreaNeededToIgnore=" << cfg.minPercentageAreaNeededToIgnore;
+			<< "\nminPercentageAreaNeededToIgnore=" << cfg.minPercentageAreaNeededToIgnore
+			
+			<< "\nminPercentageInsideAllowDiscriminator=" << cfg.minPercentageInsideAllowDiscriminator
+
+			<< "\nmaxPercentageInsideDenyDiscriminator=" << cfg.maxPercentageInsideDenyDiscriminator;
 		
 		if (cfg.ignoredAreas.size() > 0)
 			ss << "\nignoredAreas=" << Utils::IgnoredAreasToString(cfg.ignoredAreas);
@@ -713,6 +720,20 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "pointsdiscriminators" || id == "pointsdiscriminatorarea") {
 			sucess = Utils::String2DiscriminatorArea(value, config.pointDiscriminators);
+		} else if (id == "minpercentageinsideallowdiscriminator") {
+			try {
+				double val = std::stod(value);
+				config.minPercentageInsideAllowDiscriminator = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
+		} else if (id == "maxpercentageinsidedenydiscriminator") {
+			try {
+				double val = std::stod(value);
+				config.maxPercentageInsideDenyDiscriminator = val;
+			} catch (std::invalid_argument e) {
+				sucess = false;
+			}
 		} else {
 			sucess = false;
 		}

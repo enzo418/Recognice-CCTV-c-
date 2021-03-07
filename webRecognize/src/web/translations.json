@@ -197,6 +197,14 @@
 		"pointsDiscriminators": {
 			"label": "",
 			"description": ""
+		},
+		"minpercentageinsideallowdiscriminator": {
+			"label": "Minimum percentage of findings (changes in the image) within allowable areas (in points discriminator) needed for the change to be valid.",
+			"description": ""
+		},
+		"maxpercentageinsidedenydiscriminator": {
+			"label": "Maximum percentage of findings (changes in the image) within denied areas (in points discriminator) needed for the change to be valid.",
+			"description": ""
 		}
 	}, "es": {
 		"msBetweenFrame" : {
@@ -396,6 +404,14 @@
 		},
 		"pointsDiscriminators": {
 			"label": "",
+			"description": ""
+		},
+		"minpercentageinsideallowdiscriminator": {
+			"label": "Mínimo porcentaje de hallazgos (cambios en la imagen) dentro de áreas permitidas necesitados para que el cambio sea valido",
+			"description": ""
+		},
+		"maxpercentageinsidedenydiscriminator": {
+			"label": "Máximo porcentaje de hallazgos (cambios en la imagen) dentro de áreas denegadas necesitados para que el cambio sea valido",
 			"description": ""
 		},
 		"recognizer is not running": "El ronocedor esta detenido.",
