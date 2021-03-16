@@ -104,7 +104,7 @@ const std::string ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
 
 std::string lastMediaPath = "";
 
-constexpr int Max_Notifications_Number = 20;
+constexpr int Max_Notifications_Number = 300;
 
 namespace {
 	struct HandlerFile : WebSocket::Handler {
