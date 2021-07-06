@@ -1,0 +1,13 @@
+*
+
+!*.cpp
+!*.hpp
+!*.h
+!*.md
+!.gitignore
+
+!src/
+!src/web/
+!src/tests/
+
+!CMakeLists.txt
