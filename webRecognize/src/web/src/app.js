@@ -87,7 +87,7 @@ const getNotificationTemplate = (type, text, moment_date) => `
     ${(type == "text" && `<h3 class="subtitle is-3">${text}</h3>`) || ""}
     
     ${(type == "video" &&
-    `<video width="640" height="360" preload="metadata" src="" controls data-videosrc="${text}"></video>`
+        `<video width="640" height="360" preload="metadata" src="" controls data-videosrc="${text}"></video>`
     ) || ""}
 
 <h6 class="subtitle is-6 hour" data-date="${moment_date}">now</h6>
@@ -205,33 +205,33 @@ var hndlExclAreas = {
         },
         onSelect: function () {
             [...document.querySelector(`${hndlExclAreas.selectors.modal} ${hndlExclAreas.selectors.headerButtons}`).children]
-            .forEach(el => {
-                if (el.classList.contains('selection')) {
-                    el.classList.remove('is-hidden');
-                } else {
-                    el.classList.add('is-hidden');
-                }
-            });
-            
+                .forEach(el => {
+                    if (el.classList.contains('selection')) {
+                        el.classList.remove('is-hidden');
+                    } else {
+                        el.classList.add('is-hidden');
+                    }
+                });
+
             // set selection type to the same as the area
             if (hndlExclAreas.getTypeSelected() != hndlExclAreas.areas[hndlExclAreas.select.areaSelectedIndex].type) {
                 $(hndlExclAreas.selectors.typeSelectorContainer + ' .button').toggleClass('is-selected is-warning');
             }
         },
         removeSelected: function () {
-            hndlExclAreas.lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(hndlExclAreas.select.areaSelectedIndex, 1)})
+            hndlExclAreas.lastUndoEvents.push({ type: 'areas-removed', obj: hndlExclAreas.areas.splice(hndlExclAreas.select.areaSelectedIndex, 1) })
             hndlExclAreas.redraw();
-            hndlExclAreas.select.exitSelectionMode();			
+            hndlExclAreas.select.exitSelectionMode();
         },
         exitSelectionMode: function () {
             [...document.querySelector(`${hndlExclAreas.selectors.modal} ${hndlExclAreas.selectors.headerButtons}`).children]
-            .forEach(el => {
-                if (el.classList.contains('selection') && el.id != hndlExclAreas.selectors.typeSelectorContainer.substr(1, hndlExclAreas.selectors.typeSelectorContainer.length)) {
-                    el.classList.add('is-hidden');
-                } else {
-                    el.classList.remove('is-hidden');
-                }
-            });
+                .forEach(el => {
+                    if (el.classList.contains('selection') && el.id != hndlExclAreas.selectors.typeSelectorContainer.substr(1, hndlExclAreas.selectors.typeSelectorContainer.length)) {
+                        el.classList.add('is-hidden');
+                    } else {
+                        el.classList.remove('is-hidden');
+                    }
+                });
             hndlExclAreas.select.selectModeActive = false;
             hndlExclAreas.select.areaSelectedIndex = null;
         }
@@ -240,7 +240,7 @@ var hndlExclAreas = {
         if (hndlExclAreas.areas.length == 0)
             return;
 
-        hndlExclAreas.lastUndoEvents.push({type: 'areas-removed', obj: hndlExclAreas.areas.splice(0, hndlExclAreas.areas.length)})
+        hndlExclAreas.lastUndoEvents.push({ type: 'areas-removed', obj: hndlExclAreas.areas.splice(0, hndlExclAreas.areas.length) })
 
         hndlExclAreas.areasString = "";
         hndlExclAreas.current = {
@@ -279,17 +279,17 @@ var hndlExclAreas = {
         $($ev.target).addClass("is-loading");
 
         frameRequestOrigin = "exclusivity-areas";
-    
+
         var cam = document.querySelector(`#camera-${$cameraIndex}`);
-    
+
         var rotation = parseInt(cam.querySelector(`input[name="rotation"]`).value);
-    
+
         var roi = cam.querySelector('input[name="roi"]').value;
-    
+
         var url = cam.querySelector(`input[name="url"]`).value || cameras[$cameraIndex].url;
 
         var pointsDiscriminators = cam.querySelector(`input[name="pointsdiscriminators"]`).value || cameras[$cameraIndex].pointsdiscriminators;
-    
+
         var parsedRoi = stringToRoi(roi);
         if (parsedRoi) {
             $(hndlExclAreas.canvas).attr("width", parsedRoi[2])
@@ -298,9 +298,9 @@ var hndlExclAreas = {
 
         // update this.areas
         hndlExclAreas.string2areas(pointsDiscriminators);
-    
+
         sendObj('get_camera_frame', { index: $cameraIndex, rotation, url, roi });
-    
+
         unfinishedRequests["get_camera_frame"] = function () {
             setTimeout(function () {
                 $($ev.target).removeClass("is-loading");
@@ -320,7 +320,7 @@ var hndlExclAreas = {
         }
 
         var type = hndlExclAreas.getTypeSelected()
-        hndlExclAreas.areas.push({type: type, points: hndlExclAreas.current.points});
+        hndlExclAreas.areas.push({ type: type, points: hndlExclAreas.current.points });
         hndlExclAreas.current = {
             points: [],
             color: "",
@@ -330,78 +330,78 @@ var hndlExclAreas = {
     },
     aproxPoly: function () { // Aproximates the curves of the poly.
         const epsilon = window.epsilon;
-        
+
         // Simplify curve using https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm,
         // since i'am lazy, i use the optimized version from https://github.com/mourner/simplify-js			
         hndlExclAreas.current.points = simplify(hndlExclAreas.current.points, epsilon, false);
-        
+
         this.current.aproximated = true;
 
         hndlExclAreas.redraw(true);
-    }, 
+    },
     redraw: function ($should_close_path, $draw_saved_areas = true) { // Draws the canvas with the areas and current points
         var image = new Image();
-            image.onload = function () {
-                hndlExclAreas.ctx.drawImage(image, 0, 0);
+        image.onload = function () {
+            hndlExclAreas.ctx.drawImage(image, 0, 0);
 
-                //  Draw the lines that connects the points
-                // -----------------------------------------
-                hndlExclAreas.ctx.beginPath();
-                
-                hndlExclAreas.ctx.lineWidth = 5;
-                hndlExclAreas.ctx.strokeStyle = "Green";
-                
-                if (hndlExclAreas.current.points.length > 1) {
-                    var first = hndlExclAreas.current.points[0];
+            //  Draw the lines that connects the points
+            // -----------------------------------------
+            hndlExclAreas.ctx.beginPath();
+
+            hndlExclAreas.ctx.lineWidth = 5;
+            hndlExclAreas.ctx.strokeStyle = "Green";
+
+            if (hndlExclAreas.current.points.length > 1) {
+                var first = hndlExclAreas.current.points[0];
+                hndlExclAreas.ctx.moveTo(first.x, first.y);
+
+                for (let index = 1; index < hndlExclAreas.current.points.length; index++) {
+                    const element = hndlExclAreas.current.points[index];
+
+                    hndlExclAreas.ctx.lineTo(element.x, element.y);
+                }
+            }
+
+            if ($should_close_path)
+                hndlExclAreas.ctx.closePath();
+
+            hndlExclAreas.ctx.stroke();
+
+            //  Draw the points
+            // -----------------
+            hndlExclAreas.ctx.beginPath();
+
+            hndlExclAreas.ctx.strokeStyle = "Red";
+            hndlExclAreas.current.points.forEach(point => {
+                hndlExclAreas.ctx.moveTo(point.x, point.y);
+                hndlExclAreas.ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+            });
+
+            hndlExclAreas.ctx.stroke();
+
+            //  Draw the areas saved
+            // ----------------------
+            if ($draw_saved_areas) {
+                hndlExclAreas.areas.forEach(area => {
+                    hndlExclAreas.ctx.beginPath();
+                    hndlExclAreas.ctx.strokeStyle = hndlExclAreas.colors[area.type];
+                    var first = area.points[0];
                     hndlExclAreas.ctx.moveTo(first.x, first.y);
-                    
-                    for (let index = 1; index < hndlExclAreas.current.points.length; index++) {
-                        const element = hndlExclAreas.current.points[index];
-                        
+
+                    for (let index = 1; index < area.points.length; index++) {
+                        const element = area.points[index];
+
                         hndlExclAreas.ctx.lineTo(element.x, element.y);
                     }
-                }
 
-                if ($should_close_path)
                     hndlExclAreas.ctx.closePath();
-
-                hndlExclAreas.ctx.stroke();
-
-                //  Draw the points
-                // -----------------
-                hndlExclAreas.ctx.beginPath();
-
-                hndlExclAreas.ctx.strokeStyle = "Red";
-                hndlExclAreas.current.points.forEach(point => {
-                    hndlExclAreas.ctx.moveTo(point.x, point.y);
-                    hndlExclAreas.ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+                    hndlExclAreas.ctx.stroke();
                 });
+            }
+        };
 
-                hndlExclAreas.ctx.stroke();
-                
-                //  Draw the areas saved
-                // ----------------------
-                if ($draw_saved_areas) {
-                    hndlExclAreas.areas.forEach(area => {
-                        hndlExclAreas.ctx.beginPath();
-                        hndlExclAreas.ctx.strokeStyle = hndlExclAreas.colors[area.type];
-                        var first = area.points[0];
-                        hndlExclAreas.ctx.moveTo(first.x, first.y);
-                        
-                        for (let index = 1; index < area.points.length; index++) {
-                            const element = area.points[index];
-                            
-                            hndlExclAreas.ctx.lineTo(element.x, element.y);
-                        }
-                        
-                        hndlExclAreas.ctx.closePath();
-                        hndlExclAreas.ctx.stroke();
-                    });
-                }
-            };
-
-            image.src = "data:image/jpg;base64," + hndlExclAreas.lastImage;
-    }, 
+        image.src = "data:image/jpg;base64," + hndlExclAreas.lastImage;
+    },
     redo: function () { // Redo last undo
         const last = this.lastUndoEvents.pop();
 
@@ -418,17 +418,17 @@ var hndlExclAreas = {
     },
     undo: function () { // Undo last action
         if (this.current.points.length > 0) {
-            this.lastUndoEvents.push({type: 'point', obj: this.current.points.pop()});
+            this.lastUndoEvents.push({ type: 'point', obj: this.current.points.pop() });
         } else {
-            this.lastUndoEvents.push({type: 'area', obj: this.areas.pop()});
+            this.lastUndoEvents.push({ type: 'area', obj: this.areas.pop() });
         }
 
         hndlExclAreas.redraw(false);
     },
-    getTypeSelected: function() {
+    getTypeSelected: function () {
         return document.getElementById('toggle-exclusivity-area-type').querySelector('.is-selected').dataset.type;
     },
-    areas2String: function() {
+    areas2String: function () {
         // Syntax to follow: (allow|deny):ap1_x,ap1_y,...,apn_x,apn_y-(allow|deny):bp1_x,bp1_y,...,bpn_x,bpn_y
         hndlExclAreas.areasString = "";
         var isFirst = true;
@@ -440,11 +440,11 @@ var hndlExclAreas = {
             });
 
             hndlExclAreas.areasString = hndlExclAreas.areasString.slice(0, -1);
-            
+
             isFirst = false;
         });
     },
-    string2areas: function($s) {
+    string2areas: function ($s) {
         // Syntax to follow: (allow|deny):ap1_x,ap1_y,...,apn_x,apn_y-(allow|deny):bp1_x,bp1_y,...,bpn_x,bpn_y
 
         if (!$s || $s.length === 0) {
@@ -453,16 +453,16 @@ var hndlExclAreas = {
         }
 
         var currAreaIndex = 0;
-        
-        this.areas.push({points: [], color: "", type: ""});
+
+        this.areas.push({ points: [], color: "", type: "" });
 
         [...$s.matchAll(/(?<separator>-)?(?:(?<type>allow|deny):)?(?<point_coord>[0-9]+)/g)].forEach(match => {
             if (match.groups.separator) {
                 // tokens.push(match.groups.separator);
                 currAreaIndex++;
-                this.areas.push({points: [], color: "", type: ""})
+                this.areas.push({ points: [], color: "", type: "" })
             }
-            
+
             if (match.groups.type) {
                 this.areas[currAreaIndex].type = match.groups.type;
             }
@@ -472,7 +472,7 @@ var hndlExclAreas = {
                     && this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y === null) {
                     this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y = match.groups.point_coord;
                 } else {
-                    this.areas[currAreaIndex].points.push({x: match.groups.point_coord, y: null})
+                    this.areas[currAreaIndex].points.push({ x: match.groups.point_coord, y: null })
                 }
             }
         });
@@ -569,7 +569,7 @@ $(function () {
 
         if (data.hasOwnProperty("configuration_file")) {
             setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
-            
+
             // if it was a copy
             if ("need_copy_file" in unfinishedRequests) {
                 $('#modal-file-copy').toggleClass('is-active');
@@ -589,7 +589,7 @@ $(function () {
             addGroups(configurationsElements.elements.program.groups, CONFIGURATION_HEADERS.program, programContent, configurationsElements.translations[CURRENT_LANG]);
 
             $('#configurations').append(programEl);
-    
+
             // -- ADD CAMERAS CONFIGURATIONS and tabs
             CONFIGURATION_HEADERS["cameras"].forEach((val, i) => addCameraConfigurationElementsTab(val, i));
 
@@ -619,7 +619,7 @@ $(function () {
             var same_group = (notificationPaginator.elements[notificationPaginator.index].id || -1) === ob["group"];
             // only change if user is watching the last one
             if (notificationPaginator.index === notificationPaginator.elements.length - 1) {
-                changeCurrentElementNotification(notificationPaginator.elements.length - 1, !isFirstNotification && same_group);	
+                changeCurrentElementNotification(notificationPaginator.elements.length - 1, !isFirstNotification && same_group);
                 isFirstNotification = false;
             }
 
@@ -633,7 +633,7 @@ $(function () {
                 document.title = `(${++currentNumberNotificationsWindowTitle}) ${appTitle}`;
             }
 
-            notification_log.push({type: ob["type"], content: ob["content"], group_id: ob["group"], datetime: ob["datetime"]});
+            notification_log.push({ type: ob["type"], content: ob["content"], group_id: ob["group"], datetime: ob["datetime"] });
 
             if (!calendar.isOpen()) {
                 updateCalendarLimitis();
@@ -643,7 +643,7 @@ $(function () {
         if (data.hasOwnProperty('request_reply')) {
             ob = data["request_reply"];
             var $message = _(ob["message"]);
-            if (ob["extra"].length > 0 ) {
+            if (ob["extra"].length > 0) {
                 $message += `<br> ${_("Details")}: ${ob["extra"]}`;
             }
 
@@ -745,11 +745,11 @@ $(function () {
                 // var image = new Image();
                 // image.onload = function () {
                 // 	hndlExclAreas.ctx.drawImage(image, 0, 0);
-                    
+
                 // 	onResize();
                 // };
                 // image.src = "data:image/jpg;base64," + frame;
-                
+
                 onResize();
 
                 hndlExclAreas.lastImage = frame;
@@ -803,12 +803,12 @@ $(function () {
         if (selected == _("new")) {
             $('#modal-file-name').toggleClass('is-active');
             $('#modal-file').toggleClass('is-active');
-            $(this).toggleClass("is-loading");	
+            $(this).toggleClass("is-loading");
         } else {
             // else request the file
-            sendObj('need_config_file', { file: selected, is_new: false});
-            
-            unfinishedRequests["need_config_file"] = () => {				
+            sendObj('need_config_file', { file: selected, is_new: false });
+
+            unfinishedRequests["need_config_file"] = () => {
                 setTimeout(() => {
                     $(this).removeClass("is-loading");
                 }, 200);
@@ -822,8 +822,8 @@ $(function () {
         } else {
             $(this).toggleClass('is-loading');
             sendObj("change_recognize_state", { state: !RECOGNIZE_RUNNING });
-            
-            unfinishedRequests["change_recognize_state"] = () => {				
+
+            unfinishedRequests["change_recognize_state"] = () => {
                 setTimeout(() => {
                     $(this).removeClass("is-loading");
                 }, 200);
@@ -861,8 +861,8 @@ $(function () {
         var selectedFile = FILE_PATH;
         FILE_PATH = ROOT_CONFIGURATIONS_DIRECTORY + ($('#file-copy-name').val()).replace(/(\.\w+)+/, '') + ".ini";
         sendObj('need_copy_file', { file: selectedFile, copy_path: FILE_PATH });
-                
-        unfinishedRequests["need_copy_file"] = () => {				
+
+        unfinishedRequests["need_copy_file"] = () => {
             setTimeout(() => {
                 $(this).removeClass("is-loading");
 
@@ -947,7 +947,7 @@ $(function () {
     $("#button-camera-save-igarea").on("click", function (event) {
         saveCameraIgarea(event, true);
     });
-    
+
     $("#button-close-poly").on("click", function () {
         hndlExclAreas.closeCurrentPoly();
     });
@@ -1030,22 +1030,22 @@ function createAlert($state, $message, $duration = 8000) {
 function createNewNotification($type, $content, $sendPush, $groupID, $datetime) {
     var $not = $(getNotificationTemplate($type, $content, $datetime));
 
-    console.log("Create notification with: ", {"type": $type, "content": $content, "group": $groupID}, $not[0]);
+    console.log("Create notification with: ", { "type": $type, "content": $content, "group": $groupID }, $not[0]);
 
     $('.navigator-notification').removeClass('is-hidden');
-    
+
     if ($groupID > 0) {
         let found = notificationPaginator.elements.find(el => el.id && el.id == $groupID);
         if (found) {
             found.root.append($not);
-        } else {			
+        } else {
             var root = $(getNotificationGroupTemplate($groupID));
-            
+
             console.log("Group doesn't exist... creating a new one with id", $groupID, root);
-            
+
             notificationPaginator.elements.push(
                 {
-                    "id": $groupID, 
+                    "id": $groupID,
                     "root": root
                 }
             );
@@ -1095,7 +1095,7 @@ function onTabClick($e) {
     lastConfigurationActive = el.dataset.config;
 }
 
-function setListenersCameraConfigurationElement (element, i) {
+function setListenersCameraConfigurationElement(element, i) {
     $(element).find(".button-select-camera-roi").on("click", event => {
         selectCameraROI(event, i);
     });
@@ -1228,8 +1228,8 @@ function lowerKeyName(elements, translations) {
 
     Object.entries(translations).forEach(
         el => translations[el[0]] = objectKeysToLowerCase(translations[el[0]]));
-    
-    return {elements, translations};
+
+    return { elements, translations };
 }
 
 function groupsToLowerCase(groups) {
@@ -1458,7 +1458,7 @@ function calendar_OnSelect(e) {
         notification_pager_before_filter.index = notificationPaginator.index;
         notification_pager_before_filter.elements = [...notificationPaginator.elements];
     }
-    
+
     var start = e.data.date.start, end = e.data.date.end;
     var filtered = notification_log.filter(not => not.datetime >= start && not.datetime <= end);
 
@@ -1505,7 +1505,7 @@ function reloadCalendar(minDate, maxDate) {
         calendar.on('save', calendar_OnCancel);
     });
 
-    calendar = calendars[0];	
+    calendar = calendars[0];
 }
 
 function parseStringToDate(datestring, return_moment = false) {
@@ -1522,7 +1522,7 @@ function updateCalendarLimitis() {
     }
 
     // Initialize all input of date type.
-    reloadCalendar(minDate, maxDate);	
+    reloadCalendar(minDate, maxDate);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1560,13 +1560,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setInterval(() => {
         var $not = $('#notifications-content');
-    
+
         var videos = $not[0].getElementsByTagName("video");
         if (videos.length > 0) {
             [...videos].forEach(vid => {
                 if (isNaN(vid.duration)) {
                     // console.log(vid, vid.src, "NaN")
-                    vid.load(); 
+                    vid.load();
                 }
             });
         }
@@ -1588,7 +1588,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.stopPropagation();
         dropdown_lang.classList.toggle('is-active');
     });
-    
+
     [...dropdown_lang.querySelector('.dropdown-content').children].forEach(el => {
         if (el.dataset.lang != CURRENT_LANG)
             el.classList.remove('is-active');
@@ -1779,7 +1779,7 @@ document.addEventListener('DOMContentLoaded', () => {
         var buttonInOut = document.getElementById('toggle-exclusivity-area-type');
 
         // area type button
-        buttonInOut.onclick = function(e) {
+        buttonInOut.onclick = function (e) {
             [...this.children].forEach(ch => ch.classList.remove('is-selected', 'is-warning'));
             e.target.classList.add('is-selected', 'is-warning');
 
@@ -1797,14 +1797,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = e.clientY - hndlExclAreas.y;
 
             if (!hndlExclAreas.select.selectModeActive) {
-                hndlExclAreas.current.points.push({x, y});
+                hndlExclAreas.current.points.push({ x, y });
 
                 hndlExclAreas.lastUndoEvents = [];
-                
+
                 hndlExclAreas.redraw(false);
             } else {
                 for (var ia in hndlExclAreas.areas) {
-                    if (pointPolygonTest(hndlExclAreas.areas[ia].points, {x, y}) > 0) {
+                    if (pointPolygonTest(hndlExclAreas.areas[ia].points, { x, y }) > 0) {
                         hndlExclAreas.select.areaSelectedIndex = ia;
                         hndlExclAreas.select.onSelect();
                     }
@@ -1832,20 +1832,21 @@ window.addEventListener("focus", function () {
 function previousNotification() {
     var $i = notificationPaginator.index > 0 ? notificationPaginator.index - 1 : notificationPaginator.elements.length - 1;
     changeCurrentElementNotification($i);
-    window.scrollTo(0,document.body.scrollHeight);
+    window.scrollTo(0, document.body.scrollHeight);
 }
 
 // Helper function that updates the current index to the next one and calls a function to change the notification displayed
 function nextNotification() {
     var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
     changeCurrentElementNotification($i);
-    window.scrollTo(0,document.body.scrollHeight);}
+    window.scrollTo(0, document.body.scrollHeight);
+}
 
 // Helper to go to the start or end of the notification collection
 function gotoUttermost(uttermost = 'end') {
     var $i = uttermost == 'end' ? notificationPaginator.elements.length - 1 : 0;
     changeCurrentElementNotification($i);
-    window.scrollTo(0,document.body.scrollHeight);
+    window.scrollTo(0, document.body.scrollHeight);
 }
 
 // updates the number of notifications shown on the buttons to change notification
@@ -1857,7 +1858,7 @@ function updateNotificationsNumberPaginator() {
 // removes the notifications elements from the container and append the requested
 function changeCurrentElementNotification($i, $only_update_src = false) {
     var $not = $('#notifications-content');
-    
+
     if (!$only_update_src) {
         // remove all the soruces from the images of all childrends of the notification container
         [...$not[0].children].forEach(el => {
@@ -1879,19 +1880,19 @@ function changeCurrentElementNotification($i, $only_update_src = false) {
         // remove the childrends from the tree
         $not.empty();
     }
-    
+
     var el = notificationPaginator.elements[$i];
 
     if (el.id) el = el.root[0];
 
-    console.log({root: el, only_update_src: $only_update_src});
+    console.log({ root: el, only_update_src: $only_update_src });
 
     const loadVideos = function () {
         var videos = el.getElementsByTagName("video");
         if (videos.length > 0) {
             [...videos].forEach(vid => {
                 if (vid.src === window.location.href) {
-                    console.log("video:", {dataset: vid.dataset, video: vid, src: vid.dataset.videosrc})
+                    console.log("video:", { dataset: vid.dataset, video: vid, src: vid.dataset.videosrc })
                     vid.src = vid.dataset.videosrc;
                 }
             });
@@ -1900,10 +1901,10 @@ function changeCurrentElementNotification($i, $only_update_src = false) {
 
     if (el.getElementsByTagName("img").length > 0) {
         var img = el.getElementsByTagName("img")[0];
-        
+
         // set src for the image elements
         img.src = img.dataset.src;
-        
+
         // set src for the video elements
         img.onload = loadVideos;
     } else {
@@ -1933,7 +1934,7 @@ function pointPolygonTest(pts, pt) {
 
     if (pts.length > 0 && typeof pts[0].x === "string") {
         for (var j in pts)
-            points.push({x: parseInt(pts[j].x), y: parseInt(pts[j].y)});
+            points.push({ x: parseInt(pts[j].x), y: parseInt(pts[j].y) });
     } else {
         points = pts;
     }
@@ -1941,12 +1942,12 @@ function pointPolygonTest(pts, pt) {
     var result = 0;
     var i, total = points.length, counter = 0;
 
-    var ip = {x: Math.round(pt.x), y: Math.round(pt.y)};
+    var ip = { x: Math.round(pt.x), y: Math.round(pt.y) };
 
     if (total == 0)
         return -1;
 
-    var v0, v = points[total-1];
+    var v0, v = points[total - 1];
 
     for (i = 0; i < total; i++) {
         v0 = v;
@@ -1954,16 +1955,15 @@ function pointPolygonTest(pts, pt) {
 
         if ((v0.y <= ip.y && v.y <= ip.y) ||
             (v0.y > ip.y && v.y > ip.y) ||
-            (v0.x < ip.x && v.x < ip.x))
-        {
-            if	( ip.y == v.y && (ip.x == v.x || (ip.y == v0.y &&
+            (v0.x < ip.x && v.x < ip.x)) {
+            if (ip.y == v.y && (ip.x == v.x || (ip.y == v0.y &&
                 ((v0.x <= ip.x && ip.x <= v.x) || (v.x <= ip.x && ip.x <= v0.x)))))
                 return 0;
             continue;
         }
 
-        var dist = 	Math.round((ip.y - v0.y)*(v.x - v0.x))
-                   - Math.round((ip.x - v0.x)*(v.y - v0.y));
+        var dist = Math.round((ip.y - v0.y) * (v.x - v0.x))
+            - Math.round((ip.x - v0.x) * (v.y - v0.y));
 
         if (dist == 0)
             return 0;
