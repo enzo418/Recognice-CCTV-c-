@@ -5,9 +5,12 @@
 !*.h
 !*.md
 !.gitignore
+!*.js
+!*.css
 
 !src/
 !src/web/
+!src/web/assets/
 !src/tests/
 
 !CMakeLists.txt

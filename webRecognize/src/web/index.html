@@ -10,6 +10,7 @@
 	<link rel="stylesheet" href="assets/bulma-tooltip.min.css">
 	<link rel="stylesheet" href="assets/bulma-pageloader.min.css">
 	<link rel="stylesheet" href="assets/styles.css">
+	<link rel="stylesheet" href="assets/bulma-calendar.min.css">
 
 	<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" sizes="any">
 	
@@ -17,6 +18,7 @@
 	<script async src="assets/fontawesome.js"></script>
 	<script src='assets/moment.min.js'></script>
 	<script src='assets/bulma-collapsible.min.js'></script>
+	<script src='assets/bulma-calendar.min.js'></script>
 	<script src='assets/jquery.min.js'></script>
 	<script src='assets/simplify.js'></script>	
 	<script src='app.js'></script>
@@ -105,6 +107,10 @@
 			<div id="notifications-page" class="is-hidden">
 				<div class="header">
 					<h1 class="title" data-translation="Notifications">Notifications</h1>
+
+					<div class="datetimepicker-container">
+						<input type="date">
+					</div>
 					
 					<div class="notifications-configuration">
 						<label class="notifications-configuration-item checkbox">

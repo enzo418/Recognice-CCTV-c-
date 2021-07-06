@@ -65,7 +65,7 @@ const getNotificationGroupTemplate = (group_id) => `
 <div id="${group_id}" class="box"></div>
 `
 
-const getNotificationTemplate = (type, text) => `
+const getNotificationTemplate = (type, text, moment_date) => `
 <div class="box ${(type == "text" && "text-notification") || ""}">
 	${(type == "image" &&
 		`<figure class="image">
@@ -79,7 +79,7 @@ const getNotificationTemplate = (type, text) => `
 	`<video width="640" height="360" preload="metadata" src="" controls data-videosrc="${text}"></video>`
 	) || ""}
 
-<h6 class="subtitle is-6 hour" data-date="${moment().format('MMMM Do YYYY, h:mm:ss a')}">now</h6>
+<h6 class="subtitle is-6 hour" data-date="${moment_date}">now</h6>
 </div>`;
 
 const getTabTemplate = (i, camName) => `
@@ -114,6 +114,11 @@ var isFirstNotification = true;
 
 var SEND_PUSH_NOTIFICATIONS = window.localStorage.getItem("send_push") === "true";
 var PLAY_SOUND_NOTIFICATION = window.localStorage.getItem("play_sound_notification") === "true";
+
+var calendar = null;
+var notification_log = [];
+
+var notification_pager_before_filter = {}; // a variable to store the pager before deleting them
 
 var cnvRoi = {
 	canvas: null,
@@ -511,6 +516,9 @@ $(function () {
 		console.log('onopen');
 		$('#pageloader').removeClass("is-active");
 		$('#modal-file').addClass("is-active");
+
+		// request notification logs
+		sendObj("need_notifications_history", {});
 	};
 
 	ws.onclose = function () {
@@ -601,7 +609,7 @@ $(function () {
 			var ob = data["new_notification"];
 			console.log("Notification: ", ob);
 			if (ob["type"] != "sound") {
-				createNewNotification(ob["type"], ob["content"], true, ob["group"]);
+				createNewNotification(ob["type"], ob["content"], true, ob["group"], parseStringToDate(ob["datetime"], true));
 				createAlert("ok", "New notification", 1500);
 			}
 
@@ -620,6 +628,12 @@ $(function () {
 
 			if (document.visibilityState == "hidden") {
 				document.title = `(${++currentNumberNotificationsWindowTitle}) ${appTitle}`;
+			}
+
+			notification_log.push({type: ob["type"], content: ob["content"], group_id: ob["group"], datetime: ob["datetime"]});
+
+			if (!calendar.isOpen()) {
+				updateCalendarLimitis();
 			}
 		}
 
@@ -763,6 +777,13 @@ $(function () {
 			ROOT_CONFIGURATIONS_DIRECTORY = data["root_configurations_directory"];
 			$('.root-dir-configurations').text(ROOT_CONFIGURATIONS_DIRECTORY);
 		}
+
+		if (data.hasOwnProperty("need_notifications_history")) {
+			notification_log = data["need_notifications_history"];
+			notification_log.forEach(not => not.datetime = parseStringToDate(not.datetime));
+			console.log("notification log:", notification_log);
+			updateCalendarLimitis();
+		}
 	};
 
 	ws.onerror = function (error) {
@@ -891,8 +912,16 @@ function deleteAlert($ev) {
 	($ev.target.parentNode).remove();
 }
 
-function createNewNotification($type, $content, $sendPush, $groupID) {
-	var $not = $(getNotificationTemplate($type, $content));
+/**
+ * Create a new notification and appends it to the paginator
+ * @param {string} $type 
+ * @param {string} $content 
+ * @param {boolean} $sendPush 
+ * @param {string} $groupID 
+ * @param {moment_date} $datetime moment date
+ */
+function createNewNotification($type, $content, $sendPush, $groupID, $datetime) {
+	var $not = $(getNotificationTemplate($type, $content, $datetime));
 
 	console.log("Create notification with: ", {"type": $type, "content": $content, "group": $groupID}, $not[0]);
 
@@ -1293,6 +1322,87 @@ function getRectangleDimensions($p1, $p2) {
 	const heigth = br.y - lt.y;
 
 	return [lt, width, heigth];
+}
+
+function calendar_OnCancel(e) {
+	if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && notification_pager_before_filter.elements) {
+		notificationPaginator.index = 0;
+		notificationPaginator.elements = [...notification_pager_before_filter.elements];
+		notification_pager_before_filter = {};
+		changeCurrentElementNotification(0, false);
+	}
+}
+
+function calendar_OnSelect(e) {
+	if (!notification_pager_before_filter.elements) {
+		notification_pager_before_filter.index = notificationPaginator.index;
+		notification_pager_before_filter.elements = [...notificationPaginator.elements];
+	}
+	
+	var start = e.data.date.start, end = e.data.date.end;
+	var filtered = notification_log.filter(not => not.datetime >= start && not.datetime <= end);
+
+	console.log("filtered: ", filtered);
+
+	notificationPaginator.index = 0;
+	notificationPaginator.elements = [];
+
+	filtered.forEach(not => createNewNotification(not.type, not.content, false, not.group_id, moment(not.datetime)));
+
+	changeCurrentElementNotification(0, false);
+}
+
+function reloadCalendar(minDate, maxDate) {
+	// calendar excludes the minDate...
+	minDate = moment(minDate).subtract(1, "day").toDate();
+
+	// Initialize all input of date type.
+	const calendars = bulmaCalendar.attach('.datetimepicker-container > *', {
+		color: 'primary',
+		isRange: true,
+		allowSameDayRange: true,
+		lang: 'en-US',
+		startDate: undefined,
+		endDate: undefined,
+		minDate: minDate,
+		maxDate: maxDate,
+		disabledDates: [],
+		disabledWeekDays: undefined,
+		highlightedDates: [],
+		weekStart: 0,
+		dateFormat: 'dd/MM/yyyy',
+		navigationMonthFormat: 'MMMM',
+		navigationYearFormat: 'yyyy',
+		enableMonthSwitch: true,
+		enableYearSwitch: true,
+		displayYearsCount: 50,
+	});
+
+	// Loop on each calendar initialized
+	calendars.forEach(calendar => {
+		// Add listener to select event
+		calendar.on('select', calendar_OnSelect);
+		calendar.on('save', calendar_OnCancel);
+	});
+
+	calendar = calendars[0];	
+}
+
+function parseStringToDate(datestring, return_moment = false) {
+	var parsed = moment(datestring, "DD_MM_YYYY_hh_mm_ss");
+	return return_moment ? parsed : parsed.toDate();
+}
+
+function updateCalendarLimitis() {
+	var minDate, maxDate;
+
+	if (notification_log.length > 0) {
+		minDate = notification_log[0].datetime;
+		maxDate = notification_log[notification_log.length - 1].datetime;
+	}
+
+	// Initialize all input of date type.
+	reloadCalendar(minDate, maxDate);	
 }
 
 document.addEventListener('DOMContentLoaded', () => {
