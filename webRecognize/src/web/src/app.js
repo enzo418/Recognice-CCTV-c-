@@ -13,6 +13,10 @@ import Translations from './translations.json';
 
 window.$ = $;
 
+import parseConfiguration from './modules/configuration_parser'
+
+import NotificationPaginator from './modules/notification_paginator'
+
 const getCameraContainerTemplate = (i, camera) => `
 <div class="card is-hidden" id="camera-${i}">
     <header class="card-header">
@@ -481,7 +485,7 @@ var hndlExclAreas = {
     }
 }
 
-var notificationPaginator = { index: 0, elements: [] }; // DOM notification elements
+var notificationPaginator = null;
 
 var configurationsElements = lowerKeyName(Elements, Translations);
 
@@ -577,7 +581,7 @@ $(function () {
             }
 
             //  Add accordion program and cameras
-            CONFIGURATION_HEADERS = getHeadersFromStringConfig(data["configuration_file"]);
+            CONFIGURATION_HEADERS = parseConfiguration(data["configuration_file"]);
 
             cameras = CONFIGURATION_HEADERS.cameras;
 
@@ -616,11 +620,15 @@ $(function () {
                 createAlert("ok", "New notification", 1500);
             }
 
-            var same_group = (notificationPaginator.elements[notificationPaginator.index].id || -1) === ob["group"];
+            var same_group = (notificationPaginator.getElements()[notificationPaginator.getIndex()].id || -1) === ob["group"];
             // only change if user is watching the last one
             if (notificationPaginator.index === notificationPaginator.elements.length - 1) {
-                changeCurrentElementNotification(notificationPaginator.elements.length - 1, !isFirstNotification && same_group);
-                isFirstNotification = false;
+                if (!isFirstNotification && same_group) {
+                    notificationPaginator.setActualSources(notificationPaginator.getElement(notificationPaginator.elements.length - 1));
+                } else {
+                    notificationPaginator.gotoIndex(notificationPaginator.elements.length - 1);
+                    isFirstNotification = false;
+                }
             }
 
             if (PLAY_SOUND_NOTIFICATION) {
@@ -761,7 +769,7 @@ $(function () {
         if ("new_camera_config" in data) {
             ob = data["new_camera_config"];
             console.log(ob);
-            var headers = getHeadersFromStringConfig(ob["configuration"]);
+            var headers = parseConfiguration(ob["configuration"]);
             var i_start = cameras.length;
             headers.cameras.forEach((cam, i) => addCameraConfigurationElementsTab(cam, i_start + i));
         }
@@ -773,7 +781,7 @@ $(function () {
                     createNewNotification(not["type"], not["content"], false, not["group"])
             });
 
-            changeCurrentElementNotification(notificationPaginator.elements.length - 1);
+            notificationPaginator.gotoIndex(notificationPaginator.elements.length - 1);
         }
 
         if ("root_configurations_directory" in data) {
@@ -885,19 +893,19 @@ $(function () {
     });
 
     $(".buton-uttermost-start").on("click", function () {
-        gotoUttermost('start');
+        notificationPaginator.gotoUttermost(false);
     });
 
     $(".previous-notification").on("click", function () {
-        previousNotification();
+        notificationPaginator.previousNotification();
     });
 
     $(".next-notification").on("click", function () {
-        nextNotification();
+        notificationPaginator.nextNotification();
     });
 
     $(".buton-uttermost-end").on("click", function () {
-        gotoUttermost('end');
+        notificationPaginator.gotoUttermost(true);
     });
 
     $("#toggle-push").on("click", function () {
@@ -1035,15 +1043,15 @@ function createNewNotification($type, $content, $sendPush, $groupID, $datetime) 
     $('.navigator-notification').removeClass('is-hidden');
 
     if ($groupID > 0) {
-        let found = notificationPaginator.elements.find(el => el.id && el.id == $groupID);
+        let found = notificationPaginator.getElements().find(el => el.id && el.id == $groupID);
         if (found) {
+            // found a element with te same id, add this notification to the group container
             found.root.append($not);
         } else {
             var root = $(getNotificationGroupTemplate($groupID));
 
-            console.log("Group doesn't exist... creating a new one with id", $groupID, root);
-
-            notificationPaginator.elements.push(
+            // Group doesn't exist... creating a new one with id = $groupID
+            notificationPaginator.addElement(
                 {
                     "id": $groupID,
                     "root": root
@@ -1053,7 +1061,7 @@ function createNewNotification($type, $content, $sendPush, $groupID, $datetime) 
             root.append($not);
         }
     } else {
-        notificationPaginator.elements.push($not[0]);
+        notificationPaginator.addElement($not[0]);
     }
 
     if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
@@ -1069,8 +1077,6 @@ function createNewNotification($type, $content, $sendPush, $groupID, $datetime) 
             vibrate: [200, 100, 200, 100, 200, 100, 200]
         });
     }
-
-    updateNotificationsNumberPaginator();
 }
 
 function sendObj(key, body) {
@@ -1139,43 +1145,6 @@ function changeRecognizeStatusElements(running) {
         $('#button-toggle-recognizer').removeClass("is-danger").addClass("is-sucess").text(_("Start recognizer"));
         $('#button-state-recognizer').text(_("Recognizer is not running"));
     }
-}
-
-function getHeadersFromStringConfig(str) {
-    var re = /(PROGRAM|CAMERA)/g;
-    var headers_match = []
-    var match;
-    while ((match = re.exec(str)) != null) {
-        var start = match.index - 2;
-        var end = match.index + match[0].length + 2;
-        var name = match[0]
-        headers_match.push({ start, end, name });
-    }
-
-    var headers = { "program": {}, "cameras": [] };
-    for (var i = 0; i < headers_match.length; i++) {
-        var nxt = headers_match[i + 1] || []
-
-        var cam_str = str.slice(headers_match[i]["end"], nxt["start"] || str.length);
-
-        var obj = {};
-        var lines = cam_str.split('\n');
-        for (var j = 0; j < lines.length; j++) {
-            if (lines[j].length > 0) {
-                var eq = lines[j].indexOf("=");
-                var id = lines[j].slice(0, eq).toLowerCase();
-                var val = lines[j].slice(eq + 1, lines[j].length);
-                obj[id] = val;
-            }
-        }
-
-        if (headers_match[i]["name"] == "CAMERA")
-            headers["cameras"].push(obj);
-        else
-            headers["program"] = obj;
-    }
-
-    return headers;
 }
 
 function saveIntoFile() {
@@ -1448,7 +1417,7 @@ function calendar_OnCancel(e) {
             $('#notifications-content').empty();
             $('.navigator-notification').addClass('is-hidden');
         } else {
-            changeCurrentElementNotification(0, false);
+            notificationPaginator.gotoIndex(0);
         }
     }
 }
@@ -1469,7 +1438,7 @@ function calendar_OnSelect(e) {
 
     filtered.forEach(not => createNewNotification(not.type, not.content, false, not.group_id, moment(not.datetime)));
 
-    changeCurrentElementNotification(0, false);
+    notificationPaginator.gotoIndex(0);
 }
 
 function reloadCalendar(minDate, maxDate) {
@@ -1575,6 +1544,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#modal-roi .modal-content').addEventListener('scroll', onResize, false);
     document.querySelector('#modal-igarea .modal-content').addEventListener('scroll', onResize, false);
     document.querySelector('#modal-exclusivity-areas .modal-content').addEventListener('scroll', onResize, false);
+
+    notificationPaginator = new NotificationPaginator(
+        [],
+        query('#notifications-content'),
+        query('.notification-previous-left'),
+        query('.notification-next-left')
+    );
 
     // dropdowns
     var dropdown_file = document.querySelector('#dropdown-file');
@@ -1828,101 +1804,6 @@ window.addEventListener("focus", function () {
     }, 250);
 }, false);
 
-// Helper function that updates the current index to the previous and calls a function to change the notification displayed
-function previousNotification() {
-    var $i = notificationPaginator.index > 0 ? notificationPaginator.index - 1 : notificationPaginator.elements.length - 1;
-    changeCurrentElementNotification($i);
-    window.scrollTo(0, document.body.scrollHeight);
-}
-
-// Helper function that updates the current index to the next one and calls a function to change the notification displayed
-function nextNotification() {
-    var $i = notificationPaginator.index < notificationPaginator.elements.length - 1 ? notificationPaginator.index + 1 : 0;
-    changeCurrentElementNotification($i);
-    window.scrollTo(0, document.body.scrollHeight);
-}
-
-// Helper to go to the start or end of the notification collection
-function gotoUttermost(uttermost = 'end') {
-    var $i = uttermost == 'end' ? notificationPaginator.elements.length - 1 : 0;
-    changeCurrentElementNotification($i);
-    window.scrollTo(0, document.body.scrollHeight);
-}
-
-// updates the number of notifications shown on the buttons to change notification
-function updateNotificationsNumberPaginator() {
-    $('.notification-next-left').text(notificationPaginator.elements.length - 1 - notificationPaginator.index);
-    $('.notification-previous-left').text(notificationPaginator.index);
-}
-
-// removes the notifications elements from the container and append the requested
-function changeCurrentElementNotification($i, $only_update_src = false) {
-    var $not = $('#notifications-content');
-
-    if (!$only_update_src) {
-        // remove all the soruces from the images of all childrends of the notification container
-        [...$not[0].children].forEach(el => {
-            var img = el.getElementsByTagName("img")[0];
-            if (img) {
-                img.dataset.src = img.src;
-                img.src = "";
-            }
-
-            var videos = el.getElementsByTagName("video");
-            if (videos.length > 0) {
-                [...videos].forEach(vid => {
-                    vid.dataset.videosrc = vid.src;
-                    vid.src = "";
-                });
-            }
-        });
-
-        // remove the childrends from the tree
-        $not.empty();
-    }
-
-    var el = notificationPaginator.elements[$i];
-
-    if (el.id) el = el.root[0];
-
-    console.log({ root: el, only_update_src: $only_update_src });
-
-    const loadVideos = function () {
-        var videos = el.getElementsByTagName("video");
-        if (videos.length > 0) {
-            [...videos].forEach(vid => {
-                if (vid.src === window.location.href) {
-                    console.log("video:", { dataset: vid.dataset, video: vid, src: vid.dataset.videosrc })
-                    vid.src = vid.dataset.videosrc;
-                }
-            });
-        }
-    };
-
-    if (el.getElementsByTagName("img").length > 0) {
-        var img = el.getElementsByTagName("img")[0];
-
-        // set src for the image elements
-        img.src = img.dataset.src;
-
-        // set src for the video elements
-        img.onload = loadVideos;
-    } else {
-        loadVideos();
-    }
-
-    if (!$only_update_src) {
-        // append notification
-        $not.append(el);
-
-        // update current index
-        notificationPaginator.index = $i;
-
-        // update before/after notifications left
-        updateNotificationsNumberPaginator();
-    }
-}
-
 function getRandomArbitrary(min, max) {
     return Math.round(Math.random() * (max - min) + min);
 }
@@ -1975,4 +1856,8 @@ function pointPolygonTest(pts, pt) {
 
     result = counter % 2 == 0 ? -1 : 1;
     return result;
+}
+
+function query(selector) {
+    return document.querySelector(selector);
 }

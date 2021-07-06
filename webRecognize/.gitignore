@@ -15,6 +15,8 @@
 !src/web/
 !src/web/assets/
 !src/web/src/
+!src/web/src/modules/
+!src/web/src/utils/
 
 !CMakeLists.txt
 
