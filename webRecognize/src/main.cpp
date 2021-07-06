@@ -375,8 +375,10 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 	// start the thread to write the notifications to disk
 	std::thread disk_notifications([] {
 		Json::FastWriter writer;
-		std::this_thread::sleep_for(std::chrono::minutes(2));
-		WriteNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications), std::ref(writer));
+		for(;;) {
+			std::this_thread::sleep_for(std::chrono::seconds(20));
+			WriteNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications), std::ref(writer));
+		}
 	});
 	disk_notifications.detach();
 

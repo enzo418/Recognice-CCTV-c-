@@ -378,13 +378,13 @@ void Camera::ReadFramesWithInterval() {
 					if (framesLeft < maxFramesLeft)
 						framesLeft += numberFramesToAdd;
 				}
-			} else if (!this->videoLocked && saveChangeVideo) {
-				auto secondDiff = std::chrono::duration_cast<std::chrono::seconds>(this->now - this->lastVideoStartTime).count();
-				if (secondDiff >= singleVideoMaxSecondsLength) {
-					std::cout 	<< "\n[V] Video " << videosPath[currentIndexVideoPath] 
-								<< " has " << secondDiff << " of length, " << secondDiff - singleVideoMaxSecondsLength
-								<< "s more than needed. Send video continuation? " 
-								<< (this->sendChangeVideoContinuation ? "Yes" : "No") << "\n\n";
+			} else if (!this->videoLocked && saveChangeVideo) { // continuation video
+				// auto secondDiff = std::chrono::duration_cast<std::chrono::seconds>(this->now - this->lastVideoStartTime).count();
+				// if (secondDiff >= singleVideoMaxSecondsLength) {
+					// std::cout 	<< "\n[V] Video " << videosPath[currentIndexVideoPath] 
+					// 			<< " has " << secondDiff << " of length, " << secondDiff - singleVideoMaxSecondsLength
+					// 			<< "s more than needed. Send video continuation? " 
+					// 			<< (this->sendChangeVideoContinuation ? "Yes" : "No") << "\n\n";
 					// if (this->sendChangeVideoContinuation /**&&  Wants continuation video? */) {
 					// 	std::string fileName = this->videosPath[this->currentIndexVideoPath];
 					// 	this->ReleaseAndOpenChangeVideo(false);
@@ -398,7 +398,7 @@ void Camera::ReadFramesWithInterval() {
 
 					// 	this->ReleaseAndOpenChangeVideo(true);
 					// }
-				}
+				// }
 			}
 
 			if (framesLeft == 0)
