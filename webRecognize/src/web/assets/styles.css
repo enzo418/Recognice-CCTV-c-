@@ -2,6 +2,11 @@
 	height: 100%;
 } */
 
+@import 'bulma/css/bulma.css';
+@import '../node_modules/@creativebulma/bulma-tooltip/dist/bulma-tooltip.min.css';
+@import '../node_modules/bulma-pageloader/dist/css/bulma-pageloader.min.css';
+@import '../node_modules/bulma-calendar/dist/css/bulma-calendar.min.css';
+
 ::-webkit-scrollbar-thumb {
     background-color: #494e52;
 }

@@ -1,3 +1,18 @@
+import "../assets/styles.css"
+import '@fortawesome/fontawesome-free/js/all.js';
+
+import simplify from 'simplify-js';
+import $ from "jquery";
+import moment from 'moment';
+import Push from 'push.js';
+import bulmaCalendar from 'bulma-calendar'
+
+// import local json
+import Elements from './elements.json';
+import Translations from './translations.json';
+
+window.$ = $;
+
 const getCameraContainerTemplate = (i, camera) => `
 <div class="card is-hidden" id="camera-${i}">
 	<header class="card-header">
@@ -11,20 +26,16 @@ const getCameraContainerTemplate = (i, camera) => `
 
 	<footer class="card-footer">
 		<div class="card-footer-item footer-camera-buttons">
-			<button class="button button-select-camera-roi" 
-					onclick="selectCameraROI(event, ${i})"
+			<button class="button button-select-camera-roi"
 					data-translation="Select camera region of interest">Select camera region of interest</button>
 
 			<button class="button button-select-camera-ignored-areas" 
-					onclick="selectCameraIgnoredAreas(event, ${i})"
 					data-translation="Select camera ignored areas">Select camera ignored areas</button>
 			
 			<button class="button button-select-camera-exclusivity-areas" 
-					onclick="hndlExclAreas.openModal(event, ${i})"
 					data-translation="Select camera exclusivity areas">Select camera exclusivity areas</button>
 
-			<button class="button is-danger" 
-					onclick="deleteCamera(event, ${i})"
+			<button class="button is-danger button-delete-camera" 
 					data-translation="Delete camera">Delete camera</button>
 		</div>
 		</div>
@@ -472,12 +483,14 @@ var hndlExclAreas = {
 
 var notificationPaginator = { index: 0, elements: [] }; // DOM notification elements
 
-var configurationsElements = { elements: {}, translations: {} };
+var configurationsElements = lowerKeyName(Elements, Translations);
 
 var appTitle = "Web Recognize";
 var currentNumberNotificationsWindowTitle = 0;
 
 var PendingElementsToToggleState = []; // array of {state: string, elements: [{id: string, on_checked: string, on_unchecked: string}]}
+
+var frameRequestOrigin = null;
 
 function _($key_string) {
 	var lw = $key_string.toLowerCase();
@@ -488,7 +501,7 @@ function _($key_string) {
 }
 
 function changeLanguage($clicked_el) {
-	$lang_code = $clicked_el.dataset.lang;
+	var $lang_code = $clicked_el.dataset.lang;
 	localStorage.setItem("lang", $lang_code);
 	if (confirm(_("Is it necessary to restart the page to change the language, restart now?"))) {
 		location.reload();
@@ -589,20 +602,9 @@ $(function () {
 		}
 
 		if (data.hasOwnProperty("recognize_state_changed")) {
-
-			// get Translations
-			getElementsTranslations().then(res => {
-				const [elements, translations] = res;
-				configurationsElements.elements = elements;
-				configurationsElements.translations = translations;
-
-				// Translation
-				// translateDOMElements();
-
-				$('#button-toggle-recognizer').removeClass('is-loading');
-				RECOGNIZE_RUNNING = data["recognize_state_changed"];
-				changeRecognizeStatusElements(RECOGNIZE_RUNNING);
-			});
+			$('#button-toggle-recognizer').removeClass('is-loading');
+			RECOGNIZE_RUNNING = data["recognize_state_changed"];
+			changeRecognizeStatusElements(RECOGNIZE_RUNNING);
 		}
 
 		if (data.hasOwnProperty("new_notification")) {
@@ -791,7 +793,7 @@ $(function () {
 		console.log(error);
 	};
 
-	$('#button-select-config-file').click(function () {
+	$('#button-select-config-file').on("click", function () {
 		$(this).addClass("is-loading");
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText.trim();
 		FILE_PATH = selected;
@@ -813,7 +815,7 @@ $(function () {
 		}
 	});
 
-	$('#button-toggle-recognizer').click(function () {
+	$('#button-toggle-recognizer').on("click", function () {
 		if (FILE_PATH.length === 0 && !RECOGNIZE_RUNNING) {
 			createAlert("error", _("You can not start the recognize without selecting a configuration file"), 5000);
 		} else {
@@ -828,7 +830,7 @@ $(function () {
 		}
 	});
 
-	$('#button-just-notifications').click(function () {
+	$('#button-just-notifications').on("click", function () {
 		$('#configuration-page').remove();
 		$('#button-current-page').remove();
 		togglePage();
@@ -836,7 +838,7 @@ $(function () {
 		Notification.requestPermission();
 	});
 
-	$('#button-modal-make-copy-file').click(function () {
+	$('#button-modal-make-copy-file').on("click", function () {
 		var selected = document.querySelector('#dropdown-file div.dropdown-content .is-active').innerText;
 		if (selected !== _("new")) {
 			FILE_PATH = selected;
@@ -847,12 +849,12 @@ $(function () {
 		}
 	});
 
-	$('#button-cancel-copy-file').click(function () {
+	$('#button-cancel-copy-file').on("click", function () {
 		$('#modal-file-copy').toggleClass('is-active');
 		$('#modal-file').toggleClass('is-active');
 	});
 
-	$('#button-make-copy-file').click(function (event) {
+	$('#button-make-copy-file').on("click", function (event) {
 		event.preventDefault();
 		$(this).addClass("is-loading");
 		var selectedFile = FILE_PATH;
@@ -869,16 +871,120 @@ $(function () {
 		}
 	});
 
-	$('#button-cancel-file-name').click(function () {
+	$('#button-cancel-file-name').on("click", function () {
 		$('#modal-file-name').toggleClass('is-active');
 		$('#modal-file').toggleClass('is-active');
 	});
 
-	$('#button-selected-new-file-name').click(function () {
+	$('#button-selected-new-file-name').on("click", function () {
 		$(this).addClass("is-loading");
 		FILE_PATH = ROOT_CONFIGURATIONS_DIRECTORY + ($('#new-file-name').val()).replace(/(\.\w+)+/, '') + ".ini";
 		sendObj('need_config_file', { file: FILE_PATH, is_new: true });
 		$('#modal-file-name').toggleClass('is-active');
+	});
+
+	$(".buton-uttermost-start").on("click", function () {
+		gotoUttermost('start');
+	});
+
+	$(".previous-notification").on("click", function () {
+		previousNotification();
+	});
+
+	$(".next-notification").on("click", function () {
+		nextNotification();
+	});
+
+	$(".buton-uttermost-end").on("click", function () {
+		gotoUttermost('end');
+	});
+
+	$("#toggle-push").on("click", function () {
+		togglePush();
+	});
+
+	$("#toggle-notification-sound").on("click", function () {
+		toggleNotificationSound();
+	});
+
+	$("#button-save-into-file").on("click", function () {
+		saveIntoFile();
+	});
+
+	$("#button-add-new-camera").on("click", function () {
+		addNewCamera();
+	});
+
+	$("#tab-program").on("click", function (event) {
+		onTabClick(event);
+	});
+
+	$("#dropdown-language .dropdown-content > .dropdown-item").on("click", function (event) {
+		changeLanguage(event.target);
+	});
+
+	$("#button-current-page").on("click", function () {
+		togglePage();
+	});
+
+	$("#button-camera-discard-roi").on("click", function (event) {
+		saveCameraROI(event, false);
+	});
+
+	$("#button-camera-save-roi").on("click", function (event) {
+		saveCameraROI(event, true);
+	});
+
+	$("#remove-all-areas").on("click", function () {
+		cnvAreas.removeAll();
+	});
+
+	$("#button-camera-discard-igarea").on("click", function (event) {
+		saveCameraIgarea(event, false);
+	});
+
+	$("#button-camera-save-igarea").on("click", function (event) {
+		saveCameraIgarea(event, true);
+	});
+	
+	$("#button-close-poly").on("click", function () {
+		hndlExclAreas.closeCurrentPoly();
+	});
+
+	$("#button-aprox-poly").on("click", function () {
+		hndlExclAreas.aproxPoly();
+	});
+
+	$("#button-undo").on("click", function () {
+		hndlExclAreas.undo();
+	});
+
+	$("#button-redo").on("click", function () {
+		hndlExclAreas.redo();
+	});
+
+	$("#button-remove-all-exclareas").on("click", function () {
+		hndlExclAreas.removeAll();
+	});
+
+	$("#button-remove-selected-exclareas").on("click", function () {
+		hndlExclAreas.select.removeSelected();
+	});
+
+	$("#button-start-selected-exclareas").on("click", function () {
+		hndlExclAreas.select.startSelectMode();
+	});
+
+	$("#button-exit-selected-exclareas").on("click", function () {
+		hndlExclAreas.select.exitSelectionMode();
+	});
+
+	$("#button-camera-discard-exclusivity-areas").on("click", function (event) {
+		hndlExclAreas.save(event, false);
+	});
+
+	$("#button-camera-save-exclusivity-areas").on("click", function (event) {
+		hndlExclAreas.save(event, true);
 	});
 });
 
@@ -936,7 +1042,7 @@ function createNewNotification($type, $content, $sendPush, $groupID, $datetime) 
 			
 			console.log("Group doesn't exist... creating a new one with id", $groupID, root);
 			
-			this.notificationPaginator.elements.push(
+			notificationPaginator.elements.push(
 				{
 					"id": $groupID, 
 					"root": root
@@ -946,7 +1052,7 @@ function createNewNotification($type, $content, $sendPush, $groupID, $datetime) 
 			root.append($not);
 		}
 	} else {
-		this.notificationPaginator.elements.push($not[0]);
+		notificationPaginator.elements.push($not[0]);
 	}
 
 	if (SEND_PUSH_NOTIFICATIONS && $sendPush) {
@@ -988,15 +1094,34 @@ function onTabClick($e) {
 	lastConfigurationActive = el.dataset.config;
 }
 
+function setListenersCameraConfigurationElement (element, i) {
+	$(element).find(".button-select-camera-roi").on("click", event => {
+		selectCameraROI(event, i);
+	});
+
+	$(element).find(".button-select-camera-ignored-areas").on("click", event => {
+		selectCameraIgnoredAreas(event, i);
+	});
+
+	$(element).find(".button-select-camera-exclusivity-areas").on("click", event => {
+		hndlExclAreas.openModal(event, i);
+	});
+
+	$(element).find(".button-delete-camera").on("click", event => {
+		deleteCamera(event, i);
+	});
+}
+
 function addCameraConfigurationElementsTab(val, i) {
 	var tabs = document.querySelector('.tabs ul');
 	// add tab
 	var $tab = $(getTabTemplate(i, val["cameraname"]));
 	$(tabs).append($tab);
-	$tab.click(onTabClick);
+	$tab.on("click", onTabClick);
 
 	// get camera root container
 	var camEl = $(getCameraContainerTemplate(i, val));
+	setListenersCameraConfigurationElement(camEl, i);
 	var camConten = $(camEl).children('.camera-config-content');
 
 	addGroups(configurationsElements.elements.camera.groups, val, camConten, configurationsElements.translations[CURRENT_LANG])
@@ -1018,6 +1143,7 @@ function changeRecognizeStatusElements(running) {
 function getHeadersFromStringConfig(str) {
 	var re = /(PROGRAM|CAMERA)/g;
 	var headers_match = []
+	var match;
 	while ((match = re.exec(str)) != null) {
 		var start = match.index - 2;
 		var end = match.index + match[0].length + 2;
@@ -1090,30 +1216,19 @@ function togglePage() {
 	}
 }
 
-function getElementsTranslations() {
+function lowerKeyName(elements, translations) {
 	const objectKeysToLowerCase = obj => Object.fromEntries(
 		Object.entries(obj).map(([k, v]) => [k.toLowerCase(), v])
 	)
 
-	return new Promise(resolve => {
-		fetch('/elements.json')
-			.then(elements => elements.json())
-			.then(elements => {
-				// lower case ids of the elements
-				groupsToLowerCase(elements.camera.groups);
-				groupsToLowerCase(elements.program.groups);
+	// lower case ids of the elements
+	groupsToLowerCase(elements.camera.groups);
+	groupsToLowerCase(elements.program.groups);
 
-				// get the translations
-				fetch('/translations.json')
-					.then(translations => translations.json())
-					.then(translations => {
-						Object.entries(translations).forEach(
-							el => translations[el[0]] = objectKeysToLowerCase(translations[el[0]]));
-
-						resolve([elements, translations]);
-					})
-			})
-	});
+	Object.entries(translations).forEach(
+		el => translations[el[0]] = objectKeysToLowerCase(translations[el[0]]));
+	
+	return {elements, translations};
 }
 
 function groupsToLowerCase(groups) {

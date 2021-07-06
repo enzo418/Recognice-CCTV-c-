@@ -46,7 +46,7 @@ std::map<std::string, std::string> connection_file;
 std::vector<std::string> lastNotificationsSended;
 std::map<std::string, std::string> cachedImages; // map of single images from the cameras in cache
 Configurations current_configurations;
-const std::string SERVER_FILEPATH = "../src/web";
+const std::string SERVER_FILEPATH = "./web";
 
 const std::string ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
 

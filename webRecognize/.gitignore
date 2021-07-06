@@ -7,10 +7,15 @@
 !.gitignore
 !*.js
 !*.css
+!*.json
+!*.html
 
 !src/
+!src/tests/
 !src/web/
 !src/web/assets/
-!src/tests/
+!src/web/src/
 
 !CMakeLists.txt
+
+package-lock.json
