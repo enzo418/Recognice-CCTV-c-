@@ -544,7 +544,7 @@ $(function () {
         var ob = null;
         console.log(data);
 
-        if (data.hasOwnProperty("configuration_files")) {
+        if ("configuration_files" in data) {
             var dropdown_content = document.querySelector('#dropdown-file div.dropdown-content');
             data["configuration_files"].forEach((file) => {
                 var file_elem = document.createElement("a");
@@ -567,7 +567,7 @@ $(function () {
             });
         }
 
-        if (data.hasOwnProperty("configuration_file")) {
+        if ("configuration_file" in data) {
             setTimeout(() => $('#modal-file').removeClass('is-active'), 50);
 
             // if it was a copy
@@ -602,13 +602,13 @@ $(function () {
             translateDOMElements();
         }
 
-        if (data.hasOwnProperty("recognize_state_changed")) {
+        if ("recognize_state_changed" in data) {
             $('#button-toggle-recognizer').removeClass('is-loading');
             RECOGNIZE_RUNNING = data["recognize_state_changed"];
             changeRecognizeStatusElements(RECOGNIZE_RUNNING);
         }
 
-        if (data.hasOwnProperty("new_notification")) {
+        if ("new_notification" in data) {
             ob = data["new_notification"];
             console.log("Notification: ", ob);
             if (ob["type"] != "sound") {
@@ -640,7 +640,7 @@ $(function () {
             }
         }
 
-        if (data.hasOwnProperty('request_reply')) {
+        if ('request_reply' in data) {
             ob = data["request_reply"];
             var $message = _(ob["message"]);
             if (ob["extra"].length > 0) {
@@ -659,7 +659,7 @@ $(function () {
             }
         }
 
-        if (data.hasOwnProperty('frame_camera')) {
+        if ('frame_camera' in data) {
             ob = data['frame_camera'];
 
             var index = ob["camera"];
@@ -758,7 +758,7 @@ $(function () {
             }
         }
 
-        if (data.hasOwnProperty("new_camera_config")) {
+        if ("new_camera_config" in data) {
             ob = data["new_camera_config"];
             console.log(ob);
             var headers = getHeadersFromStringConfig(ob["configuration"]);
@@ -766,7 +766,7 @@ $(function () {
             headers.cameras.forEach((cam, i) => addCameraConfigurationElementsTab(cam, i_start + i));
         }
 
-        if (data.hasOwnProperty("last_notifications")) {
+        if ("last_notifications" in data) {
             ob = data["last_notifications"]["notifications"];
             ob.forEach(not => {
                 if (not["type"] !== "sound")
@@ -776,12 +776,12 @@ $(function () {
             changeCurrentElementNotification(notificationPaginator.elements.length - 1);
         }
 
-        if (data.hasOwnProperty("root_configurations_directory")) {
+        if ("root_configurations_directory" in data) {
             ROOT_CONFIGURATIONS_DIRECTORY = data["root_configurations_directory"];
             $('.root-dir-configurations').text(ROOT_CONFIGURATIONS_DIRECTORY);
         }
 
-        if (data.hasOwnProperty("need_notifications_history")) {
+        if ("need_notifications_history" in data) {
             notification_log = data["need_notifications_history"];
             notification_log.forEach(not => not.datetime = parseStringToDate(not.datetime));
             console.log("notification log:", notification_log);
