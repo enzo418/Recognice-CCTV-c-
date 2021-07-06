@@ -1329,7 +1329,13 @@ function calendar_OnCancel(e) {
 		notificationPaginator.index = 0;
 		notificationPaginator.elements = [...notification_pager_before_filter.elements];
 		notification_pager_before_filter = {};
-		changeCurrentElementNotification(0, false);
+
+		if (notificationPaginator.elements.length == 0) {
+			$('#notifications-content').empty();
+			$('.navigator-notification').addClass('is-hidden');
+		} else {
+			changeCurrentElementNotification(0, false);
+		}
 	}
 }
 
