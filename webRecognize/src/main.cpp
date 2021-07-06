@@ -31,65 +31,14 @@
 #include <fmt/color.h>
 
 #include <cstdlib>
-#include <filesystem>
+#include <fstream>
+#include <ctime>
+
+#include "server_types.hpp"
+#include "server_utils.hpp"
 
 namespace fs = std::filesystem;
 using namespace seasocks;
-
-enum AlertStatus {
-	ERROR 	= 0,
-	OK 		= 1
-};
-
-std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach);
-std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach);
-std::string GetRecognizeStateJson();
-std::string GetMediaPath();
-
-std::string GetJsonString(const std::string& key, const std::string& value) {
-	return fmt::format("{{\"{0}\": {1}}}", key, value);
-}
-
-/** Transform
- * { {"key1", "val1"}, {"key2", "val2"}, ...} => 
- * => {"key1": "val1", "key2": "val2", ...]
- * 
-*/
-std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v) {
-	std::string res = "{";
-	for (auto &&i : v) {
-		res += fmt::format("\"{}\": \"{}\",", i.first, i.second);
-	}
-	
-	res.pop_back(); // pop last ,
-	res += "}";
-
-	return res;
-}
-
-std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v, bool whitoutQuote) {
-	std::string res = "{";
-	for (auto &&i : v) {
-		res += fmt::format("\"{}\": {},", i.first, i.second);
-	}
-	
-	res.pop_back(); // pop last ,
-	res += "}";
-
-	return res;
-}
-
-/**
- * @brief Formats a alert message
- * @param status status of the alert, ok or error
- * @param message message of the alert
- * @param trigger_query query that triggered the alert, should be the same as the query received
- */
-std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& trigger_query  = "", const std::string& extra = "") {
-	std::string st = AlertStatus::OK == status ? "ok" : "error";
-
-	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"trigger", trigger_query}, {"extra", extra}}));
-}
 
 bool recognize_running = false;
 size_t connections_number = 0;
@@ -97,10 +46,12 @@ std::map<std::string, std::string> connection_file;
 std::vector<std::string> lastNotificationsSended;
 std::map<std::string, std::string> cachedImages; // map of single images from the cameras in cache
 Configurations current_configurations;
-
 const std::string SERVER_FILEPATH = "../src/web";
 
 const std::string ROOT_CONFIGURATIONS_DIRECTORY = "./configurations/";
+
+Json::Value persintent_notifications; // stores all the notifications from all time (read at start and written to disk in intervals)
+const std::string PERSISTENT_NOTIFICATIONS_FILE = "./notifications.json";
 
 std::string lastMediaPath = "";
 
@@ -118,7 +69,7 @@ namespace {
 		void onConnect(WebSocket* con) override {
 			_cons.insert(con);
 			con->send(GetConfigurationsPathsJson({"../../recognize/build/", "./configurations/"}));
-			con->send(GetRecognizeStateJson());
+			con->send(GetRecognizeStateJson(recognize_running));
 			if (lastNotificationsSended.size() > 0) {
 				std::string lastNotifications = "[";
 				for (auto &&i : lastNotificationsSended) {
@@ -251,7 +202,7 @@ namespace {
 
 					if (success) {
 						recognize_running = !recognize_running;					
-						sendEveryone(GetRecognizeStateJson());
+						sendEveryone(GetRecognizeStateJson(recognize_running));
 					}
 				} else if (id == "get_camera_frame") {
 					const unsigned int index = root["index"].asUInt();
@@ -331,6 +282,8 @@ namespace {
 					} else {
 						con->send(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", id, error));
 					}
+				}  else if (id == "need_notifications_history") {
+					con->send(persintent_notifications.toStyledString());
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}
@@ -350,6 +303,7 @@ namespace {
 			server->execute([this] {
 				std::tuple<Notification::Type, std::string, ulong> media;
 				while (recognize->notificationWithMedia->try_dequeue(media)) {					
+					std::string type_string;
 					std::string query = "";
 					Notification::Type type; std::string content; ulong group_id;
 
@@ -360,18 +314,23 @@ namespace {
 						
 						std::size_t found = content.find_last_of("/\\");
 						content = lastMediaPath + "/" + content.substr(found+1);
-					} else if (type == Notification::TEXT)
+					} else if (type == Notification::TEXT) {
 						query = "text";
-					else if (type == Notification::SOUND)
+					} else if (type == Notification::SOUND) {
 						query = "sound";
+					}
 
+					type_string = query;
 					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\"}}", query, content, group_id);
 					query = fmt::format("{{\"new_notification\": {}}}", body);
 
-					if (lastNotificationsSended.size() > Max_Notifications_Number)
+					if (lastNotificationsSended.size() > Max_Notifications_Number) {
 						lastNotificationsSended.erase(lastNotificationsSended.begin());
+					}
 						
 					lastNotificationsSended.push_back(body);
+					
+					AppendNotification(persintent_notifications, type_string, content, group_id, Utils::GetTimeFormated());
 					
 					sendEveryone(query);
 					std::cout << "sended to everyone: " << query << std::endl;
@@ -400,6 +359,7 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 	
 	std::cout << "Listening in: http://localhost:" << port << std::endl;
 
+	// start thread that send the notifications to the web
 	std::thread tick([&] {
 		for(;;) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -409,37 +369,18 @@ int main(int /*argc*/, const char* /*argv*/[]) {
 	});
 	tick.detach();
 
+	// read the file with all the notifications until now
+	ReadNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications));
+
+	// start the thread to write the notifications to disk
+	std::thread disk_notifications([] {
+		Json::FastWriter writer;
+		std::this_thread::sleep_for(std::chrono::minutes(2));
+		WriteNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications), std::ref(writer));
+	});
+	disk_notifications.detach();
+
+	// call serve and lock this thread
 	server.serve(SERVER_FILEPATH.c_str(), port);
 	return 0;
-}
-
-std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach) {
-	std::string configsFiles = "[";
-
-	size_t i = 0;
-	for (const auto& directory : directoriesToSeach) {
-		if (fs::exists(directory)) {
-			for (const auto & entry : std::filesystem::directory_iterator(directory)) {
-				std::string path = entry.path().generic_string();
-				if (entry.path().extension() == ".ini") {
-					if(i > 0) configsFiles += ",";
-
-					configsFiles += "\"" + path + "\"";
-					i++;
-				}
-			}
-		}
-	}
-
-	configsFiles += "]";
-	
-	return configsFiles;
-}
-
-std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach) {
-	return GetJsonString("configuration_files", GetConfigurationsPaths(directoriesToSeach));
-}
-
-std::string GetRecognizeStateJson() {
-	return GetJsonString("recognize_state_changed", recognize_running ? "true" : "false");
 }
