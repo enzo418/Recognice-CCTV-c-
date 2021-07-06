@@ -13,25 +13,26 @@ namespace Notification {
 			std::string text;
 			std::string filename = "test.jpg";
 			std::string build_media_command;
+			std::string datetime = Utils::GetTimeFormated();
 			
 			// if a notification is sended with others, then use this id to group them
-			ulong group_id;
+			std::string group_id;
 
 			std::vector<cv::Mat> framesVideo;
 			
 		// private:
 		public:
 			// Creates a image + text notification
-			Notification(cv::Mat& image, std::string caption, bool save, ulong group_id = 0);
+			Notification(cv::Mat& image, std::string caption, bool save, std::string group_id);
 
 			// Creates a Gif notificatoin with caption + a command to build the media
-			Notification(std::string mediaPath, std::string caption, std::string build_command, ulong group_id = 0);
+			Notification(std::string mediaPath, std::string caption, std::string build_command, std::string group_id);
 			
 			// Creates a Video notification with caption
-			Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, ulong group_id = 0);
+			Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, std::string group_id);
 			
 			// Creates a text notification
-			Notification(std::string text, ulong group_id = 0);
+			Notification(std::string text, std::string group_id);
 			
 			// Creates a sound notification
 			Notification();
@@ -57,9 +58,11 @@ namespace Notification {
 
 			std::string getString();
 
-			ulong getGroupId();
+			std::string getGroupId();
 
 			void buildMedia();
+
+			std::string getDatetime();
 	};
 }
 

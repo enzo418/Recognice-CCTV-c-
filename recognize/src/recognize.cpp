@@ -1,7 +1,7 @@
 #include "recognize.hpp"
 
 Recognize::Recognize() {
-	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, ulong>>>(100);
+	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string, std::string>>>(100);
 }
 
 bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
@@ -334,12 +334,10 @@ void Recognize::StartNotificationsSender() {
 						// since we found a gif valid, erase all the others and get new gifs
 						eraseGifs = true;
 
-						this->currentGroupID += 1;
-
 						// Current group id is a identifier for notifications that have the same origin,
 						// it's represented in one single element on the frontend to denote that.
-						const ulong& group_id = this->currentGroupID;
-						const std::string identifier = std::to_string(group_id);
+						const std::string group_id = Utils::GetTimeAsID();
+						const std::string identifier = Utils::GetTimeAsID();
 
 						std::string videoPath = imageFolder + std::to_string(camera->config->order) + "_" + identifier + ".mp4";
 						
@@ -560,10 +558,11 @@ void Recognize::StartNotificationsSender() {
 						)
 						{
 							this->notificationWithMedia->try_emplace(
-								std::tuple<Notification::Type, std::string, ulong>(
+								std::tuple<Notification::Type, std::string, std::string, std::string>(
 									notf.type, 
 									data,
-									notf.getGroupId()
+									notf.getGroupId(),
+									notf.getDatetime()
 								)
 							);
 						}

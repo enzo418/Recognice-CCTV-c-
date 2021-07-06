@@ -115,6 +115,29 @@ namespace Utils {
 		#endif
 	};
 
+	/// <summary> Gets the current time and formats it to a format that looks like an id </summary>
+	static const std::string GetTimeAsID() {
+		#ifdef WINDOWS
+		time_t rawtime;
+		struct tm timeinfo;
+		char buffer[80];
+
+		time(&rawtime);
+		localtime_s(&timeinfo, &rawtime);
+
+		strftime(buffer, 80, "%d%m%Y%H%M%S", &timeinfo);
+		return buffer;
+		#else
+		time_t     now = time(0);
+		struct tm  tstruct;
+		char       buf[80];
+		tstruct = *localtime(&now);
+		strftime(buf, sizeof(buf), "%d%m%Y%H%M%S", &tstruct);
+
+		return buf;
+		#endif
+	};
+
 	/// <summary> Gets the current hour</summary>
 	static int GetCurrentHour(int& minutesLefToNextHour) {
 		time_t theTime = time(NULL);

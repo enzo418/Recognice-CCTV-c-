@@ -283,7 +283,7 @@ namespace {
 						con->send(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", id, error));
 					}
 				}  else if (id == "need_notifications_history") {
-					con->send(persintent_notifications.toStyledString());
+					con->send(GetJsonString(id, persintent_notifications.toStyledString()));
 				} else {
 					std::cout << "Command without handler received: '" << id << "'\n";
 				}
@@ -301,13 +301,13 @@ namespace {
 
 		void Tick() {
 			server->execute([this] {
-				std::tuple<Notification::Type, std::string, ulong> media;
-				while (recognize->notificationWithMedia->try_dequeue(media)) {					
+				std::tuple<Notification::Type, std::string, std::string, std::string> media;
+				while (recognize->notificationWithMedia->try_dequeue(media)) {	
 					std::string type_string;
 					std::string query = "";
-					Notification::Type type; std::string content; ulong group_id;
+					Notification::Type type; std::string content; std::string group_id; std::string datetime;
 
-					std::tie(type, content, group_id) = media;
+					std::tie(type, content, group_id, datetime) = media;
 
 					if (type == Notification::IMAGE || type == Notification::GIF || type == Notification::VIDEO) {
 						query = type == Notification::VIDEO ? "video" : "image";
@@ -321,7 +321,7 @@ namespace {
 					}
 
 					type_string = query;
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\"}}", query, content, group_id);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\"}}", query, content, group_id, datetime);
 					query = fmt::format("{{\"new_notification\": {}}}", body);
 
 					if (lastNotificationsSended.size() > Max_Notifications_Number) {
@@ -330,7 +330,7 @@ namespace {
 						
 					lastNotificationsSended.push_back(body);
 					
-					AppendNotification(persintent_notifications, type_string, content, group_id, Utils::GetTimeFormated());
+					AppendNotification(persintent_notifications, type_string, content, group_id, datetime);
 					
 					sendEveryone(query);
 					std::cout << "sended to everyone: " << query << std::endl;

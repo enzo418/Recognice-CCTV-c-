@@ -5,7 +5,7 @@ namespace Notification {
 	// ---------------
 	//  Constructors
 	// ---------------
-	Notification::Notification(cv::Mat& img, std::string caption, bool save, ulong videoPath) 
+	Notification::Notification(cv::Mat& img, std::string caption, bool save, std::string group_id) 
 		: 	image(img), 
 			text(caption),
 			group_id(group_id)
@@ -13,10 +13,10 @@ namespace Notification {
 		this->type = Type::IMAGE;
 
 		if (save) 
-			this->filename = Utils::GetTimeFormated() + ".jpg";	
+			this->filename = this->datetime + ".jpg";	
 	}
 
-	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, ulong group_id) 
+	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, std::string group_id) 
 		: 	filename(mediaPath), 
 			text(caption),
 			build_media_command(build_command),
@@ -25,7 +25,7 @@ namespace Notification {
 		this->type = Type::GIF;
 	}
 
-	Notification::Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, ulong group_id) 
+	Notification::Notification(std::string mediaPath, std::string caption, std::vector<cv::Mat>&& frames, std::string group_id) 
 		: 	filename(mediaPath), 
 			text(caption),
 			framesVideo(std::move(frames)),
@@ -34,7 +34,7 @@ namespace Notification {
 		this->type = Type::VIDEO;
 	}
 
-	Notification::Notification(std::string text, ulong group_id) 
+	Notification::Notification(std::string text, std::string group_id) 
 		: 	text(text),
 			group_id(group_id)
 	{
@@ -113,7 +113,7 @@ namespace Notification {
 			return "SOUND";
 	}
 	
-	ulong Notification::getGroupId() {
+	std::string Notification::getGroupId() {
 		return this->group_id;
 	}
 
@@ -134,5 +134,9 @@ namespace Notification {
 			
 			videoNotf.release();
 		}
+	}
+
+	std::string Notification::getDatetime() {
+		return this->datetime;
 	}
 }
