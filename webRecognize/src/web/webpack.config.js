@@ -13,32 +13,30 @@ module.exports = {
     output: {
         filename: 'main.js',
         path: path.resolve(output_dir),
-        clean: true
+        clean: true,
     },
-    rules: [
-        {
-          test: /\.(js|jsx)$/,
-          exclude: /node_modules/,
-          use: ['babel-loader']
-        }
-    ],
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html',
-            favicon: 'assets/favicon.svg'
+            favicon: 'assets/favicon.svg',
         }),
     ],
     module: {
         rules: [
             {
-            test: /\.css$/i,
-            use: ['style-loader', 'css-loader'],
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.(js|jsx)$/,
+                exclude: /node_modules/,
+                use: ['babel-loader'],
             },
         ],
     },
     resolve: {
         modules: [path.resolve(__dirname, 'src/modules'), 'node_modules'],
-        extensions: ['*', '.js', '.jsx']
+        extensions: ['*', '.js', '.jsx'],
     },
     watchOptions: {
         ignored: '**/node_modules',
