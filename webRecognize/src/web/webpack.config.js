@@ -15,6 +15,13 @@ module.exports = {
         path: path.resolve(output_dir),
         clean: true
     },
+    rules: [
+        {
+          test: /\.(js|jsx)$/,
+          exclude: /node_modules/,
+          use: ['babel-loader']
+        }
+    ],
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html',
@@ -31,6 +38,7 @@ module.exports = {
     },
     resolve: {
         modules: [path.resolve(__dirname, 'src/modules'), 'node_modules'],
+        extensions: ['*', '.js', '.jsx']
     },
     watchOptions: {
         ignored: '**/node_modules',
