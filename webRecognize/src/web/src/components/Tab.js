@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 function Tab(props) {
-    const { cameraIndex, cameraName } = props;
+    const {cameraIndex, cameraName} = props;
     return (
         <li data-config={`camera-${cameraIndex}`} id={`tab-camera-${cameraIndex}`}>
             <a>

@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 // import PropTypes from 'prop-types';
 
 // the render prop
-import { Translation } from 'react-i18next';
+import {Translation} from "react-i18next";
 
 class ProgramConfiguration extends React.Component {
     constructor(props) {
@@ -15,7 +15,7 @@ class ProgramConfiguration extends React.Component {
             <div className="card" id="program">
                 <header className="card-header">
                     <Translation>
-                        {(t) => <p className="card-header-title">{t('Program configuration')}</p>}
+                        {(t) => <p className="card-header-title">{t("Program configuration")}</p>}
                     </Translation>
                 </header>
                 <div className="card-content program-config-content"></div>

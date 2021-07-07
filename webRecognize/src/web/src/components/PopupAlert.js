@@ -1,10 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 const deleteAlert = (ev) => ev.target.parentNode.remove();
 
 function PopupAlert(props) {
-    const { message, stateClass } = props;
+    const {message, stateClass} = props;
 
     return (
         <div className={`notification ${stateClass}`}>

@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 function ConfigurationGroup(props) {
-    const { id, name } = props;
+    const {id, name} = props;
     return (
         <fieldset className="configuration-group" id={id}>
             <legend>{name}</legend>
