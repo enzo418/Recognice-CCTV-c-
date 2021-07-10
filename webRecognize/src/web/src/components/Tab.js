@@ -2,17 +2,17 @@ import React from "react";
 import PropTypes from "prop-types";
 
 function Tab(props) {
-    const {cameraIndex, cameraName} = props;
+    const {dataConfig} = props;
     return (
-        <li data-config={`camera-${cameraIndex}`} id={`tab-camera-${cameraIndex}`}>
-            <a>
-                <span>{cameraName}</span>
-            </a>
+        <li data-config={dataConfig}>
+            <a>{props.children}</a>
         </li>
     );
 }
 
 Tab.propTypes = {
-    cameraIndex: PropTypes.number.isRequired,
-    cameraName: PropTypes.string.isRequired,
+    dataConfig: PropTypes.string.isRequired,
+    children: PropTypes.object.isRequired,
 };
+
+export default Tab;

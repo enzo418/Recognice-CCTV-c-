@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 class TextInput extends React.Component {
     constructor(props) {
@@ -10,9 +10,9 @@ class TextInput extends React.Component {
     }
 
     render() {
-        const { name, placeholder, value, label, hidden, tooltip } = this.props;
+        const {name, placeholder, value, label, hidden, tooltip} = this.props;
         return (
-            <div className={`card-content-item ${hidden && 'is-hidden'}`} id={name.toLowerCase()} data-tip={tooltip}>
+            <div className={`card-content-item ${hidden && "is-hidden"}`} id={name.toLowerCase()} data-tip={tooltip}>
                 <label htmlFor={name}>{label}</label>
                 <input className="input" name={name} type="text" placeholder={placeholder} value={value}></input>
             </div>
@@ -28,3 +28,5 @@ TextInput.propTypes = {
     hidden: PropTypes.bool.isRequired,
     tooltip: PropTypes.string.isRequired,
 };
+
+export default TextInput;

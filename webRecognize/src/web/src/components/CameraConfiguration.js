@@ -4,6 +4,9 @@ import PropTypes from "prop-types";
 // the render prop
 import {Translation} from "react-i18next";
 
+import Elements from "../elements.json";
+import ConfigurationGroup from "./ConfigurationGroup";
+
 class CameraConfiguration extends React.Component {
     constructor(props) {
         super(props);
@@ -19,9 +22,13 @@ class CameraConfiguration extends React.Component {
                     <p className="card-header-title">{cameraConfig["cameraname"]}</p>
                 </header>
 
-                <div className="card-content camera-config-content"></div>
+                <div className="card-content camera-config-content">
+                    {Elements.program.groups.map((group) => (
+                        <ConfigurationGroup key={group.name} name={group.name} group={group} />
+                    ))}
+                </div>
 
-                <div className="card-footer">
+                <footer className="card-footer">
                     <div className="card-footer-item footer-camera-buttons">
                         <Translation>
                             {(t) => (
@@ -53,7 +60,7 @@ class CameraConfiguration extends React.Component {
                             )}
                         </Translation>
                     </div>
-                </div>
+                </footer>
             </div>
         );
     }
@@ -63,3 +70,5 @@ CameraConfiguration.propTypes = {
     i: PropTypes.number.isRequired,
     cameraConfig: PropTypes.object.isRequired,
 };
+
+export default CameraConfiguration;

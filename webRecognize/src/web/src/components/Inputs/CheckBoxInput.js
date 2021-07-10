@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 class TextInput extends React.Component {
     constructor(props) {
@@ -10,9 +10,9 @@ class TextInput extends React.Component {
     }
 
     render() {
-        const { name, checked, label, tooltip, hidden } = this.props;
+        const {name, checked, label, tooltip, hidden} = this.props;
         return (
-            <div className={`card-content-item ${hidden && 'is-hidden'}`} id={name.toLowerCase()} data-tip={tooltip}>
+            <div className={`card-content-item ${hidden && "is-hidden"}`} id={name.toLowerCase()} data-tip={tooltip}>
                 <label className="checkbox">
                     <input type="checkbox" name={name} checked={checked}>
                         {label}
@@ -30,3 +30,5 @@ TextInput.propTypes = {
     hidden: PropTypes.bool.isRequired,
     tooltip: PropTypes.string.isRequired,
 };
+
+export default TextInput;

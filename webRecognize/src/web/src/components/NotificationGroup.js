@@ -8,3 +8,5 @@ function NotificationGroup(props) {
 NotificationGroup.propTypes = {
     group_id: PropTypes.string.isRequired,
 };
+
+export default NotificationGroup;

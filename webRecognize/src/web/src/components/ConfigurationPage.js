@@ -1,13 +1,26 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
+import Tab from "./Tab";
+import ProgramConfiguration from "./ProgramConfiguration copy";
 
 class ConfigurationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            configurations: props.configurations,
+            configurations: [],
         };
+
+        // test values
+        this.setState(() => ({
+            configurations: {
+                cameras: [
+                    {id: 0, name: "camera1", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=2.sdp"},
+                    {id: 1, name: "camera2", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=3.sdp"},
+                    {id: 2, name: "camera3", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=4.sdp"},
+                ],
+            },
+        }));
     }
 
     addNewCamera() {
@@ -20,17 +33,21 @@ class ConfigurationPage extends React.Component {
 
     render() {
         return (
-            <div className="" id="configuration-page">
+            <div id="configuration-page">
                 <div id="configurations">
                     <div className="tabs is-boxed">
                         <ul>
-                            <li className="is-active" data-config="program" id="tab-program">
-                                <a>
-                                    <Translation>{(t) => <span>{t("Program configuration")}</span>}</Translation>
-                                </a>
-                            </li>
+                            <Tab dataConfig="program">
+                                <Translation>{(t) => <span>{t("Program configuration")}</span>}</Translation>
+                            </Tab>
+                            {this.state.configurations.cameras.map((camera) => {
+                                <Tab dataConfig="camera" data-index={camera.id}>
+                                    <span>camera.name</span>
+                                </Tab>;
+                            })}
                         </ul>
                     </div>
+                    <ProgramConfiguration configuration={this.state.configurations.program}></ProgramConfiguration>
                 </div>
                 <div className="buttons">
                     <button className="button is-link" id="button-add-new-camera" onClick={this.addNewCamera}>
@@ -55,3 +72,5 @@ class ConfigurationPage extends React.Component {
 ConfigurationPage.propTypes = {
     configurations: PropTypes.object.isRequired,
 };
+
+export default ConfigurationPage;

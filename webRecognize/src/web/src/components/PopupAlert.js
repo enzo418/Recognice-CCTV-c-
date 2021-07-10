@@ -18,3 +18,5 @@ PopupAlert.propTypes = {
     stateClass: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
 };
+
+export default PopupAlert;

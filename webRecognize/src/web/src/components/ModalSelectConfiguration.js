@@ -87,3 +87,5 @@ function ModalSelectConfiguration() {
         </div>
     );
 }
+
+export default ModalSelectConfiguration;

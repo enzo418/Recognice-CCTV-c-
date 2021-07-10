@@ -50,3 +50,5 @@ ModalCanvas.propTypes = {
     cameraIndex: PropTypes.number.isRequired,
     headerElements: PropTypes.object.isRequired,
 };
+
+export default ModalCanvas;

@@ -32,3 +32,5 @@ Notification.propTypes = {
     text: PropTypes.string.isRequired,
     moment_date: PropTypes.object.isRequired,
 };
+
+export default Notification;

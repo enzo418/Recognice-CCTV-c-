@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import NotificationPaginator from "../modules/notification_paginator";
 
 class NotificationsPaginator extends React.Component {
     constructor(props) {
@@ -76,3 +77,5 @@ NotificationsPaginator.propTypes = {
     index: PropTypes.number.isRequired,
     elements: PropTypes.object.isRequired,
 };
+
+export default NotificationPaginator;

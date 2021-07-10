@@ -39,3 +39,5 @@ function DropDownLang() {
 DropDownLang.propTypes = {
     group_id: PropTypes.string.isRequired,
 };
+
+export default DropDownLang;

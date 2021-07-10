@@ -66,3 +66,5 @@ function ModalSelectFileName(props) {
 ModalSelectFileName.propTypes = {
     filename: PropTypes.string.isRequired,
 };
+
+export default ModalSelectFileName;

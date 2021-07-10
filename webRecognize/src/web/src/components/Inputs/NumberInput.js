@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 class NumberInput extends React.Component {
     constructor(props) {
@@ -10,18 +10,18 @@ class NumberInput extends React.Component {
     }
 
     render() {
-        const { name, placeholder, value, label, hidden, tooltip } = this.props;
+        const {name, placeholder, value, label, hidden, tooltip} = this.props;
         var min,
             max = null;
 
         // eslint-disable-next-line react/prop-types
-        if ('min' in this.props) min = this.props.min;
+        if ("min" in this.props) min = this.props.min;
 
         // eslint-disable-next-line react/prop-types
-        if ('max' in this.props) max = this.props.max;
+        if ("max" in this.props) max = this.props.max;
 
         return (
-            <div className={`card-content-item ${hidden && 'is-hidden'}`} id={name.toLowerCase()} data-tip={tooltip}>
+            <div className={`card-content-item ${hidden && "is-hidden"}`} id={name.toLowerCase()} data-tip={tooltip}>
                 <label htmlFor={name}>{label}</label>
                 <input
                     className="input"
@@ -30,8 +30,7 @@ class NumberInput extends React.Component {
                     placeholder={placeholder}
                     min={min}
                     max={max}
-                    value={value}
-                ></input>
+                    value={value}></input>
             </div>
         );
     }
@@ -45,3 +44,5 @@ NumberInput.propTypes = {
     hidden: PropTypes.bool.isRequired,
     tooltip: PropTypes.string.isRequired,
 };
+
+export default NumberInput;

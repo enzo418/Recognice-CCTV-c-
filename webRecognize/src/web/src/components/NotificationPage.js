@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
+import NotificationPaginator from "../modules/notification_paginator";
 
 class NotificationPage extends React.Component {
     constructor(props) {
@@ -54,3 +55,5 @@ class NotificationPage extends React.Component {
 }
 
 NotificationPage.propTypes = {};
+
+export default NotificationPaginator;

@@ -1,8 +1,11 @@
 import React from "react";
-// import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 // the render prop
 import {Translation} from "react-i18next";
+
+import Elements from "../elements.json";
+import ConfigurationGroup from "./ConfigurationGroup";
 
 class ProgramConfiguration extends React.Component {
     constructor(props) {
@@ -18,10 +21,18 @@ class ProgramConfiguration extends React.Component {
                         {(t) => <p className="card-header-title">{t("Program configuration")}</p>}
                     </Translation>
                 </header>
-                <div className="card-content program-config-content"></div>
+                <div className="card-content program-config-content">
+                    {Elements.program.groups.map((group) => (
+                        <ConfigurationGroup key={group.name} name={group.name} group={group} />
+                    ))}
+                </div>
             </div>
         );
     }
 }
 
-ProgramConfiguration.propTypes = {};
+ProgramConfiguration.propTypes = {
+    configuration: PropTypes.object.isRequired,
+};
+
+export default ProgramConfiguration;

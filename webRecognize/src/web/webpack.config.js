@@ -9,7 +9,7 @@ module.exports = {
         compress: true,
         port: 8500,
     },
-    entry: "./src/app.js",
+    entry: "./src/index.js",
     output: {
         filename: "main.js",
         path: path.resolve(output_dir),
@@ -39,6 +39,6 @@ module.exports = {
         extensions: ["*", ".js", ".jsx"],
     },
     watchOptions: {
-        ignored: "**/node_modules",
+        ignored: /node_modules/,
     },
 };
