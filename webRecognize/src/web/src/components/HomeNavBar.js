@@ -42,6 +42,7 @@ class HomeNavBar extends React.Component {
                                 className="button is-success"
                                 id="button-toggle-recognizer"
                                 onClick={() => this.props.recognize.toggle()}>
+                                {this.props.recognize.running && t("stop Recognizer")}
                                 {!this.props.recognize.running && t("start Recognizer")}
                             </button>
                         </div>

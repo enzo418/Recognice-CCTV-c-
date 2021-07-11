@@ -1,10 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {Translation} from "react-i18next";
+import {withTranslation} from "react-i18next";
 import Tab from "./Tab";
 import ProgramConfiguration from "./ProgramConfiguration";
 import CameraConfiguration from "./CameraConfiguration";
-import configurationParser from "../modules/configuration_parser";
 
 import testValues from "../utils/test_values";
 import configuration_parser from "../modules/configuration_parser";
@@ -72,13 +71,14 @@ class ConfigurationPage extends React.Component {
     }
 
     render() {
+        const {t} = this.props;
         return (
             <div id="configuration-page">
                 <div id="configurations">
                     <div className="tabs is-boxed">
                         <ul>
                             <Tab dataConfig="program">
-                                <Translation>{(t) => <span>{t("Program configuration")}</span>}</Translation>
+                                <span>{t("Program configuration")}</span>
                             </Tab>
                             {this.state.configurations.cameras.map((camera) => {
                                 <Tab dataConfig="camera" data-index={camera.id}>
@@ -103,14 +103,14 @@ class ConfigurationPage extends React.Component {
                         <span className="icon is-small">
                             <i className="fas fa-plus"></i>
                         </span>
-                        <Translation>{(t) => <span>{t("Add new camera")}</span>}</Translation>
+                        <span>{t("Add new camera")}</span>
                     </button>
 
                     <button className="button is-success" id="button-save-into-file" onClick={this.saveConfiguration}>
                         <span className="icon is-small">
                             <i className="fas fa-save"></i>
                         </span>
-                        <Translation>{(t) => <span>{t("Save configurations into file")}</span>}</Translation>
+                        <span>{t("Save configurations into file")}</span>
                     </button>
                 </div>
             </div>
@@ -120,6 +120,7 @@ class ConfigurationPage extends React.Component {
 
 ConfigurationPage.propTypes = {
     configurations: PropTypes.object.isRequired,
+    t: PropTypes.func,
 };
 
-export default ConfigurationPage;
+export default withTranslation()(ConfigurationPage);

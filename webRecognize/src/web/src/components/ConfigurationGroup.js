@@ -5,69 +5,75 @@ import CheckBoxInput from "./Inputs/CheckBoxInput";
 import NumberInput from "./Inputs/NumberInput";
 import TextInput from "./Inputs/TextInput";
 
-import {useTranslation} from "react-i18next";
+import {withTranslation} from "react-i18next";
 
-function ConfigurationGroup(props) {
-    const {t} = useTranslation();
-    const {name, group, values, onChangeValue} = props;
-    return (
-        <fieldset className="configuration-group">
-            <legend>{name}</legend>
-            {group.elements.map((element) => {
-                let input;
+class ConfigurationGroup extends React.Component {
+    constructor(props) {
+        super(props);
+    }
 
-                if (element.type === "number") {
-                    input = (
-                        <NumberInput
-                            key={element.target}
-                            name={element.target}
-                            placeHolder={element.placeholder}
-                            label={t(element.target).label}
-                            value={values[element.target] || 0}
-                            onChange={({target}) => onChangeValue(element.target, target.value)}
-                            hidden={element.hidden}
-                            tooltip={t(element.target).description}></NumberInput>
-                    );
-                } else if (element.type === "string") {
-                    input = (
-                        <TextInput
-                            key={element.target}
-                            name={element.target}
-                            placeHolder={element.placeholder}
-                            label={t(element.target).label}
-                            value={values[element.target] || ""}
-                            onChange={({target}) => onChangeValue(element.target, target.value)}
-                            hidden={element.hidden}
-                            tooltip={t(element.target).description}></TextInput>
-                    );
-                } else if (element.type === "boolean") {
-                    input = (
-                        <CheckBoxInput
-                            key={element.target}
-                            name={element.target}
-                            placeHolder={element.placeholder}
-                            label={t(element.target).label}
-                            checked={values[element.target] || false}
-                            onChange={({target}) => onChangeValue(element.target, target.checked)}
-                            hidden={element.hidden}
-                            tooltip={t(element.target).description}></CheckBoxInput>
-                    );
-                }
+    render() {
+        const {name, group, values, onChangeValue, t} = this.props;
+        return (
+            <fieldset className="configuration-group">
+                <legend>{name}</legend>
+                {group.elements.map((element) => {
+                    let input;
 
-                return input;
-            })}
-            {group.groups &&
-                group.groups.map((group) => (
-                    <ConfigurationGroup
-                        key={group.name}
-                        name={group.name}
-                        group={group}
-                        values={values}
-                        onChangeValue={onChangeValue}
-                    />
-                ))}
-        </fieldset>
-    );
+                    if (element.type === "number") {
+                        input = (
+                            <NumberInput
+                                key={element.target}
+                                name={element.target}
+                                placeHolder={element.placeholder}
+                                label={t(element.target).label}
+                                value={values[element.target] || 0}
+                                onChange={({target}) => onChangeValue(element.target, target.value)}
+                                hidden={element.hidden}
+                                tooltip={t(element.target).description}></NumberInput>
+                        );
+                    } else if (element.type === "string") {
+                        input = (
+                            <TextInput
+                                key={element.target}
+                                name={element.target}
+                                placeHolder={element.placeholder}
+                                label={t(element.target).label}
+                                value={values[element.target] || ""}
+                                onChange={({target}) => onChangeValue(element.target, target.value)}
+                                hidden={element.hidden}
+                                tooltip={t(element.target).description}></TextInput>
+                        );
+                    } else if (element.type === "boolean") {
+                        input = (
+                            <CheckBoxInput
+                                key={element.target}
+                                name={element.target}
+                                placeHolder={element.placeholder}
+                                label={t(element.target).label}
+                                checked={values[element.target] || false}
+                                onChange={({target}) => onChangeValue(element.target, target.checked)}
+                                hidden={element.hidden}
+                                tooltip={t(element.target).description}></CheckBoxInput>
+                        );
+                    }
+
+                    return input;
+                })}
+                {group.groups &&
+                    group.groups.map((group) => (
+                        <ConfigurationGroup
+                            key={group.name}
+                            name={group.name}
+                            group={group}
+                            values={values}
+                            onChangeValue={onChangeValue}
+                            t={t}
+                        />
+                    ))}
+            </fieldset>
+        );
+    }
 }
 
 ConfigurationGroup.propTypes = {
@@ -75,6 +81,7 @@ ConfigurationGroup.propTypes = {
     group: PropTypes.object.isRequired,
     values: PropTypes.object.isRequired,
     onChangeValue: PropTypes.func.isRequired,
+    t: PropTypes.func,
 };
 
-export default ConfigurationGroup;
+export default withTranslation()(ConfigurationGroup);
