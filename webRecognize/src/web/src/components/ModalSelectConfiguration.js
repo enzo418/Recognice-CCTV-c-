@@ -4,6 +4,7 @@ import {Translation} from "react-i18next";
 import {Link} from "react-router-dom";
 
 import Modal from "./Modal";
+import DropDownFileList from "./DropDownFileList";
 
 class ModalSelectConfiguration extends React.Component {
     constructor(props) {
@@ -35,25 +36,27 @@ class ModalSelectConfiguration extends React.Component {
 
     render() {
         let header = <Translation>{(t) => <p>{t("Select a configuration file to open")}</p>}</Translation>;
+
         let body = (
-            <select value={this.state.file} onChange={({target}) => this.onChangeFile(target.value)}>
-                <Translation>
-                    {(t) => (
-                        <option value="new" className="dropdown-item is-active">
-                            {t("new")}
-                        </option>
-                    )}
-                </Translation>
-                {this.props.configurationFilesAvailables.map((cfg) => {
-                    <option key={cfg.id} value={cfg.id} className="dropdown-item">
-                        {cfg.file}
-                    </option>;
-                })}
-            </select>
+            <DropDownFileList
+                files={this.props.configurationFilesAvailables}
+                currentFile={this.state.file}
+                changeFile={(file) => this.onChangeFile(file)}
+            />
         );
+
         let footer = (
             <div>
-                <Translation>{(t) => <Link to="/notifications">{t("Just wanna see notifications")}</Link>}</Translation>
+                <Translation>
+                    {(t) => (
+                        <Link className="button is-dark" to="/notifications">
+                            <span className="icon is-small">
+                                <i className="fas fa-bell"></i>
+                            </span>
+                            <span>{t("Just wanna see notifications")}</span>
+                        </Link>
+                    )}
+                </Translation>
 
                 <button className="button is-link" id="button-modal-make-copy-file" onClick={this.copyFileAndSelectIt}>
                     <span className="icon is-small">
@@ -73,7 +76,7 @@ class ModalSelectConfiguration extends React.Component {
                 </button>
             </div>
         );
-        return <Modal header={header} body={body} footer={footer} />;
+        return <Modal className="modal-file" header={header} body={body} footer={footer} />;
     }
 }
 

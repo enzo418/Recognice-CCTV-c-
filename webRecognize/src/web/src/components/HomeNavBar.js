@@ -8,19 +8,34 @@ import {Link} from "react-router-dom";
 class HomeNavBar extends React.Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+            showNavBar: false,
+        };
+    }
+
+    toggleNavBar() {
+        this.setState((prev) => {
+            prev.showNavBar = !prev.showNavBar;
+            return prev;
+        });
     }
 
     render() {
         const {t} = this.props;
         return (
-            <nav className="navbar is-black" role="navigation" aria-label="main navigation">
+            <nav
+                className={"navbar is-black" + (this.state.showNavBar ? " is-active" : "")}
+                role="navigation"
+                aria-label="main navigation">
                 <div className="navbar-brand">
                     <a
                         role="button"
                         className="navbar-burger"
                         aria-label="menu"
                         aria-expanded="false"
-                        data-target="navbar-status">
+                        data-target="navbar-status"
+                        onClick={() => this.toggleNavBar()}>
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
                         <span aria-hidden="true"></span>
