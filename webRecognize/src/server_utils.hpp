@@ -8,7 +8,8 @@
 #include <filesystem>
 #include "server_types.hpp"
 
-const char* multipart = "multipart/form-data";
+const char* HTTP_MULTIPART = "multipart/form-data";
+const char* HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
 
 std::string GetJsonString(const std::string& key, const std::string& value) {
 	return fmt::format("{{\"{0}\": {1}}}", key, value);

@@ -13,20 +13,20 @@ namespace ConfigurationFile {
 		#endif
 	}
 
-	void OpenFileRead(std::fstream& file, std::string& fn){
+	void OpenFileRead(std::fstream& file, const char* fn){
 		if (!file.is_open()){ 
 			char filename[MAX_PATH] = {};
-			strcpy_s(filename, GetFilePath(fn.c_str()));
+			strcpy_s(filename, GetFilePath(fn));
 			if (Utils::FileExist(filename)) {
 				file.open(filename, std::fstream::in);
 			}
 		}
 	}
 
-	void OpenFileWrite(std::fstream& file, std::string& fn){
+	void OpenFileWrite(std::fstream& file, const char* fn){
 		if (!file.is_open()){ 
 			char filename[MAX_PATH] = {};
-			strcpy_s(filename, GetFilePath(fn.c_str()));
+			strcpy_s(filename, GetFilePath(fn));
 			file.open(filename, std::ofstream::out | std::ofstream::trunc);
 		}
 	}
@@ -70,7 +70,7 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	Configurations ReadConfigurations(std::string filePath, std::string& error) {
+	Configurations ReadConfigurations(const char* filePath, std::string& error) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileRead(file, filePath);
@@ -426,7 +426,7 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	void SaveConfigurations(Configurations& cfgs, std::string filePath) {
+	void SaveConfigurations(Configurations& cfgs, const char* filePath) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileWrite(file, filePath);

@@ -1,4 +1,9 @@
-/* This is a simple HTTP(S) web server much like Python's SimpleHTTPServer */
+#include <opencv2/core.hpp>
+
+#include "../../recognize/src/recognize.hpp"
+#include "../../recognize/src/configuration_file.hpp"
+#include "../../recognize/src/notification.hpp"
+#include "../../recognize/src/utils.hpp"
 
 #include <uWebSockets/App.h>
 #include <uWebSockets/HttpContextData.h>
@@ -10,7 +15,20 @@
 
 #include "server_utils.hpp"
 
+// Selects a Region of interes from a camera fram
+#include "AreaSelector.hpp"
+
+#include "base64.hpp"
+
+#include <filesystem>
+#include <cstring>
+
+namespace fs = std::filesystem;
+
 int main(int argc, char **argv) {
+    // TODO: Change App to handle post data and call the handler
+    // when it reads all
+
     /* ws->getUserData returns one of these */
     struct PerSocketData {
         /* Fill with user data */
@@ -19,9 +37,32 @@ int main(int argc, char **argv) {
     int option;
 
     int port = 3001;
-    const char *root = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
+    const char *serverRootFolder = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
 
-    AsyncFileStreamer asyncFileStreamer(root);
+    AsyncFileStreamer asyncFileStreamer(serverRootFolder);
+    
+    // Recognize program
+    Recognize* recognize;
+
+    // TODO: Move this var to Recognize. Him should know if is active or not!
+    bool recognize_running = false;
+
+    // This saves the content of each chunk of the post body
+    std::string postBody;
+
+    // Configuration that the recognize program uses when we start it
+    Configurations current_configurations;
+    
+    // where all the videos/images are stored this gets a value each time
+    // we start the recognizer with a configuration file
+    std::string mediaPath = "";
+
+    // cache camera frames requested to improve the user experience
+    // TODO: add timeout
+    std::map<std::string, std::string> cachedImages;
+
+    // Stores all the notifications from all time (read at start and written to disk in intervals)
+    Json::Value persintent_notifications;
 
     uWS::App()
 
@@ -55,7 +96,7 @@ int main(int argc, char **argv) {
          * send it as a string in Json format.
         */
 
-        std::string file(req->getQuery("file"));
+        const std::string_view& file = req->getQuery("file");
 
         // if the file doesn't exist right now
         const bool isNew = req->getQuery("is_new") == "true" ? true : false;
@@ -68,7 +109,7 @@ int main(int argc, char **argv) {
         res->writeHeader("Content-Type", "application/json");
 
         // read file
-        Configurations cfgs = ConfigurationFile::ReadConfigurations(file, error);
+        Configurations cfgs = ConfigurationFile::ReadConfigurations(file.data(), error);
 
         if (error.length() == 0) {
             std::string stringConfigs = ConfigurationFile::ConfigurationsToString(cfgs);
@@ -80,7 +121,7 @@ int main(int argc, char **argv) {
 
                 std::filesystem::create_directories(path.parent_path());
 
-                ConfigurationFile::SaveConfigurations(cfgs, path.string());
+                ConfigurationFile::SaveConfigurations(cfgs, path.c_str());
             }
 
             // send the file
@@ -90,58 +131,213 @@ int main(int argc, char **argv) {
         }
     })
 
-    // writes a configuration into a file
-    .post("/api/configuration_file", [](auto* res, uWS::HttpRequest* req) {
+    /** writes a configuration into a file
+     *  Send the filename as a query, file_name=test.ini
+     *  Send the file content as the post body
+    */
+    .post("/api/configuration_file", [&postBody](auto* res, uWS::HttpRequest* req) {
         std::cout << "content-type: " << req->getHeader("content-type") << std::endl;
         std::cout << "content-length: "<< req->getHeader("content-length") << std::endl;
-        if (multipart == req->getHeader("content-type")) {
-            std::string length(req->getHeader("content-length"));
-            std::string reqBody(multipart);
 
-            reqBody.append(";");
+        std::string length(req->getHeader("content-length"));
 
-            reqBody.resize(strlen(multipart) + 1 + std::stoi(length));
+        postBody.resize(std::stoi(length));
 
-            std::cout << std::endl;
-            
-            std::cout << "¿?: "<< req->getHeader(req->getUrl()) << std::endl;
-            std::cout << "Query?: "<< req->getQuery() << std::endl;
+        postBody.clear();
+        
+        res->onData([&](std::string_view chunk, bool isLast) {
+            postBody.append(chunk);
+            std::cout << "Chunk: " << chunk << " is last? " << (isLast ? "true" : "false") << std::endl;
+            std::cout << "Body: " << postBody << std::endl;
 
-            res->onData([&](std::string_view chunk, bool isLast) {
-                reqBody.append(chunk);
-                std::cout << "Chunk: " << chunk << " is last? " << (isLast ? "true" : "false") << std::endl;
-                if (isLast) {
-                    uWS::MultipartParser parser(std::string_view(reqBody.c_str(), reqBody.length()));
-                    std::cout << "Is valid? " << parser.isValid() << std::endl;
-                    for (size_t i = 0; i < 10; i++)
-                    {
-                        std::cout << i << ": " << parser.getNextPart() << std::endl;
-                    }
+            if (isLast) {
+                // response is a json
+                res->writeHeader("Content-Type", "application/json");
+
+                if (HTTP_MULTIPART == req->getHeader("content-type") || HTTP_FORM_URLENCODED == req->getHeader("content-type")) {
+                    std::cout << std::endl;
                     
+                    const std::string_view& file = req->getQuery("file_name");
+                    std::cout 
+                        << "File=" << file
+                        << "Configuration size:\n" << postBody.length() << std::endl;
+                    
+                    std::string error;
+                    std::istringstream iss(postBody);
+                    Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss, error);
+
+                    if (error.length() == 0) {
+                        std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
+
+                        ConfigurationFile::SaveConfigurations(configurations, file.data());
+
+                        res->end(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
+                    } else {
+                        res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", error));
+                    }
+                } else {
+                    // if it's json ¿?
+                    // Throw error   
+                    res->end();
                 }
-            });
-            
-            std::string file(req->getParameter(0));
-            // const std::string cfgString = root["configurations"].asString();
-            std::cout 
-                << "File=" << file
-                /*<< "Configuration size:\n" << cfgString.length()*/ << std::endl;
-            
-            // std::string error;
-            // std::istringstream iss(cfgString);
-            // Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss, error);
+            }
+        });
+    })
 
-            // if (error.length() == 0) {
-            //     std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
+    /** 
+     * Start the recognizer
+     * Send as a query the file path to use, e.g. file_name=test.ini
+    **/
+    .get("/api/start_recogizer", [&current_configurations, &mediaPath, &serverRootFolder, &recognize, &recognize_running](auto *res, auto *req) {
+        const std::string_view& file = req->getQuery("file_name");
+        std::cout << "Starting recognize with file: " << file << std::endl;
+        bool success = true;
+        
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+        
+        if (!recognize_running) {
+            std::string error;
+            Configurations configurations = ConfigurationFile::ReadConfigurations(file.data(), error);
+            if (error.length() == 0) {
+                current_configurations = configurations;
 
-            //     ConfigurationFile::SaveConfigurations(configurations, file);
+                std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
 
-            //     con->send(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
-            // } else {
-            //     con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", id, error));
-            // }
-            res->end();
+                fs::create_directories(configurations.programConfig.imagesFolder);
+
+                mediaPath = configurations.programConfig.imagesFolder.substr(
+                                    strlen(serverRootFolder), 
+                                    configurations.programConfig.imagesFolder.size()
+                                );
+
+                if (recognize->Start(std::move(configurations), 
+                                    configurations.programConfig.showPreview, 
+                                    configurations.programConfig.telegramConfig.useTelegramBot)) {							
+                    res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+                } else {
+                    success = false;
+                    res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", error));
+                }
+            } else {
+                success = false;
+                res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
+            }
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, "Recognizer could not be started because it is already running"));
         }
+
+        if (success) {
+            recognize_running = !recognize_running;
+            // TODO: Notifiy all users that join the websocket
+            // sendEveryone(GetRecognizeStateJson(recognize_running));
+        }
+    })
+
+    .get("/api/stop_recognizer", [&recognize](auto *res, auto *req) {
+	    recognize->CloseAndJoin();
+
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+
+        res->end(GetAlertMessage(AlertStatus::OK, "Recognizer stopped"));
+        std::cout << "Closed recognize" << std::endl;
+    })
+
+    .get("/api/camera_frame", [&cachedImages](auto *res, auto *req) {
+	    const unsigned int index = std::stoi(static_cast<std::string>(req->getQuery("index")));
+        const int rotation = std::stoi(static_cast<std::string>(req->getQuery("rotation")));
+        const std::string_view url = req->getQuery("url");
+        const std::string_view roi_s = req->getQuery("roi");
+
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+
+        if (!url.empty()) {
+            std::string cacheKey;
+            cacheKey.append(url).append(std::to_string(rotation)).append(roi_s);
+            std::string encoded;
+            bool error = false;
+            if (cachedImages.find(cacheKey) == cachedImages.end()) {							
+                cv::Mat img;
+                if (AreaSelector::GetFrame(url.data(), img)) {		
+                    AreaSelector::ResizeRotateFrame(img, rotation);
+
+                    if (!roi_s.empty()) {
+                        const std::vector<int> numbers = Utils::GetNumbersString(static_cast<std::string>(roi_s));
+                        if (numbers.size() == 4) {
+                            cv::Rect roi(cv::Point(numbers[0], numbers[1]), cv::Size(numbers[2], numbers[3]));
+                            img = img(roi);
+                        }
+                    }
+
+                    std::vector<uchar> buf;
+                    cv::imencode(".jpg", img, buf);
+                    auto *enc_msg = reinterpret_cast<unsigned char*>(buf.data());
+                    encoded = base64_encode(enc_msg, buf.size());
+                    cachedImages.insert({cacheKey, encoded});
+                } else {
+                    res->end(GetAlertMessage(AlertStatus::ERROR, "Could not open a connection to the camera"));
+                    error = true;
+                }
+            } else {
+                encoded = cachedImages[cacheKey];
+            }
+
+            if (!error)
+                res->end(GetJsonString("camera_frame", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, "The camera url is empty"));
+        }
+    })
+
+    .get("/api/new_camera", [&](auto *res, auto *req) {
+        CameraConfiguration cfg;
+        Json::Value root;
+
+        root["new_camera_config"]["configuration"] = Json::Value(ConfigurationFile::GetConfigurationString(cfg));
+
+        // response is a json
+        res -> writeHeader("Content-Type", "application/json")
+            -> end(root.toStyledString());
+    })
+
+    .post("/api/copy_file", [&](auto *res, auto *req) {
+        const auto file = req->getQuery("file");
+        const auto copy_path = req->getQuery("copy_path");
+
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+
+        std::cout 	<< "File requested=" << file
+                    << std::endl
+                    << "Copied to: " << copy_path
+                    << std::endl;
+        
+        // create directory if missing
+        std::filesystem::path path { copy_path };
+        std::filesystem::create_directories(path.parent_path());
+        
+        // copy file
+        fs::copy_file(file, copy_path);
+
+        // read file
+        std::string error;
+        Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path.data(), error);
+        if (error.length() == 0) {
+            std::string stringCfgs = ConfigurationFile::ConfigurationsToString(cfgs);
+
+            // send configuration
+            res->end(GetJsonString("configurations", Json::Value(stringCfgs).toStyledString()));
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", error));
+        }
+    })
+
+    .get("/api/notifications", [&persintent_notifications](auto *res, auto *req) {
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+	    res->end(GetJsonString("notifications", persintent_notifications.toStyledString()));
     })
 
 	.get("/*", [&asyncFileStreamer](auto *res, auto *req) {
@@ -185,9 +381,9 @@ int main(int argc, char **argv) {
         }
 	})
 	
-    .listen(port, [port, root](auto *token) {
+    .listen(port, [port, serverRootFolder](auto *token) {
             if (token) {
-                std::cout << "Serving " << root << " over HTTP a " << port << std::endl;
+                std::cout << "Serving " << serverRootFolder << " over HTTP a " << port << std::endl;
             }
     })
         

@@ -1,7 +1,7 @@
 #include "AreaSelector.hpp"
 
 namespace AreaSelector {
-	bool GetFrame(const std::string& url, cv::Mat& frame) {
+	bool GetFrame(const char* url, cv::Mat& frame) {
 		bool sucess = false;
 		
 		cv::VideoCapture cap(url);
@@ -30,7 +30,7 @@ namespace AreaSelector {
 		AreaDataROI data;
 		bool success = false;
 
-		if (GetFrame(cfg.url, data.frame)) {
+		if (GetFrame(cfg.url.c_str(), data.frame)) {
 			// setup window
 			cv::namedWindow("Press a key to exit");
 			cv::setMouseCallback("Press a key to exit", onMouseROI, &data);
@@ -100,7 +100,7 @@ namespace AreaSelector {
 		data.rng = cv::RNG(12345);
 		bool success = false;
 		
-		if (GetFrame(cfg.url, data.frame)) {
+		if (GetFrame(cfg.url.c_str(), data.frame)) {
 			// setup window
 			cv::namedWindow("Press a key to exit");
 			cv::setMouseCallback("Press a key to exit", onMouseIgnoredAreas, &data);

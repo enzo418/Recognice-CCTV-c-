@@ -87,5 +87,7 @@ public:
 	
 	void StartCamerasThreads();
 
+	// waits until all the threads are joined
+	// then returns
 	void CloseAndJoin();
 };

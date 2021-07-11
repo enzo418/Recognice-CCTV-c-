@@ -13,6 +13,8 @@
 #include <regex>
 #include <opencv2/opencv.hpp>
 
+#include <string_view>
+
 #include "types.hpp"
 #include "types_configuration.hpp"
 
@@ -281,7 +283,7 @@ namespace Utils {
 		return r  + " and should be accessed with " + a;
 	}
 
-	static std::vector<int> GetNumbersString(std::string s) {
+	static std::vector<int> GetNumbersString(const std::string& s) {
 		std::regex r("(-?[0-9]*)"); 
 		std::vector<int> results;
 		for(std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r); i != std::sregex_iterator(); ++i)  { 
