@@ -16,7 +16,7 @@ class CameraConfiguration extends React.Component {
         const {id, cameraConfig} = this.props;
 
         return (
-            <div className="card is-hidden" id={`camera-${id}`}>
+            <div className="card">
                 <header className="card-header">
                     <p className="card-header-title">{cameraConfig["cameraname"]}</p>
                 </header>

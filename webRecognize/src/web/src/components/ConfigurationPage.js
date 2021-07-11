@@ -21,6 +21,7 @@ class ConfigurationPage extends React.Component {
                 cameras: [],
                 program: {},
             },
+            currentTab: "program",
         };
 
         this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
@@ -59,6 +60,13 @@ class ConfigurationPage extends React.Component {
         });
     }
 
+    setActiveTab(tab) {
+        this.setState((prev) => {
+            prev.currentTab = tab;
+            return prev;
+        });
+    }
+
     render() {
         const {t} = this.props;
         return (
@@ -66,28 +74,38 @@ class ConfigurationPage extends React.Component {
                 <div id="configurations">
                     <div className="tabs is-boxed">
                         <ul>
-                            <Tab dataConfig="program">
+                            <Tab
+                                isActive={this.state.currentTab === "program"}
+                                onClick={() => this.setActiveTab("program")}>
                                 <span>{t("Program configuration")}</span>
                             </Tab>
-                            {this.state.configurations.cameras.map((camera) => {
-                                <Tab dataConfig="camera" data-index={camera.id}>
+                            {this.state.configurations.cameras.map((camera) => (
+                                <Tab
+                                    isActive={camera.id === this.state.currentTab}
+                                    key={camera.id}
+                                    onClick={() => this.setActiveTab(camera.id)}>
                                     <span>{camera.cameraname}</span>
-                                </Tab>;
-                            })}
+                                </Tab>
+                            ))}
                         </ul>
                     </div>
-                    <ProgramConfiguration
-                        programConfiguration={this.state.configurations.program}
-                        changeTargetValue={this.changeProgramTargetValue}
-                        elements={elements.program}></ProgramConfiguration>
-                    {this.state.configurations.cameras.map((camera) => (
-                        <CameraConfiguration
-                            key={camera.id}
-                            id={camera.id}
-                            cameraConfig={camera}
-                            changeTargetValue={this.changeCameraTargetValue}
-                            elements={elements.camera}></CameraConfiguration>
-                    ))}
+                    {this.state.currentTab === "program" && (
+                        <ProgramConfiguration
+                            programConfiguration={this.state.configurations.program}
+                            changeTargetValue={this.changeProgramTargetValue}
+                            elements={elements.program}></ProgramConfiguration>
+                    )}
+                    {this.state.configurations.cameras.map(
+                        (camera) =>
+                            camera.id === this.state.currentTab && (
+                                <CameraConfiguration
+                                    key={camera.id}
+                                    id={camera.id}
+                                    cameraConfig={camera}
+                                    changeTargetValue={this.changeCameraTargetValue}
+                                    elements={elements.camera}></CameraConfiguration>
+                            )
+                    )}
                 </div>
                 <div className="buttons">
                     <button className="button is-link" id="button-add-new-camera" onClick={this.addNewCamera}>
