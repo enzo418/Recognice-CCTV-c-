@@ -3,7 +3,16 @@ import {initReactI18next} from "react-i18next";
 
 import Translations from "./translations.json";
 
-for (let key in Translations) {
+function lowerKeyNames(translations) {
+    const objectKeysToLowerCase = (obj) =>
+        Object.fromEntries(Object.entries(obj).map(([k, v]) => [k.toLowerCase(), v]));
+
+    Object.entries(translations).forEach((el) => (translations[el[0]] = objectKeysToLowerCase(translations[el[0]])));
+
+    return translations;
+}
+
+for (let key in lowerKeyNames(Translations)) {
     Translations[key] = {translations: Translations[key]};
 }
 
