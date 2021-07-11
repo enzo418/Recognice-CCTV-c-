@@ -107,18 +107,19 @@ class App extends React.Component {
             <div>
                 <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
 
-                {this.state.configuration.file === "" && this.props.location.pathname !== pages.notifications.path && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                    />
-                )}
+                {/* {this.state.recognize.configuration.file === "" &&
+                    this.props.location.pathname !== pages.notifications.path && (
+                        <ModalSelectConfiguration
+                            configurationFilesAvailables={this.state.configurationFilesAvailables}
+                            changeConfigurationFile={this.changeConfigurationFile}
+                        />
+                    )} */}
 
                 <Switch>
                     {/* {this.state.configuration.file !== "" && ( */}
-                    <Route path={pages.configurations.path}>
-                        <ConfigurationPage configurations={this.state.recognize.configuration}></ConfigurationPage>
-                    </Route>
+                    {/* <Route path={pages.configurations.path}> */}
+                    <ConfigurationPage configurations={this.state.recognize.configuration}></ConfigurationPage>
+                    {/* </Route> */}
                     {/* )} */}
 
                     <Route path={pages.notifications.path}>

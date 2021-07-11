@@ -1,0 +1,88 @@
+@charset "utf-8";
+
+$lemon-meringue: #f1e8b8ff;
+$yellow-crayola: #f9e784ff;
+$copper-crayola: #e58f65ff;
+$indian-red: #d05353ff;
+$eerie-black: #191919ff;
+$eerie-darker: #141414;
+$eerie-lighter: #292929;
+
+// Update Bulma's global variables
+$family-sans-serif: "Nunito", sans-serif;
+$grey-dark: #fff;
+$grey-light: $lemon-meringue;
+$primary: $eerie-black;
+$link: $yellow-crayola;
+$widescreen-enabled: false;
+$fullhd-enabled: false;
+
+// Update some of Bulma's component variables
+$body-background-color: $primary;
+// $control-border-width: 2px;
+// $input-border-color: transparent;
+// $input-shadow: none;
+
+// modal
+$modal-card-body-background-color: $eerie-black;
+$modal-card-head-background-color: $eerie-darker;
+
+// drop down
+$dropdown-content-background-color: $eerie-black;
+
+// card
+$card-background-color: $eerie-darker;
+$card-header-background-color: $eerie-lighter;
+$card-header-color: #fff;
+
+// input
+$input-background-color: $eerie-lighter;
+$input-color: #fff;
+$input-border-color: rgba(255, 255, 255, 0.309);
+
+// tab
+$tabs-boxed-link-active-background-color: $primary;
+
+@import "~bulma/bulma";
+
+::-webkit-scrollbar-thumb {
+    background-color: #494e52;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #191c1d;
+}
+
+::-webkit-scrollbar {
+    background-color: #222526;
+    color: #b5aea2;
+}
+
+.card {
+	margin: 0 0 1rem 0;
+
+    .card-content {
+        padding: 0 0.2rem 1.5rem 0.2rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-top: 0.5rem;
+    }
+
+    .configuration-group {
+        padding: 5px;
+        border: 1px solid #ffffff2b;
+        border-radius: 0.2rem;
+        margin: 0 5px 5px 0;
+        width: 49%;
+        height: fit-content;
+        display: flex;
+        flex-wrap: wrap;    
+        flex-direction: column; 
+
+        .configuration-group {
+            display: block;
+            width: auto;
+        }  
+    }
+}

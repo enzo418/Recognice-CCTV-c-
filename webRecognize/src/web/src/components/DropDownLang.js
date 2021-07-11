@@ -13,7 +13,7 @@ function DropDownLang() {
         <div className={"dropdown" + (displayed ? " is-active" : "")}>
             <div className="dropdown-trigger">
                 <button
-                    className="button"
+                    className="button is-dark"
                     aria-haspopup="true"
                     aria-controls="dropdown-menu"
                     onClick={() => setDisplayed(!displayed)}>
@@ -28,10 +28,7 @@ function DropDownLang() {
             </div>
             <div className="dropdown-menu" id="dropdown-menu" role="menu">
                 <div className="dropdown-content">
-                    <div
-                        className="dropdown-item is-active"
-                        data-lang="en"
-                        onClick={(e) => changeLanguage(e, setDisplayed)}>
+                    <div className="dropdown-item" data-lang="en" onClick={(e) => changeLanguage(e, setDisplayed)}>
                         English
                     </div>
                     <div className="dropdown-item" data-lang="es" onClick={(e) => changeLanguage(e, setDisplayed)}>

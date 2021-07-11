@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
 import {Link} from "react-router-dom";
 
+import Modal from "./Modal";
+
 class ModalSelectConfiguration extends React.Component {
     constructor(props) {
         super(props);
@@ -32,25 +34,25 @@ class ModalSelectConfiguration extends React.Component {
     }
 
     render() {
-        return (
-            <div className="modal">
-                <Translation>{(t) => <p>{t("Select a configuration file to open")}</p>}</Translation>
-
-                <select value={this.state.file} onChange={({target}) => this.onChangeFile(target.value)}>
-                    <Translation>
-                        {(t) => (
-                            <option value="new" className="dropdown-item is-active">
-                                {t("new")}
-                            </option>
-                        )}
-                    </Translation>
-                    {this.props.configurationFilesAvailables.map((cfg) => {
-                        <option key={cfg.id} value={cfg.id} className="dropdown-item">
-                            {cfg.file}
-                        </option>;
-                    })}
-                </select>
-
+        let header = <Translation>{(t) => <p>{t("Select a configuration file to open")}</p>}</Translation>;
+        let body = (
+            <select value={this.state.file} onChange={({target}) => this.onChangeFile(target.value)}>
+                <Translation>
+                    {(t) => (
+                        <option value="new" className="dropdown-item is-active">
+                            {t("new")}
+                        </option>
+                    )}
+                </Translation>
+                {this.props.configurationFilesAvailables.map((cfg) => {
+                    <option key={cfg.id} value={cfg.id} className="dropdown-item">
+                        {cfg.file}
+                    </option>;
+                })}
+            </select>
+        );
+        let footer = (
+            <div>
                 <Translation>{(t) => <Link to="/notifications">{t("Just wanna see notifications")}</Link>}</Translation>
 
                 <button className="button is-link" id="button-modal-make-copy-file" onClick={this.copyFileAndSelectIt}>
@@ -71,6 +73,7 @@ class ModalSelectConfiguration extends React.Component {
                 </button>
             </div>
         );
+        return <Modal header={header} body={body} footer={footer} />;
     }
 }
 

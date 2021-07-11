@@ -47,13 +47,13 @@ class HomeNavBar extends React.Component {
                             </button>
                         </div>
 
-                        {/* {this.props.recognize.configuration.file !== "" && ( */}
-                        <div className="navbar-item">
-                            {/* TODO: Set a different bg if it's the current page  */}
+                        {this.props.recognize.configuration.file !== "" && (
+                            <div className="navbar-item">
+                                {/* TODO: Set a different bg if it's the current page  */}
 
-                            <Link to={this.props.pages.configurations.path}>{t("configurations")}</Link>
-                        </div>
-                        {/* )} */}
+                                <Link to={this.props.pages.configurations.path}>{t("configurations")}</Link>
+                            </div>
+                        )}
 
                         <div className="navbar-item">
                             <Link to={this.props.pages.notifications.path}>{t("notifications")}</Link>

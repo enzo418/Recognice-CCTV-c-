@@ -7,6 +7,7 @@
 !.gitignore
 !*.js
 !*.css
+!*.scss
 !*.json
 !*.html
 !.prettierrc
