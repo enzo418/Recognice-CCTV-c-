@@ -2,25 +2,37 @@ import React from "react";
 import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
 import Tab from "./Tab";
-import ProgramConfiguration from "./ProgramConfiguration copy";
+import ProgramConfiguration from "./ProgramConfiguration";
+import CameraConfiguration from "./CameraConfiguration";
 
 class ConfigurationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            configurations: [],
-        };
-
-        // test values
-        this.setState(() => ({
             configurations: {
                 cameras: [
-                    {id: 0, name: "camera1", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=2.sdp"},
-                    {id: 1, name: "camera2", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=3.sdp"},
-                    {id: 2, name: "camera3", url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=4.sdp"},
+                    {
+                        id: 0,
+                        cameraname: "camera1",
+                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=2.sdp",
+                    },
+                    {
+                        id: 1,
+                        cameraname: "camera2",
+                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=3.sdp",
+                    },
+                    {
+                        id: 2,
+                        cameraname: "camera3",
+                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=4.sdp",
+                    },
                 ],
+                program: {},
             },
-        }));
+        };
+
+        this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
+        this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
     }
 
     addNewCamera() {
@@ -29,6 +41,20 @@ class ConfigurationPage extends React.Component {
 
     saveConfiguration() {
         throw "Method not implemented";
+    }
+
+    changeProgramTargetValue(target, value) {
+        this.setState((prev) => {
+            prev.configurations.program[target] = value;
+            return prev;
+        });
+    }
+
+    changeCameraTargetValue(id, target, value) {
+        this.setState((prev) => {
+            prev.configurations.cameras[id][target] = value;
+            return prev;
+        });
     }
 
     render() {
@@ -42,12 +68,17 @@ class ConfigurationPage extends React.Component {
                             </Tab>
                             {this.state.configurations.cameras.map((camera) => {
                                 <Tab dataConfig="camera" data-index={camera.id}>
-                                    <span>camera.name</span>
+                                    <span>{camera.cameraname}</span>
                                 </Tab>;
                             })}
                         </ul>
                     </div>
-                    <ProgramConfiguration configuration={this.state.configurations.program}></ProgramConfiguration>
+                    <ProgramConfiguration
+                        programConfiguration={this.state.configurations.program}
+                        changeTargetValue={this.changeProgramTargetValue}></ProgramConfiguration>
+                    {this.state.configurations.cameras.map((camera) => (
+                        <CameraConfiguration key={camera.id} id={camera.id} cameraConfig={camera}></CameraConfiguration>
+                    ))}
                 </div>
                 <div className="buttons">
                     <button className="button is-link" id="button-add-new-camera" onClick={this.addNewCamera}>

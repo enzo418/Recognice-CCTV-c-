@@ -23,7 +23,13 @@ class ProgramConfiguration extends React.Component {
                 </header>
                 <div className="card-content program-config-content">
                     {Elements.program.groups.map((group) => (
-                        <ConfigurationGroup key={group.name} name={group.name} group={group} />
+                        <ConfigurationGroup
+                            key={group.name}
+                            name={group.name}
+                            group={group}
+                            values={this.props.programConfiguration}
+                            onChangeValue={(target, value) => this.props.changeTargetValue(target, value)}
+                        />
                     ))}
                 </div>
             </div>
@@ -32,7 +38,8 @@ class ProgramConfiguration extends React.Component {
 }
 
 ProgramConfiguration.propTypes = {
-    configuration: PropTypes.object.isRequired,
+    programConfiguration: PropTypes.object.isRequired,
+    changeTargetValue: PropTypes.func.isRequired,
 };
 
 export default ProgramConfiguration;

@@ -14,17 +14,23 @@ class CameraConfiguration extends React.Component {
     }
 
     render() {
-        const {i, cameraConfig} = this.props;
+        const {id, cameraConfig} = this.props;
 
         return (
-            <div className="card is-hidden" id={`camera-${i}`}>
+            <div className="card is-hidden" id={`camera-${id}`}>
                 <header className="card-header">
                     <p className="card-header-title">{cameraConfig["cameraname"]}</p>
                 </header>
 
                 <div className="card-content camera-config-content">
                     {Elements.program.groups.map((group) => (
-                        <ConfigurationGroup key={group.name} name={group.name} group={group} />
+                        <ConfigurationGroup
+                            key={group.name}
+                            name={group.name}
+                            group={group}
+                            values={cameraConfig}
+                            onChangeValue={(target, value) => this.props.changeTargetValue(id, target, value)}
+                        />
                     ))}
                 </div>
 
@@ -67,8 +73,9 @@ class CameraConfiguration extends React.Component {
 }
 
 CameraConfiguration.propTypes = {
-    i: PropTypes.number.isRequired,
+    id: PropTypes.number.isRequired,
     cameraConfig: PropTypes.object.isRequired,
+    changeTargetValue: PropTypes.func.isRequired,
 };
 
 export default CameraConfiguration;

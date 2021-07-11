@@ -7,7 +7,7 @@ module.exports = {
     devServer: {
         contentBase: path.resolve(output_dir),
         compress: true,
-        port: 8500,
+        port: 8000,
     },
     entry: "./src/index.js",
     output: {

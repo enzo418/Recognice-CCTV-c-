@@ -10,14 +10,12 @@ class NumberInput extends React.Component {
     }
 
     render() {
-        const {name, placeholder, value, label, hidden, tooltip} = this.props;
+        const {name, placeHolder, value, label, hidden, tooltip} = this.props;
         var min,
             max = null;
 
-        // eslint-disable-next-line react/prop-types
         if ("min" in this.props) min = this.props.min;
 
-        // eslint-disable-next-line react/prop-types
         if ("max" in this.props) max = this.props.max;
 
         return (
@@ -27,7 +25,7 @@ class NumberInput extends React.Component {
                     className="input"
                     name={name}
                     type="number"
-                    placeholder={placeholder}
+                    placeHolder={placeHolder}
                     min={min}
                     max={max}
                     value={value}></input>
@@ -38,11 +36,13 @@ class NumberInput extends React.Component {
 
 NumberInput.propTypes = {
     name: PropTypes.string.isRequired,
-    placeholder: PropTypes.string.isRequired,
+    placeHolder: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
-    hidden: PropTypes.bool.isRequired,
-    tooltip: PropTypes.string.isRequired,
+    tooltip: PropTypes.string,
+    hidden: PropTypes.bool,
+    min: PropTypes.number,
+    max: PropTypes.number,
 };
 
 export default NumberInput;

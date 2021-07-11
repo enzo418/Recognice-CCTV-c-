@@ -1,6 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
-
 import {Translation} from "react-i18next";
 import i18n from "../i18n";
 
@@ -36,8 +34,6 @@ function DropDownLang() {
     );
 }
 
-DropDownLang.propTypes = {
-    group_id: PropTypes.string.isRequired,
-};
+DropDownLang.propTypes = {};
 
 export default DropDownLang;

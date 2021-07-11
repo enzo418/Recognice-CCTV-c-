@@ -2,12 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
-import NotificationPaginator from "../modules/notification_paginator";
 
 class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+            notifications: [],
+        };
     }
 
     togglePushNotifications() {
@@ -30,7 +31,12 @@ class NotificationPage extends React.Component {
 
                     <div className="notifications-configuration">
                         <label className="notifications-configuration-item checkbox">
-                            <input type="checkbox" id="toggle-push" checked onClick={this.togglePushNotifications} />
+                            <input
+                                type="checkbox"
+                                id="toggle-push"
+                                checked={this.props.configuration.sendPushOnNotification}
+                                onChange={() => this.props.configuration.toggle("sendPushOnNotification")}
+                            />
                             <i className="fas fa-bell"></i>
                             <Translation>{(t) => <p>{t("Send push notifications")}</p>}</Translation>
                         </label>
@@ -39,8 +45,8 @@ class NotificationPage extends React.Component {
                             <input
                                 type="checkbox"
                                 id="toggle-notification-sound"
-                                checked
-                                onClick={this.toggleSoundNotification}
+                                checked={this.props.configuration.playSoundOnNotification}
+                                onChange={() => this.props.configuration.toggle("playSoundOnNotification")}
                             />
                             <i className="fas fa-volume-off"></i>
                             <Translation>{(t) => <p>{t("Play sound on notification")}</p>}</Translation>
@@ -48,12 +54,14 @@ class NotificationPage extends React.Component {
                     </div>
                 </div>
 
-                {NotificationsPaginator}
+                <NotificationsPaginator notifications={this.state.notifications}></NotificationsPaginator>
             </div>
         );
     }
 }
 
-NotificationPage.propTypes = {};
+NotificationPage.propTypes = {
+    configuration: PropTypes.object.isRequired,
+};
 
-export default NotificationPaginator;
+export default NotificationPage;

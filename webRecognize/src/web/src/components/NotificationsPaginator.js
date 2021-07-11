@@ -1,13 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import NotificationPaginator from "../modules/notification_paginator";
 
 class NotificationsPaginator extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            index: props.index,
-            elements: props.elements,
+            index: 0,
         };
     }
 
@@ -21,21 +19,21 @@ class NotificationsPaginator extends React.Component {
 
     // updates the current index to the next one and changes the current notification
     nextNotification() {
-        var i = this.index < this.elements.length - 1 ? this.index + 1 : 0;
+        var i = this.index < this.props.notifications.length - 1 ? this.index + 1 : 0;
         this.gotoIndex(i);
         this.scrollContainerToElementTop();
     }
 
     // updates the current index to the previous and changes the current displayed
     previousNotification() {
-        var i = this.index > 0 ? this.index - 1 : this.elements.length - 1;
+        var i = this.index > 0 ? this.index - 1 : this.props.notifications.length - 1;
         this.gotoIndex(i);
         this.scrollContainerToElementTop();
     }
 
     // go to the start or end of the notification collection
     gotoUttermost(end = true) {
-        var i = end ? this.elements.length - 1 : 0;
+        var i = end ? this.props.notifications.length - 1 : 0;
         this.gotoIndex(i);
         this.scrollContainerToElementTop();
     }
@@ -74,8 +72,7 @@ class NotificationsPaginator extends React.Component {
 }
 
 NotificationsPaginator.propTypes = {
-    index: PropTypes.number.isRequired,
-    elements: PropTypes.object.isRequired,
+    notifications: PropTypes.array.isRequired,
 };
 
-export default NotificationPaginator;
+export default NotificationsPaginator;

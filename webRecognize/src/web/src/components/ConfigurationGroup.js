@@ -5,8 +5,11 @@ import CheckBoxInput from "./Inputs/CheckBoxInput";
 import NumberInput from "./Inputs/NumberInput";
 import TextInput from "./Inputs/TextInput";
 
+import {useTranslation} from "react-i18next";
+
 function ConfigurationGroup(props) {
-    const {name, group} = props;
+    const {t} = useTranslation();
+    const {name, group, values, onChangeValue} = props;
     return (
         <fieldset className="configuration-group">
             <legend>{name}</legend>
@@ -14,11 +17,32 @@ function ConfigurationGroup(props) {
                 let input;
 
                 if (element.type === "number") {
-                    input = <NumberInput></NumberInput>;
+                    input = (
+                        <NumberInput
+                            name={element.target}
+                            placeHolder={element.placeholder}
+                            label={t(element.target)}
+                            value={values[element.target]}
+                            onChange={({target}) => onChangeValue(element.target, target.value)}></NumberInput>
+                    );
                 } else if (element.type === "string") {
-                    input = <TextInput></TextInput>;
+                    input = (
+                        <TextInput
+                            name={element.target}
+                            placeHolder={element.placeholder}
+                            label={t(element.target)}
+                            value={values[element.target]}
+                            onChange={({target}) => onChangeValue(element.target, target.value)}></TextInput>
+                    );
                 } else if (element.type === "boolean") {
-                    input = <CheckBoxInput></CheckBoxInput>;
+                    input = (
+                        <CheckBoxInput
+                            name={element.target}
+                            placeHolder={element.placeholder}
+                            label={t(element.target)}
+                            value={values[element.target]}
+                            onChange={({target}) => onChangeValue(element.target, target.checked)}></CheckBoxInput>
+                    );
                 }
 
                 return input;
@@ -32,8 +56,9 @@ function ConfigurationGroup(props) {
 
 ConfigurationGroup.propTypes = {
     name: PropTypes.string.isRequired,
-    children: PropTypes.object.isRequired,
     group: PropTypes.object.isRequired,
+    values: PropTypes.object.isRequired,
+    onChangeValue: PropTypes.func.isRequired,
 };
 
 export default ConfigurationGroup;

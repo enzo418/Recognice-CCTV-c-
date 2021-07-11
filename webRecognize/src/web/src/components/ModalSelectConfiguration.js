@@ -1,91 +1,82 @@
 import React from "react";
+import PropTypes from "prop-types";
 import {Translation} from "react-i18next";
+import {Link} from "react-router-dom";
 
-function ModalSelectConfiguration() {
-    function showFilesDropDown() {
+class ModalSelectConfiguration extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            file: "new",
+        };
+    }
+    showFilesDropDown() {
         throw "Method not implemented";
     }
 
-    function goToNotificationsPage() {
+    goToNotificationsPage() {
         throw "Method not implemented";
     }
 
-    function copyFileAndSelectIt() {
+    copyFileAndSelectIt() {
         throw "Method not implemented";
     }
 
-    function selectFile() {
+    selectFile() {
         throw "Method not implemented";
     }
 
-    return (
-        <div className="modal" id="modal-file">
-            <div className="modal-background"></div>
-            <div className="modal-content container is-fullhd">
-                <article className="message is-primary">
-                    <div className="message-header">
-                        <Translation>{(t) => <p>{t("Select a configuration file to open")}</p>}</Translation>
-                    </div>
-                    <div className="message-body">
-                        <div className="dropdown" id="dropdown-file">
-                            <div className="dropdown-trigger">
-                                <button
-                                    className="button"
-                                    aria-haspopup="true"
-                                    aria-controls="dropdown-menu"
-                                    onClick={showFilesDropDown}>
-                                    <Translation>
-                                        {(t) => <span id="dropdown-current-file-element">{t("new")}</span>}
-                                    </Translation>
-                                    <span className="icon is-small">
-                                        <i className="fas fa-angle-down" aria-hidden="true"></i>
-                                    </span>
-                                </button>
-                            </div>
-                            <div className="dropdown-menu" id="dropdown-menu" role="menu">
-                                <div className="dropdown-content">
-                                    <Translation>
-                                        {(t) => <a className="dropdown-item is-active">{t("new")}</a>}
-                                    </Translation>
-                                    <hr className="dropdown-divider" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="buttons-config-selector">
-                            <button
-                                className="button is-link"
-                                id="button-just-notifications"
-                                onClick={goToNotificationsPage}>
-                                <span className="icon is-small">
-                                    <i className="fas fa-bell"></i>
-                                </span>
-                                <Translation>{(t) => <span>{t("Just wanna see notifications")}</span>}</Translation>
-                            </button>
+    onChangeFile(file) {
+        this.setState(() => ({file}));
+    }
 
-                            <button
-                                className="button is-link"
-                                id="button-modal-make-copy-file"
-                                onClick={copyFileAndSelectIt}>
-                                <span className="icon is-small">
-                                    <i className="fas fa-copy"></i>
-                                </span>
-                                <Translation>
-                                    {(t) => <span>{t("Make a copy of this file and select it")}</span>}
-                                </Translation>
-                            </button>
+    render() {
+        return (
+            <div className="modal">
+                <Translation>{(t) => <p>{t("Select a configuration file to open")}</p>}</Translation>
 
-                            <button className="button is-success" id="button-select-config-file" onClick={selectFile}>
-                                <span className="icon is-small">
-                                    <i className="fas fa-check"></i>
-                                </span>
-                                <span>Ok</span>
-                            </button>
-                        </div>
-                    </div>
-                </article>
+                <select value={this.state.file} onChange={({target}) => this.onChangeFile(target.value)}>
+                    <Translation>
+                        {(t) => (
+                            <option value="new" className="dropdown-item is-active">
+                                {t("new")}
+                            </option>
+                        )}
+                    </Translation>
+                    {this.props.configurationFilesAvailables.map((cfg) => {
+                        <option key={cfg.id} value={cfg.id} className="dropdown-item">
+                            {cfg.file}
+                        </option>;
+                    })}
+                </select>
+
+                <Translation>{(t) => <Link to="/notifications">{t("Just wanna see notifications")}</Link>}</Translation>
+
+                <button className="button is-link" id="button-modal-make-copy-file" onClick={this.copyFileAndSelectIt}>
+                    <span className="icon is-small">
+                        <i className="fas fa-copy"></i>
+                    </span>
+                    <Translation>{(t) => <span>{t("Make a copy of this file and select it")}</span>}</Translation>
+                </button>
+
+                <button
+                    className="button is-success"
+                    id="button-select-config-file"
+                    onClick={() => this.props.changeConfigurationFile(this.state.file)}>
+                    <span className="icon is-small">
+                        <i className="fas fa-check"></i>
+                    </span>
+                    <span>Ok</span>
+                </button>
             </div>
-        </div>
-    );
+        );
+    }
 }
+
+ModalSelectConfiguration.propTypes = {
+    configurationFilesAvailables: PropTypes.array.isRequired,
+    changeConfigurationFile: PropTypes.func.isRequired,
+};
 
 export default ModalSelectConfiguration;

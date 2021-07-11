@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import {Translation} from "react-i18next";
 import DropDownLang from "./DropDownLang";
-import {BrowserRouter as Link} from "react-router-dom";
+import {Link} from "react-router-dom";
 
 class HomeNavBar extends React.Component {
     constructor(props) {
@@ -46,20 +46,26 @@ class HomeNavBar extends React.Component {
                                     <button
                                         className="button is-success"
                                         id="button-toggle-recognizer"
-                                        onClick={() => this.props.toggleRecognize()}>
+                                        onClick={() => this.props.recognize.toggle()}>
                                         {this.props.recognize.running ? t("Stop recognizer") : t("Start Recognizer")}
                                     </button>
                                 )}
                             </Translation>
                         </div>
 
+                        {/* {this.props.recognize.configuration.file !== "" && ( */}
                         <div className="navbar-item">
                             {/* TODO: Set a different bg if it's the current page  */}
-                            <Translation>{(t) => <Link to="/configuration">{t("configurations")}</Link>}</Translation>
+                            <Translation>
+                                {(t) => <Link to={this.props.pages.configurations.path}>{t("configurations")}</Link>}
+                            </Translation>
                         </div>
+                        {/* )} */}
 
                         <div className="navbar-item">
-                            <Translation>{(t) => <Link to="/notifications">{t("notifications")}</Link>}</Translation>
+                            <Translation>
+                                {(t) => <Link to={this.props.pages.notifications.path}>{t("notifications")}</Link>}
+                            </Translation>
                         </div>
 
                         <div className="navbar-item">
@@ -73,6 +79,7 @@ class HomeNavBar extends React.Component {
 }
 
 HomeNavBar.propTypes = {
+    pages: PropTypes.object.isRequired,
     recognize: PropTypes.object.isRequired,
     toggleRecognize: PropTypes.func.isRequired,
 };
