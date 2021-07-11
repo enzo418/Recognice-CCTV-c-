@@ -3,6 +3,7 @@
 !*.cpp
 !*.hpp
 !*.h
+!*.h
 !*.md
 !.gitignore
 !*.js
@@ -12,6 +13,10 @@
 !*.html
 !.prettierrc
 
+# server
+!src/serverhelpers
+
+# web
 !src/
 !src/tests/
 !src/web/

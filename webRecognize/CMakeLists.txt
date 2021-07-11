@@ -51,5 +51,6 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread -lX11")
 
 add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
 
-# set -l of opencv and curl
-target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp Seasocks::seasocks fmt::fmt)
+# set -l of opencv and curl 
+# add -lssl if use ssl
+target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp Seasocks::seasocks fmt::fmt "-l:uSockets.a" "-lz")
