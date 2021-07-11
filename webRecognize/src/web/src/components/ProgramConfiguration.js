@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 // the render prop
 import {Translation} from "react-i18next";
 
-import Elements from "../elements.json";
 import ConfigurationGroup from "./ConfigurationGroup";
 
 class ProgramConfiguration extends React.Component {
@@ -22,7 +21,7 @@ class ProgramConfiguration extends React.Component {
                     </Translation>
                 </header>
                 <div className="card-content program-config-content">
-                    {Elements.program.groups.map((group) => (
+                    {this.props.elements.groups.map((group) => (
                         <ConfigurationGroup
                             key={group.name}
                             name={group.name}
@@ -40,6 +39,7 @@ class ProgramConfiguration extends React.Component {
 ProgramConfiguration.propTypes = {
     programConfiguration: PropTypes.object.isRequired,
     changeTargetValue: PropTypes.func.isRequired,
+    elements: PropTypes.object.isRequired,
 };
 
 export default ProgramConfiguration;

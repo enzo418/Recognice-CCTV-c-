@@ -8,28 +8,17 @@ import CameraConfiguration from "./CameraConfiguration";
 import testValues from "../utils/test_values";
 import configuration_parser from "../modules/configuration_parser";
 
+import Elements from "../elements.json";
+import utils from "../utils/utils";
+
+const elements = utils.elementsGroupsToLowerCase(Elements);
+
 class ConfigurationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             configurations: {
-                cameras: [
-                    {
-                        id: 0,
-                        cameraname: "camera1",
-                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=2.sdp",
-                    },
-                    {
-                        id: 1,
-                        cameraname: "camera2",
-                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=3.sdp",
-                    },
-                    {
-                        id: 2,
-                        cameraname: "camera3",
-                        url: "rtsp://192.168.1.13:554?user=viewer&password=123&camera=4.sdp",
-                    },
-                ],
+                cameras: [],
                 program: {},
             },
         };
@@ -40,7 +29,7 @@ class ConfigurationPage extends React.Component {
 
     componentDidMount() {
         this.setState(() => {
-            let configs = configuration_parser.parseConfiguration(testValues.getTestConfiguration());
+            let configs = configuration_parser.parseConfiguration(testValues.getTestConfiguration(), elements);
             configs.cameras.forEach((cam, i) => {
                 cam.id = i;
             });
@@ -89,13 +78,15 @@ class ConfigurationPage extends React.Component {
                     </div>
                     <ProgramConfiguration
                         programConfiguration={this.state.configurations.program}
-                        changeTargetValue={this.changeProgramTargetValue}></ProgramConfiguration>
+                        changeTargetValue={this.changeProgramTargetValue}
+                        elements={elements.program}></ProgramConfiguration>
                     {this.state.configurations.cameras.map((camera) => (
                         <CameraConfiguration
                             key={camera.id}
                             id={camera.id}
                             cameraConfig={camera}
-                            changeTargetValue={this.changeCameraTargetValue}></CameraConfiguration>
+                            changeTargetValue={this.changeCameraTargetValue}
+                            elements={elements.camera}></CameraConfiguration>
                     ))}
                 </div>
                 <div className="buttons">

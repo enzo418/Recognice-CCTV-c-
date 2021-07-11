@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 // the render prop
 import {Translation} from "react-i18next";
 
-import Elements from "../elements.json";
 import ConfigurationGroup from "./ConfigurationGroup";
 
 class CameraConfiguration extends React.Component {
@@ -23,7 +22,7 @@ class CameraConfiguration extends React.Component {
                 </header>
 
                 <div className="card-content camera-config-content">
-                    {Elements.program.groups.map((group) => (
+                    {this.props.elements.groups.map((group) => (
                         <ConfigurationGroup
                             key={group.name}
                             name={group.name}
@@ -76,6 +75,7 @@ CameraConfiguration.propTypes = {
     id: PropTypes.number.isRequired,
     cameraConfig: PropTypes.object.isRequired,
     changeTargetValue: PropTypes.func.isRequired,
+    elements: PropTypes.object.isRequired,
 };
 
 export default CameraConfiguration;
