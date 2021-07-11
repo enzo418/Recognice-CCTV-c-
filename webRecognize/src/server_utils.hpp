@@ -8,6 +8,8 @@
 #include <filesystem>
 #include "server_types.hpp"
 
+const char* multipart = "multipart/form-data";
+
 std::string GetJsonString(const std::string& key, const std::string& value) {
 	return fmt::format("{{\"{0}\": {1}}}", key, value);
 }
@@ -47,10 +49,10 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
  * @param message message of the alert
  * @param trigger_query query that triggered the alert, should be the same as the query received
  */
-std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& trigger_query  = "", const std::string& extra = "") {
+std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& extra = "") {
 	std::string st = AlertStatus::OK == status ? "ok" : "error";
 
-	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"trigger", trigger_query}, {"extra", extra}}));
+	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"extra", extra}}));
 }
 
 // datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss

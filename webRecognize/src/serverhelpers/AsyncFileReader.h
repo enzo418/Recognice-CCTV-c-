@@ -32,12 +32,12 @@ public:
         fin.seekg(0, fin.end);
         fileSize = fin.tellg();
 
-        //std::cout << "File size is: " << fileSize << std::endl;
+        std::cout << "File size is: " << fileSize << std::endl;
 
         // cache up 10 mb!
         cache.resize(10 * 1024 * 1024); // SHOULD CACHE THE FILE SIZE?¡¡!!!!
 
-        //std::cout << "Caching 1 MB at offset = " << 0 << std::endl;
+        //std::cout << "Caching 10 MB at offset = " << 0 << std::endl;
         fin.seekg(0, fin.beg);
         fin.read(cache.data(), cache.length());
         cacheOffset = 0;
@@ -63,6 +63,8 @@ public:
 
             return std::string_view(cache.data() + offset - cacheOffset, chunkSize);
         } else {
+            // TODO: Return the next pice of the file 
+            //       Read it into a buffer then chunk it
             /* Cache miss */
             //std::cout << "Cache miss!" << std::endl;
             return std::string_view(nullptr, 0);

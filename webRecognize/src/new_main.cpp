@@ -1,6 +1,8 @@
 /* This is a simple HTTP(S) web server much like Python's SimpleHTTPServer */
 
 #include <uWebSockets/App.h>
+#include <uWebSockets/HttpContextData.h>
+#include <uWebSockets/Multipart.h>
 
 #include "serverhelpers/AsyncFileReader.h"
 #include "serverhelpers/AsyncFileStreamer.h"
@@ -16,8 +18,8 @@ int main(int argc, char **argv) {
 
     int option;
 
-    int port = 3000;
-    char *root = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
+    int port = 3001;
+    const char *root = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
 
     AsyncFileStreamer asyncFileStreamer(root);
 
@@ -33,22 +35,122 @@ int main(int argc, char **argv) {
         res->end();
     })
 
-    .get("/api/configuration_files", [](auto* res, auto* req){
+    // To use parameters put the parameter in the url like /path/:file
+    // then use req->getParameter(0) to get the parameter
+
+    .get("/api/configuration_files", [](auto* res, uWS::HttpRequest* req){
         res->writeHeader("Content-Type", "application/json");
         res->end(GetConfigurationsPathsJson({"../../recognize/build/", "./configurations/"}));
+        
+        // not handle the route, causing the router to continue looking 
+        // for a matching route handler, or fail
+        // req->setYield(true);
+    })
+
+    // answer with the request configuration file
+    .get("/api/configuration_file", [](auto* res, uWS::HttpRequest* req) {
+        /**
+         * Since we are working with files, this should response with a 
+         * chunked response sending the files but for now it will just
+         * send it as a string in Json format.
+        */
+
+        std::string file(req->getQuery("file"));
+
+        // if the file doesn't exist right now
+        const bool isNew = req->getQuery("is_new") == "true" ? true : false;
+
+        std::cout << "Query file: " << file << std::endl;
+        
+        std::string error;
+
+        // response is a json
+        res->writeHeader("Content-Type", "application/json");
+
+        // read file
+        Configurations cfgs = ConfigurationFile::ReadConfigurations(file, error);
+
+        if (error.length() == 0) {
+            std::string stringConfigs = ConfigurationFile::ConfigurationsToString(cfgs);
+
+            if (isNew) {
+                std::filesystem::path path { file };
+                
+                std::cout << "\tFile is new. Full path: " << path << std::endl;
+
+                std::filesystem::create_directories(path.parent_path());
+
+                ConfigurationFile::SaveConfigurations(cfgs, path.string());
+            }
+
+            // send the file
+            res->end(GetJsonString("configuration_file", Json::Value(stringConfigs).toStyledString()));
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
+        }
+    })
+
+    // writes a configuration into a file
+    .post("/api/configuration_file", [](auto* res, uWS::HttpRequest* req) {
+        std::cout << "content-type: " << req->getHeader("content-type") << std::endl;
+        std::cout << "content-length: "<< req->getHeader("content-length") << std::endl;
+        if (multipart == req->getHeader("content-type")) {
+            std::string length(req->getHeader("content-length"));
+            std::string reqBody(multipart);
+
+            reqBody.append(";");
+
+            reqBody.resize(strlen(multipart) + 1 + std::stoi(length));
+
+            std::cout << std::endl;
+            
+            std::cout << "¿?: "<< req->getHeader(req->getUrl()) << std::endl;
+            std::cout << "Query?: "<< req->getQuery() << std::endl;
+
+            res->onData([&](std::string_view chunk, bool isLast) {
+                reqBody.append(chunk);
+                std::cout << "Chunk: " << chunk << " is last? " << (isLast ? "true" : "false") << std::endl;
+                if (isLast) {
+                    uWS::MultipartParser parser(std::string_view(reqBody.c_str(), reqBody.length()));
+                    std::cout << "Is valid? " << parser.isValid() << std::endl;
+                    for (size_t i = 0; i < 10; i++)
+                    {
+                        std::cout << i << ": " << parser.getNextPart() << std::endl;
+                    }
+                    
+                }
+            });
+            
+            std::string file(req->getParameter(0));
+            // const std::string cfgString = root["configurations"].asString();
+            std::cout 
+                << "File=" << file
+                /*<< "Configuration size:\n" << cfgString.length()*/ << std::endl;
+            
+            // std::string error;
+            // std::istringstream iss(cfgString);
+            // Configurations configurations = ConfigurationFile::ReadConfigurationBuffer(iss, error);
+
+            // if (error.length() == 0) {
+            //     std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
+
+            //     ConfigurationFile::SaveConfigurations(configurations, file);
+
+            //     con->send(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
+            // } else {
+            //     con->send(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", id, error));
+            // }
+            res->end();
+        }
     })
 
 	.get("/*", [&asyncFileStreamer](auto *res, auto *req) {
-	    std::cout << "Any" << std::endl;
+	    std::cout << "2. Any" << std::endl;
         serveFile(res, req);
-        
-        std::cout << "ASDASDASD" << std::endl;
 
-        asyncFileStreamer.streamFile(res, req->getUrl());
-        
-        std::cout << "EEEEEEE" << std::endl;
-        
-        res->end();
+        if (asyncFileStreamer.streamFile(res, req->getUrl())){
+            res->end();
+        }
     })
 
     .ws<PerSocketData>("recognize", {

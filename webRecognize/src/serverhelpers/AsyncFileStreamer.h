@@ -1,6 +1,8 @@
 #pragma once
 #include <filesystem>
 
+const char *HTTP_404_NOT_FOUND = "HTTP/1.1 404 Not Found";
+
 struct AsyncFileStreamer {
 
     std::map<std::string_view, AsyncFileReader *> asyncFileReaders;
@@ -33,13 +35,21 @@ struct AsyncFileStreamer {
     }
 
     template <bool SSL>
-    void streamFile(uWS::HttpResponse<SSL> *res, std::string_view url) {
+    bool streamFile(uWS::HttpResponse<SSL> *res, std::string_view url) {
+        bool found = false;
         auto it = asyncFileReaders.find(url);
         if (it == asyncFileReaders.end()) {
-            std::cout << "Did not find file: " << url << std::endl;
-	        res->close();
+            std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << url << std::endl;
+            res->writeStatus(std::string_view(HTTP_404_NOT_FOUND));
+            // res->writeHeader("Connection", "close");
+            // res->close();
+            res->end();
+            return false;
         } else {
+            // res->writeStatus(uWS::HTTP_200_OK);
+            found = true;
             streamFile(res, it->second);
+            return true;
         }
     }
 
