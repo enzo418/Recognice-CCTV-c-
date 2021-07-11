@@ -4,6 +4,10 @@ import {Translation} from "react-i18next";
 import Tab from "./Tab";
 import ProgramConfiguration from "./ProgramConfiguration";
 import CameraConfiguration from "./CameraConfiguration";
+import configurationParser from "../modules/configuration_parser";
+
+import testValues from "../utils/test_values";
+import configuration_parser from "../modules/configuration_parser";
 
 class ConfigurationPage extends React.Component {
     constructor(props) {
@@ -33,6 +37,16 @@ class ConfigurationPage extends React.Component {
 
         this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
         this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
+    }
+
+    componentDidMount() {
+        this.setState(() => {
+            let configs = configuration_parser.parseConfiguration(testValues.getTestConfiguration());
+            configs.cameras.forEach((cam, i) => {
+                cam.id = i;
+            });
+            return {configurations: configs};
+        });
     }
 
     addNewCamera() {
@@ -77,7 +91,11 @@ class ConfigurationPage extends React.Component {
                         programConfiguration={this.state.configurations.program}
                         changeTargetValue={this.changeProgramTargetValue}></ProgramConfiguration>
                     {this.state.configurations.cameras.map((camera) => (
-                        <CameraConfiguration key={camera.id} id={camera.id} cameraConfig={camera}></CameraConfiguration>
+                        <CameraConfiguration
+                            key={camera.id}
+                            id={camera.id}
+                            cameraConfig={camera}
+                            changeTargetValue={this.changeCameraTargetValue}></CameraConfiguration>
                     ))}
                 </div>
                 <div className="buttons">

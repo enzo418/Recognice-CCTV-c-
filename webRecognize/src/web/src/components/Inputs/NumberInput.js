@@ -25,10 +25,11 @@ class NumberInput extends React.Component {
                     className="input"
                     name={name}
                     type="number"
-                    placeHolder={placeHolder}
+                    placeholder={placeHolder}
                     min={min}
                     max={max}
-                    value={value}></input>
+                    value={value}
+                    onChange={this.props.onChange}></input>
             </div>
         );
     }
@@ -36,13 +37,14 @@ class NumberInput extends React.Component {
 
 NumberInput.propTypes = {
     name: PropTypes.string.isRequired,
-    placeHolder: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
+    placeHolder: PropTypes.string,
+    value: PropTypes.number.isRequired,
     label: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
     hidden: PropTypes.bool,
     min: PropTypes.number,
     max: PropTypes.number,
+    onChange: PropTypes.func.isRequired,
 };
 
 export default NumberInput;

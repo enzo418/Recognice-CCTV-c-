@@ -14,7 +14,14 @@ class TextInput extends React.Component {
         return (
             <div className={`card-content-item ${hidden && "is-hidden"}`} id={name.toLowerCase()} data-tip={tooltip}>
                 <label htmlFor={name}>{label}</label>
-                <input className="input" name={name} type="text" placeholder={placeholder} value={value}></input>
+                <input
+                    className="input"
+                    name={name}
+                    type="text"
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={this.props.onChange}
+                />
             </div>
         );
     }
@@ -22,11 +29,12 @@ class TextInput extends React.Component {
 
 TextInput.propTypes = {
     name: PropTypes.string.isRequired,
-    placeholder: PropTypes.string.isRequired,
+    placeholder: PropTypes.string,
     value: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
     hidden: PropTypes.bool.isRequired,
-    tooltip: PropTypes.string.isRequired,
+    tooltip: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
 };
 
 export default TextInput;

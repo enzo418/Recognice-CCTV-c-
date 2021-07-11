@@ -24,3 +24,4 @@
 !CMakeLists.txt
 
 package-lock.json
+test_values.js

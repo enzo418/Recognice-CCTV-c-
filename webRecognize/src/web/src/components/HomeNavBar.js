@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import {Translation} from "react-i18next";
+import {withTranslation} from "react-i18next";
 import DropDownLang from "./DropDownLang";
 import {Link} from "react-router-dom";
 
@@ -11,6 +11,7 @@ class HomeNavBar extends React.Component {
     }
 
     render() {
+        const {t} = this.props;
         return (
             <nav className="navbar is-black" role="navigation" aria-label="main navigation">
                 <div className="navbar-brand">
@@ -29,43 +30,32 @@ class HomeNavBar extends React.Component {
                 <div id="navbar-status" className="navbar-menu">
                     <div className="navbar-start">
                         <div className="navbar-item">
-                            <Translation>
-                                {(t) => (
-                                    <h1 id="button-state-recognizer">
-                                        {this.props.recognize.running
-                                            ? t("Recognizer is running")
-                                            : t("Recognizer is not running")}
-                                    </h1>
-                                )}
-                            </Translation>
+                            <h1 id="button-state-recognizer">
+                                {this.props.recognize.running
+                                    ? t("recognizer is running")
+                                    : t("recognizer is not running")}
+                            </h1>
                         </div>
 
                         <div className="navbar-item">
-                            <Translation>
-                                {(t) => (
-                                    <button
-                                        className="button is-success"
-                                        id="button-toggle-recognizer"
-                                        onClick={() => this.props.recognize.toggle()}>
-                                        {this.props.recognize.running ? t("Stop recognizer") : t("Start Recognizer")}
-                                    </button>
-                                )}
-                            </Translation>
+                            <button
+                                className="button is-success"
+                                id="button-toggle-recognizer"
+                                onClick={() => this.props.recognize.toggle()}>
+                                {!this.props.recognize.running && t("start Recognizer")}
+                            </button>
                         </div>
 
                         {/* {this.props.recognize.configuration.file !== "" && ( */}
                         <div className="navbar-item">
                             {/* TODO: Set a different bg if it's the current page  */}
-                            <Translation>
-                                {(t) => <Link to={this.props.pages.configurations.path}>{t("configurations")}</Link>}
-                            </Translation>
+
+                            <Link to={this.props.pages.configurations.path}>{t("configurations")}</Link>
                         </div>
                         {/* )} */}
 
                         <div className="navbar-item">
-                            <Translation>
-                                {(t) => <Link to={this.props.pages.notifications.path}>{t("notifications")}</Link>}
-                            </Translation>
+                            <Link to={this.props.pages.notifications.path}>{t("notifications")}</Link>
                         </div>
 
                         <div className="navbar-item">
@@ -82,6 +72,7 @@ HomeNavBar.propTypes = {
     pages: PropTypes.object.isRequired,
     recognize: PropTypes.object.isRequired,
     toggleRecognize: PropTypes.func.isRequired,
+    t: PropTypes.func,
 };
 
-export default HomeNavBar;
+export default withTranslation()(HomeNavBar);
