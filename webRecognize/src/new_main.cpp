@@ -136,31 +136,39 @@ int main(int argc, char **argv) {
      *  Send the file content as the post body
     */
     .post("/api/configuration_file", [&postBody](auto* res, uWS::HttpRequest* req) {
-        std::cout << "content-type: " << req->getHeader("content-type") << std::endl;
+        std::string type(req->getHeader("content-type"));
+        std::cout << "content-type: " << type << std::endl;
         std::cout << "content-length: "<< req->getHeader("content-length") << std::endl;
 
         std::string length(req->getHeader("content-length"));
+        std::string file(req->getQuery("file_name"));
 
         postBody.resize(std::stoi(length));
 
         postBody.clear();
         
-        res->onData([&](std::string_view chunk, bool isLast) {
+        req->setYield(false);
+        res->onAborted([]() {
+            std::cout << "Aborted" << std::endl;
+        });
+        
+        res->onData([&postBody, fileName = std::move(file), contentType = std::move(type), response = std::move(res), request = std::move(req)](std::string_view chunk, bool isLast) {
             postBody.append(chunk);
-            std::cout << "Chunk: " << chunk << " is last? " << (isLast ? "true" : "false") << std::endl;
-            std::cout << "Body: " << postBody << std::endl;
+            std::cout   << "Chunk length: " << chunk.length() 
+                        << " is last? " << (isLast ? "true" : "false") << std::endl<< std::endl;
+            // std::cout << "Body: " << postBody << std::endl;
 
             if (isLast) {
-                // response is a json
-                res->writeHeader("Content-Type", "application/json");
 
-                if (HTTP_MULTIPART == req->getHeader("content-type") || HTTP_FORM_URLENCODED == req->getHeader("content-type")) {
+                // response is a json
+                response->writeHeader("Content-Type", "application/json");
+                
+                if (HTTP_MULTIPART == contentType || HTTP_FORM_URLENCODED == contentType) {
                     std::cout << std::endl;
                     
-                    const std::string_view& file = req->getQuery("file_name");
                     std::cout 
-                        << "File=" << file
-                        << "Configuration size:\n" << postBody.length() << std::endl;
+                        << "File=" << fileName
+                        << "\nConfiguration size:\n" << postBody.length() << std::endl;
                     
                     std::string error;
                     std::istringstream iss(postBody);
@@ -168,17 +176,16 @@ int main(int argc, char **argv) {
 
                     if (error.length() == 0) {
                         std::cout << "There is " << configurations.camerasConfigs.size() << " cameras in the string\n";
+                        ConfigurationFile::SaveConfigurations(configurations, fileName);
 
-                        ConfigurationFile::SaveConfigurations(configurations, file.data());
-
-                        res->end(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
+                        response->end(GetAlertMessage(AlertStatus::OK, "File saved correctly"));
                     } else {
-                        res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", error));
+                        response->end(GetAlertMessage(AlertStatus::ERROR, "File could not be saved, there is an invalid field", error));
                     }
                 } else {
                     // if it's json ¿?
                     // Throw error   
-                    res->end();
+                    response->end();
                 }
             }
         });

@@ -54,6 +54,7 @@ class App extends React.Component {
         this.toggleRecognize = this.toggleRecognize.bind(this);
         this.changeConfiguration = this.changeConfiguration.bind(this);
         this.changeConfigurationFile = this.changeConfigurationFile.bind(this);
+        this.addAlert = this.addAlert.bind(this);
     }
 
     componentDidMount() {
@@ -86,23 +87,7 @@ class App extends React.Component {
         let url = "/api/" + to + "_recognizer" + "?file_name=" + this.state.recognize.configuration.file;
         fetch(url)
             .then((res) => res.json())
-            .then((res) =>
-                this.setState((prev) => {
-                    let id = prev.alerts.length;
-
-                    // add alert to alerts
-                    prev.alerts.push({id, alert: res.status});
-
-                    // remove alert after 3.5s
-                    setTimeout(() => {
-                        this.setState((prev2) => {
-                            prev2.alerts.splice(id, 1);
-                            return prev2;
-                        });
-                    }, 3500);
-                    return prev;
-                })
-            );
+            .then((res) => this.addAlert(res.status));
     }
 
     /**
@@ -167,6 +152,25 @@ class App extends React.Component {
         }, this.saveConfigurationOnLocalStorage);
     }
 
+    addAlert(alert) {
+        this.setState((prev) => {
+            let id = prev.alerts.length;
+
+            // add alert to alerts
+            prev.alerts.push({id, alert});
+
+            // remove alert after 3.5s
+            setTimeout(() => {
+                this.setState((prev2) => {
+                    prev2.alerts.splice(id, 1);
+                    return prev2;
+                });
+            }, 3500);
+
+            return prev;
+        });
+    }
+
     render() {
         return (
             <div>
@@ -174,18 +178,19 @@ class App extends React.Component {
 
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path && (
-                        <ModalSelectConfiguration
-                            configurationFilesAvailables={this.state.configurationFilesAvailables}
-                            changeConfigurationFile={this.changeConfigurationFile}
-                        />
-                    )}
+                    <ModalSelectConfiguration
+                        configurationFilesAvailables={this.state.configurationFilesAvailables}
+                        changeConfigurationFile={this.changeConfigurationFile}
+                    />
+                )}
 
                 <Switch>
                     {this.state.recognize.configuration.file !== "" && (
                         <Route path={pages.configurations.path}>
                             <ConfigurationPage
                                 elements={elements}
-                                configurations={this.state.recognize.configuration}></ConfigurationPage>
+                                configurations={this.state.recognize.configuration}
+                                addAlert={this.addAlert}></ConfigurationPage>
                         </Route>
                     )}
 

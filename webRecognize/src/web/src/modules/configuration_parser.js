@@ -1,3 +1,8 @@
+const headers = {
+    camera: "[CAMERA]",
+    program: "[PROGRAM]",
+};
+
 function searchElement(key, elements) {
     let res;
     if ("elements" in elements) {
@@ -66,6 +71,27 @@ function parseConfiguration(str, elements) {
     return headers;
 }
 
+function configurationToString(cfg) {
+    return Object.entries(cfg).reduce((ac, current) => {
+        const [key, value] = current;
+        if (key !== "id") {
+            ac += key + "=" + value + "\n";
+        }
+        return ac;
+    }, "");
+}
+
+function configurationsToString(configurations) {
+    let program = headers.program + "\n" + configurationToString(configurations.program);
+    let cameras =
+        headers.camera +
+        "\n" +
+        configurations.cameras.map((camera) => configurationToString(camera)).join("\n[CAMERA]\n");
+
+    return program + cameras;
+}
+
 export default {
     parseConfiguration,
+    configurationsToString,
 };

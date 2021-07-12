@@ -5,16 +5,20 @@ import Tab from "./Tab";
 import ProgramConfiguration from "./ProgramConfiguration";
 import CameraConfiguration from "./CameraConfiguration";
 
+import parser from "../modules/configuration_parser";
+
 class ConfigurationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             configurations: this.props.configurations.headers,
+            file: this.props.configurations.file,
             currentTab: "program",
         };
 
         this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
         this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
+        this.saveConfiguration = this.saveConfiguration.bind(this);
     }
 
     addNewCamera() {
@@ -22,7 +26,15 @@ class ConfigurationPage extends React.Component {
     }
 
     saveConfiguration() {
-        throw "Method not implemented";
+        fetch(`/api/configuration_file?file_name=${this.state.file}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+            body: parser.configurationsToString(this.state.configurations),
+        })
+            .then((res) => res.json())
+            .then((res) => this.props.addAlert(res.status));
     }
 
     changeProgramTargetValue(target, value) {
@@ -110,6 +122,7 @@ ConfigurationPage.propTypes = {
     configurations: PropTypes.object.isRequired,
     elements: PropTypes.any.isRequired,
     t: PropTypes.func,
+    addAlert: PropTypes.func.isRequired,
 };
 
 export default withTranslation()(ConfigurationPage);

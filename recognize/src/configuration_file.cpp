@@ -23,10 +23,10 @@ namespace ConfigurationFile {
 		}
 	}
 
-	void OpenFileWrite(std::fstream& file, const char* fn){
+	void OpenFileWrite(std::fstream& file, const std::string& fn){
 		if (!file.is_open()){ 
 			char filename[MAX_PATH] = {};
-			strcpy_s(filename, GetFilePath(fn));
+			strcpy_s(filename, GetFilePath(fn.c_str()));
 			file.open(filename, std::ofstream::out | std::ofstream::trunc);
 		}
 	}
@@ -426,11 +426,11 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	void SaveConfigurations(Configurations& cfgs, const char* filePath) {
+	void SaveConfigurations(Configurations& cfgs, const std::string& filePath) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileWrite(file, filePath);
-		
+
 		// Get and Write configuration header
 		ConfigurationFile::WriteLineInFile(file, ConfigurationFile::GetConfigurationFileHeaderString().c_str());
 		

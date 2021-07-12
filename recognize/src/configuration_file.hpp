@@ -73,5 +73,5 @@ namespace ConfigurationFile {
 	* @param cfgs Configurations
 	* @param fileName Optional, if it's blank the will use the last file name.
 	*/
-	void SaveConfigurations(Configurations& cfgs, const char* filePath);
+	void SaveConfigurations(Configurations& cfgs, const std::string& filePath);
 };
