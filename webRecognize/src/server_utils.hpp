@@ -53,7 +53,7 @@ std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>
 std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& extra = "") {
 	std::string st = AlertStatus::OK == status ? "ok" : "error";
 
-	return GetJsonString("request_reply", GetJsonString({{"status", st}, {"message", message}, {"extra", extra}}));
+	return GetJsonString("status", GetJsonString({{"status", st}, {"message", message}, {"extra", extra}}));
 }
 
 // datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss

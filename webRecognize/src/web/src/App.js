@@ -12,6 +12,7 @@ import utils from "./utils/utils";
 const elements = utils.elementsGroupsToLowerCase(Elements);
 
 import i18n from "./i18n";
+import PopupAlert from "./components/PopupAlert";
 
 const pages = {
     configurations: {
@@ -47,6 +48,7 @@ class App extends React.Component {
             },
             configurationFilesAvailables: [],
             error: null,
+            alerts: [],
         };
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
@@ -60,7 +62,6 @@ class App extends React.Component {
             .then(({configuration_files}) => {
                 this.setState(
                     () => {
-                        // configuration_files = configuration_files.map((cfg, i) => ({file: cfg, id: i}));
                         return {configurationFilesAvailables: configuration_files};
                     },
                     (error) => {
@@ -73,13 +74,35 @@ class App extends React.Component {
         i18n.changeLanguage(lang);
     }
 
+    /**
+     * Request the server to set the state of the recognizer
+     * @param {string} to start|stop|toggle
+     */
     toggleRecognize(to = "toggle") {
-        console.log(to);
-        // throw "Not implemented";
-        // this.setState((prevState) => ({
-        //     recognizeIsRunning: !prevState.recognizeIsRunning,
-        // }));
-        // TODO: call the api
+        if (["start", "stop", "toggle"].indexOf(to) === -1) {
+            throw "Invalid recognizer state requested '" + to + "'";
+        }
+        to = to === "toggle" ? (this.state.recognize.running ? "stop" : "start") : to;
+        let url = "/api/" + to + "_recognizer" + "?file_name=" + this.state.recognize.configuration.file;
+        fetch(url)
+            .then((res) => res.json())
+            .then((res) =>
+                this.setState((prev) => {
+                    let id = prev.alerts.length;
+
+                    // add alert to alerts
+                    prev.alerts.push({id, alert: res.status});
+
+                    // remove alert after 3.5s
+                    setTimeout(() => {
+                        this.setState((prev2) => {
+                            prev2.alerts.splice(id, 1);
+                            return prev2;
+                        });
+                    }, 3500);
+                    return prev;
+                })
+            );
     }
 
     /**
@@ -100,8 +123,6 @@ class App extends React.Component {
                     configs.cameras.forEach((cam, i) => {
                         cam.id = i;
                     });
-
-                    console.log(configuration_file);
 
                     prev.recognize.configuration.headers = configs;
 
@@ -153,11 +174,11 @@ class App extends React.Component {
 
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                    />
-                )}
+                        <ModalSelectConfiguration
+                            configurationFilesAvailables={this.state.configurationFilesAvailables}
+                            changeConfigurationFile={this.changeConfigurationFile}
+                        />
+                    )}
 
                 <Switch>
                     {this.state.recognize.configuration.file !== "" && (
@@ -172,6 +193,12 @@ class App extends React.Component {
                         <NotificationPage configuration={this.state.configuration}></NotificationPage>
                     </Route>
                 </Switch>
+
+                <div id="alerts">
+                    {this.state.alerts.map((el) => (
+                        <PopupAlert key={el.id} alert={el.alert} />
+                    ))}
+                </div>
             </div>
         );
     }

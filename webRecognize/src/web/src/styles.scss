@@ -138,6 +138,14 @@ $tabs-boxed-link-active-background-color: $primary;
     }
 }
 
+#alerts {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
 
 // media
 @media only screen and (min-width: 500px) and (max-width: 771px) {

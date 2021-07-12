@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     int option;
 
     int port = 3001;
-    const char *serverRootFolder = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
+    const std::string serverRootFolder = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
 
     AsyncFileStreamer asyncFileStreamer(serverRootFolder);
     
@@ -188,43 +188,46 @@ int main(int argc, char **argv) {
      * Start the recognizer
      * Send as a query the file path to use, e.g. file_name=test.ini
     **/
-    .get("/api/start_recogizer", [&current_configurations, &mediaPath, &serverRootFolder, &recognize, &recognize_running](auto *res, auto *req) {
-        const std::string_view& file = req->getQuery("file_name");
-        std::cout << "Starting recognize with file: " << file << std::endl;
-        bool success = true;
+    .get("/api/start_recognizer", [&current_configurations, &mediaPath, &serverRootFolder, &recognize, &recognize_running](auto *res, auto *req) {
+        std::string file(req->getQuery("file_name"));
+        std::cout << "Starting recognize with file: " << file << " empty? " << file.empty() << std::endl;
+        bool success = false;
         
         // response is a json
         res->writeHeader("Content-Type", "application/json");
-        
-        if (!recognize_running) {
-            std::string error;
-            Configurations configurations = ConfigurationFile::ReadConfigurations(file.data(), error);
-            if (error.length() == 0) {
-                current_configurations = configurations;
 
-                std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
+        if (!file.empty()) {
+            if (!recognize_running) {
+                std::string error;
+                Configurations configurations = ConfigurationFile::ReadConfigurations(file, error);
+                if (error.length() == 0) {
+                    current_configurations = configurations;
 
-                fs::create_directories(configurations.programConfig.imagesFolder);
+                    std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
 
-                mediaPath = configurations.programConfig.imagesFolder.substr(
-                                    strlen(serverRootFolder), 
-                                    configurations.programConfig.imagesFolder.size()
-                                );
+                    fs::create_directories(configurations.programConfig.imagesFolder);
 
-                if (recognize->Start(std::move(configurations), 
-                                    configurations.programConfig.showPreview, 
-                                    configurations.programConfig.telegramConfig.useTelegramBot)) {							
-                    res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+                    mediaPath = configurations.programConfig.imagesFolder.substr(
+                                        serverRootFolder.size(), 
+                                        configurations.programConfig.imagesFolder.size()
+                                    );
+
+                    if (recognize->Start(std::move(configurations), 
+                                        configurations.programConfig.showPreview, 
+                                        configurations.programConfig.telegramConfig.useTelegramBot)) {							
+                        res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+                        success = true;
+                    } else {
+                        res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", error));
+                    }
                 } else {
-                    success = false;
-                    res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", error));
+                    res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
                 }
             } else {
-                success = false;
-                res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
+                res->end(GetAlertMessage(AlertStatus::ERROR, "Recognizer could not be started because it is already running"));
             }
         } else {
-            res->end(GetAlertMessage(AlertStatus::ERROR, "Recognizer could not be started because it is already running"));
+            res->end(GetAlertMessage(AlertStatus::ERROR, "No file in request."));
         }
 
         if (success) {
@@ -354,7 +357,7 @@ int main(int argc, char **argv) {
         }
     })
 
-    .get("/*", [&asyncFileStreamer](auto *res, auto *req) {
+    .get("/*", [](auto *res, auto *req) {
 	    std::cout << "3. Web" << std::endl;
         res->writeStatus(HTTP_301_MOVED_PERMANENTLY);
         res->writeHeader("Location", "/");
