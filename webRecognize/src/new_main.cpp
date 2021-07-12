@@ -508,6 +508,7 @@ int main(int argc, char **argv) {
         },
         .close = [](auto */*ws*/, int /*code*/, std::string_view /*message*/) {
             /* You may access ws->getUserData() here */
+            // Test: clients.erase(ws);
         }
 	})
 	
