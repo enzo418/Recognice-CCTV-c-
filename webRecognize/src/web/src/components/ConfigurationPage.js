@@ -19,6 +19,7 @@ class ConfigurationPage extends React.Component {
         this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
         this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
         this.saveConfiguration = this.saveConfiguration.bind(this);
+        this.deleteCamera = this.deleteCamera.bind(this);
     }
 
     addNewCamera() {
@@ -54,6 +55,14 @@ class ConfigurationPage extends React.Component {
     setActiveTab(tab) {
         this.setState((prev) => {
             prev.currentTab = tab;
+            return prev;
+        });
+    }
+
+    deleteCamera(id) {
+        this.setState((prev) => {
+            prev.currentTab = "program";
+            prev.configurations.cameras = prev.configurations.cameras.filter((cam) => cam.id !== id);
             return prev;
         });
     }
@@ -94,7 +103,8 @@ class ConfigurationPage extends React.Component {
                                     id={camera.id}
                                     cameraConfig={camera}
                                     changeTargetValue={this.changeCameraTargetValue}
-                                    elements={this.props.elements.camera}></CameraConfiguration>
+                                    elements={this.props.elements.camera}
+                                    deleteCamera={this.deleteCamera}></CameraConfiguration>
                             )
                     )}
                 </div>

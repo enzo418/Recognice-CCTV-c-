@@ -61,7 +61,11 @@ class CameraConfiguration extends React.Component {
 
                         <Translation>
                             {(t) => (
-                                <button className="button is-danger button-delete-camera">{t("Delete camera")}</button>
+                                <button
+                                    className="button is-danger button-delete-camera"
+                                    onClick={() => this.props.deleteCamera(this.props.id)}>
+                                    {t("Delete camera")}
+                                </button>
                             )}
                         </Translation>
                     </div>
@@ -76,6 +80,7 @@ CameraConfiguration.propTypes = {
     cameraConfig: PropTypes.object.isRequired,
     changeTargetValue: PropTypes.func.isRequired,
     elements: PropTypes.object.isRequired,
+    deleteCamera: PropTypes.func.isRequired,
 };
 
 export default CameraConfiguration;
