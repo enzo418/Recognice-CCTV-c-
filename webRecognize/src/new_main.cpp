@@ -65,6 +65,12 @@ int main(int argc, char **argv) {
     Json::Value persintent_notifications;
     const std::string PERSISTENT_NOTIFICATIONS_FILE = "./notifications.json";
 
+    // stores the last 20 notification sended to each client
+    // so when the web is restated, the client has some 
+    // notifications from the current run
+    std::vector<std::string> notificationsSended(20);
+    int currentNotificationIndex = 0;
+
 	// read the file with all the notifications until now
 	ReadNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications));
 
@@ -90,6 +96,49 @@ int main(int argc, char **argv) {
             }
         }
     };
+
+	// start thread that send the notifications to the web
+	std::thread tick([&] {
+		for(;;) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			if (recognize_running) {
+			    std::tuple<Notification::Type, std::string, std::string, std::string> media;
+				while (recognize->notificationWithMedia->try_dequeue(media)) {	
+					std::string type_string;
+					std::string query = "";
+					Notification::Type type; std::string content; std::string group_id; std::string datetime;
+
+					std::tie(type, content, group_id, datetime) = media;
+
+					if (type == Notification::IMAGE || type == Notification::GIF || type == Notification::VIDEO) {
+						query = type == Notification::VIDEO ? "video" : "image";
+						
+						std::size_t found = content.find_last_of("/\\");
+						content = "/media/" + content.substr(found+1);
+					} else if (type == Notification::TEXT) {
+						query = "text";
+					} else if (type == Notification::SOUND) {
+						query = "sound";
+					}
+
+					type_string = query;
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\"}}", query, content, group_id, datetime);
+					query = fmt::format("{{\"new_notification\": {}}}", body);
+
+					notificationsSended[currentNotificationIndex] = body;
+					
+					AppendNotification(persintent_notifications, type_string, content, group_id, datetime);
+					
+                    currentNotificationIndex = currentNotificationIndex + 1 >= notificationsSended.capacity() 
+                                                    ? 0 : currentNotificationIndex + 1;
+
+					sendToEveryone(query);
+					std::cout << "sended to everyone: " << query << std::endl;
+				}
+            }
+		}
+	});
+	tick.detach();
     
     // Initilize app
     uWS::App()
@@ -102,6 +151,30 @@ int main(int argc, char **argv) {
         asyncFileStreamer.streamFile(res, "/index.html");
         
         res->end();
+    })
+    
+    // make sure to copy currentNotificationIndex
+    .get("/api/last_notifications", [&notificationsSended, currentNotificationIndex](auto* res, uWS::HttpRequest* req){
+        res->writeHeader("Content-Type", "application/json");
+        if (notificationsSended.size() > 0) {
+            std::string lastNotifications = "[";
+            const size_t start = currentNotificationIndex + 1  >= notificationsSended.capacity() 
+                                    ? 0 : currentNotificationIndex + 1;
+            size_t i = start;
+            while(i != currentNotificationIndex) {
+                if (!notificationsSended[i].empty()) {
+                    lastNotifications += notificationsSended[i] + ",";
+                }
+                i = i + 1 >= notificationsSended.capacity() ? 0 : i + 1;
+            }
+            
+            
+            lastNotifications[lastNotifications.size() - 1] = ']';
+            
+            res->end(GetJsonString("last_notifications", GetJsonString({{"notifications", lastNotifications}}, false)));
+        } else {
+            res->end(GetJsonString("last_notifications", "[]"));
+        }
     })
 
     .get("/api/configuration_files", [](auto* res, uWS::HttpRequest* req){
