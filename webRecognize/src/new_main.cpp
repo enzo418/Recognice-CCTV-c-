@@ -77,6 +77,19 @@ int main(int argc, char **argv) {
 		}
 	});
 	disk_notifications.detach();
+
+    // stores all the websocket clients
+    // TODO: Remove clients that are no longer connected
+    std::vector<uWS::WebSocket<false, true, PerSocketData>*> clients;
+
+    // send a message to all the web socket clients
+    auto sendToEveryone = [&clients](const std::string& message) {
+        for (auto & client : clients) {
+            if (client->isSubscribed("/recognize")) {
+                client->send(message, uWS::OpCode::TEXT, true);
+            }
+        }
+    };
     
     // Initilize app
     uWS::App()
@@ -399,7 +412,7 @@ int main(int argc, char **argv) {
         res->end();
     })
 
-    .ws<PerSocketData>("recognize", {
+    .ws<PerSocketData>("/recognize", {
         /* Settings */
         .compression = uWS::SHARED_COMPRESSOR,
         .maxPayloadLength = 16 * 1024 * 1024,
@@ -410,10 +423,11 @@ int main(int argc, char **argv) {
         .sendPingsAutomatically = true,
         /* Handlers */
         .upgrade = nullptr,
-        .open = [](auto */*ws*/) {
+        .open = [&clients](auto* ws) {
             /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
+            clients.push_back(ws);
         },
-        .message = [](auto *ws, std::string_view message, uWS::OpCode opCode) {
+        .message = [&clients](auto *ws, std::string_view message, uWS::OpCode opCode) {
             // echo message
             ws->send(message, opCode, true);
         },
