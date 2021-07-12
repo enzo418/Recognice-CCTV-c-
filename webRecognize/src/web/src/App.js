@@ -11,6 +11,8 @@ import Elements from "./elements.json";
 import utils from "./utils/utils";
 const elements = utils.elementsGroupsToLowerCase(Elements);
 
+import i18n from "./i18n";
+
 const pages = {
     configurations: {
         path: "/configurations",
@@ -66,6 +68,9 @@ class App extends React.Component {
                     }
                 );
             });
+
+        let lang = window.localStorage.getItem("lang") || "en";
+        i18n.changeLanguage(lang);
     }
 
     toggleRecognize(to = "toggle") {
@@ -99,6 +104,8 @@ class App extends React.Component {
                     console.log(configuration_file);
 
                     prev.recognize.configuration.headers = configs;
+
+                    this.props.history.push(pages.configurations.path);
 
                     return prev;
                 });
@@ -153,7 +160,7 @@ class App extends React.Component {
                 )}
 
                 <Switch>
-                    {this.state.configuration.file !== "" && (
+                    {this.state.recognize.configuration.file !== "" && (
                         <Route path={pages.configurations.path}>
                             <ConfigurationPage
                                 elements={elements}
@@ -172,6 +179,7 @@ class App extends React.Component {
 
 App.propTypes = {
     location: PropTypes.object,
+    history: PropTypes.any.isRequired,
 };
 
 export default App;

@@ -3,8 +3,10 @@ import {Translation} from "react-i18next";
 import i18n from "../i18n";
 
 const changeLanguage = (e, setDisplayed) => {
+    let lang = e.target.dataset.lang;
     setDisplayed(false);
-    i18n.changeLanguage(e.target.dataset.lang);
+    i18n.changeLanguage(lang);
+    window.localStorage.setItem("lang", lang);
 };
 
 function DropDownLang() {
