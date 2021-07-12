@@ -28,7 +28,7 @@ class ConfigurationGroup extends React.Component {
                                 placeHolder={element.placeholder}
                                 label={t(element.target).label}
                                 value={values[element.target] || 0}
-                                onChange={({target}) => onChangeValue(element.target, target.value)}
+                                onChange={({target}) => onChangeValue(element.target, parseInt(target.value))}
                                 hidden={element.hidden}
                                 tooltip={t(element.target).description}></NumberInput>
                         );

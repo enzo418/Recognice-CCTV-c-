@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 	.get("/", [&asyncFileStreamer](auto *res, auto *req) {
 	    std::cout << "Index!" << std::endl;
 
-        serveFile(res, req, true);
+        setFileContentType(res, req->getUrl(), true);
         
         asyncFileStreamer.streamFile(res, "/index.html");
         
@@ -340,13 +340,26 @@ int main(int argc, char **argv) {
 	    res->end(GetJsonString("notifications", persintent_notifications.toStyledString()));
     })
 
-	.get("/*", [&asyncFileStreamer](auto *res, auto *req) {
-	    std::cout << "2. Any" << std::endl;
-        serveFile(res, req);
+	.get("/*.*", [&asyncFileStreamer](auto *res, auto *req) {
+	    std::cout << "2. Any file" << std::endl;
 
-        if (asyncFileStreamer.streamFile(res, req->getUrl())){
+        if (!hasExtension(req->getUrl())) {
+            req->setYield(true);
+        } else if (asyncFileStreamer.streamFile(res, req->getUrl())){
+            std::cout << "Succesfull sended file" << std::endl;
+        
+            res->end();
+        } else {
             res->end();
         }
+    })
+
+    .get("/*", [&asyncFileStreamer](auto *res, auto *req) {
+	    std::cout << "3. Web" << std::endl;
+        res->writeStatus(HTTP_301_MOVED_PERMANENTLY);
+        res->writeHeader("Location", "/");
+        res->writeHeader("Content-Type", "text/html");
+        res->end();
     })
 
     .ws<PerSocketData>("recognize", {
