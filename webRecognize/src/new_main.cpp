@@ -104,16 +104,9 @@ int main(int argc, char **argv) {
         res->end();
     })
 
-    // To use parameters put the parameter in the url like /path/:file
-    // then use req->getParameter(0) to get the parameter
-
     .get("/api/configuration_files", [](auto* res, uWS::HttpRequest* req){
         res->writeHeader("Content-Type", "application/json");
-        res->end(GetConfigurationsPathsJson({"../../recognize/build/", "./configurations/"}));
-        
-        // not handle the route, causing the router to continue looking 
-        // for a matching route handler, or fail
-        // req->setYield(true);
+        res->end(GetConfigurationsPathsJson({"../../recognize/build/", "./configurations/"}));        
     })
 
     // answer with the request configuration file
