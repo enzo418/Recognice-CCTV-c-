@@ -23,7 +23,13 @@ function DropDownFileList(props) {
             <div className="dropdown-menu" id="dropdown-menu" role="menu">
                 <div className="dropdown-content">
                     {props.files.map((file) => (
-                        <div key={file} className="dropdown-item" onClick={() => props.changeFile(file)}>
+                        <div
+                            key={file}
+                            className="dropdown-item"
+                            onClick={() => {
+                                setDisplayed(!displayed);
+                                props.changeFile(file);
+                            }}>
                             {file}
                         </div>
                     ))}

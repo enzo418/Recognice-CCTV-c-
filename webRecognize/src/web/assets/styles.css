@@ -2,7 +2,6 @@
 	height: 100%;
 } */
 
-$modal-background-background-color: #fff;
 
 @import 'bulma/css/bulma.css';
 @import '../node_modules/@creativebulma/bulma-tooltip/dist/bulma-tooltip.min.css';

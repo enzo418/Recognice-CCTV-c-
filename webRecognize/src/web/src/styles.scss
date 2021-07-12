@@ -109,6 +109,7 @@ $tabs-boxed-link-active-background-color: $primary;
 
 .modal.modal-file {
     .modal-card {
+        overflow: visible;
         width: 60%;
 
         .modal-card-foot {
@@ -117,6 +118,16 @@ $tabs-boxed-link-active-background-color: $primary;
             flex-wrap: nowrap;
             align-items: center;
             justify-content: space-evenly;
+        }
+
+        .modal-card-body {
+            overflow: visible;
+        }
+
+        .dropdown-content {            
+            height: 200px;
+            overflow-x: hidden;
+            overflow-y: scroll;
         }
     }   
 }

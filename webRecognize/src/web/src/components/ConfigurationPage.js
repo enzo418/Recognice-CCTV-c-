@@ -5,37 +5,16 @@ import Tab from "./Tab";
 import ProgramConfiguration from "./ProgramConfiguration";
 import CameraConfiguration from "./CameraConfiguration";
 
-import testValues from "../utils/test_values";
-import configuration_parser from "../modules/configuration_parser";
-
-import Elements from "../elements.json";
-import utils from "../utils/utils";
-
-const elements = utils.elementsGroupsToLowerCase(Elements);
-
 class ConfigurationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            configurations: {
-                cameras: [],
-                program: {},
-            },
+            configurations: this.props.configurations.headers,
             currentTab: "program",
         };
 
         this.changeProgramTargetValue = this.changeProgramTargetValue.bind(this);
         this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
-    }
-
-    componentDidMount() {
-        this.setState(() => {
-            let configs = configuration_parser.parseConfiguration(testValues.getTestConfiguration(), elements);
-            configs.cameras.forEach((cam, i) => {
-                cam.id = i;
-            });
-            return {configurations: configs};
-        });
     }
 
     addNewCamera() {
@@ -93,7 +72,7 @@ class ConfigurationPage extends React.Component {
                         <ProgramConfiguration
                             programConfiguration={this.state.configurations.program}
                             changeTargetValue={this.changeProgramTargetValue}
-                            elements={elements.program}></ProgramConfiguration>
+                            elements={this.props.elements.program}></ProgramConfiguration>
                     )}
                     {this.state.configurations.cameras.map(
                         (camera) =>
@@ -103,7 +82,7 @@ class ConfigurationPage extends React.Component {
                                     id={camera.id}
                                     cameraConfig={camera}
                                     changeTargetValue={this.changeCameraTargetValue}
-                                    elements={elements.camera}></CameraConfiguration>
+                                    elements={this.props.elements.camera}></CameraConfiguration>
                             )
                     )}
                 </div>
@@ -129,6 +108,7 @@ class ConfigurationPage extends React.Component {
 
 ConfigurationPage.propTypes = {
     configurations: PropTypes.object.isRequired,
+    elements: PropTypes.any.isRequired,
     t: PropTypes.func,
 };
 

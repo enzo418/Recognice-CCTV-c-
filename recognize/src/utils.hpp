@@ -80,7 +80,7 @@ namespace Utils {
 
 	#pragma region File
 	static inline bool FileExist(const std::string& name) {
-		std::ifstream f(name.c_str());
+		std::ifstream f(name);
 		return f.good();
 		
 		//struct stat buffer;

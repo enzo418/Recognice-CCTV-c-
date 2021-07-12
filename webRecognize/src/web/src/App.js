@@ -6,6 +6,11 @@ import {Switch, Route} from "react-router-dom";
 import ModalSelectConfiguration from "./components/ModalSelectConfiguration";
 import PropTypes from "prop-types";
 
+import configuration_parser from "./modules/configuration_parser";
+import Elements from "./elements.json";
+import utils from "./utils/utils";
+const elements = utils.elementsGroupsToLowerCase(Elements);
+
 const pages = {
     configurations: {
         path: "/configurations",
@@ -39,15 +44,28 @@ class App extends React.Component {
                 playSoundOnNotification: true,
             },
             configurationFilesAvailables: [],
+            error: null,
         };
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
         this.changeConfiguration = this.changeConfiguration.bind(this);
+        this.changeConfigurationFile = this.changeConfigurationFile.bind(this);
     }
 
     componentDidMount() {
-        // 1. fecth all the configurations availables into configurationFilesAvailables
-        // 2. map each one to {id: #, file: str}
+        fetch("/api/configuration_files")
+            .then((res) => res.json())
+            .then(({configuration_files}) => {
+                this.setState(
+                    () => {
+                        // configuration_files = configuration_files.map((cfg, i) => ({file: cfg, id: i}));
+                        return {configurationFilesAvailables: configuration_files};
+                    },
+                    (error) => {
+                        this.setState(() => ({error}));
+                    }
+                );
+            });
     }
 
     toggleRecognize(to = "toggle") {
@@ -61,11 +79,30 @@ class App extends React.Component {
 
     /**
      * Loads all the configuration from the file
-     * @param {number} fileIndex
+     * @param {string} filename
      */
-    changeConfigurationFile(fileIndex) {
-        console.log(fileIndex);
-        throw "Not implemented";
+    changeConfigurationFile(filename) {
+        this.setState((prev) => {
+            prev.recognize.configuration.file = filename;
+            return prev;
+        });
+
+        fetch(`/api/configuration_file?file=${filename}`)
+            .then((res) => res.json())
+            .then(({configuration_file}) => {
+                this.setState((prev) => {
+                    let configs = configuration_parser.parseConfiguration(configuration_file, elements);
+                    configs.cameras.forEach((cam, i) => {
+                        cam.id = i;
+                    });
+
+                    console.log(configuration_file);
+
+                    prev.recognize.configuration.headers = configs;
+
+                    return prev;
+                });
+            });
     }
 
     saveConfigurationOnLocalStorage() {
@@ -109,16 +146,18 @@ class App extends React.Component {
 
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path && (
-                        <ModalSelectConfiguration
-                            configurationFilesAvailables={this.state.configurationFilesAvailables}
-                            changeConfigurationFile={this.changeConfigurationFile}
-                        />
-                    )}
+                    <ModalSelectConfiguration
+                        configurationFilesAvailables={this.state.configurationFilesAvailables}
+                        changeConfigurationFile={this.changeConfigurationFile}
+                    />
+                )}
 
                 <Switch>
                     {this.state.configuration.file !== "" && (
                         <Route path={pages.configurations.path}>
-                            <ConfigurationPage configurations={this.state.recognize.configuration}></ConfigurationPage>
+                            <ConfigurationPage
+                                elements={elements}
+                                configurations={this.state.recognize.configuration}></ConfigurationPage>
                         </Route>
                     )}
 

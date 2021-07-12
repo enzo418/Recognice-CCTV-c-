@@ -13,10 +13,10 @@ namespace ConfigurationFile {
 		#endif
 	}
 
-	void OpenFileRead(std::fstream& file, const char* fn){
+	void OpenFileRead(std::fstream& file, const std::string& fn){
 		if (!file.is_open()){ 
 			char filename[MAX_PATH] = {};
-			strcpy_s(filename, GetFilePath(fn));
+			strcpy_s(filename, GetFilePath(fn.c_str()));
 			if (Utils::FileExist(filename)) {
 				file.open(filename, std::fstream::in);
 			}
@@ -70,7 +70,7 @@ namespace ConfigurationFile {
 		return config;
 	}
 
-	Configurations ReadConfigurations(const char* filePath, std::string& error) {
+	Configurations ReadConfigurations(const std::string& filePath, std::string& error) {
 		std::fstream file;
 		
 		ConfigurationFile::OpenFileRead(file, filePath);

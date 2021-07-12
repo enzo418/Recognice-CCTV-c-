@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
          * send it as a string in Json format.
         */
 
-        const std::string_view& file = req->getQuery("file");
+        std::string file(req->getQuery("file"));
 
         // if the file doesn't exist right now
         const bool isNew = req->getQuery("is_new") == "true" ? true : false;
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         res->writeHeader("Content-Type", "application/json");
 
         // read file
-        Configurations cfgs = ConfigurationFile::ReadConfigurations(file.data(), error);
+        Configurations cfgs = ConfigurationFile::ReadConfigurations(file, error);
 
         if (error.length() == 0) {
             std::string stringConfigs = ConfigurationFile::ConfigurationsToString(cfgs);
