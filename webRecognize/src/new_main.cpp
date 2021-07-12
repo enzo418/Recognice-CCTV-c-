@@ -214,10 +214,7 @@ int main(int argc, char **argv) {
 
                     fs::create_directories(configurations.programConfig.imagesFolder);
 
-                    mediaPath = configurations.programConfig.imagesFolder.substr(
-                                        serverRootFolder.size(), 
-                                        configurations.programConfig.imagesFolder.size()
-                                    );
+                    mediaPath = fs::absolute(configurations.programConfig.imagesFolder).string();
 
                     if (recognize->Start(std::move(configurations), 
                                         configurations.programConfig.showPreview, 
@@ -348,6 +345,21 @@ int main(int argc, char **argv) {
         // response is a json
         res->writeHeader("Content-Type", "application/json");
 	    res->end(GetJsonString("notifications", persintent_notifications.toStyledString()));
+    })
+
+    .get("/media/:media", [](auto *res, auto *req) {
+        // TODO:
+        //  1.  Read all the files from lastMediaPath and update
+        //      a map and update the missing ones, the key would
+        //      be the filename with extension without path
+        //
+        //  2.  Search for a file named req->getParameter(0) and
+        //      if found send it chunked, else send 404 Status.
+        //
+        //  When the server send a notification file first would 
+        //  need to change the path to /media/filename, then 
+        //  send the notification
+        req->setYield(true);
     })
 
 	.get("/*.*", [&asyncFileStreamer](auto *res, auto *req) {
