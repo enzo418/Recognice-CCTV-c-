@@ -91,6 +91,8 @@ private:
 
 	cv::VideoWriter outVideo;
 
+	bool useGifOrVideo;
+
 	void UpdateThreshold();
 
 	// ==================

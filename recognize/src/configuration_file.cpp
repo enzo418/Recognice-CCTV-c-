@@ -120,7 +120,17 @@ namespace ConfigurationFile {
 			
 			if (config.framesToAnalyze.framesAfter == -1)
 				config.framesToAnalyze.framesAfter = cfgs.programConfig.numberGifFrames.framesAfter;
-		}	
+		}
+
+
+		cfgs.programConfig.useNotifications = 	cfgs.programConfig.telegramConfig.useTelegramBot 
+												|| cfgs.programConfig.localNotificationsConfig.useLocalNotifications;
+
+		cfgs.programConfig.useGif = cfgs.programConfig.telegramConfig.sendGifWhenDetectChange
+									|| cfgs.programConfig.localNotificationsConfig.sendGifWhenDetectChange;
+		
+		cfgs.programConfig.sendVideo = 	cfgs.programConfig.telegramConfig.sendVideoWhenDetectChange
+										|| cfgs.programConfig.localNotificationsConfig.sendVideoWhenDetectChange;
 	}
 
 	std::string ConfigurationsToString(Configurations& cfgs) {
@@ -448,6 +458,10 @@ namespace ConfigurationFile {
 		file.close();
 	}
 
+	inline bool getBooleanValue(const std::string& str) {
+		return str == "1" ? true : (str == "true" ? true : false);
+	}
+
 	/// <summary> Saves the given id and value into the corresponding member of the program config </summary>
 	bool SaveIdVal(ProgramConfiguration& config, std::string id, std::string value) {
 		bool sucess = true;
@@ -480,27 +494,27 @@ namespace ConfigurationFile {
 			config.telegramConfig.chatId = value;
 		} else if (id == "showpreviewcameras" || id == "showpreviewofcameras") {
 			Utils::toLowerCase(value);
-			config.showPreview = value == "0" ? false : true;
+			config.showPreview = getBooleanValue(value);
 		} else if (id == "showareacamerasees" || id == "showareacamera") {
 			Utils::toLowerCase(value);
-			config.showAreaCameraSees = value == "0" ? false : true;
+			config.showAreaCameraSees = getBooleanValue(value);
 		} else if (id == "showprocessedframes" || id == "showprocessedimages") {
 			Utils::toLowerCase(value);
-			config.showProcessedFrames = value == "0" ? false : true;
+			config.showProcessedFrames = getBooleanValue(value);
 		} else if (id == "telegrambot_sendimagewhendetectchange" || id == "telegrambot_sendimageafterdetectigchange"){
-			config.telegramConfig.sendImageWhenDetectChange = value == "1";
+			config.telegramConfig.sendImageWhenDetectChange = getBooleanValue(value);
 		} else if (id == "telegrambot_sendgifwhendetectchange" || id == "telegrambot_sendgifafterchange") {
-			config.telegramConfig.sendGifWhenDetectChange = value == "1";
+			config.telegramConfig.sendGifWhenDetectChange = getBooleanValue(value);
 		} else if (id == "telegrambot_sendtextwhendetectchange" || id == "telegrambot_sendtextafterchange") {
-			config.telegramConfig.sendTextWhenDetectChange = value == "1";
+			config.telegramConfig.sendTextWhenDetectChange = getBooleanValue(value);
 		} else if (id == "telegrambot_sendvideowhendetectchange" || id == "telegrambot_sendvideoafterchange") {
-			config.telegramConfig.sendVideoWhenDetectChange = value == "1";
+			config.telegramConfig.sendVideoWhenDetectChange = getBooleanValue(value);
 		} else if (id == "usetelegrambot" || id == "activatetelegrambot") {
 			Utils::toLowerCase(value);
-			config.telegramConfig.useTelegramBot = value == "0" ? false : true;
+			config.telegramConfig.useTelegramBot = getBooleanValue(value);
 		} else if (id == "sendimageofallcameras" || id == "sendImageallcameras") {
 			Utils::toLowerCase(value);
-			config.sendImageOfAllCameras = value == "0" ? false : true;
+			config.sendImageOfAllCameras = getBooleanValue(value);
 		} else if(id == "authuserstosendactions" || id == "authserssendactions"){
 			config.authUsersToSendActions = std::move(Utils::SplitString(value, ","));
 		} else if (id == "ratioscaleoutput") {
@@ -536,7 +550,7 @@ namespace ConfigurationFile {
 			}
 		} else if (id == "showignoredareas") {
 			Utils::toLowerCase(value);
-			config.showIgnoredAreas = value == "0" ? false : true;
+			config.showIgnoredAreas = getBooleanValue(value);
 		} else if (id == "detectionmethod") {
 			try {
 				config.detectionMethod = (DetectionMethod)std::stoi(value);
@@ -546,17 +560,17 @@ namespace ConfigurationFile {
 		} else if (id == "imagesfolder" || id == "mediafolder") {
 			config.imagesFolder = value;
 		} else if (id == "uselocalnotifications") {
-			config.localNotificationsConfig.useLocalNotifications = value == "1";
+			config.localNotificationsConfig.useLocalNotifications = getBooleanValue(value);
 		} else if (id == "localnotifications_sendtextwhendetectchange" || id == "localnotification_sendtextwhendetectchange") {
-			config.localNotificationsConfig.sendTextWhenDetectChange = value == "1";
+			config.localNotificationsConfig.sendTextWhenDetectChange = getBooleanValue(value);
 		} else if (id == "localnotifications_sendimagewhendetectchange" || id == "localnotification_sendimagewhendetectchange") {
-			config.localNotificationsConfig.sendImageWhenDetectChange = value == "1";
+			config.localNotificationsConfig.sendImageWhenDetectChange = getBooleanValue(value);
 		} else if (id == "localnotifications_sendgifwhendetectchange" || id == "localnotification_sendgifwhendetectchange") {
-			config.localNotificationsConfig.sendGifWhenDetectChange = value == "1";
+			config.localNotificationsConfig.sendGifWhenDetectChange = getBooleanValue(value);
 		} else if (id == "localnotifications_sendvideowhendetectchange" || id == "localnotification_sendvideowhendetectchange") {
-			config.localNotificationsConfig.sendVideoWhenDetectChange = value == "1";
+			config.localNotificationsConfig.sendVideoWhenDetectChange = getBooleanValue(value);
 		} else if (id == "analizebeforeafterchangeframes") {
-			config.analizeBeforeAfterChangeFrames = value == "1";
+			config.analizeBeforeAfterChangeFrames = getBooleanValue(value);
 		} else if (id == "framestoanalyzechangevalidity") {
 			std::vector<std::string> results = Utils::GetRange(value);
 			size_t sz = results.size();
@@ -569,9 +583,9 @@ namespace ConfigurationFile {
 				}
 			}
 		} else if (id == "savechangeinvideo") {
-			config.saveChangeInVideo = value == "1";
+			config.saveChangeInVideo = getBooleanValue(value);
 		} else if (id == "drawchangefoundbetweenframes") {
-			config.drawChangeFoundBetweenFrames = value == "1";
+			config.drawChangeFoundBetweenFrames = getBooleanValue(value);
 		}  else if (id == "messageontextnotification") {
 			config.messageOnTextNotification = value;
 		}  else if (id == "drawtraceofchangefoundon") {
@@ -672,7 +686,7 @@ namespace ConfigurationFile {
 				sucess = false;
 			}
 		} else if (id == "usehighconstrast") {
-			config.useHighConstrast = value == "1";
+			config.useHighConstrast = getBooleanValue(value);
 		} else if (id == "ignoredareas"){
 			std::vector<int> results = Utils::GetNumbersString(value);
 			

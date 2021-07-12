@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     AsyncFileStreamer asyncFileStreamer(serverRootFolder);
     
     // Recognize program
-    Recognize* recognize;
+    Recognize recognize;
 
     // TODO: Move this var to Recognize. Him should know if is active or not!
     bool recognize_running = false;
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			if (recognize_running) {
 			    std::tuple<Notification::Type, std::string, std::string, std::string> media;
-				while (recognize->notificationWithMedia->try_dequeue(media)) {	
+				while (recognize.notificationWithMedia->try_dequeue(media)) {	
 					std::string type_string;
 					std::string query = "";
 					Notification::Type type; std::string content; std::string group_id; std::string datetime;
@@ -310,7 +310,7 @@ int main(int argc, char **argv) {
 
                     mediaPath = fs::absolute(configurations.programConfig.imagesFolder).string();
 
-                    if (recognize->Start(std::move(configurations), 
+                    if (recognize.Start(current_configurations, 
                                         configurations.programConfig.showPreview, 
                                         configurations.programConfig.telegramConfig.useTelegramBot)) {							
                         res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
     })
 
     .get("/api/stop_recognizer", [&recognize](auto *res, auto *req) {
-	    recognize->CloseAndJoin();
+	    recognize.CloseAndJoin();
 
         // response is a json
         res->writeHeader("Content-Type", "application/json");

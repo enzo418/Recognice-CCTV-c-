@@ -98,8 +98,6 @@ bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 }
 
 void Recognize::StartCamerasThreads() {
-	bool somethingDetected = false;
-
 	Utils::FixOrderCameras(this->camerasConfigs);
 	
 	// Create the cameras objs
