@@ -63,7 +63,22 @@ int main(int argc, char **argv) {
 
     // Stores all the notifications from all time (read at start and written to disk in intervals)
     Json::Value persintent_notifications;
+    const std::string PERSISTENT_NOTIFICATIONS_FILE = "./notifications.json";
 
+	// read the file with all the notifications until now
+	ReadNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications));
+
+	// start the thread to write the notifications to disk
+	std::thread disk_notifications([&PERSISTENT_NOTIFICATIONS_FILE, &persintent_notifications] {
+		Json::FastWriter writer;
+		for(;;) {
+			std::this_thread::sleep_for(std::chrono::seconds(20));
+			WriteNotificationsFile(PERSISTENT_NOTIFICATIONS_FILE, std::ref(persintent_notifications), std::ref(writer));
+		}
+	});
+	disk_notifications.detach();
+    
+    // Initilize app
     uWS::App()
 
 	.get("/", [&asyncFileStreamer](auto *res, auto *req) {
