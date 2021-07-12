@@ -28,7 +28,7 @@ class ConfigurationGroup extends React.Component {
                                 placeHolder={element.placeholder}
                                 label={t(element.target).label}
                                 value={values[element.target] || 0}
-                                onChange={({target}) => onChangeValue(element.target, parseInt(target.value))}
+                                onChange={(value) => onChangeValue(element.target, value)}
                                 hidden={element.hidden}
                                 tooltip={t(element.target).description}></NumberInput>
                         );
@@ -40,7 +40,7 @@ class ConfigurationGroup extends React.Component {
                                 placeHolder={element.placeholder}
                                 label={t(element.target).label}
                                 value={values[element.target] || ""}
-                                onChange={({target}) => onChangeValue(element.target, target.value)}
+                                onChange={(value) => onChangeValue(element.target, value)}
                                 hidden={element.hidden}
                                 tooltip={t(element.target).description}></TextInput>
                         );
@@ -52,7 +52,7 @@ class ConfigurationGroup extends React.Component {
                                 placeHolder={element.placeholder}
                                 label={t(element.target).label}
                                 checked={values[element.target] || false}
-                                onChange={({target}) => onChangeValue(element.target, target.checked)}
+                                onChange={(value) => onChangeValue(element.target, value)}
                                 hidden={element.hidden}
                                 tooltip={t(element.target).description}></CheckBoxInput>
                         );

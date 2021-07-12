@@ -13,6 +13,7 @@ const elements = utils.elementsGroupsToLowerCase(Elements);
 
 import i18n from "./i18n";
 import PopupAlert from "./components/PopupAlert";
+import ModalSelectFileName from "./components/ModalSelectFileName";
 
 const pages = {
     configurations: {
@@ -49,12 +50,14 @@ class App extends React.Component {
             configurationFilesAvailables: [],
             error: null,
             alerts: [],
+            fileNameToCopy: "", // this is used to know when the user wants to copy a cfg file
         };
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
         this.changeConfiguration = this.changeConfiguration.bind(this);
         this.changeConfigurationFile = this.changeConfigurationFile.bind(this);
         this.addAlert = this.addAlert.bind(this);
+        this.onWantsToCopyConfigurationFile = this.onWantsToCopyConfigurationFile.bind(this);
     }
 
     componentDidMount() {
@@ -171,18 +174,35 @@ class App extends React.Component {
         });
     }
 
+    onWantsToCopyConfigurationFile(filename) {
+        this.setState(() => ({
+            fileNameToCopy: filename,
+        }));
+    }
+
     render() {
         return (
             <div>
                 <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
 
                 {this.state.recognize.configuration.file === "" &&
-                    this.props.location.pathname !== pages.notifications.path && (
+                    this.props.location.pathname !== pages.notifications.path &&
+                    this.state.fileNameToCopy === "" && (
                     <ModalSelectConfiguration
                         configurationFilesAvailables={this.state.configurationFilesAvailables}
                         changeConfigurationFile={this.changeConfigurationFile}
+                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
                     />
                 )}
+
+                {this.state.fileNameToCopy !== "" &&
+                    this.props.location.pathname !==
+                        pages.notifications.path(
+                            <ModalSelectFileName
+                                configurationFilesAvailables={this.state.configurationFilesAvailables}
+                                changeConfigurationFile={this.changeConfigurationFile}
+                            />
+                        )}
 
                 <Switch>
                     {this.state.recognize.configuration.file !== "" && (

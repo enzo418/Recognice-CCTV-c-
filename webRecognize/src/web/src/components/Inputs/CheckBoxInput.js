@@ -12,8 +12,12 @@ class TextInput extends React.Component {
     render() {
         const {name, checked, label, tooltip, hidden} = this.props;
         return (
-            <div className={`card-content-item ${hidden && "is-hidden"}`} id={name.toLowerCase()} data-tip={tooltip}>
-                <input type="checkbox" name={name} checked={checked} onChange={this.props.onChange} />
+            <div
+                className={`card-content-item ${hidden && "is-hidden"}`}
+                id={name.toLowerCase()}
+                data-tip={tooltip}
+                onClick={() => this.props.onChange(!checked)}>
+                <input type="checkbox" name={name} checked={checked} onChange={() => true} />
                 <label className="checkbox" htmlFor={name}>
                     {label}
                 </label>

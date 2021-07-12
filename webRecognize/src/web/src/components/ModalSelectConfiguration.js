@@ -58,7 +58,10 @@ class ModalSelectConfiguration extends React.Component {
                     )}
                 </Translation>
 
-                <button className="button is-link" id="button-modal-make-copy-file" onClick={this.copyFileAndSelectIt}>
+                <button
+                    className="button is-link"
+                    id="button-modal-make-copy-file"
+                    onClick={() => this.props.onWantsToCopyConfigurationFile(this.state.file)}>
                     <span className="icon is-small">
                         <i className="fas fa-copy"></i>
                     </span>
@@ -83,6 +86,7 @@ class ModalSelectConfiguration extends React.Component {
 ModalSelectConfiguration.propTypes = {
     configurationFilesAvailables: PropTypes.array.isRequired,
     changeConfigurationFile: PropTypes.func.isRequired,
+    onWantsToCopyConfigurationFile: PropTypes.func.isRequired,
 };
 
 export default ModalSelectConfiguration;

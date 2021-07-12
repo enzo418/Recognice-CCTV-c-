@@ -20,7 +20,7 @@ class TextInput extends React.Component {
                     type="text"
                     placeholder={placeholder}
                     value={value}
-                    onChange={this.props.onChange}
+                    onChange={({target}) => this.props.onChange(target.value)}
                 />
             </div>
         );

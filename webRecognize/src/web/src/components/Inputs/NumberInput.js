@@ -29,7 +29,7 @@ class NumberInput extends React.Component {
                     min={min}
                     max={max}
                     value={value}
-                    onChange={this.props.onChange}></input>
+                    onChange={({target}) => this.props.onChange(parseInt(target.value))}></input>
             </div>
         );
     }

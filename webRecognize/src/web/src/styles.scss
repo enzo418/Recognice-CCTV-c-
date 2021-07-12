@@ -138,6 +138,32 @@ $tabs-boxed-link-active-background-color: $primary;
     }
 }
 
+.navbar-menu {
+    .navbar-item {
+        transition: background-color 500ms ease-out;
+        
+        &:hover {
+            background-color: #44444482;
+            border-radius: 2px;
+        }
+
+        .hover::after {
+            content: "";
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+            position: absolute;
+            bottom: 0;
+            left: 2px;
+            transition: all 4s;
+        }
+
+        a:hover {
+            color: $link;
+        }
+    }
+}
+
 #alerts {
     position: fixed;
     bottom: 0.5rem;
