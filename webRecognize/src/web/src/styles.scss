@@ -65,6 +65,9 @@ $tabs-boxed-link-active-background-color: $primary;
     .card-header {
         .card-header-title {
             text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     }
 
