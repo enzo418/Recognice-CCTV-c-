@@ -153,6 +153,17 @@ $tabs-boxed-link-active-background-color: $primary;
     }
 }
 
+.modal-canvas {
+    .modal-card {
+        max-width: 100%;
+        width: min-content;
+        height: min-content;
+        max-height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}
+
 .navbar-menu {
     .navbar-item {
         transition: background-color 500ms ease-out;

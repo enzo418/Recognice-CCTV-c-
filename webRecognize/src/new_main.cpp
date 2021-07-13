@@ -346,10 +346,9 @@ int main(int argc, char **argv) {
     })
 
     .get("/api/camera_frame", [&cachedImages](auto *res, auto *req) {
-	    const unsigned int index = std::stoi(static_cast<std::string>(req->getQuery("index")));
         const int rotation = std::stoi(static_cast<std::string>(req->getQuery("rotation")));
-        const std::string_view url = req->getQuery("url");
-        const std::string_view roi_s = req->getQuery("roi");
+        const std::string url(req->getQuery("url"));
+        const std::string roi_s(req->getQuery("roi"));
 
         // response is a json
         res->writeHeader("Content-Type", "application/json");
@@ -386,7 +385,7 @@ int main(int argc, char **argv) {
             }
 
             if (!error)
-                res->end(GetJsonString("camera_frame", GetJsonString({{"camera", std::to_string(index)},{"frame", encoded}})));
+                res->end(GetJsonString("camera_frame", GetJsonString("frame", "\"" + encoded + "\"")));
         } else {
             res->end(GetAlertMessage(AlertStatus::ERROR, "The camera url is empty"));
         }

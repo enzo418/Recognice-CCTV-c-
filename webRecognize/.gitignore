@@ -23,6 +23,7 @@
 !src/web/assets/
 !src/web/src/
 !src/web/src/modules/
+!src/web/src/modules/canvas/
 !src/web/src/utils/
 !src/web/src/components/
 !src/web/src/components/Inputs

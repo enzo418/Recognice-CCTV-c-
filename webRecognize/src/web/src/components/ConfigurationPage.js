@@ -104,7 +104,8 @@ class ConfigurationPage extends React.Component {
                                     cameraConfig={camera}
                                     changeTargetValue={this.changeCameraTargetValue}
                                     elements={this.props.elements.camera}
-                                    deleteCamera={this.deleteCamera}></CameraConfiguration>
+                                    deleteCamera={this.deleteCamera}
+                                    openModalCanvas={this.props.openModalCanvas}></CameraConfiguration>
                             )
                     )}
                 </div>
@@ -133,6 +134,7 @@ ConfigurationPage.propTypes = {
     elements: PropTypes.any.isRequired,
     t: PropTypes.func,
     addAlert: PropTypes.func.isRequired,
+    openModalCanvas: PropTypes.func.isRequired,
 };
 
 export default withTranslation()(ConfigurationPage);

@@ -10,6 +10,25 @@ class CameraConfiguration extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};
+        this.onAcceptRoiModal = this.onAcceptRoiModal.bind(this);
+        this.openModalROI = this.openModalROI.bind(this);
+    }
+
+    onAcceptRoiModal(value) {
+        console.log("accepted!", value);
+        this.props.changeTargetValue(this.props.id, "roi", value);
+    }
+
+    openModalROI() {
+        fetch(
+            `/api/camera_frame?url=${encodeURIComponent(this.props.cameraConfig["url"])}&rotation=${
+                this.props.cameraConfig["rotation"]
+            }`
+        )
+            .then((res) => res.json())
+            .then(({camera_frame}) => {
+                this.props.openModalCanvas("roi", this.onAcceptRoiModal, camera_frame.frame);
+            });
     }
 
     render() {
@@ -37,7 +56,7 @@ class CameraConfiguration extends React.Component {
                     <div className="card-footer-item footer-camera-buttons">
                         <Translation>
                             {(t) => (
-                                <button className="button button-select-camera-roi">
+                                <button className="button button-select-camera-roi" onClick={this.openModalROI}>
                                     {t("Select camera region of interest")}
                                 </button>
                             )}
@@ -81,6 +100,7 @@ CameraConfiguration.propTypes = {
     changeTargetValue: PropTypes.func.isRequired,
     elements: PropTypes.object.isRequired,
     deleteCamera: PropTypes.func.isRequired,
+    openModalCanvas: PropTypes.func.isRequired,
 };
 
 export default CameraConfiguration;

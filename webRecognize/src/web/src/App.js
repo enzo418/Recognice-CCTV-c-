@@ -14,6 +14,8 @@ const elements = utils.elementsGroupsToLowerCase(Elements);
 import i18n from "./i18n";
 import PopupAlert from "./components/PopupAlert";
 import ModalSelectFileName from "./components/ModalSelectFileName";
+import ModalCanvas from "./components/ModalCanvas";
+import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 
 const pages = {
     configurations: {
@@ -51,6 +53,26 @@ class App extends React.Component {
             error: null,
             alerts: [],
             fileNameToCopy: "", // this is used to know when the user wants to copy a cfg file
+            modalCanvas: {
+                show: false,
+                header: null,
+
+                references: {
+                    roi: React.createRef(),
+                },
+
+                currentImage: "", // base64 encoded image to use
+
+                // saves the current handler
+                // id is used to access references[activeHandlerId]
+                activeHandlerId: "",
+
+                // default handler, can change
+                onAccept: () => this.hideCanvasModal(),
+
+                // do not change cancel
+                onCancel: () => this.hideCanvasModal(),
+            },
         };
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
@@ -60,9 +82,9 @@ class App extends React.Component {
         this.onWantsToCopyConfigurationFile = this.onWantsToCopyConfigurationFile.bind(this);
         this.callbackEnterFileName = this.callbackEnterFileName.bind(this);
         this.setLifeAlert = this.setLifeAlert.bind(this);
+        this.openModalCanvas = this.openModalCanvas.bind(this);
+        this.onAcceptModalCanvas = this.onAcceptModalCanvas.bind(this);
     }
-
-    updateAlertsLife() {}
 
     componentDidMount() {
         fetch("/api/configuration_files")
@@ -80,6 +102,13 @@ class App extends React.Component {
 
         let lang = window.localStorage.getItem("lang") || "en";
         i18n.changeLanguage(lang);
+    }
+
+    hideCanvasModal() {
+        this.setState((prev) => {
+            prev.modalCanvas.show = false;
+            return prev;
+        });
     }
 
     /**
@@ -227,6 +256,28 @@ class App extends React.Component {
         }
     }
 
+    openModalCanvas(canvasType = "roi", onAccept, image) {
+        this.setState((prev) => {
+            prev.modalCanvas.show = true;
+            prev.modalCanvas.onAccept = onAccept;
+            prev.modalCanvas.activeHandlerId = canvasType;
+            prev.modalCanvas.currentImage = image;
+            // prev.modalCanvas.references[canvasType].current.setImage(image);
+            return prev;
+        });
+    }
+
+    onAcceptModalCanvas() {
+        // get value generated from the user input
+        let value = this.state.modalCanvas.references[this.state.modalCanvas.activeHandlerId].current.getValue();
+
+        // pass the accepted value to the canvas
+        this.state.modalCanvas.onAccept(value);
+
+        //
+        this.hideCanvasModal();
+    }
+
     render() {
         return (
             <div>
@@ -235,15 +286,28 @@ class App extends React.Component {
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
                     this.state.fileNameToCopy === "" && (
-                        <ModalSelectConfiguration
-                            configurationFilesAvailables={this.state.configurationFilesAvailables}
-                            changeConfigurationFile={this.changeConfigurationFile}
-                            onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                        />
-                    )}
+                    <ModalSelectConfiguration
+                        configurationFilesAvailables={this.state.configurationFilesAvailables}
+                        changeConfigurationFile={this.changeConfigurationFile}
+                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
+                    />
+                )}
 
                 {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
                     <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
+                )}
+
+                {this.state.modalCanvas.show && (
+                    <ModalCanvas
+                        onAccept={this.onAcceptModalCanvas}
+                        onCancel={this.state.modalCanvas.onCancel}
+                        header={this.state.modalCanvas.header}>
+                        {this.state.modalCanvas.activeHandlerId === "roi" && (
+                            <CanvasRoiHandler
+                                ref={this.state.modalCanvas.references.roi}
+                                image={this.state.modalCanvas.currentImage}></CanvasRoiHandler>
+                        )}
+                    </ModalCanvas>
                 )}
 
                 <Switch>
@@ -252,7 +316,8 @@ class App extends React.Component {
                             <ConfigurationPage
                                 elements={elements}
                                 configurations={this.state.recognize.configuration}
-                                addAlert={this.addAlert}></ConfigurationPage>
+                                addAlert={this.addAlert}
+                                openModalCanvas={this.openModalCanvas}></ConfigurationPage>
                         </Route>
                     )}
 
