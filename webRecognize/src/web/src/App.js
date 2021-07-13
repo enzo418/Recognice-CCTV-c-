@@ -58,7 +58,11 @@ class App extends React.Component {
         this.changeConfigurationFile = this.changeConfigurationFile.bind(this);
         this.addAlert = this.addAlert.bind(this);
         this.onWantsToCopyConfigurationFile = this.onWantsToCopyConfigurationFile.bind(this);
+        this.callbackEnterFileName = this.callbackEnterFileName.bind(this);
+        this.setLifeAlert = this.setLifeAlert.bind(this);
     }
+
+    updateAlertsLife() {}
 
     componentDidMount() {
         fetch("/api/configuration_files")
@@ -155,29 +159,71 @@ class App extends React.Component {
         }, this.saveConfigurationOnLocalStorage);
     }
 
+    callbackRemoveAlert(id) {
+        this.setState((prev2) => {
+            prev2.alerts.splice(id, 1);
+            return prev2;
+        });
+    }
+
     addAlert(alert) {
         this.setState((prev) => {
             let id = prev.alerts.length;
 
-            // add alert to alerts
-            prev.alerts.push({id, alert});
-
             // remove alert after 3.5s
-            setTimeout(() => {
-                this.setState((prev2) => {
-                    prev2.alerts.splice(id, 1);
-                    return prev2;
-                });
-            }, 3500);
+            let c = setTimeout(() => this.callbackRemoveAlert(id), 3500);
+
+            // add alert to alerts
+            prev.alerts.push({id, alert, timeout: c});
 
             return prev;
         });
+    }
+
+    setLifeAlert(id, extend) {
+        if (extend) {
+            this.setState((prev) => {
+                let a = prev.alerts.find((a) => a.id === id);
+                if (a) {
+                    clearTimeout(a.timeout);
+                }
+
+                return prev;
+            });
+        } else {
+            this.setState((prev) => {
+                let a = prev.alerts.find((a) => a.id === id);
+                if (a) {
+                    a.tomeout = setTimeout(() => this.callbackRemoveAlert(id), 3500);
+                }
+
+                return prev;
+            });
+        }
     }
 
     onWantsToCopyConfigurationFile(filename) {
         this.setState(() => ({
             fileNameToCopy: filename,
         }));
+    }
+
+    callbackEnterFileName({cancelled, value}) {
+        if (!cancelled) {
+            fetch(`/api/copy_file?file=${this.state.fileNameToCopy}&copy_path=${value}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                body: "",
+            })
+                .then((res) => res.json())
+                .then((res) => this.addAlert(res.status));
+        } else {
+            this.setState(() => ({
+                fileNameToCopy: "",
+            }));
+        }
     }
 
     render() {
@@ -188,21 +234,16 @@ class App extends React.Component {
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
                     this.state.fileNameToCopy === "" && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                    />
-                )}
+                        <ModalSelectConfiguration
+                            configurationFilesAvailables={this.state.configurationFilesAvailables}
+                            changeConfigurationFile={this.changeConfigurationFile}
+                            onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
+                        />
+                    )}
 
-                {this.state.fileNameToCopy !== "" &&
-                    this.props.location.pathname !==
-                        pages.notifications.path(
-                            <ModalSelectFileName
-                                configurationFilesAvailables={this.state.configurationFilesAvailables}
-                                changeConfigurationFile={this.changeConfigurationFile}
-                            />
-                        )}
+                {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
+                    <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
+                )}
 
                 <Switch>
                     {this.state.recognize.configuration.file !== "" && (
@@ -221,7 +262,7 @@ class App extends React.Component {
 
                 <div id="alerts">
                     {this.state.alerts.map((el) => (
-                        <PopupAlert key={el.id} alert={el.alert} />
+                        <PopupAlert key={el.id} id={el.id} setLifeAlert={this.setLifeAlert} alert={el.alert} />
                     ))}
                 </div>
             </div>

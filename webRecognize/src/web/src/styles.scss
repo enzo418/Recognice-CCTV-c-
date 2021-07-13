@@ -132,6 +132,18 @@ $tabs-boxed-link-active-background-color: $primary;
     }   
 }
 
+.modal {
+    .file-name-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        input {
+            margin-right: 0.5rem;
+        }
+    }
+}
+
 .modal-card-head {
     > *:first-letter {
         text-transform: uppercase;

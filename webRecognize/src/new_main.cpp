@@ -404,8 +404,10 @@ int main(int argc, char **argv) {
     })
 
     .post("/api/copy_file", [&](auto *res, auto *req) {
-        const auto file = req->getQuery("file");
-        const auto copy_path = req->getQuery("copy_path");
+        const std::string file(req->getQuery("file"));
+        const std::string copy_path(req->getQuery("copy_path"));
+
+        std::string error;
 
         // response is a json
         res->writeHeader("Content-Type", "application/json");
@@ -419,19 +421,26 @@ int main(int argc, char **argv) {
         std::filesystem::path path { copy_path };
         std::filesystem::create_directories(path.parent_path());
         
-        // copy file
-        fs::copy_file(file, copy_path);
-
-        // read file
-        std::string error;
-        Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path.data(), error);
+        // try to copy the file
+        try {
+            fs::copy_file(file, copy_path);
+        } catch (std::filesystem::filesystem_error const& ex) {
+            error = ex.what();
+        }
+        
         if (error.length() == 0) {
-            std::string stringCfgs = ConfigurationFile::ConfigurationsToString(cfgs);
+            // read the file
+            Configurations cfgs = ConfigurationFile::ReadConfigurations(copy_path, error);
+            if (error.length() == 0) {
+                std::string stringCfgs = ConfigurationFile::ConfigurationsToString(cfgs);
 
-            // send configuration
-            res->end(GetJsonString("configurations", Json::Value(stringCfgs).toStyledString()));
+                // send configuration
+                res->end(GetJsonString("configurations", Json::Value(stringCfgs).toStyledString()));
+            } else {
+                res->end(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", error));
+            }
         } else {
-            res->end(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", error));
+            res->end(GetAlertMessage(AlertStatus::ERROR, "Could not copy file", error));
         }
     })
 
