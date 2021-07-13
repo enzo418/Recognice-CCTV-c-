@@ -10,13 +10,14 @@ class CameraConfiguration extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};
-        this.onAcceptRoiModal = this.onAcceptRoiModal.bind(this);
+        this.onAcceptModal = this.onAcceptModal.bind(this);
         this.openModalROI = this.openModalROI.bind(this);
+        this.openModalAreas = this.openModalAreas.bind(this);
+        this.openModalExclusivityAreas = this.openModalExclusivityAreas.bind(this);
     }
 
-    onAcceptRoiModal(value) {
-        console.log("accepted!", value);
-        this.props.changeTargetValue(this.props.id, "roi", value);
+    onAcceptModal(id, value) {
+        this.props.changeTargetValue(this.props.id, id, value);
     }
 
     openModalROI() {
@@ -27,7 +28,39 @@ class CameraConfiguration extends React.Component {
         )
             .then((res) => res.json())
             .then(({camera_frame}) => {
-                this.props.openModalCanvas("roi", this.onAcceptRoiModal, camera_frame.frame);
+                this.props.openModalCanvas("roi", (value) => this.onAcceptModal("roi", value), camera_frame.frame);
+            });
+    }
+
+    openModalAreas() {
+        fetch(
+            `/api/camera_frame?url=${encodeURIComponent(this.props.cameraConfig["url"])}&rotation=${
+                this.props.cameraConfig["rotation"]
+            }&roi=${encodeURIComponent(this.props.cameraConfig["roi"])}`
+        )
+            .then((res) => res.json())
+            .then(({camera_frame}) => {
+                this.props.openModalCanvas(
+                    "ignoredAreas",
+                    (value) => this.onAcceptModal("ignoredAreas", value),
+                    camera_frame.frame
+                );
+            });
+    }
+
+    openModalExclusivityAreas() {
+        fetch(
+            `/api/camera_frame?url=${encodeURIComponent(this.props.cameraConfig["url"])}&rotation=${
+                this.props.cameraConfig["rotation"]
+            }&roi=${encodeURIComponent(this.props.cameraConfig["roi"])}`
+        )
+            .then((res) => res.json())
+            .then(({camera_frame}) => {
+                this.props.openModalCanvas(
+                    "exclusivityAreas",
+                    (value) => this.onAcceptModal("pointsdiscriminators", value),
+                    camera_frame.frame
+                );
             });
     }
 
@@ -64,7 +97,9 @@ class CameraConfiguration extends React.Component {
 
                         <Translation>
                             {(t) => (
-                                <button className="button button-select-camera-ignored-areas">
+                                <button
+                                    className="button button-select-camera-ignored-areas"
+                                    onClick={this.openModalAreas}>
                                     {t("Select camera ignored areas")}
                                 </button>
                             )}
@@ -72,7 +107,9 @@ class CameraConfiguration extends React.Component {
 
                         <Translation>
                             {(t) => (
-                                <button className="button button-select-camera-exclusivity-areas">
+                                <button
+                                    className="button button-select-camera-exclusivity-areas"
+                                    onClick={this.openModalExclusivityAreas}>
                                     {t("Select camera exclusivity areas")}
                                 </button>
                             )}

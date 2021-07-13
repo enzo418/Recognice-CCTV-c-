@@ -26,7 +26,8 @@ class CanvasRoiHandler extends CanvasHandler {
 
     componentDidMount() {
         super.componentDidMount();
-        this.onCameraFrame(this.props.image);
+        this.onReady(this.props.image, this.props.initialValue);
+        this.props.callbackOnMounted();
     }
 
     getValue() {
@@ -87,7 +88,9 @@ class CanvasRoiHandler extends CanvasHandler {
      * Callback to update the image displayed in the canvas
      * @param {strng} frame base64 encoded image
      */
-    onCameraFrame(frame) {
+    onReady(frame, initialValue) {
+        this.roi = initialValue || "";
+
         let image = new Image();
         image.onload = () => {
             this.ctx.drawImage(image, 0, 0);
@@ -113,6 +116,8 @@ class CanvasRoiHandler extends CanvasHandler {
 
 CanvasRoiHandler.propTypes = {
     image: PropTypes.string.isRequired,
+    initialValue: PropTypes.string,
+    callbackOnMounted: PropTypes.func,
 };
 
 export default CanvasRoiHandler;

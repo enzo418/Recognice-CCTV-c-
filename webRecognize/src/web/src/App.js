@@ -16,6 +16,8 @@ import PopupAlert from "./components/PopupAlert";
 import ModalSelectFileName from "./components/ModalSelectFileName";
 import ModalCanvas from "./components/ModalCanvas";
 import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
+import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
+import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
 
 const pages = {
     configurations: {
@@ -59,9 +61,13 @@ class App extends React.Component {
 
                 references: {
                     roi: React.createRef(),
+                    ignoredAreas: React.createRef(),
+                    exclusivityAreas: React.createRef(),
                 },
 
                 currentImage: "", // base64 encoded image to use
+
+                intialValue: "",
 
                 // saves the current handler
                 // id is used to access references[activeHandlerId]
@@ -84,6 +90,7 @@ class App extends React.Component {
         this.setLifeAlert = this.setLifeAlert.bind(this);
         this.openModalCanvas = this.openModalCanvas.bind(this);
         this.onAcceptModalCanvas = this.onAcceptModalCanvas.bind(this);
+        this.callbackCanvasHandlerMounted = this.callbackCanvasHandlerMounted.bind(this);
     }
 
     componentDidMount() {
@@ -256,12 +263,19 @@ class App extends React.Component {
         }
     }
 
-    openModalCanvas(canvasType = "roi", onAccept, image) {
+    /**
+     * Opens a modal that contains a canvas
+     * @param {string} canvasType roi|ignoredAreas|exclusivityAreas
+     * @param {Function} onAccept callback when the user hits "Ok"
+     * @param {string} image base64 encoded image
+     */
+    openModalCanvas(canvasType = "roi", onAccept, image, initialValue) {
         this.setState((prev) => {
             prev.modalCanvas.show = true;
             prev.modalCanvas.onAccept = onAccept;
             prev.modalCanvas.activeHandlerId = canvasType;
             prev.modalCanvas.currentImage = image;
+            prev.modalCanvas.initialValue = initialValue;
             // prev.modalCanvas.references[canvasType].current.setImage(image);
             return prev;
         });
@@ -276,6 +290,15 @@ class App extends React.Component {
 
         //
         this.hideCanvasModal();
+    }
+
+    callbackCanvasHandlerMounted() {
+        // load header of the handler into the modal canvas element
+        this.setState((prev) => {
+            prev.modalCanvas.header =
+                prev.modalCanvas.references[prev.modalCanvas.activeHandlerId].current.getHeaders();
+        });
+        setTimeout(() => console.log(this.state.modalCanvas), 5000);
     }
 
     render() {
@@ -305,7 +328,27 @@ class App extends React.Component {
                         {this.state.modalCanvas.activeHandlerId === "roi" && (
                             <CanvasRoiHandler
                                 ref={this.state.modalCanvas.references.roi}
-                                image={this.state.modalCanvas.currentImage}></CanvasRoiHandler>
+                                image={this.state.modalCanvas.currentImage}
+                                initialValue={this.state.modalCanvas.initialValue}
+                                callbackOnMounted={this.callbackCanvasHandlerMounted}></CanvasRoiHandler>
+                        )}
+
+                        {this.state.modalCanvas.activeHandlerId === "ignoredAreas" && (
+                            <CanvasAreasHandler
+                                ref={this.state.modalCanvas.references.ignoredAreas}
+                                image={this.state.modalCanvas.currentImage}
+                                initialValue={this.state.modalCanvas.initialValue}
+                                callbackOnMounted={this.callbackCanvasHandlerMounted}
+                            />
+                        )}
+
+                        {this.state.modalCanvas.activeHandlerId === "exclusivityAreas" && (
+                            <CanvasExclusivityAreasHandler
+                                ref={this.state.modalCanvas.references.exclusivityAreas}
+                                image={this.state.modalCanvas.currentImage}
+                                initialValue={this.state.modalCanvas.initialValue}
+                                callbackOnMounted={this.callbackCanvasHandlerMounted}
+                            />
                         )}
                     </ModalCanvas>
                 )}

@@ -1,7 +1,7 @@
 import React from "react";
-import simplify from "simplify-js";
 import CanvasHandler from "./canvas_handler";
 import {getRandom, getRectangleDimensions} from "./canvas_utils";
+import PropTypes from "prop-types";
 
 class CanvasAreasHandler extends CanvasHandler {
     constructor(props) {
@@ -36,13 +36,34 @@ class CanvasAreasHandler extends CanvasHandler {
             onMouseUp: this.release.bind(this),
             onTouchEnd: this.release.bind(this),
         };
+
+        this.header = (
+            <div>
+                <p data-translation="Select the ignored areas of the camera">Select the ignored areas of the camera</p>
+                <button id="remove-all-areas" className="button" data-translation="Remove all">
+                    Remove all
+                </button>
+            </div>
+        );
+    }
+
+    getValue() {
+        return this.areasString;
+    }
+
+    componentDidMount() {
+        super.componentDidMount();
+        this.onReady(this.props.image, this.props.initialValue);
+        this.props.callbackOnMounted();
+    }
+
+    componentDidUpdate() {
+        console.log("updated");
     }
 
     removeAll() {
         this.areas = [];
         this.areasString = "";
-        var camindex = $("#modal-igarea").data("index");
-        document.querySelector("#camera-" + camindex).querySelector('input[name="ignoredareas"]').value = "";
 
         var image = new Image();
         image.onload = () => this.ctx.drawImage(image, 0, 0);
@@ -56,7 +77,7 @@ class CanvasAreasHandler extends CanvasHandler {
         e = (e.touches || [])[0] || e;
         if (this.clickPressed) {
             var image = new Image();
-            image.onload = function () {
+            image.onload = () => {
                 // check again... there is alot of this calls at the same time and causes problems
                 if (this.clickPressed) {
                     this.ctx.drawImage(image, 0, 0);
@@ -124,7 +145,7 @@ class CanvasAreasHandler extends CanvasHandler {
 
             // draw areas
             var image = new Image();
-            image.onload = function () {
+            image.onload = () => {
                 this.ctx.drawImage(image, 0, 0);
 
                 this.areas.forEach((area) => {
@@ -149,6 +170,53 @@ class CanvasAreasHandler extends CanvasHandler {
         }
         e.preventDefault();
     }
+
+    /**
+     * Callback to update the image displayed in the canvas
+     * @param {string} frame base64 encoded image
+     * @param {string} initialValue initial value
+     */
+    onReady(frame, initialValue) {
+        this.areasString = initialValue || "";
+        this.areas = [];
+
+        let image = new Image();
+        image.onload = () => {
+            this.ctx.drawImage(image, 0, 0);
+
+            this.ctx.strokeStyle = "Red";
+            this.ctx.lineWidth = 5;
+
+            if (this.areasString.length > 0) {
+                var numbers = this.areasString.match(/\d+/g).map((i) => parseInt(i));
+                if (numbers.length % 4 === 0) {
+                    for (var base = 0; base < numbers.length; base += 4) {
+                        const color = this.colors[getRandom(0, this.colors.length)];
+                        const lt = {x: numbers[base + 0], y: numbers[base + 1]},
+                            width = numbers[base + 2],
+                            heigth = numbers[base + 3];
+
+                        this.areas.push({lt, width, heigth, color});
+
+                        this.ctx.strokeStyle = color;
+                        this.ctx.strokeRect(lt.x, lt.y, width, heigth);
+                    }
+                }
+            }
+
+            console.log("areas loaded: ", this.areas.length);
+            this.updateCanvasPosition();
+        };
+        image.src = "data:image/jpg;base64," + frame;
+
+        this.lastImage = frame;
+    }
 }
+
+CanvasAreasHandler.propTypes = {
+    image: PropTypes.string.isRequired,
+    initialValue: PropTypes.string,
+    callbackOnMounted: PropTypes.func,
+};
 
 export default CanvasAreasHandler;

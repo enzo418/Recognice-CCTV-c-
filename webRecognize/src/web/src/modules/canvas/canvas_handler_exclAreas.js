@@ -1,7 +1,14 @@
 import React from "react";
+import {withTranslation} from "react-i18next";
 import simplify from "simplify-js";
 import CanvasHandler from "./canvas_handler";
 import {pointPolygonTest} from "./canvas_utils";
+import PropTypes from "prop-types";
+
+const TypeArea = {
+    DENY: "deny",
+    ALLOW: "allow",
+};
 
 class CanvasExclusivityAreasHandler extends CanvasHandler {
     constructor(props) {
@@ -21,7 +28,12 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
         this.select = {
             areaSelectedIndex: null,
+        };
+
+        // in state only define the variables that the elements use
+        this.state = {
             selectModeActive: false,
+            typeSelected: TypeArea.DENY, // deny|allow
         };
 
         this.header = (
@@ -31,59 +43,83 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                 </p>
 
                 <div className="message-header-button">
-                    <button id="button-close-poly" className="button sizable" data-translation="Close polygon">
+                    <button
+                        id="button-close-poly"
+                        className="button sizable"
+                        data-translation="Close polygon"
+                        hidden={this.state.selectModeActive}>
                         Close polygon
                     </button>
                     <button
                         id="button-aprox-poly"
                         className="button sizable"
-                        data-translation="Aproximate polygon curve(s)">
+                        data-translation="Aproximate polygon curve(s)"
+                        hidden={this.state.selectModeActive}>
                         Aproximate polygon curve(s)
                     </button>
 
                     <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
-                        <button className="button" data-type="allow">
+                        <button
+                            className={"button" + (this.state.typeSelected === TypeArea.ALLOW ? "is-selected" : "")}
+                            data-type="allow"
+                            onClick={() => this.toggleAreaType()}>
                             Allow points inside this poly
                         </button>
-                        <button className="button is-warning is-selected" data-type="deny">
+                        <button
+                            className={
+                                "button is-warning" + (this.state.typeSelected === TypeArea.DENY ? "is-selected" : "")
+                            }
+                            data-type="deny"
+                            onClick={() => this.toggleAreaType()}>
                             Deny points inside this poly
                         </button>
                     </div>
 
-                    <div className="undo-redo sizable">
-                        <button id="button-undo" className="button">
+                    <div className="undo-redo sizable" hidden={this.state.selectModeActive}>
+                        <button id="button-undo" className="button" onClick={() => this.undo()}>
                             <i className="fas fa-undo"></i>
                             <p>Undo</p>
                         </button>
-                        <button id="" className="button">
+                        <button id="" className="button" onClick={() => this.redo()}>
                             <p>Redo</p>
                             <i className="fas fa-redo"></i>
                         </button>
                     </div>
 
-                    <button id="button-remove-all-exclareas" className="button sizable" data-translation="Remove all">
+                    <button
+                        id="button-remove-all-exclareas"
+                        className="button sizable"
+                        data-translation="Remove all"
+                        hidden={this.state.selectModeActive}
+                        onClick={() => this.removeAll()}>
                         Remove all
                     </button>
 
                     <button
                         id="button-remove-selected-exclareas"
                         className="button sizable selection is-hidden"
-                        data-translation="Remove this area">
+                        data-translation="Remove this area"
+                        hidden={!this.state.selectModeActive}
+                        onClick={() => this.removeSelected()}>
                         Remove this area
                     </button>
 
                     <button
                         id="button-start-selected-exclareas"
                         className="button sizable"
-                        data-translation="Select area">
+                        data-translation="Select area"
+                        hidden={this.state.selectModeActive}
+                        onClick={() => this.startSelectMode()}>
                         Select area
                     </button>
 
                     <button
                         id="button-exit-selected-exclareas"
                         className="button sizable selection is-hidden"
-                        data-translation="Exit from selectoin mode">
-                        Exit from selectoin mode
+                        data-translation="Exit from selection mode"
+                        hidden={!this.state.selectModeActive}
+                        onClick={() => this.exitSelectionMode()}>
+                        Exit from selection mode
                     </button>
                 </div>
             </div>
@@ -99,26 +135,31 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         };
     }
 
-    startSelectMode() {
-        this.select.selectModeActive = true;
-    }
+    toggleAreaType() {
+        this.setState((prev) => {
+            // update type (allow points inside this area or deny them)
+            prev.typeSelected = prev.typeSelected === TypeArea.DENY ? TypeArea.ALLOW : TypeArea.DENY;
 
-    onSelect() {
-        [...document.querySelector(`${this.selectors.modal} ${this.selectors.headerButtons}`).children].forEach(
-            (el) => {
-                if (el.classList.contains("selection")) {
-                    el.classList.remove("is-hidden");
-                } else {
-                    el.classList.add("is-hidden");
-                }
+            // if it's in selection mode
+            if (prev.selectModeActive) {
+                // change the type of the selected area
+                this.areas[this.select.areaSelectedIndex].type = prev.typeSelected;
+                this.redraw();
             }
-        );
-
-        // set selection type to the same as the area
-        if (this.getTypeSelected() !== this.areas[this.select.areaSelectedIndex].type) {
-            $(this.selectors.typeSelectorContainer + " .button").toggleClass("is-selected is-warning");
-        }
+        });
     }
+
+    componentDidMount() {
+        super.componentDidMount();
+        this.onReady(this.props.image, this.props.initialValue);
+        this.props.callbackOnMounted();
+    }
+
+    startSelectMode() {
+        this.setState(() => ({selectModeActive: true}));
+    }
+
+    onSelect() {}
 
     removeSelected() {
         this.lastUndoEvents.push({
@@ -126,24 +167,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             obj: this.areas.splice(this.select.areaSelectedIndex, 1),
         });
         this.redraw();
-        this.select.exitSelectionMode();
+        this.exitSelectionMode();
     }
 
     exitSelectionMode() {
-        [...document.querySelector(`${this.selectors.modal} ${this.selectors.headerButtons}`).children].forEach(
-            (el) => {
-                if (
-                    el.classList.contains("selection") &&
-                    el.id !==
-                        this.selectors.typeSelectorContainer.substr(1, this.selectors.typeSelectorContainer.length)
-                ) {
-                    el.classList.add("is-hidden");
-                } else {
-                    el.classList.remove("is-hidden");
-                }
-            }
-        );
-        this.select.selectModeActive = false;
+        this.setState(() => ({selectModeActive: false}));
         this.select.areaSelectedIndex = null;
     }
 
@@ -161,19 +189,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         };
 
         this.redraw();
-
-        var camindex = $("#modal-exclusivity-areas").data("index");
-        document.querySelector("#camera-" + camindex).querySelector('input[name="pointsdiscriminators"]').value = "";
     }
 
-    save(ev, $save) {
-        var camindex = $("#modal-exclusivity-areas")[0].dataset["index"];
-        var camera = document.querySelector("#camera-" + camindex);
-
-        if ($save) {
-            var discriminatorInput = camera.querySelector('input[name="pointsdiscriminators"]');
+    save(save) {
+        if (save) {
             this.areas2String();
-            discriminatorInput.value = this.areasString;
         }
 
         this.x = this.y = 0;
@@ -183,43 +203,22 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             points: [],
             color: "",
         };
-
-        camera.querySelector(".button-select-camera-exclusivity-areas").classList.remove("is-loading");
-        $("#modal-exclusivity-areas").toggleClass("is-active");
     }
 
-    openModal(ev, cameraIndex) {
-        $(ev.target).addClass("is-loading");
+    onReady(frame, initialValue /*, roi*/) {
+        this.lastImage = frame;
 
-        frameRequestOrigin = "exclusivity-areas";
-
-        var cam = document.querySelector(`#camera-${cameraIndex}`);
-
-        var rotation = parseInt(cam.querySelector(`input[name="rotation"]`).value);
-
-        var roi = cam.querySelector('input[name="roi"]').value;
-
-        var url = cam.querySelector(`input[name="url"]`).value || cameras[cameraIndex].url;
-
-        var pointsDiscriminators =
-            cam.querySelector(`input[name="pointsdiscriminators"]`).value || cameras[cameraIndex].pointsdiscriminators;
-
-        var parsedRoi = this.stringToRoi(roi);
-        if (parsedRoi) {
-            $(this.canvas).attr("width", parsedRoi[2]);
-            $(this.canvas).attr("height", parsedRoi[3]);
-        }
+        // var parsedRoi = this.stringToRoi(roi);
+        // if (parsedRoi) {
+        //     this.setCanvasSize({width: parsedRoi[2], height: parsedRoi[3]});
+        // }
 
         // update this.areas
-        this.string2areas(pointsDiscriminators);
+        this.string2areas(initialValue);
 
-        sendObj("get_camera_frame", {index: cameraIndex, rotation, url, roi});
+        this.updateCanvasPosition();
 
-        unfinishedRequests["get_camera_frame"] = function () {
-            setTimeout(function () {
-                $(ev.target).removeClass("is-loading");
-            }, 500);
-        };
+        this.redraw();
     }
 
     closeCurrentPoly() {
@@ -229,18 +228,19 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         if (this.current.points.length === 0) return;
 
         if (!this.current.aproximated) {
-            if (confirm(_("Aproximate polygon curve(s)? It can increases the program perfomance."))) {
+            if (confirm(this.props.t("Aproximate polygon curve(s)? It can increases the program perfomance."))) {
                 this.aproxPoly();
             }
         }
 
-        var type = this.getTypeSelected();
+        var type = this.state.typeSelected;
         this.areas.push({type: type, points: this.current.points});
         this.current = {
             points: [],
             color: "",
             aproximated: false,
         };
+
         this.redraw(true);
     }
 
@@ -258,9 +258,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     }
 
     redraw(should_close_path, draw_saved_areas = true) {
+        // TODO: use this.repaintCanvas(callback)
+
         // Draws the canvas with the areas and current points
         var image = new Image();
-        image.onload = function () {
+        image.onload = () => {
             this.ctx.drawImage(image, 0, 0);
 
             //  Draw the lines that connects the points
@@ -347,10 +349,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         this.redraw(false);
     }
 
-    getTypeSelected() {
-        return document.getElementById("toggle-exclusivity-area-type").querySelector(".is-selected").dataset.type;
-    }
-
     areas2String() {
         // Syntax to follow: (allow|deny):ap1_x,ap1_y,...,apn_x,apn_y-(allow|deny):bp1_x,bp1_y,...,bpn_x,bpn_y
         this.areasString = "";
@@ -407,16 +405,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         });
     }
 
-    onclickbuttonInOut(e) {
-        [...this.children].forEach((ch) => ch.classList.remove("is-selected", "is-warning"));
-        e.target.classList.add("is-selected", "is-warning");
-
-        if (this.select.selectModeActive) {
-            this.areas[this.select.areaSelectedIndex].type = this.getTypeSelected();
-            this.redraw();
-        }
-    }
-
     // Click or touch pressed
     pressed(e) {
         e.preventDefault();
@@ -424,7 +412,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         const x = e.clientX - this.x;
         const y = e.clientY - this.y;
 
-        if (!this.select.selectModeActive) {
+        if (!this.state.selectModeActive) {
             this.current.points.push({x, y});
 
             this.lastUndoEvents = [];
@@ -434,9 +422,18 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             for (var ia in this.areas) {
                 if (pointPolygonTest(this.areas[ia].points, {x, y}) > 0) {
                     this.select.areaSelectedIndex = ia;
-                    this.select.onSelect();
+                    // this.select.onSelect();
                 }
             }
         }
     }
 }
+
+CanvasExclusivityAreasHandler.propTypes = {
+    t: PropTypes.any,
+    image: PropTypes.string.isRequired,
+    initialValue: PropTypes.string,
+    callbackOnMounted: PropTypes.func,
+};
+
+export default CanvasExclusivityAreasHandler;

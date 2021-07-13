@@ -1,5 +1,4 @@
 import React from "react";
-import simplify from "simplify-js";
 
 // abstract class that adds functionality to a canvas
 class CanvasHandler extends React.Component {
@@ -16,6 +15,19 @@ class CanvasHandler extends React.Component {
 
         // canvas envent handlers
         this.handlers = {};
+
+        this.header = null;
+
+        this.state = {
+            size: {
+                width: 640,
+                height: 360,
+            },
+        };
+    }
+
+    getHeaders() {
+        return this.header;
     }
 
     // get the value
@@ -34,6 +46,24 @@ class CanvasHandler extends React.Component {
         this.updateCanvasPosition();
     }
 
+    setCanvasSize({width, height}) {
+        this.setState((prev) => {
+            if (width) {
+                prev.size.width = width;
+            }
+
+            if (height) {
+                prev.size.height = height;
+            }
+        });
+    }
+
+    repaintCanvas(callbackOnImageLoaded) {
+        var image = new Image();
+        image.onload = () => callbackOnImageLoaded();
+        image.src = "data:image/jpg;base64," + this.lastImage;
+    }
+
     updateCanvasPosition() {
         var bounds = this.canvas.current.getBoundingClientRect();
         this.x = bounds.left;
@@ -41,7 +71,14 @@ class CanvasHandler extends React.Component {
     }
 
     render() {
-        return <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />;
+        return (
+            <canvas
+                ref={this.canvas}
+                {...this.handlers}
+                width={this.state.size.width + "px"}
+                height={this.state.size.height + "px"}
+            />
+        );
     }
 }
 
