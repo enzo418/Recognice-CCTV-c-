@@ -97,32 +97,32 @@ class App extends React.Component {
             .then((res) => this.addAlert(res.status));
     }
 
+    parseAndLoadNewConfigurationFile(filename, configurationFile) {
+        this.setState((prev) => {
+            prev.fileNameToCopy = "";
+            prev.recognize.configuration.file = filename;
+
+            let configs = configuration_parser.parseConfiguration(configurationFile, elements);
+            configs.cameras.forEach((cam, i) => {
+                cam.id = i;
+            });
+
+            prev.recognize.configuration.headers = configs;
+
+            this.props.history.push(pages.configurations.path);
+
+            return prev;
+        });
+    }
+
     /**
      * Loads all the configuration from the file
      * @param {string} filename
      */
     changeConfigurationFile(filename) {
-        this.setState((prev) => {
-            prev.recognize.configuration.file = filename;
-            return prev;
-        });
-
         fetch(`/api/configuration_file?file=${filename}`)
             .then((res) => res.json())
-            .then(({configuration_file}) => {
-                this.setState((prev) => {
-                    let configs = configuration_parser.parseConfiguration(configuration_file, elements);
-                    configs.cameras.forEach((cam, i) => {
-                        cam.id = i;
-                    });
-
-                    prev.recognize.configuration.headers = configs;
-
-                    this.props.history.push(pages.configurations.path);
-
-                    return prev;
-                });
-            });
+            .then(({configuration_file}) => this.parseAndLoadNewConfigurationFile(filename, configuration_file));
     }
 
     saveConfigurationOnLocalStorage() {
@@ -210,7 +210,8 @@ class App extends React.Component {
 
     callbackEnterFileName({cancelled, value}) {
         if (!cancelled) {
-            fetch(`/api/copy_file?file=${this.state.fileNameToCopy}&copy_path=${value}`, {
+            let filename = value.indexOf(".ini") >= 0 ? value : value + ".ini";
+            fetch(`/api/copy_file?file=${this.state.fileNameToCopy}&copy_path=${filename}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -218,7 +219,7 @@ class App extends React.Component {
                 body: "",
             })
                 .then((res) => res.json())
-                .then((res) => this.addAlert(res.status));
+                .then(({configuration_file}) => this.parseAndLoadNewConfigurationFile(filename, configuration_file));
         } else {
             this.setState(() => ({
                 fileNameToCopy: "",

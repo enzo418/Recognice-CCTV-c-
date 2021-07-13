@@ -435,7 +435,7 @@ int main(int argc, char **argv) {
                 std::string stringCfgs = ConfigurationFile::ConfigurationsToString(cfgs);
 
                 // send configuration
-                res->end(GetJsonString("configurations", Json::Value(stringCfgs).toStyledString()));
+                res->end(GetJsonString("configuration_file", Json::Value(stringCfgs).toStyledString()));
             } else {
                 res->end(GetAlertMessage(AlertStatus::ERROR, "The copied file was invalid and now you have 2 invalid files", error));
             }
