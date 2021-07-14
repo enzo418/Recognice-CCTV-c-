@@ -133,6 +133,8 @@ $button-focus-color: $yellow-crayola;
     .modal-card {
         overflow: visible;
         width: 60%;
+        top: 7px;
+        position: absolute;
 
         .modal-card-foot {
             display: flex;
@@ -147,7 +149,7 @@ $button-focus-color: $yellow-crayola;
         }
 
         .dropdown-content {            
-            height: 200px;
+            height: 55vh;
             overflow-x: hidden;
             overflow-y: scroll;
         }
