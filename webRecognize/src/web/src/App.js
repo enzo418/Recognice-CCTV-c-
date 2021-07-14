@@ -14,7 +14,6 @@ const elements = utils.elementsGroupsToLowerCase(Elements);
 import i18n from "./i18n";
 import PopupAlert from "./components/PopupAlert";
 import ModalSelectFileName from "./components/ModalSelectFileName";
-import ModalCanvas from "./components/ModalCanvas";
 import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
 import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
@@ -56,9 +55,6 @@ class App extends React.Component {
             alerts: [],
             fileNameToCopy: "", // this is used to know when the user wants to copy a cfg file
             modalCanvas: {
-                show: false,
-                headerAvailable: false,
-
                 references: {
                     roi: React.createRef(),
                     ignoredAreas: React.createRef(),
@@ -90,7 +86,7 @@ class App extends React.Component {
         this.setLifeAlert = this.setLifeAlert.bind(this);
         this.openModalCanvas = this.openModalCanvas.bind(this);
         this.onAcceptModalCanvas = this.onAcceptModalCanvas.bind(this);
-        this.callbackCanvasHandlerMounted = this.callbackCanvasHandlerMounted.bind(this);
+        this.hideCanvasModal = this.hideCanvasModal.bind(this);
     }
 
     componentDidMount() {
@@ -113,8 +109,7 @@ class App extends React.Component {
 
     hideCanvasModal() {
         this.setState((prev) => {
-            prev.modalCanvas.show = false;
-            prev.modalCanvas.headerAvailable = false;
+            prev.modalCanvas.activeHandlerId = "";
             return prev;
         });
     }
@@ -293,23 +288,7 @@ class App extends React.Component {
         this.hideCanvasModal();
     }
 
-    callbackCanvasHandlerMounted() {
-        console.log("Header available!");
-        // load header of the handler into the modal canvas element
-        this.setState((prev) => {
-            prev.modalCanvas.headerAvailable = true;
-            this.forceUpdate();
-        });
-        // setTimeout(() => console.log(this.state.modalCanvas), 5000);
-    }
-
     render() {
-        let header = this.state.modalCanvas.headerAvailable ? (
-            this.state.modalCanvas.references[this.state.modalCanvas.activeHandlerId].current.getHeaders()
-        ) : (
-            <div className="Notaheader"></div>
-        );
-
         return (
             <div>
                 <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
@@ -328,38 +307,33 @@ class App extends React.Component {
                     <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
                 )}
 
-                {this.state.modalCanvas.show && (
-                    <ModalCanvas
-                        className={this.state.modalCanvas.activeHandlerId}
+                {this.state.modalCanvas.activeHandlerId === "roi" && (
+                    <CanvasRoiHandler
+                        ref={this.state.modalCanvas.references.roi}
+                        image={this.state.modalCanvas.currentImage}
+                        initialValue={this.state.modalCanvas.initialValue}
                         onAccept={this.onAcceptModalCanvas}
-                        onCancel={this.state.modalCanvas.onCancel}
-                        header={header}>
-                        {this.state.modalCanvas.activeHandlerId === "roi" && (
-                            <CanvasRoiHandler
-                                ref={this.state.modalCanvas.references.roi}
-                                image={this.state.modalCanvas.currentImage}
-                                initialValue={this.state.modalCanvas.initialValue}
-                                callbackOnMounted={this.callbackCanvasHandlerMounted}></CanvasRoiHandler>
-                        )}
+                        onCancel={this.hideCanvasModal}></CanvasRoiHandler>
+                )}
 
-                        {this.state.modalCanvas.activeHandlerId === "ignoredAreas" && (
-                            <CanvasAreasHandler
-                                ref={this.state.modalCanvas.references.ignoredAreas}
-                                image={this.state.modalCanvas.currentImage}
-                                initialValue={this.state.modalCanvas.initialValue}
-                                callbackOnMounted={this.callbackCanvasHandlerMounted}
-                            />
-                        )}
+                {this.state.modalCanvas.activeHandlerId === "ignoredAreas" && (
+                    <CanvasAreasHandler
+                        ref={this.state.modalCanvas.references.ignoredAreas}
+                        image={this.state.modalCanvas.currentImage}
+                        initialValue={this.state.modalCanvas.initialValue}
+                        onAccept={this.onAcceptModalCanvas}
+                        onCancel={this.hideCanvasModal}
+                    />
+                )}
 
-                        {this.state.modalCanvas.activeHandlerId === "exclusivityAreas" && (
-                            <CanvasExclusivityAreasHandler
-                                ref={this.state.modalCanvas.references.exclusivityAreas}
-                                image={this.state.modalCanvas.currentImage}
-                                initialValue={this.state.modalCanvas.initialValue}
-                                callbackOnMounted={this.callbackCanvasHandlerMounted}
-                            />
-                        )}
-                    </ModalCanvas>
+                {this.state.modalCanvas.activeHandlerId === "exclusivityAreas" && (
+                    <CanvasExclusivityAreasHandler
+                        ref={this.state.modalCanvas.references.exclusivityAreas}
+                        image={this.state.modalCanvas.currentImage}
+                        initialValue={this.state.modalCanvas.initialValue}
+                        onAccept={this.onAcceptModalCanvas}
+                        onCancel={this.hideCanvasModal}
+                    />
                 )}
 
                 <Switch>

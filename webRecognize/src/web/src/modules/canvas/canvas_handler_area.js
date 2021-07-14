@@ -2,6 +2,7 @@ import React from "react";
 import CanvasHandler from "./canvas_handler";
 import {getRandom, getRectangleDimensions} from "./canvas_utils";
 import PropTypes from "prop-types";
+import ModalCanvas from "../../components/ModalCanvas";
 
 class CanvasAreasHandler extends CanvasHandler {
     constructor(props) {
@@ -37,7 +38,7 @@ class CanvasAreasHandler extends CanvasHandler {
             onTouchEnd: this.release.bind(this),
         };
 
-        this.headers = (
+        this.header = (
             <div className="ignored-areas-header">
                 <p data-translation="Select the ignored areas of the camera">Select the ignored areas of the camera</p>
                 <button id="remove-all-areas" className="button" data-translation="Remove all">
@@ -54,7 +55,6 @@ class CanvasAreasHandler extends CanvasHandler {
     componentDidMount() {
         super.componentDidMount();
         this.onReady(this.props.image, this.props.initialValue);
-        this.props.callbackOnMounted();
     }
 
     componentDidUpdate() {
@@ -211,12 +211,22 @@ class CanvasAreasHandler extends CanvasHandler {
 
         this.lastImage = frame;
     }
+
+    render() {
+        return (
+            <ModalCanvas header={this.header} onAccept={this.props.onAccept} onCancel={this.props.onCancel}>
+                <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />
+            </ModalCanvas>
+        );
+    }
 }
 
 CanvasAreasHandler.propTypes = {
     image: PropTypes.string.isRequired,
     initialValue: PropTypes.string,
     callbackOnMounted: PropTypes.func,
+    onCancel: PropTypes.func.isRequired,
+    onAccept: PropTypes.func.isRequired,
 };
 
 export default CanvasAreasHandler;

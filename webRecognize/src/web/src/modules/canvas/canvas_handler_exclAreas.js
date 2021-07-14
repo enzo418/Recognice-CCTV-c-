@@ -3,6 +3,7 @@ import simplify from "simplify-js";
 import CanvasHandler from "./canvas_handler";
 import {pointPolygonTest} from "./canvas_utils";
 import PropTypes from "prop-types";
+import ModalCanvas from "../../components/ModalCanvas";
 
 const TypeArea = {
     DENY: "deny",
@@ -44,7 +45,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             onTouchEnd: () => true,
         };
 
-        this.headers = (
+        this.header = (
             <div className="message-header exclusivity-areas-header">
                 <p data-translation="Select the exclusivity areas of the camera">
                     Select the exclusivity areas of the camera
@@ -151,7 +152,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     componentDidMount() {
         super.componentDidMount();
         this.onReady(this.props.image, this.props.initialValue);
-        this.props.callbackOnMounted();
     }
 
     startSelectMode() {
@@ -426,6 +426,14 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             }
         }
     }
+
+    render() {
+        return (
+            <ModalCanvas header={this.header} onAccept={this.props.onAccept} onCancel={this.props.onCancel}>
+                <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />
+            </ModalCanvas>
+        );
+    }
 }
 
 CanvasExclusivityAreasHandler.propTypes = {
@@ -433,6 +441,8 @@ CanvasExclusivityAreasHandler.propTypes = {
     image: PropTypes.string.isRequired,
     initialValue: PropTypes.string,
     callbackOnMounted: PropTypes.func,
+    onCancel: PropTypes.func.isRequired,
+    onAccept: PropTypes.func.isRequired,
 };
 
 export default CanvasExclusivityAreasHandler;

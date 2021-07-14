@@ -2,6 +2,7 @@ import React from "react";
 import CanvasHandler from "./canvas_handler";
 import {getRectangleDimensions} from "./canvas_utils";
 import PropTypes from "prop-types";
+import ModalCanvas from "../../components/ModalCanvas";
 
 class CanvasRoiHandler extends CanvasHandler {
     /**
@@ -24,7 +25,7 @@ class CanvasRoiHandler extends CanvasHandler {
             onTouchEnd: this.release.bind(this),
         };
 
-        this.headers = (
+        this.header = (
             <p data-translation="Select the camera region of interest">Select the camera region of interest</p>
         );
     }
@@ -32,7 +33,10 @@ class CanvasRoiHandler extends CanvasHandler {
     componentDidMount() {
         super.componentDidMount();
         this.onReady(this.props.image, this.props.initialValue);
-        this.props.callbackOnMounted();
+
+        // console.log(this.canvas);
+        // console.log("context:", this.ctx);
+        this.updateCanvasPosition();
     }
 
     getValue() {
@@ -117,12 +121,22 @@ class CanvasRoiHandler extends CanvasHandler {
 
         this.lastImage = frame;
     }
+
+    render() {
+        return (
+            <ModalCanvas header={this.header} onAccept={this.props.onAccept} onCancel={this.props.onCancel}>
+                <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />
+            </ModalCanvas>
+        );
+    }
 }
 
 CanvasRoiHandler.propTypes = {
     image: PropTypes.string.isRequired,
     initialValue: PropTypes.string,
     callbackOnMounted: PropTypes.func,
+    onCancel: PropTypes.func.isRequired,
+    onAccept: PropTypes.func.isRequired,
 };
 
 export default CanvasRoiHandler;

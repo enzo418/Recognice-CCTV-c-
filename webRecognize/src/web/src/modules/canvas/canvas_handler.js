@@ -11,8 +11,6 @@ class CanvasHandler extends React.Component {
 
         this.clickPressed = false;
 
-        this.canvas = React.createRef();
-
         // canvas envent handlers
         this.handlers = {};
 
@@ -24,6 +22,8 @@ class CanvasHandler extends React.Component {
                 height: 360,
             },
         };
+
+        this.canvas = React.createRef();
     }
 
     getHeaders() {
@@ -40,10 +40,7 @@ class CanvasHandler extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this.canvas);
         this.ctx = this.canvas.current.getContext("2d");
-        console.log("context:", this.ctx);
-        this.updateCanvasPosition();
     }
 
     setCanvasSize({width, height}) {
@@ -70,9 +67,10 @@ class CanvasHandler extends React.Component {
         this.y = bounds.top;
     }
 
+    /*
     render() {
-        return <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />;
-    }
+        return ;
+    }*/
 }
 
 export default CanvasHandler;

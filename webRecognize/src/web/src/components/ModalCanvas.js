@@ -34,12 +34,6 @@ function ModalCanvas(props) {
 
 ModalCanvas.propTypes = {
     header: PropTypes.any,
-    onMouseMove: PropTypes.func,
-    onTouchMove: PropTypes.func,
-    onMouseDown: PropTypes.func,
-    onTouchStart: PropTypes.func,
-    onMouseUp: PropTypes.func,
-    onTouchEnd: PropTypes.func,
     onAccept: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
     children: PropTypes.any,
