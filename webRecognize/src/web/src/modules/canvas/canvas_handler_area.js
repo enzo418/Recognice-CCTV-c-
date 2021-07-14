@@ -37,8 +37,8 @@ class CanvasAreasHandler extends CanvasHandler {
             onTouchEnd: this.release.bind(this),
         };
 
-        this.header = (
-            <div>
+        this.headers = (
+            <div className="ignored-areas-header">
                 <p data-translation="Select the ignored areas of the camera">Select the ignored areas of the camera</p>
                 <button id="remove-all-areas" className="button" data-translation="Remove all">
                     Remove all

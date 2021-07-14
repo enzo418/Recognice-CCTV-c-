@@ -1,5 +1,4 @@
 import React from "react";
-import {withTranslation} from "react-i18next";
 import simplify from "simplify-js";
 import CanvasHandler from "./canvas_handler";
 import {pointPolygonTest} from "./canvas_utils";
@@ -36,8 +35,17 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             typeSelected: TypeArea.DENY, // deny|allow
         };
 
-        this.header = (
-            <div className="message-header">
+        this.handlers = {
+            onMouseMove: () => true,
+            onTouchMove: () => true,
+            onMouseDown: this.pressed.bind(this),
+            onTouchStart: this.pressed.bind(this),
+            onMouseUp: () => true,
+            onTouchEnd: () => true,
+        };
+
+        this.headers = (
+            <div className="message-header exclusivity-areas-header">
                 <p data-translation="Select the exclusivity areas of the camera">
                     Select the exclusivity areas of the camera
                 </p>
@@ -124,15 +132,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                 </div>
             </div>
         );
-
-        this.handlers = {
-            onMouseMove: () => true,
-            onTouchMove: () => true,
-            onMouseDown: this.pressed.bind(this),
-            onTouchStart: this.pressed.bind(this),
-            onMouseUp: () => true,
-            onTouchEnd: () => true,
-        };
     }
 
     toggleAreaType() {

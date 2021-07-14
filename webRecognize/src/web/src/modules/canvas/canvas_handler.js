@@ -16,7 +16,7 @@ class CanvasHandler extends React.Component {
         // canvas envent handlers
         this.handlers = {};
 
-        this.header = null;
+        this.headers = null;
 
         this.state = {
             size: {
@@ -27,7 +27,7 @@ class CanvasHandler extends React.Component {
     }
 
     getHeaders() {
-        return this.header;
+        return this.headers;
     }
 
     // get the value
@@ -71,14 +71,7 @@ class CanvasHandler extends React.Component {
     }
 
     render() {
-        return (
-            <canvas
-                ref={this.canvas}
-                {...this.handlers}
-                width={this.state.size.width + "px"}
-                height={this.state.size.height + "px"}
-            />
-        );
+        return <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />;
     }
 }
 

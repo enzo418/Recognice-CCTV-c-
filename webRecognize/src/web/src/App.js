@@ -57,7 +57,7 @@ class App extends React.Component {
             fileNameToCopy: "", // this is used to know when the user wants to copy a cfg file
             modalCanvas: {
                 show: false,
-                header: null,
+                headerAvailable: false,
 
                 references: {
                     roi: React.createRef(),
@@ -67,7 +67,7 @@ class App extends React.Component {
 
                 currentImage: "", // base64 encoded image to use
 
-                intialValue: "",
+                initialValue: "",
 
                 // saves the current handler
                 // id is used to access references[activeHandlerId]
@@ -114,6 +114,7 @@ class App extends React.Component {
     hideCanvasModal() {
         this.setState((prev) => {
             prev.modalCanvas.show = false;
+            prev.modalCanvas.headerAvailable = false;
             return prev;
         });
     }
@@ -293,15 +294,22 @@ class App extends React.Component {
     }
 
     callbackCanvasHandlerMounted() {
+        console.log("Header available!");
         // load header of the handler into the modal canvas element
         this.setState((prev) => {
-            prev.modalCanvas.header =
-                prev.modalCanvas.references[prev.modalCanvas.activeHandlerId].current.getHeaders();
+            prev.modalCanvas.headerAvailable = true;
+            this.forceUpdate();
         });
-        setTimeout(() => console.log(this.state.modalCanvas), 5000);
+        // setTimeout(() => console.log(this.state.modalCanvas), 5000);
     }
 
     render() {
+        let header = this.state.modalCanvas.headerAvailable ? (
+            this.state.modalCanvas.references[this.state.modalCanvas.activeHandlerId].current.getHeaders()
+        ) : (
+            <div className="Notaheader"></div>
+        );
+
         return (
             <div>
                 <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
@@ -309,12 +317,12 @@ class App extends React.Component {
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
                     this.state.fileNameToCopy === "" && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                    />
-                )}
+                        <ModalSelectConfiguration
+                            configurationFilesAvailables={this.state.configurationFilesAvailables}
+                            changeConfigurationFile={this.changeConfigurationFile}
+                            onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
+                        />
+                    )}
 
                 {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
                     <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
@@ -322,9 +330,10 @@ class App extends React.Component {
 
                 {this.state.modalCanvas.show && (
                     <ModalCanvas
+                        className={this.state.modalCanvas.activeHandlerId}
                         onAccept={this.onAcceptModalCanvas}
                         onCancel={this.state.modalCanvas.onCancel}
-                        header={this.state.modalCanvas.header}>
+                        header={header}>
                         {this.state.modalCanvas.activeHandlerId === "roi" && (
                             <CanvasRoiHandler
                                 ref={this.state.modalCanvas.references.roi}

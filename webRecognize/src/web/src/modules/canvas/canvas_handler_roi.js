@@ -1,3 +1,4 @@
+import React from "react";
 import CanvasHandler from "./canvas_handler";
 import {getRectangleDimensions} from "./canvas_utils";
 import PropTypes from "prop-types";
@@ -22,6 +23,10 @@ class CanvasRoiHandler extends CanvasHandler {
             onMouseUp: this.release.bind(this),
             onTouchEnd: this.release.bind(this),
         };
+
+        this.headers = (
+            <p data-translation="Select the camera region of interest">Select the camera region of interest</p>
+        );
     }
 
     componentDidMount() {
