@@ -26,13 +26,10 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         };
         this.lastUndoEvents = []; // array of { type: string [point or area], obj: Object }
 
-        this.select = {
-            areaSelectedIndex: null,
-        };
-
         // in state only define the variables that the elements use
         this.state = {
-            selectModeActive: true,
+            selectModeActive: false,
+            areaSelectedIndex: null,
             typeSelected: TypeArea.DENY, // deny|allow
         };
 
@@ -46,15 +43,15 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         };
     }
 
-    toggleAreaType() {
+    toggleAreaType(type) {
         this.setState((prev) => {
             // update type (allow points inside this area or deny them)
-            prev.typeSelected = prev.typeSelected === TypeArea.DENY ? TypeArea.ALLOW : TypeArea.DENY;
+            prev.typeSelected = type;
 
             // if it's in selection mode
             if (prev.selectModeActive) {
                 // change the type of the selected area
-                this.areas[this.select.areaSelectedIndex].type = prev.typeSelected;
+                this.areas[this.state.areaSelectedIndex].type = prev.typeSelected;
                 this.redraw();
             }
         });
@@ -66,8 +63,8 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     }
 
     startSelectMode() {
-        console.log(this.state);
-        this.setState((prev) => ({selectModeActive: !prev.selectModeActive}));
+        console.log("start select mode");
+        this.setState(() => ({selectModeActive: true}));
     }
 
     onSelect() {}
@@ -75,15 +72,14 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     removeSelected() {
         this.lastUndoEvents.push({
             type: "areas-removed",
-            obj: this.areas.splice(this.select.areaSelectedIndex, 1),
+            obj: this.areas.splice(this.state.areaSelectedIndex, 1),
         });
         this.redraw();
         this.exitSelectionMode();
     }
 
     exitSelectionMode() {
-        this.setState(() => ({selectModeActive: false}));
-        this.select.areaSelectedIndex = null;
+        this.setState(() => ({selectModeActive: false, areaSelectedIndex: null}));
     }
 
     removeAll() {
@@ -332,7 +328,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
         } else {
             for (var ia in this.areas) {
                 if (pointPolygonTest(this.areas[ia].points, {x, y}) > 0) {
-                    this.select.areaSelectedIndex = ia;
+                    this.setState(() => ({areaSelectedIndex: ia}));
                     // this.select.onSelect();
                 }
             }
@@ -349,7 +345,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                         </p>
 
                         <div className="message-header-button">
-                            {this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-close-poly"
                                     className="button sizable"
@@ -359,7 +355,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                                 </button>
                             )}
 
-                            {this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-aprox-poly"
                                     className="button sizable"
@@ -371,24 +367,18 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
                             <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
                                 <button
-                                    className={
-                                        "button" + (this.state.typeSelected === TypeArea.ALLOW ? "is-selected" : "")
-                                    }
-                                    data-type="allow"
-                                    onClick={() => this.toggleAreaType()}>
+                                    className={`button ${this.state.typeSelected === "allow" ? " is-warning" : ""}`}
+                                    onClick={() => this.toggleAreaType("allow")}>
                                     Allow points inside this poly
                                 </button>
                                 <button
-                                    className={
-                                        "button is-warning" +
-                                        (this.state.typeSelected === TypeArea.DENY ? "is-selected" : "")
-                                    }
-                                    data-type="deny"
-                                    onClick={() => this.toggleAreaType()}>
+                                    className={`button ${this.state.typeSelected === "deny" ? " is-warning" : ""}`}
+                                    onClick={() => this.toggleAreaType("deny")}>
                                     Deny points inside this poly
                                 </button>
                             </div>
-                            {this.state.selectModeActive && (
+
+                            {this.state.areaSelectedIndex === null && (
                                 <div className="undo-redo sizable">
                                     <button id="button-undo" className="button" onClick={() => this.undo()}>
                                         <i className="fas fa-undo"></i>
@@ -401,7 +391,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                                 </div>
                             )}
 
-                            {this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-remove-all-exclareas"
                                     className="button sizable"
@@ -411,18 +401,18 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                                 </button>
                             )}
 
-                            {!this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex !== null && (
                                 <button
                                     id="button-remove-selected-exclareas"
-                                    className="button sizable selection is-hidden"
+                                    className="button sizable selection"
                                     data-translation="Remove this area"
-                                    hidden={!this.state.selectModeActive}
+                                    hidden={!this.state.areaSelectedIndex !== null}
                                     onClick={() => this.removeSelected()}>
                                     Remove this area
                                 </button>
                             )}
 
-                            {!this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-start-selected-exclareas"
                                     className="button sizable"
@@ -432,10 +422,10 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                                 </button>
                             )}
 
-                            {this.state.selectModeActive && (
+                            {this.state.areaSelectedIndex !== null && (
                                 <button
                                     id="button-exit-selected-exclareas"
-                                    className="button sizable selection is-hidden"
+                                    className="button sizable selection"
                                     data-translation="Exit from selection mode"
                                     onClick={() => this.exitSelectionMode()}>
                                     Exit from selection mode
