@@ -44,6 +44,12 @@ $input-hover-color: $yellow-crayola;
 // tab
 $tabs-boxed-link-active-background-color: $primary;
 
+// button
+$button-background-color: $eerie-lighter;
+$button-color: #fff;
+$button-hover-color: rgb(254, 255, 188);
+$button-focus-color: $yellow-crayola;
+
 @import "~bulma/bulma";
 
 ::-webkit-scrollbar-thumb {
@@ -98,8 +104,21 @@ $tabs-boxed-link-active-background-color: $primary;
     }
 }
 
-.configuration-group .card-content-item input[type="checkbox"] {
-    margin-right: 0.5rem;
+#configurations {
+    .configuration-group .card-content-item input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+
+    .card-content-item {
+        margin: 0.5rem 0;
+    }
+
+    .footer-camera-buttons {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
 }
 
 .tabs{
@@ -169,24 +188,46 @@ $tabs-boxed-link-active-background-color: $primary;
         padding-top: 1rem;
     }
 
-    .exclusivity-areas-header {
-        .modal-content {
+    &.exclusivity-areas {
+        .modal-card {
             width: 100%;
             height: 100%;
             max-height: 100%;
             margin: 0;
             padding: 0;
+        
+            .exclusivity-areas-header {
+                width: 100%;
+                background-color: $primary;
+
+                p {
+                    color: #fff;
+                }
+
+                .button {
+                    margin: 0 0.5rem;
+                }
+            }
 
             .message-body {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                border: 0;
 
                 .buttons-exclusivity-areas {
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
                     margin-top: 0.5rem;
+                    width: 100%;
+                }
+
+                .buttons-modal-body {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: space-evenly;
                     width: 100%;
                 }
             }

@@ -50,13 +50,13 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     }
 
     getValue() {
+        this.areas2String();
         return this.areasString;
     }
 
     toggleAreaType(type) {
         this.setState(() => ({typeSelected: type}));
 
-        console.log({selectmode: this.state.selectModeActive});
         // if it's in selection mode
         if (this.state.selectModeActive) {
             // change the type of the selected area
@@ -316,10 +316,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                     this.areas[currAreaIndex].points.length > 0 &&
                     this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y === null
                 ) {
-                    this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y =
-                        match.groups.point_coord;
+                    this.areas[currAreaIndex].points[this.areas[currAreaIndex].points.length - 1].y = parseInt(
+                        match.groups.point_coord
+                    );
                 } else {
-                    this.areas[currAreaIndex].points.push({x: match.groups.point_coord, y: null});
+                    this.areas[currAreaIndex].points.push({x: parseInt(match.groups.point_coord), y: null});
                 }
             }
         });
@@ -339,10 +340,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
             this.redraw(false);
         } else {
-            for (var ia in this.areas) {
-                if (pointPolygonTest(this.areas[ia].points, {x, y}) > 0) {
-                    this.setState(() => ({areaSelectedIndex: ia}));
+            for (let i = 0; i < this.areas.length; i++) {
+                if (pointPolygonTest(this.areas[i].points, {x, y}) > 0) {
+                    this.setState(() => ({areaSelectedIndex: i}));
                     // this.select.onSelect();
+                    break;
                 }
             }
         }
@@ -351,6 +353,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     render() {
         return (
             <ModalCanvas
+                className="exclusivity-areas"
                 header={
                     <div className="message-header exclusivity-areas-header">
                         <p data-translation="Select the exclusivity areas of the camera">
@@ -361,7 +364,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-close-poly"
-                                    className="button sizable"
+                                    className="button sizable is-dark"
                                     data-translation="Close polygon"
                                     onClick={() => this.closeCurrentPoly()}>
                                     Close polygon
@@ -371,14 +374,14 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-aprox-poly"
-                                    className="button sizable"
+                                    className="button sizable is-dark"
                                     data-translation="Aproximate polygon curve(s)"
                                     onClick={() => this.aproxPoly()}>
                                     Aproximate polygon curve(s)
                                 </button>
                             )}
 
-                            <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
+                            <div id="toggle-exclusivity-area-type" className="buttons has-addons selection is-dark">
                                 <button
                                     className={"button " + (this.state.typeSelected === "allow" ? "is-warning" : "")}
                                     data-type="allow"
@@ -395,11 +398,11 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
                             {this.state.areaSelectedIndex === null && (
                                 <div className="undo-redo sizable">
-                                    <button id="button-undo" className="button" onClick={() => this.undo()}>
+                                    <button id="button-undo" className="button is-dark" onClick={() => this.undo()}>
                                         <i className="fas fa-undo"></i>
                                         <p>Undo</p>
                                     </button>
-                                    <button id="" className="button" onClick={() => this.redo()}>
+                                    <button id="" className="button is-dark" onClick={() => this.redo()}>
                                         <p>Redo</p>
                                         <i className="fas fa-redo"></i>
                                     </button>
@@ -409,7 +412,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-remove-all-exclareas"
-                                    className="button sizable"
+                                    className="button sizable is-danger is-light"
                                     data-translation="Remove all"
                                     onClick={() => this.removeAll()}>
                                     Remove all
@@ -419,7 +422,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex !== null && (
                                 <button
                                     id="button-remove-selected-exclareas"
-                                    className="button sizable selection"
+                                    className="button sizable selection is-danger is-light"
                                     data-translation="Remove this area"
                                     onClick={() => this.removeSelected()}>
                                     Remove this area
@@ -429,7 +432,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex === null && (
                                 <button
                                     id="button-start-selected-exclareas"
-                                    className="button sizable"
+                                    className="button sizable is-dark"
                                     data-translation="Select area"
                                     onClick={() => this.startSelectMode()}>
                                     Select area
@@ -439,7 +442,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                             {this.state.areaSelectedIndex !== null && (
                                 <button
                                     id="button-exit-selected-exclareas"
-                                    className="button sizable selection"
+                                    className="button sizable selection is-dark"
                                     data-translation="Exit from selection mode"
                                     onClick={() => this.exitSelectionMode()}>
                                     Exit from selection mode

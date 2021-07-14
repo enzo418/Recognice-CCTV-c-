@@ -5,11 +5,11 @@ import Modal from "./Modal";
 function ModalCanvas(props) {
     return (
         <Modal
-            className="modal-canvas"
+            className={"modal-canvas " + props.className}
             header={props.header}
             body={
                 // className="message-body"
-                <div>
+                <div className="message-body">
                     {props.children}
 
                     <div className="buttons-modal-body">
@@ -33,6 +33,7 @@ function ModalCanvas(props) {
 }
 
 ModalCanvas.propTypes = {
+    className: PropTypes.string,
     header: PropTypes.any,
     onAccept: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
