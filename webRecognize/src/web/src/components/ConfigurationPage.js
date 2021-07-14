@@ -6,6 +6,9 @@ import ProgramConfiguration from "./ProgramConfiguration";
 import CameraConfiguration from "./CameraConfiguration";
 
 import parser from "../modules/configuration_parser";
+import Elements from "../elements.json";
+import utils from "../utils/utils";
+const elements = utils.elementsGroupsToLowerCase(Elements);
 
 class ConfigurationPage extends React.Component {
     constructor(props) {
@@ -20,10 +23,35 @@ class ConfigurationPage extends React.Component {
         this.changeCameraTargetValue = this.changeCameraTargetValue.bind(this);
         this.saveConfiguration = this.saveConfiguration.bind(this);
         this.deleteCamera = this.deleteCamera.bind(this);
+        this.addNewCamera = this.addNewCamera.bind(this);
+    }
+
+    findNextCameraId(cameras) {
+        const max = 100000;
+        let i = 0;
+        while (i < max && cameras.findIndex((cam) => cam.id === i) >= 0) {
+            i++;
+        }
+        return cameras.findIndex((cam) => cam.id === i) >= 0 ? null : i;
     }
 
     addNewCamera() {
-        throw "Method not implemented";
+        fetch("/api/new_camera")
+            .then((res) => res.json())
+            .then(({new_camera_config}) => {
+                let configs = parser.parseConfiguration(new_camera_config.configuration, elements);
+                if (configs) {
+                    if (configs.cameras.length > 0) {
+                        let camera = configs.cameras[0];
+                        this.setState((prev) => {
+                            let l = prev.configurations.cameras.length;
+                            camera.id = l > 0 ? this.findNextCameraId(prev.configurations.cameras) : 0;
+                            prev.configurations.cameras.push(camera);
+                            return prev;
+                        });
+                    }
+                }
+            });
     }
 
     saveConfiguration() {

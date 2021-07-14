@@ -5,11 +5,6 @@ import {pointPolygonTest} from "./canvas_utils";
 import PropTypes from "prop-types";
 import ModalCanvas from "../../components/ModalCanvas";
 
-const TypeArea = {
-    DENY: "deny",
-    ALLOW: "allow",
-};
-
 class CanvasExclusivityAreasHandler extends CanvasHandler {
     constructor(props) {
         super(props);

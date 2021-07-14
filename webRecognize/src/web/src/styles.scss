@@ -155,6 +155,10 @@ $button-focus-color: $yellow-crayola;
 }
 
 .modal {
+    .message-body{
+        border: 0;
+    }
+
     .file-name-container {
         display: flex;
         flex-direction: row;
@@ -182,10 +186,19 @@ $button-focus-color: $yellow-crayola;
         padding: 0;
     }
 
-    .buttons-roi, .ignored-areas-header {
+    .buttons-modal-body {
         display: flex;
+        flex-direction: row;
         justify-content: space-between;
-        padding-top: 1rem;
+        align-items: center;
+    }
+
+    .ignored-areas-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
     }
 
     &.exclusivity-areas {
