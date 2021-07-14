@@ -41,7 +41,11 @@ class CanvasAreasHandler extends CanvasHandler {
         this.header = (
             <div className="ignored-areas-header">
                 <p data-translation="Select the ignored areas of the camera">Select the ignored areas of the camera</p>
-                <button id="remove-all-areas" className="button" data-translation="Remove all">
+                <button
+                    id="remove-all-areas"
+                    className="button"
+                    data-translation="Remove all"
+                    onClick={() => this.removeAll()}>
                     Remove all
                 </button>
             </div>
@@ -177,6 +181,7 @@ class CanvasAreasHandler extends CanvasHandler {
      * @param {string} initialValue initial value
      */
     onReady(frame, initialValue) {
+        console.log({initialValue});
         this.areasString = initialValue || "";
         this.areas = [];
 
@@ -189,6 +194,7 @@ class CanvasAreasHandler extends CanvasHandler {
 
             if (this.areasString.length > 0) {
                 var numbers = this.areasString.match(/\d+/g).map((i) => parseInt(i));
+                console.log(numbers);
                 if (numbers.length % 4 === 0) {
                     for (var base = 0; base < numbers.length; base += 4) {
                         const color = this.colors[getRandom(0, this.colors.length)];

@@ -93,6 +93,12 @@ class CanvasRoiHandler extends CanvasHandler {
         e.preventDefault();
     }
 
+    stringToRoi(roi) {
+        var numbers = roi.match(/\d+/g).map((i) => parseInt(i));
+        if (numbers.length === 4) return [numbers[0], numbers[1], numbers[2], numbers[3]];
+        else return false;
+    }
+
     /**
      * Callback to update the image displayed in the canvas
      * @param {strng} frame base64 encoded image

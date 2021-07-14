@@ -28,7 +28,12 @@ class CameraConfiguration extends React.Component {
         )
             .then((res) => res.json())
             .then(({camera_frame}) => {
-                this.props.openModalCanvas("roi", (value) => this.onAcceptModal("roi", value), camera_frame.frame);
+                this.props.openModalCanvas(
+                    "roi",
+                    (value) => this.onAcceptModal("roi", value),
+                    camera_frame.frame,
+                    this.props.cameraConfig["roi"]
+                );
             });
     }
 
@@ -42,8 +47,9 @@ class CameraConfiguration extends React.Component {
             .then(({camera_frame}) => {
                 this.props.openModalCanvas(
                     "ignoredAreas",
-                    (value) => this.onAcceptModal("ignoredAreas", value),
-                    camera_frame.frame
+                    (value) => this.onAcceptModal("ignoredareas", value),
+                    camera_frame.frame,
+                    this.props.cameraConfig["ignoredareas"]
                 );
             });
     }
@@ -59,7 +65,8 @@ class CameraConfiguration extends React.Component {
                 this.props.openModalCanvas(
                     "exclusivityAreas",
                     (value) => this.onAcceptModal("pointsdiscriminators", value),
-                    camera_frame.frame
+                    camera_frame.frame,
+                    this.props.cameraConfig["pointsdiscriminators"]
                 );
             });
     }

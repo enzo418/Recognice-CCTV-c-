@@ -32,7 +32,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
         // in state only define the variables that the elements use
         this.state = {
-            selectModeActive: false,
+            selectModeActive: true,
             typeSelected: TypeArea.DENY, // deny|allow
         };
 
@@ -44,95 +44,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             onMouseUp: () => true,
             onTouchEnd: () => true,
         };
-
-        this.header = (
-            <div className="message-header exclusivity-areas-header">
-                <p data-translation="Select the exclusivity areas of the camera">
-                    Select the exclusivity areas of the camera
-                </p>
-
-                <div className="message-header-button">
-                    <button
-                        id="button-close-poly"
-                        className="button sizable"
-                        data-translation="Close polygon"
-                        hidden={this.state.selectModeActive}>
-                        Close polygon
-                    </button>
-                    <button
-                        id="button-aprox-poly"
-                        className="button sizable"
-                        data-translation="Aproximate polygon curve(s)"
-                        hidden={this.state.selectModeActive}>
-                        Aproximate polygon curve(s)
-                    </button>
-
-                    <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
-                        <button
-                            className={"button" + (this.state.typeSelected === TypeArea.ALLOW ? "is-selected" : "")}
-                            data-type="allow"
-                            onClick={() => this.toggleAreaType()}>
-                            Allow points inside this poly
-                        </button>
-                        <button
-                            className={
-                                "button is-warning" + (this.state.typeSelected === TypeArea.DENY ? "is-selected" : "")
-                            }
-                            data-type="deny"
-                            onClick={() => this.toggleAreaType()}>
-                            Deny points inside this poly
-                        </button>
-                    </div>
-
-                    <div className="undo-redo sizable" hidden={this.state.selectModeActive}>
-                        <button id="button-undo" className="button" onClick={() => this.undo()}>
-                            <i className="fas fa-undo"></i>
-                            <p>Undo</p>
-                        </button>
-                        <button id="" className="button" onClick={() => this.redo()}>
-                            <p>Redo</p>
-                            <i className="fas fa-redo"></i>
-                        </button>
-                    </div>
-
-                    <button
-                        id="button-remove-all-exclareas"
-                        className="button sizable"
-                        data-translation="Remove all"
-                        hidden={this.state.selectModeActive}
-                        onClick={() => this.removeAll()}>
-                        Remove all
-                    </button>
-
-                    <button
-                        id="button-remove-selected-exclareas"
-                        className="button sizable selection is-hidden"
-                        data-translation="Remove this area"
-                        hidden={!this.state.selectModeActive}
-                        onClick={() => this.removeSelected()}>
-                        Remove this area
-                    </button>
-
-                    <button
-                        id="button-start-selected-exclareas"
-                        className="button sizable"
-                        data-translation="Select area"
-                        hidden={this.state.selectModeActive}
-                        onClick={() => this.startSelectMode()}>
-                        Select area
-                    </button>
-
-                    <button
-                        id="button-exit-selected-exclareas"
-                        className="button sizable selection is-hidden"
-                        data-translation="Exit from selection mode"
-                        hidden={!this.state.selectModeActive}
-                        onClick={() => this.exitSelectionMode()}>
-                        Exit from selection mode
-                    </button>
-                </div>
-            </div>
-        );
     }
 
     toggleAreaType() {
@@ -155,7 +66,8 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     }
 
     startSelectMode() {
-        this.setState(() => ({selectModeActive: true}));
+        console.log(this.state);
+        this.setState((prev) => ({selectModeActive: !prev.selectModeActive}));
     }
 
     onSelect() {}
@@ -429,7 +341,111 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
     render() {
         return (
-            <ModalCanvas header={this.header} onAccept={this.props.onAccept} onCancel={this.props.onCancel}>
+            <ModalCanvas
+                header={
+                    <div className="message-header exclusivity-areas-header">
+                        <p data-translation="Select the exclusivity areas of the camera">
+                            Select the exclusivity areas of the camera
+                        </p>
+
+                        <div className="message-header-button">
+                            {this.state.selectModeActive && (
+                                <button
+                                    id="button-close-poly"
+                                    className="button sizable"
+                                    data-translation="Close polygon"
+                                    onClick={() => this.closeCurrentPoly()}>
+                                    Close polygon
+                                </button>
+                            )}
+
+                            {this.state.selectModeActive && (
+                                <button
+                                    id="button-aprox-poly"
+                                    className="button sizable"
+                                    data-translation="Aproximate polygon curve(s)"
+                                    onClick={() => this.aproxPoly()}>
+                                    Aproximate polygon curve(s)
+                                </button>
+                            )}
+
+                            <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
+                                <button
+                                    className={
+                                        "button" + (this.state.typeSelected === TypeArea.ALLOW ? "is-selected" : "")
+                                    }
+                                    data-type="allow"
+                                    onClick={() => this.toggleAreaType()}>
+                                    Allow points inside this poly
+                                </button>
+                                <button
+                                    className={
+                                        "button is-warning" +
+                                        (this.state.typeSelected === TypeArea.DENY ? "is-selected" : "")
+                                    }
+                                    data-type="deny"
+                                    onClick={() => this.toggleAreaType()}>
+                                    Deny points inside this poly
+                                </button>
+                            </div>
+                            {this.state.selectModeActive && (
+                                <div className="undo-redo sizable">
+                                    <button id="button-undo" className="button" onClick={() => this.undo()}>
+                                        <i className="fas fa-undo"></i>
+                                        <p>Undo</p>
+                                    </button>
+                                    <button id="" className="button" onClick={() => this.redo()}>
+                                        <p>Redo</p>
+                                        <i className="fas fa-redo"></i>
+                                    </button>
+                                </div>
+                            )}
+
+                            {this.state.selectModeActive && (
+                                <button
+                                    id="button-remove-all-exclareas"
+                                    className="button sizable"
+                                    data-translation="Remove all"
+                                    onClick={() => this.removeAll()}>
+                                    Remove all
+                                </button>
+                            )}
+
+                            {!this.state.selectModeActive && (
+                                <button
+                                    id="button-remove-selected-exclareas"
+                                    className="button sizable selection is-hidden"
+                                    data-translation="Remove this area"
+                                    hidden={!this.state.selectModeActive}
+                                    onClick={() => this.removeSelected()}>
+                                    Remove this area
+                                </button>
+                            )}
+
+                            {!this.state.selectModeActive && (
+                                <button
+                                    id="button-start-selected-exclareas"
+                                    className="button sizable"
+                                    data-translation="Select area"
+                                    onClick={() => this.startSelectMode()}>
+                                    Select area
+                                </button>
+                            )}
+
+                            {this.state.selectModeActive && (
+                                <button
+                                    id="button-exit-selected-exclareas"
+                                    className="button sizable selection is-hidden"
+                                    data-translation="Exit from selection mode"
+                                    onClick={() => this.exitSelectionMode()}>
+                                    Exit from selection mode
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                }
+                onAccept={this.props.onAccept}
+                onCancel={this.props.onCancel}>
                 <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />
             </ModalCanvas>
         );
