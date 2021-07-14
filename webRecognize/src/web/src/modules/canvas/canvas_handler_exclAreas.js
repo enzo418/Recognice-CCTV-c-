@@ -28,9 +28,9 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
         // in state only define the variables that the elements use
         this.state = {
-            selectModeActive: false,
             areaSelectedIndex: null,
-            typeSelected: TypeArea.DENY, // deny|allow
+            selectModeActive: false,
+            typeSelected: "allow", // deny|allow
         };
 
         this.handlers = {
@@ -41,20 +41,28 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             onMouseUp: () => true,
             onTouchEnd: () => true,
         };
+
+        // this.header = (
+
+        // );
+
+        this.toggleAreaType = this.toggleAreaType.bind(this);
+    }
+
+    getValue() {
+        return this.areasString;
     }
 
     toggleAreaType(type) {
-        this.setState((prev) => {
-            // update type (allow points inside this area or deny them)
-            prev.typeSelected = type;
+        this.setState(() => ({typeSelected: type}));
 
-            // if it's in selection mode
-            if (prev.selectModeActive) {
-                // change the type of the selected area
-                this.areas[this.state.areaSelectedIndex].type = prev.typeSelected;
-                this.redraw();
-            }
-        });
+        console.log({selectmode: this.state.selectModeActive});
+        // if it's in selection mode
+        if (this.state.selectModeActive) {
+            // change the type of the selected area
+            this.areas[this.state.areaSelectedIndex].type = type;
+            this.redraw();
+        }
     }
 
     componentDidMount() {
@@ -63,11 +71,15 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
     }
 
     startSelectMode() {
-        console.log("start select mode");
         this.setState(() => ({selectModeActive: true}));
     }
 
-    onSelect() {}
+    onSelect() {
+        // set selection type to the same as the area
+        if (this.state.typeSelected !== this.areas[this.state.areaSelectedIndex].type) {
+            this.toggleAreaType(this.areas[this.state.areaSelectedIndex].type);
+        }
+    }
 
     removeSelected() {
         this.lastUndoEvents.push({
@@ -148,6 +160,7 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
             aproximated: false,
         };
 
+        this.areas2String();
         this.redraw(true);
     }
 
@@ -367,12 +380,14 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
 
                             <div id="toggle-exclusivity-area-type" className="buttons has-addons selection">
                                 <button
-                                    className={`button ${this.state.typeSelected === "allow" ? " is-warning" : ""}`}
+                                    className={"button " + (this.state.typeSelected === "allow" ? "is-warning" : "")}
+                                    data-type="allow"
                                     onClick={() => this.toggleAreaType("allow")}>
                                     Allow points inside this poly
                                 </button>
                                 <button
-                                    className={`button ${this.state.typeSelected === "deny" ? " is-warning" : ""}`}
+                                    className={"button " + (this.state.typeSelected === "deny" ? "is-warning" : "")}
+                                    data-type="deny"
                                     onClick={() => this.toggleAreaType("deny")}>
                                     Deny points inside this poly
                                 </button>
@@ -406,7 +421,6 @@ class CanvasExclusivityAreasHandler extends CanvasHandler {
                                     id="button-remove-selected-exclareas"
                                     className="button sizable selection"
                                     data-translation="Remove this area"
-                                    hidden={!this.state.areaSelectedIndex !== null}
                                     onClick={() => this.removeSelected()}>
                                     Remove this area
                                 </button>

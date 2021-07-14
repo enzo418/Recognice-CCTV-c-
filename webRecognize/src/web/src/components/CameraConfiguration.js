@@ -17,6 +17,7 @@ class CameraConfiguration extends React.Component {
     }
 
     onAcceptModal(id, value) {
+        console.log({id, value});
         this.props.changeTargetValue(this.props.id, id, value);
     }
 
