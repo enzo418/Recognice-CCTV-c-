@@ -467,8 +467,14 @@ int main(int argc, char **argv) {
 	.get("/*.*", [&asyncFileStreamer](auto *res, auto *req) {
 	    std::cout << "2. Any file" << std::endl;
 
+        std::cout << "[" << req->getUrl() << "] Range: " << req->getHeader("range") << std::endl;
+
+        std::string rangeHeader(req->getHeader("range"));
+
         if (!hasExtension(req->getUrl())) {
             req->setYield(true);
+        }  else if (req->getUrl() == "/media/test_video.mp4") {
+            asyncFileStreamer.streamRangedFile(res, req->getUrl(), rangeHeader);
         } else if (asyncFileStreamer.streamFile(res, req->getUrl())){
             std::cout << "Succesfull sended file" << std::endl;
         

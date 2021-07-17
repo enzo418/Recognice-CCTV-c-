@@ -129,4 +129,12 @@ public:
     int getFileSize() {
         return fileSize;
     }
+
+    std::ifstream* getFileHandler() {
+        return &fin;
+    }
+
+    std::string getFileName() {
+        return fileName;
+    }
 };
