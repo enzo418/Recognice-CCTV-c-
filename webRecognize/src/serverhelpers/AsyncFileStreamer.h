@@ -7,7 +7,7 @@ const char *HTTP_404_NOT_FOUND = "404 Not Found";
 const char *HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
 
 // 16.384kb
-constexpr size_t ReadWriteBufferSize = 16 * 1024;
+constexpr size_t ReadWriteBufferSize = 16 * 1024 * 10;
 
 struct AsyncFileStreamer {
 
@@ -70,15 +70,25 @@ struct AsyncFileStreamer {
 
         if (rangeHeader == "bytes=0-") {
             std::cout << "is first" << std::endl;
-            res->writeStatus("206 Partial Content")
-                ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-                ->writeHeader("Content-Length", fz)
-                ->writeHeader("Connection", "keep-alive")
-                ->writeHeader("Accept-Ranges", "bytes")
-                ->writeHeader("Content-Type", "video/mp4")
-                ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
+            //  res->writeStatus("200 OK")
+                // ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
+                // ->writeHeader("Content-Length", fz)
+                // ->writeHeader("Connection", "keep-alive")
+                // ->writeHeader("Transfer-Encoding", "chunked")
+                // ->writeHeader("Content-Type", "video/mp4");
+                // ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
                 // ->tryEndRaw(std::string_view(nullptr, 0), 0);
-                ->endRaw();
+                // ->endRaw();
+
+            // res->writeStatus("206 Partial Content")
+            //     ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
+            //     ->writeHeader("Content-Length", fz)
+            //     ->writeHeader("Connection", "keep-alive")
+            //     ->writeHeader("Accept-Ranges", "bytes")
+            //     ->writeHeader("Content-Type", "video/mp4")
+            //     ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
+            //     // ->tryEndRaw(std::string_view(nullptr, 0), 0);
+            //     ->endRaw();
             // return true;
         }
 
@@ -108,6 +118,7 @@ struct AsyncFileStreamer {
         }
 
         std::string ran;
+        std::string buf; buf.resize(ReadWriteBufferSize);
 
         for (auto& range : ranges) {
             std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
@@ -117,13 +128,12 @@ struct AsyncFileStreamer {
 
             auto bytesLeft = range.length();
             while (bytesLeft) {
-                char buf[ReadWriteBufferSize];
-                auto of = std::min(sizeof(buf), bytesLeft);
+                auto of = std::min(buf.length(), bytesLeft);
                 total += of;
 
                 ran = "bytes 0-" + std::to_string(total) + "/" + std::to_string(fz);
                 std::cout << "Reading " << of << " bytes from file." << " Left: " << bytesLeft <<  " Ran: " << ran << std::endl;
-                fin->read(buf, of);
+                fin->read(buf.data(), of);
                 if (of <= 0) {
                     const static std::string unexpectedEof("Unexpected EOF");
                     std::cout << "Error reading file: " << (of == 0 ? unexpectedEof : "getLastError") << std::endl;
@@ -136,16 +146,23 @@ struct AsyncFileStreamer {
                 //     ->writeHeader("Content-Length", of);
 
                 bytesLeft -= of;
-                if (!res->tryEndRaw(buf, of).first) {
+                if (!res->write(std::string_view(buf.data(), of))) {
+                // if (!res->tryEndRaw(buf, of).first) {
                     std::cout << "ended range" << std::endl;
-                    return false;
                 }
             }
-        }
+            
+            std::cout << "Sending 0 size chunk\n";
+            if (!res->writeOrZero(std::string_view(nullptr, 0))) {                
+                // res->close();
+                // res->end();
+                std::cout << "Error sending 0 size chunk\n";
+                break;
+            }
 
-        // res->tryEnd(std::string_view(nullptr, 0), 0);
-        // res->close();
-        // res->end();
+            std::cout << "Send end\n" << std::endl;
+            res->tryEnd(std::string_view(nullptr, 0), 0);
+        }
     }
 
     template <bool SSL>
