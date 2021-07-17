@@ -64,59 +64,10 @@ struct AsyncFileStreamer {
 
         auto it = asyncFileReaders.find(url);
         AsyncFileReader *fileReader = it->second;
-        std::string rangesStringOut;
-
-        std::list<Range> ranges;
-
-        // std::cout << "Header string: " << rangeHeader << std::endl;
-
-        if (!rangeHeader.empty() && !parseRanges(rangeHeader, ranges)) {
-            // return sendBadRequest("Bad range header");
-            std::cout << "Bad request header" << std::endl;
-            return false;
-        }
 
         long fz = fileReader->getFileSize();
 
-        ranges = processRangesForStaticData(ranges, fz, rangesStringOut);
-
-        std::cout << "Ranges: \n";
-        for(auto&& range : ranges) {
-            std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
-        }
-
-        if (rangeHeader == "bytes=0-") {
-            std::cout << "is first" << std::endl;
-            //  res->writeStatus("200 OK")
-                // ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-                // ->writeHeader("Content-Length", fz)
-                // ->writeHeader("Connection", "keep-alive")
-                // ->writeHeader("Transfer-Encoding", "chunked")
-                // ->writeHeader("Content-Type", "video/mp4");
-                // ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
-                // ->tryEndRaw(std::string_view(nullptr, 0), 0);
-                // ->endRaw();
-
-            // res->writeStatus("206 Partial Content")
-            //     ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-            //     ->writeHeader("Content-Length", fz)
-            //     ->writeHeader("Connection", "keep-alive")
-            //     ->writeHeader("Accept-Ranges", "bytes")
-            //     ->writeHeader("Content-Type", "video/mp4")
-            //     ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
-            //     // ->tryEndRaw(std::string_view(nullptr, 0), 0);
-            //     ->endRaw();
-            // return true;
-        }
-
         std::cout << "Fz: " << fz << std::endl;
-        
-
-        // res->onWritable([&](int offset) {
-        //     std::cout << "[" << url << "] Writable called, offset: " << offset << std::endl;
-        //     sendChunk(res, url, fileReader, ranges, rangesStringOut);
-        //     return true;
-        // });
 
         std::cout << std::endl << std::endl;
 
@@ -137,49 +88,44 @@ struct AsyncFileStreamer {
         std::string ran;
         std::string buf; buf.resize(ReadWriteBufferSize);
 
-        for (auto& range : ranges) {
-            std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
+        fin->seekg(0, fin->beg);  
+        long total = 0;
 
-            fin->seekg(range.start, fin->beg);  
-            long total = range.start;
+        auto bytesLeft = fz;
+        while (bytesLeft) {
+            auto of = std::min((long)buf.length(), bytesLeft);
+            total += of;
 
-            auto bytesLeft = range.length();
-            while (bytesLeft) {
-                auto of = std::min(buf.length(), bytesLeft);
-                total += of;
-
-                ran = "bytes 0-" + std::to_string(total) + "/" + std::to_string(fz);
-                std::cout << "Reading " << of << " bytes from file." << " Left: " << bytesLeft <<  " Ran: " << ran << std::endl;
-                fin->read(buf.data(), of);
-                if (of <= 0) {
-                    const static std::string unexpectedEof("Unexpected EOF");
-                    std::cout << "Error reading file: " << (of == 0 ? unexpectedEof : "getLastError") << std::endl;
-                    // We can't send an error document as we've sent the header.
-                    return false;
-                }
-
-                // res ->writeStatus("206 Partial Content")
-                //     ->writeHeader("Content-Range", std::string_view(ran.data(), ran.length()))
-                //     ->writeHeader("Content-Length", of);
-
-                bytesLeft -= of;
-                if (!res->write(std::string_view(buf.data(), of))) {
-                // if (!res->tryEndRaw(buf, of).first) {
-                    std::cout << "ended range" << std::endl;
-                }
-            }
-            
-            std::cout << "Sending 0 size chunk\n";
-            if (!res->writeOrZero(std::string_view(nullptr, 0))) {                
-                // res->close();
-                // res->end();
-                std::cout << "Error sending 0 size chunk\n";
-                break;
+            ran = "bytes " + std::to_string(total) + "/" + std::to_string(fz);
+            std::cout << "Reading " << of << " bytes from file." << " Left: " << bytesLeft <<  " Ran: " << ran << std::endl;
+            fin->read(buf.data(), of);
+            if (of <= 0) {
+                const static std::string unexpectedEof("Unexpected EOF");
+                std::cout << "Error reading file: " << (of == 0 ? unexpectedEof : "getLastError") << std::endl;
+                // We can't send an error document as we've sent the header.
+                return false;
             }
 
-            std::cout << "Send end\n" << std::endl;
-            res->tryEnd(std::string_view(nullptr, 0), 0);
+            bytesLeft -= of;
+            if (!res->write(std::string_view(buf.data(), of))) {
+                // This can be expected because
+                // client may only want the first part of the file. 
+                // Do not return
+                std::cout << "Client ended range" << std::endl;
+            }
         }
+        
+        std::cout << "Sending 0 size chunk\n";
+        if (!res->writeOrZero(std::string_view(nullptr, 0))) {
+            // res->close();
+            // res->end();
+            std::cout << "Error sending 0 size chunk\n";
+            return false;
+        }
+
+        std::cout << "Send end\n" << std::endl;
+        res->tryEnd(std::string_view(nullptr, 0), 0);
+        return true;
     }
 
     template <bool SSL>
