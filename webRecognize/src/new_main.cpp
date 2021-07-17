@@ -474,7 +474,7 @@ int main(int argc, char **argv) {
         if (!hasExtension(req->getUrl())) {
             req->setYield(true);
         }  else if (req->getUrl() == "/media/test_video.mp4") {
-            asyncFileStreamer.streamRangedFile(res, req->getUrl(), rangeHeader);
+            asyncFileStreamer.streamRangedFile(res, req->getUrl(), rangeHeader, serverRootFolder);
         } else if (asyncFileStreamer.streamFile(res, req->getUrl())){
             std::cout << "Succesfull sended file" << std::endl;
         

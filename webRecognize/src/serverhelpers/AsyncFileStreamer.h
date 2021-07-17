@@ -6,8 +6,8 @@
 const char *HTTP_404_NOT_FOUND = "404 Not Found";
 const char *HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
 
-// 16.384kb
-constexpr size_t ReadWriteBufferSize = 16 * 1024 * 10;
+// Max buffer size: 16.384 kb
+constexpr size_t ReadWriteBufferSize = 16 * 1024;
 
 struct AsyncFileStreamer {
 
@@ -44,7 +44,17 @@ struct AsyncFileStreamer {
     }
 
     template <bool SSL>
-    bool streamRangedFile(uWS::HttpResponse<SSL> *res, std::string_view url, std::string rangeHeader) {
+    bool streamRangedFile(uWS::HttpResponse<SSL> *res, std::string_view url, std::string rangeHeader, const std::string& server_path) {
+        /**
+         * This function stream a ranged file to the client.
+         * First it tells the client that the content is a Partial content
+         * that accepts a range from 0 to the file size.
+         * Content type is text/html and not a video/audio since
+         * in this response we don't send actually any data of the file.
+         * 
+         * Then we start sending to the user the actual file data.
+        **/
+
         auto it = asyncFileReaders.find(url);
         AsyncFileReader *fileReader = it->second;
         std::string rangesStringOut;
@@ -68,40 +78,16 @@ struct AsyncFileStreamer {
             std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
         }
 
-        if (rangeHeader == "bytes=0-") {
-            std::cout << "is first" << std::endl;
-            //  res->writeStatus("200 OK")
-                // ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-                // ->writeHeader("Content-Length", fz)
-                // ->writeHeader("Connection", "keep-alive")
-                // ->writeHeader("Transfer-Encoding", "chunked")
-                // ->writeHeader("Content-Type", "video/mp4");
-                // ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT") // test
-                // ->tryEndRaw(std::string_view(nullptr, 0), 0);
-                // ->endRaw();
-
-            res->writeStatus("206 Partial Content")
-                ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-                ->writeHeader("Content-Length", fz)
-                ->writeHeader("Connection", "keep-alive")
-                ->writeHeader("Accept-Ranges", "bytes")
-                ->writeHeader("Content-Type", "video/mp4")
-                ->writeHeader("last-modified", "Thu, 17 Jun 2021 20:50:11 GMT");
-                // ->tryEndRaw(std::string_view(nullptr, 0), 0);
-                // ->endRaw();
-            // return true;
-        }
+        res->writeStatus("206 Partial Content")
+            ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
+            ->writeHeader("Content-Length", fz)
+            ->writeHeader("Connection", "keep-alive")
+            ->writeHeader("Accept-Ranges", "bytes")
+            ->writeHeader("Content-Type", "text/html")
+            ->writeHeader("Last-Modified", "Thu, 17 Jun 2021 20:50:11 GMT") // TODO: set actual modified time
+            ->tryEndRaw(std::string_view(nullptr, 0), 0);            
 
         std::cout << "Fz: " << fz << std::endl;
-        
-
-        // res->onWritable([&](int offset) {
-        //     std::cout << "[" << url << "] Writable called, offset: " << offset << std::endl;
-        //     sendChunk(res, url, fileReader, ranges, rangesStringOut);
-        //     return true;
-        // });
-
-        std::cout << std::endl << std::endl;
 
         res->onAborted([url]() {
             std::cout << "[" << url << "] ABORTED!" << std::endl;
@@ -140,28 +126,21 @@ struct AsyncFileStreamer {
                     // We can't send an error document as we've sent the header.
                     return false;
                 }
-
+                
+                // if we would support multiple ranges we need to send this:
                 // res ->writeStatus("206 Partial Content")
                 //     ->writeHeader("Content-Range", std::string_view(ran.data(), ran.length()))
                 //     ->writeHeader("Content-Length", of);
 
                 bytesLeft -= of;
-                // if (!res->write(std::string_view(buf.data(), of))) {
+
                 if (!res->tryEndRaw(buf, of).first) {
                     std::cout << "ended range" << std::endl;
+                    // The client doesn't want any more data from this range. 
+                    // Stop sending it.
+                    break;
                 }
             }
-            
-            // std::cout << "Sending 0 size chunk\n";
-            // if (!res->writeOrZero(std::string_view(nullptr, 0))) {                
-            //     // res->close();
-            //     // res->end();
-            //     std::cout << "Error sending 0 size chunk\n";
-            //     break;
-            // }
-
-            std::cout << "Send end\n" << std::endl;
-            res->tryEnd(std::string_view(nullptr, 0), 0);
         }
     }
 
