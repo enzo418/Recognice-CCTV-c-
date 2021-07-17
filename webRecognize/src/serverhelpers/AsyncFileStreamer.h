@@ -44,7 +44,24 @@ struct AsyncFileStreamer {
     }
 
     template <bool SSL>
-    bool streamRangedFile(uWS::HttpResponse<SSL> *res, std::string_view url, std::string rangeHeader) {
+    bool streamChunkedFile(uWS::HttpResponse<SSL> *res, std::string_view url, std::string rangeHeader) {
+        /**
+         * When the server request the video file we answer with 
+         *  -   Status: 200 OK
+         *  -   Transfer-Encoding: chunked
+         * in the first chunk
+         * 
+         * Then (without closing the connection [end]) we send the chunk as
+         * specified here: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding#directives
+         * 
+         * When we reach the end of file then we send an chunk with 0 size,
+         * if sucess then the client should have responded with an FIN flag and we of
+         * course try to end as the user said.
+         * 
+         * Tranfer-Enconding chunk doesn't allow to seek for a specific range on the file,
+         * so is not a good idea for media files.
+        **/
+
         auto it = asyncFileReaders.find(url);
         AsyncFileReader *fileReader = it->second;
         std::string rangesStringOut;
