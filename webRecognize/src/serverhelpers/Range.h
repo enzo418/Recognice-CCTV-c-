@@ -86,6 +86,7 @@ std::list<Range> processRangesForStaticData(const std::list<Range>& origRanges, 
     // bufferResponseAndCommonHeaders(ResponseCode::PartialContent);
     int contentLength = 0;
     std::ostringstream rangeLine;
+    rangeLine << "bytes ";
     std::list<Range> sendRanges;
     for (auto actualRange : origRanges) {
         if (actualRange.start < 0) {
