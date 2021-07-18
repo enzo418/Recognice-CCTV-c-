@@ -9,9 +9,9 @@
 #include <uWebSockets/HttpContextData.h>
 #include <uWebSockets/Multipart.h>
 
-#include "serverhelpers/AsyncFileReader.h"
-#include "serverhelpers/AsyncFileStreamer.h"
-#include "serverhelpers/Middleware.h"
+#include "stream_content/FileReader.h"
+#include "stream_content/FileStreamer.h"
+#include "stream_content/FileExtension.h"
 
 #include "server_utils.hpp"
 
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     int port = 3001;
     const std::string serverRootFolder = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
 
-    AsyncFileStreamer asyncFileStreamer(serverRootFolder);
+    FileStreamer fileStreamer(serverRootFolder);
     
     // Recognize program
     Recognize recognize;
@@ -143,14 +143,12 @@ int main(int argc, char **argv) {
     // Initilize app
     uWS::App()
 
-	.get("/", [&asyncFileStreamer](auto *res, auto *req) {
+	.get("/", [&fileStreamer](auto *res, auto *req) {
 	    std::cout << "Index!" << std::endl;
 
-        setFileContentType(res, req->getUrl(), true);
-        
-        asyncFileStreamer.streamFile(res, "/index.html");
-        
-        res->end();
+        std::string rangeHeader(req->getHeader("range"));
+
+        fileStreamer.streamFile(res, "/index.html", rangeHeader);
     })
     
     // make sure to copy currentNotificationIndex
@@ -464,22 +462,20 @@ int main(int argc, char **argv) {
         req->setYield(true);
     })
 
-	.get("/*.*", [&asyncFileStreamer](auto *res, auto *req) {
-	    std::cout << "2. Any file" << std::endl;
+	.get("/*.*", [&fileStreamer](auto *res, auto *req) {
+        std::string url(req->getUrl());
+        std::string rangeHeader(req->getHeader("range"));
 
-        if (!hasExtension(req->getUrl())) {
-            req->setYield(true);
-        } else if (asyncFileStreamer.streamFile(res, req->getUrl())){
-            std::cout << "Succesfull sended file" << std::endl;
-        
-            res->end();
+        if (!hasExtension(url)) {
+            req->setYield(true); // mark as not handled
+        } else if (fileStreamer.streamFile(res, url, rangeHeader)){
+            // std::cout << "Succesfull sended file" << std::endl;
         } else {
             res->end();
         }
     })
 
     .get("/*", [](auto *res, auto *req) {
-	    std::cout << "3. Web" << std::endl;
         res->writeStatus(HTTP_301_MOVED_PERMANENTLY);
         res->writeHeader("Location", "/");
         res->writeHeader("Content-Type", "text/html");

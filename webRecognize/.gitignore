@@ -14,7 +14,7 @@
 !.prettierrc
 
 # server
-!src/serverhelpers
+!src/stream_content
 
 # web
 !src/

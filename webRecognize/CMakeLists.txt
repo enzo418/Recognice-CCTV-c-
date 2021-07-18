@@ -47,7 +47,7 @@ message(${RECOG_SRC})
 include_directories(${CURL_INCLUDE_DIR})
 
 # Set cmake cxx flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread -lX11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -lX11")
 
 add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
 

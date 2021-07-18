@@ -10,6 +10,8 @@
 
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
+const char *HTTP_404_NOT_FOUND = "404 Not Found";
+const char *HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
 
 std::string GetJsonString(const std::string& key, const std::string& value) {
 	return fmt::format("{{\"{0}\": {1}}}", key, value);
