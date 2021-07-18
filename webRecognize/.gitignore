@@ -12,9 +12,11 @@
 !*.json
 !*.html
 !.prettierrc
+!LICENSE
 
 # server
 !src/stream_content
+!uWebSockets/
 
 # web
 !src/

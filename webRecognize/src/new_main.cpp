@@ -5,9 +5,9 @@
 #include "../../recognize/src/notification.hpp"
 #include "../../recognize/src/utils.hpp"
 
-#include <uWebSockets/App.h>
-#include <uWebSockets/HttpContextData.h>
-#include <uWebSockets/Multipart.h>
+#include "../uWebSockets/src/App.h"
+#include "../uWebSockets/src/HttpContextData.h"
+#include "../uWebSockets/src/Multipart.h"
 
 #include "stream_content/FileReader.h"
 #include "stream_content/FileStreamer.h"

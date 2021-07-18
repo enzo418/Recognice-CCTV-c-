@@ -1,6 +1,6 @@
 # Compiling
 - You will need c++ >= 20
-- (uWebSocket)[https://github.com/uNetworking/uWebSockets/]
+- [uWebSocket](https://github.com/uNetworking/uWebSockets/)
     - git clone --recursive https://github.com/uNetworking/uWebSockets/
     - `cd uWebSockets`
     - `sudo make install`
