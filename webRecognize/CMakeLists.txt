@@ -21,8 +21,6 @@ endif()
 # Opencv package
 find_package(OpenCV REQUIRED)
 
-find_package(Seasocks REQUIRED)
-
 find_package(fmt)
 
 # Curl package
@@ -52,5 +50,5 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -lX11")
 add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
 
 # set -l of opencv and curl 
-# add -lssl if use ssl
-target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp Seasocks::seasocks fmt::fmt "-l:uSockets.a" "-lz")
+# add -lssl if use ssl with uwebsocket
+target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp fmt::fmt "-l:uSockets.a" "-lz")
