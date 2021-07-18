@@ -517,9 +517,9 @@ int main(int argc, char **argv) {
 	})
 	
     .listen(port, [port, serverRootFolder](auto *token) {
-            if (token) {
-                std::cout << "Serving " << serverRootFolder << " over HTTP a " << port << std::endl;
-            }
+        if (token) {
+            std::cout << "Serving " << serverRootFolder << " over HTTP a " << port << std::endl;
+        }
     })
         
     .run();

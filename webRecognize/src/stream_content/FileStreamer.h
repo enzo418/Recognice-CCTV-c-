@@ -5,7 +5,7 @@
 #include <iostream>
 #include "../server_utils.hpp"
 
-// Max buffer size: 16.384 kb
+// Max buffer size: 16 kb = 16.384 bytes
 constexpr size_t ReadWriteBufferSize = 16 * 1024;
 
 struct FileStreamer {
@@ -23,6 +23,8 @@ struct FileStreamer {
          * This function stream a ranged file to the client.
          * First it tells the client that the content is a Partial content
          * that accepts a range from 0 to the file size.
+         * 
+         * For a mediafile, e.g. a mp4 video file the
          * Content type is text/html and not a video/audio since
          * in this response we don't send actually any data of the file.
          * 
@@ -30,14 +32,9 @@ struct FileStreamer {
         **/
         const long fz = fileReader->getFileSize();
 
-        // request is not ranged, send it chunked
-        if (rangeHeader.empty()) {
-            return streamChunkedFile(res, url, fileReader);
-        }
-
         std::vector<Range> ranges;
 
-        if (!parseRanges(rangeHeader, fz, ranges)) {
+        if (!parseRangeHeader(rangeHeader, fz, ranges)) {
             std::cout << "invalid header range \"" << rangeHeader << "\"\n";
             return false;
         }
@@ -48,20 +45,6 @@ struct FileStreamer {
         // }
 
         std::string rangesStringOut = getRangeStringForResponse(ranges[0], fz);
-
-        // always write status first
-        res->writeStatus("206 Partial Content")
-            ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
-            ->writeHeader("Content-Length", fz)
-            ->writeHeader("Connection", "keep-alive")
-            ->writeHeader("Accept-Ranges", "bytes")
-            ->writeHeader("Content-Type", getContentType(fileReader->getFileName()))
-            ->writeHeader("Last-Modified", "Thu, 17 Jun 2021 20:50:11 GMT") // TODO: set actual modified time
-            ->tryEndRaw(std::string_view(nullptr, 0), 0);            
-
-        res->onAborted([url]() {
-            std::cout << "[" << url << "] ABORTED!" << std::endl;
-        });
 
         // Check file health before reading it
         if (!fileReader->good()) {
@@ -78,6 +61,20 @@ struct FileStreamer {
                 return false;
             }
         }
+
+        // always write status first
+        res->writeStatus("206 Partial Content")
+            ->writeHeader("Content-Range", std::string_view(rangesStringOut.data(), rangesStringOut.length()))
+            ->writeHeader("Content-Length", fz)
+            ->writeHeader("Connection", "keep-alive")
+            ->writeHeader("Accept-Ranges", "bytes")
+            ->writeHeader("Content-Type", getContentType(fileReader->getFileName()))
+            ->writeHeader("Last-Modified", "Thu, 17 Jun 2021 20:50:11 GMT") // TODO: set actual modified time
+            ->tryEndRaw(std::string_view(nullptr, 0), 0);            
+
+        res->onAborted([url]() {
+            std::cout << "[" << url << "] ABORTED!" << std::endl;
+        });
 
         std::string ran;
         std::string buf; buf.resize(ReadWriteBufferSize);
@@ -124,7 +121,7 @@ struct FileStreamer {
     template <bool SSL>
     bool streamChunkedFile(uWS::HttpResponse<SSL> *res, const std::string& url, FileReader *fileReader) {
         /**
-         * When the server request the video file we answer with 
+         * When the server request a file we answer with 
          *  -   Status: 200 OK
          *  -   Transfer-Encoding: chunked
          * in the first chunk
@@ -201,6 +198,7 @@ struct FileStreamer {
             return false;
         }
 
+        // everything was ok, end it.
         res->tryEnd(std::string_view(nullptr, 0), 0);
         return true;
     }
@@ -217,8 +215,13 @@ struct FileStreamer {
         }
 
         FileReader* reader = staticFiles->getFileHandler(url);
-        streamRangedFile(res, url, reader, rangeHeader);
-
-        return true;
+        
+        // request is not ranged, send it chunked
+        if (rangeHeader.empty()) {
+            return streamChunkedFile(res, url, reader);
+        } else {
+            // there is a range
+            return streamRangedFile(res, url, reader, rangeHeader);
+        }
     }
 };

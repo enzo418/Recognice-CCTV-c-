@@ -30,7 +30,9 @@ public:
 
         // TODO: Since the file will be opened all the time check
         // if the last modification time is the same as the one
-        // as when we opened it
+        // as when we opened it. Or the file will have
+        // an incorrect size and we could potentially be 
+        // trying to stream data that is not longer there.
 
         // TODO: Support cache
 
@@ -114,9 +116,7 @@ private:
 public:
     StaticFilesHandler(std::string server_path) : server_path(server_path) {}
 
-    /**
-      * Adds a file handler to the list
-    **/
+    // Adds a file handler to the list    
     bool addFileHandler(std::string url) {
         std::string path = server_path + url;
         if (fileExists(path)) {
@@ -132,9 +132,7 @@ public:
         return filesReader.find(url) != filesReader.end();
     }
 
-    /**
-      * Returns the FileReader of a url
-    **/
+    // Returns the FileReader of a url
     FileReader* getFileHandler(const std::string& url) {
         return filesReader.find(url)->second;
     }

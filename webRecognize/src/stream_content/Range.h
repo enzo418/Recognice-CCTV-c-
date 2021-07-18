@@ -55,12 +55,11 @@ Range getRange(const std::string& range_s, const long& filesize) {
 inline void getRanges(const std::string& rangesHeader, std::vector<Range>& outranges, const long& filesize) {
     auto ranges = splitString(rangesHeader, ", ");
     for(auto& range : ranges) {
-        Range rn = getRange(range, filesize);
-        outranges.push_back(rn);
+        outranges.push_back(getRange(range, filesize));
     }
 }
 
-bool parseRanges(const std::string& rangesHeader, const long& filesize, std::vector<Range>& ranges) {    
+bool parseRangeHeader(const std::string& rangesHeader, const long& filesize, std::vector<Range>& ranges) {    
     if (rangesHeader.substr(0, 6) == "bytes=") {
         getRanges(rangesHeader.substr(6, rangesHeader.length() - 1), ranges, filesize);
         return true;
