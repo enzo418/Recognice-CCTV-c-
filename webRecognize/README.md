@@ -1,12 +1,16 @@
 # Compiling
-- You will need c++ >= 20
+- You will need installed on your system
+    - compiler for c++ >= 20
+    - curl
+    - zlib
+    - fmt
+    - opencv
 - [uWebSocket](https://github.com/uNetworking/uWebSockets/)
-    - git clone --recursive https://github.com/uNetworking/uWebSockets/
-    - `cd uWebSockets`
-    - `sudo make install`
-    - uSocket
+    - already included a modified version
+    - [uSocket](https://github.com/uNetworking/uSockets/tree/5440dbac79bd76444175b76ee95dfcade12a6aac)
+        - `git clone https://github.com/uNetworking/uSockets/tree/5440dbac79bd76444175b76ee95dfcade12a6aac`
         - `cd uSockets && make`
-        - sudo cp uSockets.a /usr/local/lib
+        - `sudo cp uSockets.a /usr/local/lib`
 
 # Frontend
 The fronted is built dynamically. First we get the html-elements specifications for the camera and program configurations from "elements.json", then we get the translations from "translations.json". Then the users choices a configuration file and the program parses that in order to acquire the defaults value for each field. After that the program generates the elements from differents templates.

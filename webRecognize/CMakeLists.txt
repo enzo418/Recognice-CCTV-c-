@@ -51,4 +51,5 @@ add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
 
 # set -l of opencv and curl 
 # add -lssl if use ssl with uwebsocket
+# -lz is zlib
 target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp fmt::fmt "-l:uSockets.a" "-lz")
