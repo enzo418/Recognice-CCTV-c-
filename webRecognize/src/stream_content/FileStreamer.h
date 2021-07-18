@@ -42,14 +42,12 @@ struct FileStreamer {
             return false;
         }
         
-        std::cout << "Ranges: " << rangeHeader << " | File size: " << fz << std::endl;
-        for(auto&& range : ranges) {
-            std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
-        }
+        // std::cout << "Ranges: " << rangeHeader << " | File size: " << fz << std::endl;
+        // for(auto&& range : ranges) {
+        //     std::cout << "\tstart: " << range.start << " -> end: " << range.end << std::endl;
+        // }
 
         std::string rangesStringOut = getRangeStringForResponse(ranges[0], fz);
-
-        std::cout << "Range string for response: " << rangesStringOut << std::endl;
 
         // always write status first
         res->writeStatus("206 Partial Content")
@@ -90,6 +88,10 @@ struct FileStreamer {
             fileReader->seek(range.start, fileReader->beg());  
             long total = range.start;
 
+            // if we would support multiple ranges we need to send this:
+            // res ->writeStatus("206 Partial Content")
+            //     ->writeHeader("Content-Range", getRangeStringForResponse(range, fz));
+
             auto bytesLeft = range.length();
             while (bytesLeft) {
                 auto of = std::min(buf.length(), bytesLeft);
@@ -105,11 +107,6 @@ struct FileStreamer {
                     return false;
                 }
                 
-                // if we would support multiple ranges we need to send this:
-                // res ->writeStatus("206 Partial Content")
-                //     ->writeHeader("Content-Range", std::string_view(ran.data(), ran.length()))
-                //     ->writeHeader("Content-Length", of);
-
                 bytesLeft -= of;
 
                 if (!res->tryEndRaw(buf, of).first) {
