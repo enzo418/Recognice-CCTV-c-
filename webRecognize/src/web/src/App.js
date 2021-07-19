@@ -47,12 +47,16 @@ class App extends React.Component {
                 stop: () => this.toggleRecognize("stop"),
             },
             // App config
-            configuration: {
-                set: (key, value) => this.changeConfiguration({key, value}),
-                toggle: (key) => this.changeConfiguration({key: key}, true),
-                sendPushOnNotification: false,
-                playSoundOnNotification: true,
-            },
+            configuration: Object.assign(
+                {
+                    set: (key, value) => this.changeConfiguration({key, value}),
+                    toggle: (key) => this.changeConfiguration({key: key}, true),
+                },
+                JSON.parse(window.localStorage.getItem("configuration")) || {
+                    sendPushOnNotification: false,
+                    playSoundOnNotification: true,
+                }
+            ),
             configurationFilesAvailables: [],
             error: null,
             alerts: [],
@@ -313,12 +317,12 @@ class App extends React.Component {
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
                     this.state.fileNameToCopy === "" && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                    />
-                )}
+                        <ModalSelectConfiguration
+                            configurationFilesAvailables={this.state.configurationFilesAvailables}
+                            changeConfigurationFile={this.changeConfigurationFile}
+                            onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
+                        />
+                    )}
 
                 {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
                     <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />

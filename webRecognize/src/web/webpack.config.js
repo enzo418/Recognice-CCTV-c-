@@ -10,7 +10,7 @@ module.exports = {
         compress: true,
         port: 8000,
     },
-    entry: "./src/index.js",
+    entry: ["./src/index.js", "./src/styles/styles.scss"],
     output: {
         filename: "main.js",
         path: path.resolve(output_dir),
@@ -19,7 +19,7 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             template: "./src/index.html",
-            favicon: "assets/favicon.svg",
+            favicon: "./src/favicon.svg",
         }),
         new MiniCssExtractPlugin({
             filename: "css/styles.css",
@@ -27,17 +27,17 @@ module.exports = {
     ],
     module: {
         rules: [
-            {
-                test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
+            // {
+            //     test: /\.css$/i,
+            //     use: ["style-loader", "css-loader"],
+            // },
             {
                 test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
                 use: ["babel-loader"],
             },
             {
-                test: /styles\.scss$/,
+                test: /\.scss$/,
                 use: [
                     MiniCssExtractPlugin.loader,
                     {

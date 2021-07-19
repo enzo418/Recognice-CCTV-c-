@@ -4,7 +4,6 @@ import moment from "moment";
 import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
 import bulmaCalendar from "bulma-calendar/dist/js/bulma-calendar.min";
-// import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min.css";
 
 class NotificationPage extends React.Component {
     constructor(props) {

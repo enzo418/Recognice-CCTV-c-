@@ -51,8 +51,8 @@ $button-hover-color: rgb(254, 255, 188);
 $button-focus-color: $yellow-crayola;
 
 @import "~bulma/bulma";
-// @import "./configurations.scss";
-// @import "./notifications.scss";
+@import "./configurations.scss";
+@import "./notifications.scss";
 @import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min";
 
 ::-webkit-scrollbar-thumb {
