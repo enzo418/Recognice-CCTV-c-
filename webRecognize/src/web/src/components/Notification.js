@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 function Notification(props) {
-    const {type, text, moment_date} = props;
+    const {type, text, moment_date} = props.notification;
     let media;
 
     if (type === "image") {
@@ -28,9 +28,7 @@ function Notification(props) {
 }
 
 Notification.propTypes = {
-    type: PropTypes.string.isRequired,
-    text: PropTypes.string.isRequired,
-    moment_date: PropTypes.object.isRequired,
+    notification: PropTypes.object.isRequired,
 };
 
 export default Notification;

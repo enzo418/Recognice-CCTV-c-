@@ -29,6 +29,7 @@
 !src/web/src/utils/
 !src/web/src/components/
 !src/web/src/components/Inputs
+!src/web/src/styles
 
 !CMakeLists.txt
 

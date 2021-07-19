@@ -47,7 +47,7 @@
     "@creativebulma/bulma-tooltip": "^1.2.0",
     "@fortawesome/fontawesome-free": "^5.15.3",
     "bulma": "^0.9.3",
-    "bulma-calendar": "^6.1.8",
+    "bulma-calendar": "^6.1.9",
     "bulma-pageloader": "^0.3.0",
     "i18next": "^20.3.2",
     "jquery": "^3.6.0",

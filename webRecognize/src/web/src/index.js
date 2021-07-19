@@ -6,7 +6,7 @@ import App from "./App";
 import {BrowserRouter as Router} from "react-router-dom";
 import {withRouter} from "react-router";
 
-import "./styles.scss";
+import "./styles/styles.scss";
 import "@fortawesome/fontawesome-free/js/all.js";
 
 // wrap the app in I18next Provider with the configuration loaded from i18n.js

@@ -51,6 +51,9 @@ $button-hover-color: rgb(254, 255, 188);
 $button-focus-color: $yellow-crayola;
 
 @import "~bulma/bulma";
+@import "./configurations.scss";
+@import "./notifications.scss";
+// @import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min.css";
 
 ::-webkit-scrollbar-thumb {
     background-color: #494e52;
@@ -101,23 +104,6 @@ $button-focus-color: $yellow-crayola;
             width: auto;
         }
 
-    }
-}
-
-#configurations {
-    .configuration-group .card-content-item input[type="checkbox"] {
-        margin-right: 0.5rem;
-    }
-
-    .card-content-item {
-        margin: 0.5rem 0;
-    }
-
-    .footer-camera-buttons {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
     }
 }
 
