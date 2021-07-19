@@ -17,6 +17,7 @@ import ModalSelectFileName from "./components/ModalSelectFileName";
 import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
 import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
+import {w3cwebsocket as W3CWebSocket} from "websocket";
 
 const pages = {
     configurations: {
@@ -28,6 +29,8 @@ const pages = {
         name: "notifications",
     },
 };
+
+const client = new W3CWebSocket("ws://localhost:3001/recognize");
 
 class App extends React.Component {
     constructor(props) {
@@ -75,6 +78,7 @@ class App extends React.Component {
                 // do not change cancel
                 onCancel: () => this.hideCanvasModal(),
             },
+            notifications: [],
         };
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
@@ -105,6 +109,21 @@ class App extends React.Component {
 
         let lang = window.localStorage.getItem("lang") || "en";
         i18n.changeLanguage(lang);
+
+        fetch("/api/notifications")
+            .then((res) => res.json())
+            .then((res) => {
+                this.setState(() => ({notifications: utils.prepareNotifications(res.notifications)}));
+            });
+
+        client.onmessage = (message) => {
+            console.log(message);
+            if (message.notifications) {
+                this.setState((prev) => ({
+                    notifications: prev.notifications.concat(utils.prepareNotifications(message.notifications)),
+                }));
+            }
+        };
     }
 
     hideCanvasModal() {
@@ -346,7 +365,9 @@ class App extends React.Component {
                     )}
 
                     <Route path={pages.notifications.path}>
-                        <NotificationPage configuration={this.state.configuration}></NotificationPage>
+                        <NotificationPage
+                            notifications={this.state.notifications}
+                            configuration={this.state.configuration}></NotificationPage>
                     </Route>
                 </Switch>
 

@@ -4,19 +4,13 @@ import moment from "moment";
 import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
 import bulmaCalendar from "bulma-calendar/dist/js/bulma-calendar.min";
-import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min.css";
-
-const parseStringToDate = (datestring, return_moment = false) => {
-    var parsed = moment(datestring, "DD_MM_YYYY_hh_mm_ss");
-    return return_moment ? parsed : parsed.toDate();
-};
+// import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min.css";
 
 class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            allNotifications: [], // all available notifications
-            showingNotifications: [], // notifications being shown
+            showingNotifications: props.notifications, // notifications being shown
             calendar: null,
         };
 
@@ -65,9 +59,9 @@ class NotificationPage extends React.Component {
     updateCalendarLimitis() {
         var minDate, maxDate;
 
-        if (this.state.allNotifications.length > 0) {
-            minDate = this.state.allNotifications[0].datetime;
-            maxDate = this.state.allNotifications[this.state.allNotifications.length - 1].datetime;
+        if (this.props.notifications.length > 0) {
+            minDate = this.props.notifications[0].datetime;
+            maxDate = this.props.notifications[this.props.notifications.length - 1].datetime;
         }
 
         if (!this.state.calendar || !this.state.calendar.isOpen()) {
@@ -80,17 +74,19 @@ class NotificationPage extends React.Component {
         var start = e.data.date.start,
             end = e.data.date.end;
 
-        this.setState((prev) => ({
-            showingNotifications: prev.allNotifications.filter((not) => not.datetime >= start && not.datetime <= end),
+        this.setState(() => ({
+            showingNotifications: this.props.notifications.filter(
+                (not) => not.datetime >= start && not.datetime <= end
+            ),
         }));
     }
 
     calendar_OnCancel(e) {
-        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.state.allNotifications) {
+        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.props.notifications) {
             // notificationPaginator.index = 0;
-            this.setState((prev) => ({showingNotifications: prev.allNotifications}));
+            this.setState(() => ({showingNotifications: this.props.notifications}));
 
-            // if (this.state.allNotifications === 0) {
+            // if (this.props.notifications === 0) {
             // } else {
             // notificationPaginator.gotoIndex(0);
             // }
@@ -98,18 +94,7 @@ class NotificationPage extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/notifications")
-            .then((res) => res.json())
-            .then((res) => {
-                res.notifications.forEach((not) => {
-                    not.datetime = parseStringToDate(not.datetime);
-                });
-
-                this.setState(
-                    () => ({allNotifications: res.notifications, showingNotifications: res.notifications}),
-                    this.updateCalendarLimitis
-                );
-            });
+        this.updateCalendarLimitis();
     }
 
     getGroups() {
@@ -157,6 +142,7 @@ class NotificationPage extends React.Component {
 
 NotificationPage.propTypes = {
     configuration: PropTypes.object.isRequired,
+    notifications: PropTypes.array.isRequired,
 };
 
 export default NotificationPage;

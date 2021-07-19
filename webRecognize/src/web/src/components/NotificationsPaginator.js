@@ -74,13 +74,15 @@ class NotificationsPaginator extends React.Component {
                             className="navigator-notification previous-notification icon button"
                             onClick={this.previousNotification}>
                             <i className="fas fa-arrow-left is-left"></i>
-                            <span className="notification-previous-left unselectable"></span>
+                            <span className="notification-previous-left unselectable">{this.state.index}</span>
                         </button>
 
                         <button
                             className="button navigator-notification next-notification icon"
                             onClick={this.nextNotification}>
-                            <span className="notification-next-left unselectable"></span>
+                            <span className="notification-next-left unselectable">
+                                {this.props.groups.length - this.state.index}
+                            </span>
                             <i className="fas fa-arrow-right is-right"></i>
                         </button>
 

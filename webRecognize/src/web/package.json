@@ -57,6 +57,7 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-tooltip": "^4.2.21",
-    "simplify-js": "^1.2.4"
+    "simplify-js": "^1.2.4",
+    "websocket": "^1.0.34"
   }
 }

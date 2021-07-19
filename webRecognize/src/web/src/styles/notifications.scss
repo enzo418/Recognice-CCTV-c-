@@ -83,13 +83,23 @@
                 color: #00feff;
             }
             
-            .previous-notification {
+            &.previous-notification {
                 bottom: 60%;
                 margin-right: 0.2rem;
+
+                svg {
+                    left: 10%;
+                    position: absolute;
+                }
             }
             
-            .next-notification {
+            &.next-notification {
                 bottom: 20%;
+
+                svg {
+                    right: 10%;
+                    position: absolute;
+                }
             }
 
             span {
