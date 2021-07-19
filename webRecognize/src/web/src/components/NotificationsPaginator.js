@@ -6,9 +6,7 @@ class NotificationsPaginator extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            index: props.lastNotificationIndex,
-            lastIndex: 0,
-            // groups: props.groups,
+            index: 0,
         };
 
         this.gotoIndex = this.gotoIndex.bind(this);
@@ -18,17 +16,10 @@ class NotificationsPaginator extends React.Component {
         this.scrollContainerToElementTop = this.scrollContainerToElementTop.bind(this);
     }
 
-    componentDidUpdate(prevProps, prevstate) {
-        // console.log("pag." , {prevProps, prevstate, i: this.state.marker_notifications}, prevProps.notifications.length !== this.state.marker_notifications);
-        // if(prevProps.notifications.length !== this.state.marker_notifications) {
-        //     this.setState(() => ({index: this.state.lastIndex, marker_notifications: this.props.notifications.length}));
-        // }
-    }
 
     gotoIndex(i, cb = () => {}) {
         console.log("update:" , i);
         this.setState(() => ({index: i}), cb);
-        this.props.onCurrentNotificationIndexChanged(i);
     }
 
     scrollContainerToElementTop() {
@@ -76,7 +67,8 @@ class NotificationsPaginator extends React.Component {
 
                 {this.props.notifications.length > 0 && (
                     <div className="buttons-navigator-notification">
-                        <button className="button navigator-notification buton-uttermost-start icon">
+                        <button className="button navigator-notification buton-uttermost-start icon"
+                        onClick={() => this.gotoUttermost(false)}>
                             <i className="fas fa-angle-double-left"></i>
                         </button>
 
@@ -91,12 +83,13 @@ class NotificationsPaginator extends React.Component {
                             className="button navigator-notification next-notification icon"
                             onClick={this.nextNotification}>
                             <span className="notification-next-left unselectable">
-                                {this.props.groups.length - this.state.index}
+                                {this.props.groups.length - 1 - this.state.index}
                             </span>
                             <i className="fas fa-arrow-right is-right"></i>
                         </button>
 
-                        <button className="button navigator-notification buton-uttermost-end icon">
+                        <button className="button navigator-notification buton-uttermost-end icon"
+                        onClick={() => this.gotoUttermost(true)}>
                             <i className="fas fa-angle-double-right"></i>
                         </button>
                     </div>
@@ -109,8 +102,6 @@ class NotificationsPaginator extends React.Component {
 NotificationsPaginator.propTypes = {
     notifications: PropTypes.array.isRequired,
     groups: PropTypes.array.isRequired,
-    lastNotificationIndex: PropTypes.number.isRequired,
-    onCurrentNotificationIndexChanged: PropTypes.func.isRequired
 };
 
 export default NotificationsPaginator;

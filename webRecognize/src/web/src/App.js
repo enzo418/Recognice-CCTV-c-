@@ -371,7 +371,6 @@ class App extends React.Component {
 
                     <Route path={pages.notifications.path}>
                         <NotificationPage
-                            key={this.state.notifications.length}
                             notifications={this.state.notifications}
                             configuration={this.state.configuration}></NotificationPage>
                     </Route>
