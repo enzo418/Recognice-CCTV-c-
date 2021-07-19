@@ -100,10 +100,6 @@ int main(int argc, char **argv) {
 	// start thread that send the notifications to the web
 	std::thread tick([&] {
 		for(;;) {
-            std::this_thread::sleep_for(std::chrono::seconds(10));
-            std::cout << "Sending to everyone!\n";
-            sendToEveryone("{\"notifications\": [{\"content\":\"/media/1_1_notification.mp4\",\"datetime\":\"04_07_2021_03_53_00\",\"group_id\":\"04072015085305\",\"type\":\"video\"}]}");
-            /*
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			if (recognize_running) {
 			    std::tuple<Notification::Type, std::string, std::string, std::string> media;
@@ -140,7 +136,6 @@ int main(int argc, char **argv) {
 					std::cout << "sended to everyone: " << query << std::endl;
 				}
             }
-            */
 		}
 	});
 	tick.detach();
