@@ -9,9 +9,9 @@ class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            notifications: props.notifications,
             showingNotifications: props.notifications, // notifications being shown
             calendar: null,
+            lastNotificationIndex: 0,
         };
 
         this.calendar_OnSelect = this.calendar_OnSelect.bind(this);
@@ -19,15 +19,21 @@ class NotificationPage extends React.Component {
         this.updateCalendarLimitis = this.updateCalendarLimitis.bind(this);
         this.getGroups = this.getGroups.bind(this);
         this.updateNotificationsWithFilters = this.updateNotificationsWithFilters.bind(this);
+        this.onCurrentNotificationIndexChanged = this.onCurrentNotificationIndexChanged.bind(this);
     }
 
     componentDidUpdate(prevProps) {
-        console.log(prevProps);
-        if(prevProps.notifications !== this.state.notifications) {
-            setTimeout(() => {
-                this.setState({notifications: this.state.notifications}, this.updateNotificationsWithFilters);
-            }, 1000)
-        }
+        // console.log(prevProps);
+        // if(prevProps.notifications !== this.props.notifications) {
+        //     setTimeout(() => {
+        //         this.setState({notifications: this.props.notifications}, this.updateNotificationsWithFilters);
+        //     }, 1000)
+        // }
+    }
+
+    onCurrentNotificationIndexChanged(i) {
+        console.log("update a ", i);
+        this.setState(() => ({lastNotificationIndex: i}));
     }
 
     reloadCalendar(minDate, maxDate) {
@@ -69,9 +75,9 @@ class NotificationPage extends React.Component {
     updateCalendarLimitis() {
         var minDate, maxDate;
 
-        if (this.state.notifications.length > 0) {
-            minDate = this.state.notifications[0].datetime;
-            maxDate = this.state.notifications[this.state.notifications.length - 1].datetime;
+        if (this.props.notifications.length > 0) {
+            minDate = this.props.notifications[0].datetime;
+            maxDate = this.props.notifications[this.props.notifications.length - 1].datetime;
         }
 
         if (!this.state.calendar || !this.state.calendar.isOpen()) {
@@ -82,9 +88,9 @@ class NotificationPage extends React.Component {
 
     updateNotificationsWithFilters(start = null, end = null) {
         this.setState((prev) => {
-            prev.showingNotifications = start && end ? this.state.notifications.filter(
+            prev.showingNotifications = start && end ? this.props.notifications.filter(
                 (not) => not.datetime >= start && not.datetime <= end
-            ) : this.state.notifications;
+            ) : this.props.notifications;
         });
     }
 
@@ -96,11 +102,11 @@ class NotificationPage extends React.Component {
     }
 
     calendar_OnCancel(e) {
-        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.state.notifications) {
+        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.props.notifications) {
             // notificationPaginator.index = 0;
-            this.setState(() => ({showingNotifications: this.state.notifications}));
+            this.setState(() => ({showingNotifications: this.props.notifications}));
 
-            // if (this.state.notifications === 0) {
+            // if (this.props.notifications === 0) {
             // } else {
             // notificationPaginator.gotoIndex(0);
             // }
@@ -147,9 +153,11 @@ class NotificationPage extends React.Component {
                 </div>
 
                 <NotificationsPaginator
-                    key={this.state.showingNotifications}
+                    key={this.props.notifications.length + this.state.showingNotifications.length}
                     notifications={this.state.showingNotifications}
-                    groups={this.getGroups()}></NotificationsPaginator>
+                    groups={this.getGroups()}
+                    lastNotificationIndex={this.state.lastNotificationIndex}
+                    onCurrentNotificationIndexChanged={this.onCurrentNotificationIndexChanged}></NotificationsPaginator>
             </div>
         );
     }
