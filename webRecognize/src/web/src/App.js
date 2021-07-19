@@ -121,10 +121,11 @@ class App extends React.Component {
             });
 
         client.onmessage = (message) => {
-            console.log(message);
-            if (message.notifications) {
+            let data = JSON.parse(message.data);
+            console.log("Message: ", data);
+            if (data.notifications) {
                 this.setState((prev) => ({
-                    notifications: prev.notifications.concat(utils.prepareNotifications(message.notifications)),
+                    notifications: prev.notifications.concat(utils.prepareNotifications(data.notifications)),
                 }));
             }
         };
@@ -370,6 +371,7 @@ class App extends React.Component {
 
                     <Route path={pages.notifications.path}>
                         <NotificationPage
+                            key={this.state.notifications}
                             notifications={this.state.notifications}
                             configuration={this.state.configuration}></NotificationPage>
                     </Route>

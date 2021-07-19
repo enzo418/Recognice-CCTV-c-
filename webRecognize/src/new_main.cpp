@@ -91,15 +91,19 @@ int main(int argc, char **argv) {
     // send a message to all the web socket clients
     auto sendToEveryone = [&clients](const std::string& message) {
         for (auto & client : clients) {
-            if (client->isSubscribed("/recognize")) {
+            // if (client->isSubscribed("/recognize")) {
                 client->send(message, uWS::OpCode::TEXT, true);
-            }
+            // }
         }
     };
 
 	// start thread that send the notifications to the web
 	std::thread tick([&] {
 		for(;;) {
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::cout << "Sending to everyone!\n";
+            sendToEveryone("{\"notifications\": [{\"content\":\"/media/1_1_notification.mp4\",\"datetime\":\"04_07_2021_03_53_00\",\"group_id\":\"04072015085305\",\"type\":\"video\"}]}");
+            /*
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			if (recognize_running) {
 			    std::tuple<Notification::Type, std::string, std::string, std::string> media;
@@ -123,7 +127,7 @@ int main(int argc, char **argv) {
 
 					type_string = query;
 					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\"}}", query, content, group_id, datetime);
-					query = fmt::format("{{\"new_notification\": {}}}", body);
+					query = fmt::format("{{\"notifications\": [{}]}}", body);
 
 					notificationsSended[currentNotificationIndex] = body;
 					
@@ -136,6 +140,7 @@ int main(int argc, char **argv) {
 					std::cout << "sended to everyone: " << query << std::endl;
 				}
             }
+            */
 		}
 	});
 	tick.detach();
@@ -516,6 +521,7 @@ int main(int argc, char **argv) {
         .open = [&clients](auto* ws) {
             /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
             clients.push_back(ws);
+            std::cout << "Client connected!\n";
         },
         .message = [&clients](auto *ws, std::string_view message, uWS::OpCode opCode) {
             // echo message

@@ -9,6 +9,7 @@ class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            notifications: props.notifications,
             showingNotifications: props.notifications, // notifications being shown
             calendar: null,
         };
@@ -17,6 +18,16 @@ class NotificationPage extends React.Component {
         this.calendar_OnCancel = this.calendar_OnCancel.bind(this);
         this.updateCalendarLimitis = this.updateCalendarLimitis.bind(this);
         this.getGroups = this.getGroups.bind(this);
+        this.updateNotificationsWithFilters = this.updateNotificationsWithFilters.bind(this);
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log(prevProps);
+        if(prevProps.notifications !== this.state.notifications) {
+            setTimeout(() => {
+                this.setState({notifications: this.state.notifications}, this.updateNotificationsWithFilters);
+            }, 1000)
+        }
     }
 
     reloadCalendar(minDate, maxDate) {
@@ -58,9 +69,9 @@ class NotificationPage extends React.Component {
     updateCalendarLimitis() {
         var minDate, maxDate;
 
-        if (this.props.notifications.length > 0) {
-            minDate = this.props.notifications[0].datetime;
-            maxDate = this.props.notifications[this.props.notifications.length - 1].datetime;
+        if (this.state.notifications.length > 0) {
+            minDate = this.state.notifications[0].datetime;
+            maxDate = this.state.notifications[this.state.notifications.length - 1].datetime;
         }
 
         if (!this.state.calendar || !this.state.calendar.isOpen()) {
@@ -69,23 +80,27 @@ class NotificationPage extends React.Component {
         }
     }
 
+    updateNotificationsWithFilters(start = null, end = null) {
+        this.setState((prev) => {
+            prev.showingNotifications = start && end ? this.state.notifications.filter(
+                (not) => not.datetime >= start && not.datetime <= end
+            ) : this.state.notifications;
+        });
+    }
+
     calendar_OnSelect(e) {
         var start = e.data.date.start,
             end = e.data.date.end;
 
-        this.setState(() => ({
-            showingNotifications: this.props.notifications.filter(
-                (not) => not.datetime >= start && not.datetime <= end
-            ),
-        }));
+        updateNotificationsWithFilters(start, end);
     }
 
     calendar_OnCancel(e) {
-        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.props.notifications) {
+        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.state.notifications) {
             // notificationPaginator.index = 0;
-            this.setState(() => ({showingNotifications: this.props.notifications}));
+            this.setState(() => ({showingNotifications: this.state.notifications}));
 
-            // if (this.props.notifications === 0) {
+            // if (this.state.notifications === 0) {
             // } else {
             // notificationPaginator.gotoIndex(0);
             // }
@@ -132,6 +147,7 @@ class NotificationPage extends React.Component {
                 </div>
 
                 <NotificationsPaginator
+                    key={this.state.showingNotifications}
                     notifications={this.state.showingNotifications}
                     groups={this.getGroups()}></NotificationsPaginator>
             </div>
