@@ -462,6 +462,26 @@ int main(int argc, char **argv) {
         req->setYield(true);
     })
 
+    // example for an async response
+    .get("/api/example_async", [](auto *res, auto *req) {
+        // move response and request to the new thread.
+        std::thread threadReponse([r = res, rq = req]() {
+            int total = 10;
+            while(total--) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+
+            r->end("It's working!");
+            std::cout << "Sended after 5 seconds!" << std::endl;
+        });
+
+        res->onAborted([]() {
+            std::cout << "ABORTED! async." << std::endl;
+        });
+        
+        threadReponse.detach();
+    })
+
 	.get("/*.*", [&fileStreamer](auto *res, auto *req) {
         std::string url(req->getUrl());
         std::string rangeHeader(req->getHeader("range"));
