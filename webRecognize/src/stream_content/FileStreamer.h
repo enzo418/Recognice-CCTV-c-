@@ -205,13 +205,17 @@ struct FileStreamer {
 
     template <bool SSL>
     bool streamFile(uWS::HttpResponse<SSL> *res, std::string url, std::string rangeHeader) {
-        if (!staticFiles->fileHandlerExists(url)) {
-            if (!staticFiles->addFileHandler(url)) {
-                std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << url << std::endl;
-                res->writeStatus(HTTP_404_NOT_FOUND);
-                res->end();
-                return false;
-            }
+        // yes, in each request we check if the file exists
+        // if it exists and doesn't have a handler then
+        if (!staticFiles->fileExists(url)) {
+            staticFiles->removeHandlerIfExists(url);
+            
+            std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << url << std::endl;
+            res->writeStatus(HTTP_404_NOT_FOUND);
+            res->end();
+            return false;
+        } else if (!staticFiles->fileHandlerExists(url)) {
+            staticFiles->addFileHandler(url);
         }
 
         FileReader* reader = staticFiles->getFileHandler(url);

@@ -18,13 +18,21 @@ private:
     std::string fileName;
     std::ifstream fin;
 
+    std::time_t lastModification;
+    
+    time_t lastModificationEpoch() {
+        return std::chrono::system_clock::to_time_t(
+            std::chrono::file_clock::to_sys(
+                std::filesystem::last_write_time(fileName)
+            )
+        );
+    }
 public:
     FileReader(std::string fileName) : fileName(fileName) {
         fin.open(fileName, std::ios::binary);
 
         // get fileSize
-        fin.seekg(0, fin.end);
-        fileSize = fin.tellg();
+        updateFileSize();
 
         // std::cout << "File size is: " << fileSize << std::endl;
 
@@ -44,6 +52,11 @@ public:
         // fin.read(cache.data(), cache.length());
         // cacheOffset = 0;
         // hasCache = true;
+    }
+
+    void updateFileSize() {
+        fin.seekg(0, fin.end);
+        fileSize = fin.tellg();
     }
 
     // Wrap filesystem to support cache in a future
@@ -79,9 +92,17 @@ public:
 
     void reload() {
         fin.open(fileName, std::ios::binary);
+        updateFileSize();
     }
 
+    // Updates if changed and then return the file size
     long getFileSize() {
+        time_t lastMod = lastModificationEpoch();
+        if (std::difftime(lastMod, lastModification) >= 0) {
+            updateFileSize();
+            lastModification = lastMod;
+        }
+
         return fileSize;
     }
 
@@ -89,15 +110,9 @@ public:
         return fileName;
     }
 
-    std::string getLastModificationTime() {
-        time_t lastModificationt = std::chrono::system_clock::to_time_t(
-            std::chrono::file_clock::to_sys(
-                std::filesystem::last_write_time(fileName)
-            )
-        );
-
+    std::string getLastModificationTime() {        
         struct tm time;
-        gmtime_r(&lastModificationt, &time);
+        gmtime_r(&lastModification, &time);
 
         char buffer[256];
         strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S %Z", &time);
@@ -109,23 +124,20 @@ struct StaticFilesHandler {
 private:
     std::string server_path;
     std::map<std::string, FileReader *> filesReader;
-
-    inline bool fileExists(std::string path) {
-        return std::filesystem::exists(path);
-    }
 public:
     StaticFilesHandler(std::string server_path) : server_path(server_path) {}
 
+    bool fileExists(std::string url) {
+        return std::filesystem::exists(server_path + url);
+    }
+
     // Adds a file handler to the list    
-    bool addFileHandler(std::string url) {
+    void addFileHandler(std::string url) {
+        // we assume that the file exists
+
         std::string path = server_path + url;
-        if (fileExists(path)) {
-            std::cout << "[" << url << "] => [" << path << "] File handler didn't exist. Adding it\n";
-            filesReader[url] = new FileReader(path);
-            return true;
-        } else {
-            return false;
-        }
+        std::cout << "[" << url << "] => [" << path << "] File handler didn't exist. Adding it\n";
+        filesReader[url] = new FileReader(path);
     }
 
     bool fileHandlerExists(const std::string& url) {
@@ -135,5 +147,10 @@ public:
     // Returns the FileReader of a url
     FileReader* getFileHandler(const std::string& url) {
         return filesReader.find(url)->second;
+    }
+
+    void removeHandlerIfExists(const std::string& url) {
+        auto it = filesReader.find(url);
+        if (it != filesReader.end()) filesReader.erase(it);
     }
 };
