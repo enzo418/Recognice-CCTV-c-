@@ -128,6 +128,15 @@ class App extends React.Component {
                     notifications: prev.notifications.concat(utils.prepareNotifications(data.notifications)),
                 }));
             }
+
+            if (data.recognize_state) {
+                if (typeof data.recognize_state.running !== 'undefined') {
+                    this.setState((prev) => {
+                        prev.recognize.running = data.recognize_state.running;
+                        return prev;
+                    });
+                }
+            }
         };
     }
 

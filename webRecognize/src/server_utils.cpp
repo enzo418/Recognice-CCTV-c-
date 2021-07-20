@@ -51,12 +51,13 @@ std::string GetAlertMessage(const AlertStatus& status, const std::string& messag
 }
 
 // datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss
-void AppendNotification (Json::Value& root, const std::string& type, const std::string& content, const std::string& group_id, const std::string& datetime) {
+void AppendNotification (Json::Value& root, const std::string& type, const std::string& content, const std::string& group_id, const std::string& datetime, const std::string& directory) {
     Json::Value pnt;
     pnt["type"] = type;
     pnt["content"] = content;
     pnt["group_id"] = group_id;
     pnt["datetime"] = datetime;
+    pnt["directory"] = directory;
     root.append(pnt);
 }
 

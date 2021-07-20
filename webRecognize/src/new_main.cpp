@@ -122,12 +122,12 @@ int main(int argc, char **argv) {
 					}
 
 					type_string = query;
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\", \"directory\":\"{4}\"}}", query, content, group_id, datetime, mediaPath);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group_id\":\"{2}\", \"datetime\":\"{3}\", \"directory\":\"{4}\"}}", query, content, group_id, datetime, mediaPath);
 					query = fmt::format("{{\"notifications\": [{}]}}", body);
 
 					notificationsSended[currentNotificationIndex] = body;
 					
-					AppendNotification(persintent_notifications, type_string, content, group_id, datetime);
+					AppendNotification(persintent_notifications, type_string, content, group_id, datetime, mediaPath);
 					
                     currentNotificationIndex = currentNotificationIndex + 1 >= notificationsSended.capacity() 
                                                     ? 0 : currentNotificationIndex + 1;
@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
      * Start the recognizer
      * Send as a query the file path to use, e.g. file_name=test.ini
     **/
-    .get("/api/start_recognizer", [&current_configurations, &mediaPath, &serverRootFolder, &recognize, &recognize_running](auto *res, auto *req) {
+    .get("/api/start_recognizer", [&sendToEveryone, &current_configurations, &mediaPath, &serverRootFolder, &recognize, &recognize_running](auto *res, auto *req) {
         std::string file(req->getQuery("file_name"));
         std::cout << "Starting recognize with file: " << file << " empty? " << file.empty() << std::endl;
         bool success = false;
@@ -306,12 +306,13 @@ int main(int argc, char **argv) {
 
                     fs::create_directories(configurations.programConfig.imagesFolder);
 
-                    mediaPath = fs::absolute(configurations.programConfig.imagesFolder).string();
-
                     if (recognize.Start(current_configurations, 
                                         configurations.programConfig.showPreview, 
-                                        configurations.programConfig.telegramConfig.useTelegramBot)) {							
+                                        configurations.programConfig.telegramConfig.useTelegramBot)) {	
+                        mediaPath = fs::canonical(configurations.programConfig.imagesFolder).string();
+
                         res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+                        sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "true")));
                         success = true;
                     } else {
                         res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", error));
@@ -333,14 +334,21 @@ int main(int argc, char **argv) {
         }
     })
 
-    .get("/api/stop_recognizer", [&recognize](auto *res, auto *req) {
-	    recognize.CloseAndJoin();
-
+    .get("/api/stop_recognizer", [&recognize, &recognize_running, &sendToEveryone](auto *res, auto *req) {
         // response is a json
         res->writeHeader("Content-Type", "application/json");
 
-        res->end(GetAlertMessage(AlertStatus::OK, "Recognizer stopped"));
-        std::cout << "Closed recognize" << std::endl;
+        if (recognize_running) {
+            recognize.CloseAndJoin();
+
+            sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "false")));
+            res->end(GetAlertMessage(AlertStatus::OK, "Recognizer stopped"));
+            std::cout << "Closed recognize" << std::endl;
+            
+            recognize_running = false;
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, "Recognizer is not running"));
+        }
     })
 
     .get("/api/camera_frame", [&cachedImages](auto *res, auto *req) {
@@ -442,9 +450,10 @@ int main(int argc, char **argv) {
     })
 
     .get("/api/notifications", [&persintent_notifications](auto *res, auto *req) {
+        const std::string notf = persintent_notifications.empty() ? "[]" : persintent_notifications.toStyledString();
         // response is a json
         res->writeHeader("Content-Type", "application/json");
-	    res->end(GetJsonString("notifications", persintent_notifications.toStyledString()));
+	    res->end(GetJsonString("notifications", notf));
     })
 
     .get("/media/:media", [&fileStreamer, &serverRootFolder](auto *res, auto *req) {
@@ -455,12 +464,12 @@ int main(int argc, char **argv) {
         
         // use server root folder as default
         if (directory.empty()) directory = serverRootFolder;
-        std::string url(req->getUrl());
+        std::string url(req->getParameter(0));
 
         std::cout << "URL: " << url << std::endl << "Directory: " << directory << std::endl;
         
         std::string rangeHeader(req->getHeader("range"));
-        fileStreamer.streamFile(res, url.substr(path.length(), url.length()-1), rangeHeader, directory);
+        fileStreamer.streamFile(res, url, rangeHeader, directory);
         // std::cout << "Media: "<<  << std::endl;
         // TODO:
         //  1.  Read all the files from lastMediaPath and update
@@ -510,10 +519,10 @@ int main(int argc, char **argv) {
     })
 
     .get("/*", [](auto *res, auto *req) {
-        res->writeStatus(HTTP_301_MOVED_PERMANENTLY);
-        res->writeHeader("Location", "/");
-        res->writeHeader("Content-Type", "text/html");
-        res->end();
+        res ->writeStatus(HTTP_301_MOVED_PERMANENTLY)
+            ->writeHeader("Location", "/")
+            ->writeHeader("Content-Type", "text/html")
+            ->end();
     })
 
     .ws<PerSocketData>("/recognize", {

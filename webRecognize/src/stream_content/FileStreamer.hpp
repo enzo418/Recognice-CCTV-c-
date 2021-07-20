@@ -13,6 +13,9 @@
 // Max buffer: 32kb = 32.768 bytes
 const size_t ReadWriteBufferSize = 32768;
 
+// it doesn't have a .cpp file since using templates makes it harded for the linker.
+
+
 struct FileStreamer {
     StaticFilesHandler* staticFiles;
     std::string root;
@@ -211,8 +214,10 @@ public:
     template <bool SSL>
     bool streamFile(uWS::HttpResponse<SSL> *res, std::string url, std::string rangeHeader, std::string directory = "") {
         if (directory.empty()) directory = root;
+        if (url[0] == '/') url = url.substr(1, url.length()-1);
 
-        const std::string path = directory + url;
+        // /path/to/directory / url without initial '/'
+        const std::string path = std::filesystem::path(directory) / url;
 
         // yes, in each request we check if the file exists
         // if it exists and doesn't have a handler then

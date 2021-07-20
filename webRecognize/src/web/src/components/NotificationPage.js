@@ -20,6 +20,10 @@ class NotificationPage extends React.Component {
     }
 
     reloadCalendar(minDate, maxDate) {
+        if (!minDate && !maxDate) {
+            minDate = maxDate = new Date();
+        }
+
         // calendar excludes the minDate...
         minDate = moment(minDate).subtract(1, "day").toDate();
 
