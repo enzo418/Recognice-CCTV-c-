@@ -122,35 +122,32 @@ public:
 
 struct StaticFilesHandler {
 private:
-    std::string server_path;
     std::map<std::string, FileReader *> filesReader;
 public:
-    StaticFilesHandler(std::string server_path) : server_path(server_path) {}
+    StaticFilesHandler() {}
 
-    bool fileExists(std::string url) {
-        return std::filesystem::exists(server_path + url);
+    bool fileExists(std::string path) {
+        return std::filesystem::exists(path);
     }
 
     // Adds a file handler to the list    
-    void addFileHandler(std::string url) {
+    void addFileHandler(std::string path) {
         // we assume that the file exists
-
-        std::string path = server_path + url;
-        std::cout << "[" << url << "] => [" << path << "] File handler didn't exist. Adding it\n";
-        filesReader[url] = new FileReader(path);
+        std::cout << "[" << path << "] => [" << path << "] File handler didn't exist. Adding it\n";
+        filesReader[path] = new FileReader(path);
     }
 
-    bool fileHandlerExists(const std::string& url) {
-        return filesReader.find(url) != filesReader.end();
+    bool fileHandlerExists(const std::string& path) {
+        return filesReader.find(path) != filesReader.end();
     }
 
-    // Returns the FileReader of a url
-    FileReader* getFileHandler(const std::string& url) {
-        return filesReader.find(url)->second;
+    // Returns the FileReader of a path
+    FileReader* getFileHandler(const std::string& path) {
+        return filesReader.find(path)->second;
     }
 
-    void removeHandlerIfExists(const std::string& url) {
-        auto it = filesReader.find(url);
+    void removeHandlerIfExists(const std::string& path) {
+        auto it = filesReader.find(path);
         if (it != filesReader.end()) filesReader.erase(it);
     }
 };

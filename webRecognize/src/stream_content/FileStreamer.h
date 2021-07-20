@@ -14,7 +14,7 @@ struct FileStreamer {
     std::string root;
 
     FileStreamer(std::string root) : root(root) {
-        staticFiles = new StaticFilesHandler(root);
+        staticFiles = new StaticFilesHandler();
     }
 
     template <bool SSL>
@@ -204,21 +204,25 @@ struct FileStreamer {
     }
 
     template <bool SSL>
-    bool streamFile(uWS::HttpResponse<SSL> *res, std::string url, std::string rangeHeader) {
+    bool streamFile(uWS::HttpResponse<SSL> *res, std::string url, std::string rangeHeader, std::string directory = "") {
+        if (directory.empty()) directory = root;
+
+        const std::string path = directory + url;
+
         // yes, in each request we check if the file exists
         // if it exists and doesn't have a handler then
-        if (!staticFiles->fileExists(url)) {
-            staticFiles->removeHandlerIfExists(url);
+        if (!staticFiles->fileExists(path)) {
+            staticFiles->removeHandlerIfExists(path);
             
-            std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << url << std::endl;
+            std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << path << std::endl;
             res->writeStatus(HTTP_404_NOT_FOUND);
             res->end();
             return false;
-        } else if (!staticFiles->fileHandlerExists(url)) {
-            staticFiles->addFileHandler(url);
+        } else if (!staticFiles->fileHandlerExists(path)) {
+            staticFiles->addFileHandler(path);
         }
 
-        FileReader* reader = staticFiles->getFileHandler(url);
+        FileReader* reader = staticFiles->getFileHandler(path);
         
         // request is not ranged, send it chunked
         if (rangeHeader.empty()) {

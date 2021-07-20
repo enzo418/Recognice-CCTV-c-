@@ -9,9 +9,9 @@
 #include "../uWebSockets/src/HttpContextData.h"
 #include "../uWebSockets/src/Multipart.h"
 
-#include "stream_content/FileReader.h"
-#include "stream_content/FileStreamer.h"
-#include "stream_content/FileExtension.h"
+#include "stream_content/FileReader.hpp"
+#include "stream_content/FileStreamer.hpp"
+#include "stream_content/FileExtension.hpp"
 
 #include "server_utils.hpp"
 
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 					}
 
 					type_string = query;
-					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\"}}", query, content, group_id, datetime);
+					const std::string body = fmt::format("{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", \"datetime\":\"{3}\", \"directory\":\"{4}\"}}", query, content, group_id, datetime, mediaPath);
 					query = fmt::format("{{\"notifications\": [{}]}}", body);
 
 					notificationsSended[currentNotificationIndex] = body;
@@ -447,7 +447,21 @@ int main(int argc, char **argv) {
 	    res->end(GetJsonString("notifications", persintent_notifications.toStyledString()));
     })
 
-    .get("/media/:media", [](auto *res, auto *req) {
+    .get("/media/:media", [&fileStreamer, &serverRootFolder](auto *res, auto *req) {
+        static const std::string path = "/media/";
+        std::string directory(req->getHeader("directory"));
+
+        std::cout << "Directory 1: " << directory << std::endl;
+        
+        // use server root folder as default
+        if (directory.empty()) directory = serverRootFolder;
+        std::string url(req->getUrl());
+
+        std::cout << "URL: " << url << std::endl << "Directory: " << directory << std::endl;
+        
+        std::string rangeHeader(req->getHeader("range"));
+        fileStreamer.streamFile(res, url.substr(path.length(), url.length()-1), rangeHeader, directory);
+        // std::cout << "Media: "<<  << std::endl;
         // TODO:
         //  1.  Read all the files from lastMediaPath and update
         //      a map and update the missing ones, the key would
@@ -459,7 +473,7 @@ int main(int argc, char **argv) {
         //  When the server send a notification file first would 
         //  need to change the path to /media/filename, then 
         //  send the notification
-        req->setYield(true);
+        // req->setYield(true);
     })
 
     // example for an async response
