@@ -27,6 +27,10 @@ const parseStringToDate = (datestring, return_moment = false) => {
 const prepareNotifications = (notifications) =>
     notifications.map((not) => {
         not.datetime = parseStringToDate(not.datetime);
+        if (not.type === "video" || not.type === "image") {
+            not.content += `?directory=${encodeURIComponent(not.directory)}`;
+        }
+
         return not;
     });
 

@@ -1,9 +1,4 @@
-#pragma once
-
-#include <iostream>
-#include <filesystem>
-#include <unordered_map>
-#include <string>
+#include "FileExtension.hpp"
 
 const std::unordered_map<std::string, std::string> contentTypes = {
     {"txt", "text/plain"},
@@ -31,6 +26,7 @@ const std::unordered_map<std::string, std::string> contentTypes = {
     {"wav", "audio/x-wav"},
     {"ttf", "font/ttf"},
 };
+
 
 inline std::string getExtension(const std::string& path) {
     return std::filesystem::path(path).extension();

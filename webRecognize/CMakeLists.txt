@@ -31,15 +31,18 @@ set(source_dir "${PROJECT_SOURCE_DIR}")
 
 file(GLOB COMMON_SRC "${source_dir}/src/*.cpp")
 
+file(GLOB STREAM_CONTENT_SRC "${source_dir}/src/stream_content/*.cpp")
+
 file(GLOB RECOG_SRC "${source_dir}/../recognize/src/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC})
+set(SOURCES ${COMMON_SRC} ${STREAM_CONTENT_SRC})
 
 # Print sources
 message(${SOURCES})
 message(${RECOG_SRC})
+message(${STREAM_CONTENT_SRC})
 
 # Include curl
 include_directories(${CURL_INCLUDE_DIR})

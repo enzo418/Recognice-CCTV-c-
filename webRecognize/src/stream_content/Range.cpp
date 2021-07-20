@@ -1,17 +1,4 @@
-#pragma once
-#include <iostream>
-#include <limits>
-#include <list>
-#include <vector>
-#include <sstream>
-
-struct Range {
-    long start;
-    long end;
-    size_t length() const {
-        return end - start + 1;
-    }
-};
+#include "Range.hpp"
 
 std::vector<std::string> splitString(const std::string& str, const std::string& delim) {
 	std::vector<std::string> tokens;

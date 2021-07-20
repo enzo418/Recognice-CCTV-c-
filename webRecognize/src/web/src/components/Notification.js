@@ -2,19 +2,20 @@ import React from "react";
 import PropTypes from "prop-types";
 
 function Notification(props) {
-    const {type, text, moment_date} = props.notification;
+    const {type, content, moment_date} = props.notification;
+    console.log(props.notification);
     let media;
 
     if (type === "image") {
         media = (
             <div className="image">
-                <img src="" data-src="${text}" alt="Image" />
+                <img src={content} data-src={content} alt="Image" />
             </div>
         );
     } else if (type === "text") {
-        media = <h3 className="subtitle is-3">{text}</h3>;
+        media = <h3 className="subtitle is-3">{content}</h3>;
     } else if (type === "video") {
-        media = <video width="640" height="360" preload="metadata" src="" controls data-videosrc={text}></video>;
+        media = <video width="640" height="360" preload="metadata" src={content} controls data-videosrc={content}></video>;
     }
 
     return (

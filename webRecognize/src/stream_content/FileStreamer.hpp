@@ -1,18 +1,22 @@
-#pragma once
+#ifndef FILE_STREAMER
+#define FILE_STREAMER
+
 #include <filesystem>
-#include "FileExtension.h"
-#include "Range.h"
+#include "FileExtension.hpp"
+#include "StaticFilesHandler.hpp"
+#include "FileReader.hpp"
+#include "../../uWebSockets/src/App.h"
+#include "Range.hpp"
 #include <iostream>
 #include "../server_utils.hpp"
 
-// Max buffer size: 16 kb = 16.384 bytes
-constexpr size_t ReadWriteBufferSize = 16 * 1024;
+const size_t ReadWriteBufferSize = 16384;
 
 struct FileStreamer {
-
     StaticFilesHandler* staticFiles;
     std::string root;
 
+public:
     FileStreamer(std::string root) : root(root) {
         staticFiles = new StaticFilesHandler();
     }
@@ -233,3 +237,4 @@ struct FileStreamer {
         }
     }
 };
+#endif /* FILE_STREAMER */
