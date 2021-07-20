@@ -24,6 +24,14 @@ struct FrameDescriptor {
 	FindingInfo finding;
 };
 
+struct Finding {
+	size_t frameIndex;
+	cv::Rect rect;
+	cv::Point center;
+
+	Finding(size_t fi, cv::Rect r, cv::Point c) : frameIndex(fi), rect(r), center(c) {}
+};
+
 class GifFrames {
 	private:
 		ProgramConfiguration* program;
@@ -72,7 +80,7 @@ class GifFrames {
 
 		void framesToSingleVectors();
 
-		std::vector<std::tuple<size_t, cv::Rect, cv::Point>> findings;
+		std::vector<Finding> findings;
 
 	public:
 		GifFrames(ProgramConfiguration* programConfig, CameraConfiguration* cameraConfig);
@@ -93,5 +101,5 @@ class GifFrames {
 
 		cv::Mat& firstFrameWithChangeDetected();
 
-		std::vector<std::tuple<size_t, cv::Rect, cv::Point>> getFindingsTrace();
+		std::vector<Finding> getFindingsTrace();
 };

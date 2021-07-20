@@ -77,7 +77,7 @@ public:
 	Recognize(void);
 	~Recognize() = default;
 
-	bool Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread);
+	bool Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread, std::string& error);
 
 	void StartActionsBot();
 

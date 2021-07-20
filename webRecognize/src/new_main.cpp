@@ -308,14 +308,14 @@ int main(int argc, char **argv) {
 
                     if (recognize.Start(current_configurations, 
                                         configurations.programConfig.showPreview, 
-                                        configurations.programConfig.telegramConfig.useTelegramBot)) {	
+                                        configurations.programConfig.telegramConfig.useTelegramBot, error)) {	
                         mediaPath = fs::canonical(configurations.programConfig.imagesFolder).string();
 
                         res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
                         sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "true")));
                         success = true;
                     } else {
-                        res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer, check that the configuration file has active cameras.", error));
+                        res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer.", error));
                     }
                 } else {
                     res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
