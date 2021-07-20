@@ -10,7 +10,8 @@
 #include <iostream>
 #include "../server_utils.hpp"
 
-const size_t ReadWriteBufferSize = 16384;
+// Max buffer: 32kb = 32.768 bytes
+const size_t ReadWriteBufferSize = 32768;
 
 struct FileStreamer {
     StaticFilesHandler* staticFiles;

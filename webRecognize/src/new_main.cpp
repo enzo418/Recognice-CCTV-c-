@@ -449,7 +449,7 @@ int main(int argc, char **argv) {
 
     .get("/media/:media", [&fileStreamer, &serverRootFolder](auto *res, auto *req) {
         static const std::string path = "/media/";
-        std::string directory(req->getHeader("directory"));
+        std::string directory(req->getQuery("directory"));
 
         std::cout << "Directory 1: " << directory << std::endl;
         
