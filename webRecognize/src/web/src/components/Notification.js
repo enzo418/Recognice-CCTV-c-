@@ -15,7 +15,7 @@ function Notification(props) {
     } else if (type === "text") {
         media = <h3 className="subtitle is-3">{content}</h3>;
     } else if (type === "video") {
-        media = <video width="640" height="360" preload="metadata" src={content} controls data-videosrc={content}></video>;
+        media = <video width="640" height="360" preload="metadata" src={content} controls autoPlay="true" data-videosrc={content}></video>;
     }
 
     return (

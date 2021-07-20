@@ -14,8 +14,36 @@ class NotificationsPaginator extends React.Component {
         this.nextNotification = this.nextNotification.bind(this);
         this.gotoUttermost = this.gotoUttermost.bind(this);
         this.scrollContainerToElementTop = this.scrollContainerToElementTop.bind(this);
+        this.onKeyPressed = this.onKeyPressed.bind(this);
     }
 
+
+    componentDidMount() {
+        document.addEventListener("keyup", this.onKeyPressed);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keyup", this.onKeyPressed);
+    }
+
+    onKeyPressed(e) {
+        switch (e.key) {
+            case "ArrowRight":
+                    this.nextNotification();         
+                break;
+            case "ArrowLeft":
+                    this.previousNotification();         
+                break;
+            case "ArrowUp":
+                    // ¿?
+                break;
+            case "ArrowDown":
+                    // ¿?
+                break;
+            default:
+                break;
+        }
+    }
 
     gotoIndex(i, cb = () => {}) {
         console.log("update:" , i);

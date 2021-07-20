@@ -459,30 +459,13 @@ int main(int argc, char **argv) {
     .get("/media/:media", [&fileStreamer, &serverRootFolder](auto *res, auto *req) {
         static const std::string path = "/media/";
         std::string directory(req->getQuery("directory"));
-
-        std::cout << "Directory 1: " << directory << std::endl;
-        
+       
         // use server root folder as default
         if (directory.empty()) directory = serverRootFolder;
         std::string url(req->getParameter(0));
 
-        std::cout << "URL: " << url << std::endl << "Directory: " << directory << std::endl;
-        
         std::string rangeHeader(req->getHeader("range"));
         fileStreamer.streamFile(res, url, rangeHeader, directory);
-        // std::cout << "Media: "<<  << std::endl;
-        // TODO:
-        //  1.  Read all the files from lastMediaPath and update
-        //      a map and update the missing ones, the key would
-        //      be the filename with extension without path
-        //
-        //  2.  Search for a file named req->getParameter(0) and
-        //      if found send it chunked, else send 404 Status.
-        //
-        //  When the server send a notification file first would 
-        //  need to change the path to /media/filename, then 
-        //  send the notification
-        // req->setYield(true);
     })
 
     // example for an async response
@@ -538,12 +521,18 @@ int main(int argc, char **argv) {
         .upgrade = nullptr,
         .open = [&clients](auto* ws) {
             /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
+            
+            // add to connected clients
             clients.push_back(ws);
+            
             std::cout << "Client connected!\n";
+
+            // send current recognize state
+            ws->send(GetJsonString("recognize_state", GetJsonString("running", "false")), uWS::OpCode::TEXT, true);
         },
         .message = [&clients](auto *ws, std::string_view message, uWS::OpCode opCode) {
             // echo message
-            ws->send(message, opCode, true);
+            // ws->send(message, opCode, true);
         },
         .drain = [](auto */*ws*/) {
             /* Check ws->getBufferedAmount() here */
