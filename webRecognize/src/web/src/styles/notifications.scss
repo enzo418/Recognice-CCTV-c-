@@ -46,6 +46,18 @@
                 }
             }
         }
+
+        .datetimepicker-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+
+            @media (max-width: 1237px) {                
+                display: flex;
+                flex-direction: column;
+                padding-bottom: 0.5rem;                
+            }
+        }
     }
     
     #notifications-content .box {

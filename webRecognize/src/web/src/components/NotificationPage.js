@@ -5,21 +5,31 @@ import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
 import bulmaCalendar from "bulma-calendar/dist/js/bulma-calendar.min";
 
+const getHoursMinute = (date) => `${date.getHours()}:${date.getMinutes()}:00`;
+const getMomentTime = (date) => moment(getHoursMinute(date), 'hh:mm:ss');
+
 class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             showingNotifications: [], // notifications being shown
+            lastNotificationsFilteredCalendar: [],
             calendar: null,
+            timePicker: null,
         };
 
         this.calendar_OnSelect = this.calendar_OnSelect.bind(this);
         this.calendar_OnCancel = this.calendar_OnCancel.bind(this);
+        this.timePicker_OnCancel = this.timePicker_OnCancel.bind(this);
+        this.timePicker_OnSelect = this.timePicker_OnSelect.bind(this);
         this.updateCalendarLimitis = this.updateCalendarLimitis.bind(this);
         this.getGroups = this.getGroups.bind(this);
     }
 
     reloadCalendar(minDate, maxDate) {
+        // avoid reloading while it's open
+        if (this.state.calendar && this.state.calendar.isOpen()) return;
+
         if (!minDate && !maxDate) {
             minDate = maxDate = new Date();
         }
@@ -77,9 +87,31 @@ class NotificationPage extends React.Component {
         var start = e.data.date.start,
             end = e.data.date.end;
 
-        this.setState(() => ({showingNotifications: this.props.notifications.filter(
+        this.setState((prev) => {
+            prev.showingNotifications = this.props.notifications.filter(
                 (not) => not.datetime >= start && not.datetime <= end
-            )}));
+            );
+
+            prev.lastNotificationsFilteredCalendar = prev.showingNotifications;
+
+            // set time picker
+            if (prev.showingNotifications.length > 0) { 
+                const timePickers = bulmaCalendar.attach('[type="time"]', {
+                    color: "primary",
+                    isRange: true,
+                    lang: "en-US",
+                    timeFormat: "HH:mm",
+                });
+
+                timePickers.forEach((timep) => {
+                    // Add listener to select event
+                    timep.on("select", this.timePicker_OnSelect);
+                    timep.on("save", this.timePicker_OnCancel);
+                });
+
+                prev.timePicker = timePickers[0];
+            }
+        }, () => this.forceUpdate());
     }
 
     calendar_OnCancel(e) {
@@ -94,8 +126,29 @@ class NotificationPage extends React.Component {
         }
     }
 
+    timePicker_OnSelect(e) {
+    }
+
+    timePicker_OnCancel(e) {
+        var end = getMomentTime(e.data.timePicker.end);
+        var start = getMomentTime(e.data.timePicker.start);
+
+        console.log({start, end, e});
+
+        this.setState((prev) => {
+            prev.showingNotifications = prev.lastNotificationsFilteredCalendar.filter(
+                (not) => getMomentTime(not.datetime).isBetween(start, end)
+            );
+        }, () => this.forceUpdate());
+    }
+
     componentDidMount() {
         this.updateCalendarLimitis();
+    }
+
+    componentDidUpdate() {        
+        // if calendar is not showing and there is no selected date:
+        // this.updateCalendarLimitis();
     }
 
     getGroups(nots) {
@@ -108,8 +161,11 @@ class NotificationPage extends React.Component {
                 <div className="header">
                     <Translation>{(t) => <h1 className="title">{t("Notifications")}</h1>}</Translation>
 
-                    <div className="datetimepicker-container">
+                    <div className="datetimepicker-container" onClick={this.updateCalendarLimitis}>
                         <input type="date" />
+                        <div className={(this.state.showingNotifications.length > 0 ? "" : "is-hidden")} >
+                            <input type="time" />
+                        </div>
                     </div>
 
                     <div className="notifications-configuration">
