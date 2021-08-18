@@ -520,6 +520,9 @@
 		"aproximate polygon curve(s)? it can increases the program perfomance": "Aproximar las curvas del poligono? Esto puede aumentar la eficiencia del programa.",
 		"enter the filename": "Ingresa el nombre del archivo",
 		"show more": "mostrar mas",
-		"could not copy file": "No se pudo copiar el archivo"
+		"could not copy file": "No se pudo copiar el archivo",
+		"could not connect to the server": "No se pudo conectar con el servidor",
+		"the connection to the server has been lost": "Se ha perdido la conexión con el servidor",
+		"verify that the server is running to diagnose the problem": "Verifica que el servidor este andando para diagnosticar el problema"
 	}
 }

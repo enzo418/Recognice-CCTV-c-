@@ -18,6 +18,7 @@ import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
 import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
 import {w3cwebsocket as W3CWebSocket} from "websocket";
+import ModalConnectionLost from "./components/ModalConnectionLost";
 
 const pages = {
     configurations: {
@@ -29,6 +30,10 @@ const pages = {
         name: "notifications",
     },
 };
+
+const ERRORS = {
+    CONNECTION_LOST: "connection_lost"
+}
 
 const client = new W3CWebSocket("ws://localhost:3001/recognize");
 
@@ -95,6 +100,7 @@ class App extends React.Component {
         this.openModalCanvas = this.openModalCanvas.bind(this);
         this.onAcceptModalCanvas = this.onAcceptModalCanvas.bind(this);
         this.hideCanvasModal = this.hideCanvasModal.bind(this);
+        this.clearErrors = this.clearErrors.bind(this);
     }
 
     componentDidMount() {
@@ -126,7 +132,11 @@ class App extends React.Component {
             if (data.notifications) {
                 this.setState((prev) => ({
                     notifications: prev.notifications.concat(utils.prepareNotifications(data.notifications)),
-                }));
+                }), () => {
+                    if (this.state.configuration["playSoundOnNotification"]) {
+                        this.playAudioAlert();
+                    }
+                });
             }
 
             if (data.recognize_state) {
@@ -136,6 +146,14 @@ class App extends React.Component {
                         return prev;
                     });
                 }
+            }
+        };
+
+        client.onclose = () => {
+            this.setError(ERRORS.CONNECTION_LOST);
+
+            if (this.state.configuration["playSoundOnNotification"]) {
+                this.playAudioAlert();
             }
         };
     }
@@ -159,7 +177,11 @@ class App extends React.Component {
         let url = "/api/" + to + "_recognizer" + "?file_name=" + this.state.recognize.configuration.file;
         fetch(url)
             .then((res) => res.json())
-            .then((res) => this.addAlert(res.status));
+            .then((res) => this.addAlert(res.status))
+            .catch(error => {
+                this.addAlert({status: "error", message: "could not connect to the server", extra: error.message});
+                // this.setError(ERRORS.CONNECTION_LOST);
+            });
     }
 
     parseAndLoadNewConfigurationFile(filename, configurationFile) {
@@ -319,10 +341,28 @@ class App extends React.Component {
         this.hideCanvasModal();
     }
 
+    playAudioAlert() {
+        var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
+        audio.volume = 0.5;
+        audio.play();
+    }
+
+    setError(errorType) {
+        this.setState(() => ({error: {type: errorType}}));
+    }
+
+    clearErrors() {
+        this.setState(() => ({error: null}));
+    }
+
     render() {
         return (
             <div>
                 <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
+
+                {this.state.error && this.state.error.type === ERRORS.CONNECTION_LOST && (
+                    <ModalConnectionLost closeModal={this.clearErrors}></ModalConnectionLost>
+                )}
 
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
