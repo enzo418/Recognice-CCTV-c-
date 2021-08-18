@@ -8,6 +8,8 @@ function PopupAlert(props) {
     const {alert} = props;
     const [showExtra, setExtraVisible] = useState(true);
 
+    const extraIsNull = !alert.extra || alert.extra.length === 0;
+
     return (
         <div
             onMouseLeave={() => props.setLifeAlert(props.id, false)}
@@ -16,10 +18,11 @@ function PopupAlert(props) {
             <button className="delete" onClick={deleteAlert}></button>
             <span className="notification-text">{props.t(alert.message)}</span>
             <p>
-                <a hidden={!showExtra} onClick={() => setExtraVisible(!showExtra)}>
+                <a hidden={extraIsNull || !showExtra} onClick={() => setExtraVisible(!showExtra)}>
                     {props.t("show more")}
                 </a>
             </p>
+            
             <span className="notification-extra-text" hidden={showExtra}>
                 {alert.extra}
             </span>
