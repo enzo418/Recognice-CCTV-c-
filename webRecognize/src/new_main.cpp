@@ -590,18 +590,16 @@ int main(int argc, char **argv) {
 
 bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed) {
     cfgErrorInvalidFileDetailed = "";
-    Configurations configurations = ConfigurationFile::ReadConfigurations(file, cfgErrorInvalidFileDetailed);
+    current_configurations = ConfigurationFile::ReadConfigurations(file, cfgErrorInvalidFileDetailed);
     bool sucess = false;
     if (cfgErrorInvalidFileDetailed.length() == 0) {
-        current_configurations = configurations;
+        std::cout << "Config cameras size: " << current_configurations.camerasConfigs.size() << std::endl;
 
-        std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
-
-        fs::create_directories(configurations.programConfig.imagesFolder);
+        fs::create_directories(current_configurations.programConfig.imagesFolder);
 
         if (recognizer.Start(current_configurations, 
-                            configurations.programConfig.showPreview, 
-                            configurations.programConfig.telegramConfig.useTelegramBot, cfgErrorInvalidFileDetailed)) {
+                            current_configurations.programConfig.showPreview, 
+                            current_configurations.programConfig.telegramConfig.useTelegramBot, cfgErrorInvalidFileDetailed)) {
             sucess = true;
         } else {
             error = RECOGNIZER_ERROR;            
