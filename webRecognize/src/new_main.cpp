@@ -25,6 +25,18 @@
 
 namespace fs = std::filesystem;
 
+typedef int Error;
+
+bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed);
+
+enum ErrorCode {INVALID_FILE, RECOGNIZER_ERROR, RECOGNIZER_RUNNING, NO_FILE_IN_REQUEST};
+const std::unordered_map<Error, std::string> ErrorMap = {
+    {INVALID_FILE, "File could not be read, there is an invalid field"},
+    {RECOGNIZER_ERROR, "Could not start the recognizer"},
+    {RECOGNIZER_RUNNING, "Recognizer could not be started because it is already running"},
+    {NO_FILE_IN_REQUEST, "No file in request."}
+};
+
 int main(int argc, char **argv) {
     // TODO: Change App to handle post data and call the handler
     // when it reads all
@@ -96,6 +108,36 @@ int main(int argc, char **argv) {
             // }
         }
     };
+
+    /// --- Parse cli arguments
+    const std::string keys =
+        "{help h usage ? |      | print this message   }"
+        "{file_path      |      | automatically start the recognizer with this file   }"
+        ;
+
+    cv::CommandLineParser parser(argc, argv, keys);
+
+    if (parser.has("help")) {
+        parser.printMessage();
+        return 0;
+    }
+
+    if (parser.has("file_path")) {
+        Error error;
+        std::string detailed_error;
+        std::string file_path = parser.get<std::string>("file_path");
+        if (!StartRecognizer(recognize, current_configurations, file_path, error, detailed_error)) {
+            std::cout   << "Error while starting recognizer: "
+                        << ErrorMap.at(error) 
+                        << "\nDetails:\n\t"
+                        << detailed_error
+                        << std::endl;
+            return 1;
+        } else {
+            recognize_running = true;
+            std::cout << "Recognizer started" << std::endl;
+        }
+    }
 
 	// start thread that send the notifications to the web
 	std::thread tick([&] {
@@ -291,46 +333,32 @@ int main(int argc, char **argv) {
         std::string file(req->getQuery("file_name"));
         std::cout << "Starting recognize with file: " << file << " empty? " << file.empty() << std::endl;
         bool success = false;
+        Error error;
+        std::string detailed_error;
         
         // response is a json
         res->writeHeader("Content-Type", "application/json");
 
         if (!file.empty()) {
             if (!recognize_running) {
-                std::string error;
-                Configurations configurations = ConfigurationFile::ReadConfigurations(file, error);
-                if (error.length() == 0) {
-                    current_configurations = configurations;
-
-                    std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
-
-                    fs::create_directories(configurations.programConfig.imagesFolder);
-
-                    if (recognize.Start(current_configurations, 
-                                        configurations.programConfig.showPreview, 
-                                        configurations.programConfig.telegramConfig.useTelegramBot, error)) {	
-                        mediaPath = fs::canonical(configurations.programConfig.imagesFolder).string();
-
-                        res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
-                        sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "true")));
-                        success = true;
-                    } else {
-                        res->end(GetAlertMessage(AlertStatus::ERROR, "Could not start the recognizer.", error));
-                    }
-                } else {
-                    res->end(GetAlertMessage(AlertStatus::ERROR, "File could not be read, there is an invalid field", error));
-                }
+                success = StartRecognizer(recognize, current_configurations, file, error, detailed_error);
             } else {
-                res->end(GetAlertMessage(AlertStatus::ERROR, "Recognizer could not be started because it is already running"));
+                error = RECOGNIZER_RUNNING;
             }
         } else {
-            res->end(GetAlertMessage(AlertStatus::ERROR, "No file in request."));
+            error = NO_FILE_IN_REQUEST;            
         }
 
         if (success) {
             recognize_running = !recognize_running;
-            // TODO: Notifiy all users that join the websocket
-            // sendEveryone(GetRecognizeStateJson(recognize_running));
+
+            mediaPath = fs::canonical(current_configurations.programConfig.imagesFolder).string();
+            
+            res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
+            
+            sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "true")));
+        } else {
+            res->end(GetAlertMessage(AlertStatus::ERROR, ErrorMap.at(error), detailed_error));
         }
     })
 
@@ -519,7 +547,7 @@ int main(int argc, char **argv) {
         .sendPingsAutomatically = true,
         /* Handlers */
         .upgrade = nullptr,
-        .open = [&clients](auto* ws) {
+        .open = [&clients, &recognize_running](auto* ws) {
             /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
             
             // add to connected clients
@@ -528,7 +556,7 @@ int main(int argc, char **argv) {
             std::cout << "Client connected!\n";
 
             // send current recognize state
-            ws->send(GetJsonString("recognize_state", GetJsonString("running", "false")), uWS::OpCode::TEXT, true);
+            ws->send(GetJsonString("recognize_state", GetJsonString("running", recognize_running ? "true" : "false")), uWS::OpCode::TEXT, true);
         },
         .message = [&clients](auto *ws, std::string_view message, uWS::OpCode opCode) {
             // echo message
@@ -558,4 +586,29 @@ int main(int argc, char **argv) {
     .run();
 
     std::cout << "Failed to listen to port " << port << std::endl;
+}
+
+bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed) {
+    cfgErrorInvalidFileDetailed = "";
+    Configurations configurations = ConfigurationFile::ReadConfigurations(file, cfgErrorInvalidFileDetailed);
+    bool sucess = false;
+    if (cfgErrorInvalidFileDetailed.length() == 0) {
+        current_configurations = configurations;
+
+        std::cout << "Config cameras size: " << configurations.camerasConfigs.size() << std::endl;
+
+        fs::create_directories(configurations.programConfig.imagesFolder);
+
+        if (recognizer.Start(current_configurations, 
+                            configurations.programConfig.showPreview, 
+                            configurations.programConfig.telegramConfig.useTelegramBot, cfgErrorInvalidFileDetailed)) {
+            sucess = true;
+        } else {
+            error = RECOGNIZER_ERROR;            
+        }
+    } else {
+        error = INVALID_FILE;        
+    }
+
+    return sucess;
 }
