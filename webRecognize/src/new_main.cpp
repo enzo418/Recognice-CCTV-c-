@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
 
 typedef int Error;
 
-bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed);
+bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed, std::string& mediaPath, bool& recognize_running);
 
 enum ErrorCode {INVALID_FILE, RECOGNIZER_ERROR, RECOGNIZER_RUNNING, NO_FILE_IN_REQUEST};
 const std::unordered_map<Error, std::string> ErrorMap = {
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     int option;
 
     int port = 3001;
-    const std::string serverRootFolder = "/home/cltx/projects/cpp/wxRecognize/webRecognize/build/web";
+    const std::string serverRootFolder = fs::current_path() / "web";
 
     FileStreamer fileStreamer(serverRootFolder);
     
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
         Error error;
         std::string detailed_error;
         std::string file_path = parser.get<std::string>("file_path");
-        if (!StartRecognizer(recognize, current_configurations, file_path, error, detailed_error)) {
+        if (!StartRecognizer(recognize, current_configurations, file_path, error, detailed_error, mediaPath, recognize_running)) {
             std::cout   << "Error while starting recognizer: "
                         << ErrorMap.at(error) 
                         << "\nDetails:\n\t"
@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
 
         if (!file.empty()) {
             if (!recognize_running) {
-                success = StartRecognizer(recognize, current_configurations, file, error, detailed_error);
+                success = StartRecognizer(recognize, current_configurations, file, error, detailed_error, mediaPath, recognize_running);
             } else {
                 error = RECOGNIZER_RUNNING;
             }
@@ -349,11 +349,7 @@ int main(int argc, char **argv) {
             error = NO_FILE_IN_REQUEST;            
         }
 
-        if (success) {
-            recognize_running = !recognize_running;
-
-            mediaPath = fs::canonical(current_configurations.programConfig.imagesFolder).string();
-            
+        if (success) {            
             res->end(GetAlertMessage(AlertStatus::OK, "Recognizer started"));
             
             sendToEveryone(GetJsonString("recognize_state", GetJsonString("running", "true")));
@@ -588,7 +584,10 @@ int main(int argc, char **argv) {
     std::cout << "Failed to listen to port " << port << std::endl;
 }
 
-bool StartRecognizer(Recognize& recognizer, Configurations& current_configurations, std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed) {
+bool StartRecognizer(
+    Recognize& recognizer, Configurations& current_configurations, 
+    std::string& file, Error& error, std::string& cfgErrorInvalidFileDetailed,
+    std::string& mediaPath, bool& recognize_running) {
     cfgErrorInvalidFileDetailed = "";
     current_configurations = ConfigurationFile::ReadConfigurations(file, cfgErrorInvalidFileDetailed);
     bool sucess = false;
@@ -600,6 +599,8 @@ bool StartRecognizer(Recognize& recognizer, Configurations& current_configuratio
         if (recognizer.Start(current_configurations, 
                             current_configurations.programConfig.showPreview, 
                             current_configurations.programConfig.telegramConfig.useTelegramBot, cfgErrorInvalidFileDetailed)) {
+                recognize_running = !recognize_running;
+                mediaPath = fs::canonical(current_configurations.programConfig.imagesFolder).string();
             sucess = true;
         } else {
             error = RECOGNIZER_ERROR;            
