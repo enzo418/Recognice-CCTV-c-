@@ -20,9 +20,15 @@
 					},		
 					{
 						"target": "detectionMethod",
-						"type": "number",
+						"type": "select",
 						"hidden": false,
-						"placeholder": ""
+						"placeholder": "",
+						"is_integer_value": true,
+						"options": {
+							"0": "Do not try detect people on the video",
+							"1": "HOG Descriptor, uses built in opencv HOG Descriptor",
+							"2": "YOLO V4 DNN, uses darknet neural net, more precise than HOG"
+						}
 					},		
 					{
 						"target": "imagesFolder",
@@ -192,10 +198,15 @@
 					},
 					{
 						"target": "drawTraceOfChangeFoundOn",
-						"type": "number",
+						"type": "select",
 						"hidden": false,
-						"min": 0,
-						"max": 3
+						"is_integer_value": true,
+						"options": {
+							"0": "none",
+							"1": "image",
+							"2": "gif",
+							"3": "all"
+						}
 					}
 				],
 				"groups": [
@@ -334,10 +345,15 @@
 					},
 					{
 						"target": "type",
-						"type": "number",
+						"type": "select",
 						"hidden": false,
 						"placeholder": "",
-						"min": 0
+						"is_integer_value": true,
+						"options": {
+							"0": "Disabled, Camera is disabled, doesn't show or process frames",
+							"1": "Sentry, Only sends notifications",
+							"2": "Active, Same as Sentry but try to recognize a person in the frames selected"
+						}
 					},
 					{
 						"target": "pointsDiscriminators",

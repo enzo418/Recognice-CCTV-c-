@@ -99,7 +99,7 @@
 			"description": ""
 		},
 		"detectionMethod": {
-			"label": "Select the detection method<br> 0: No intentar detectar a una persona<br> 1: HOG Descriptor, uses built in opencv HOG Descriptor.<br> 2: YOLO V4 DNN, uses darknet neural net, more precise than HOG.",
+			"label": "Select the person detection method",
 			"description": ""
 		},
 		"gifFrames": {
@@ -191,7 +191,7 @@
 			"description": ""
 		},
 		"drawTraceOfChangeFoundOn": {
-			"label": "(When sending a notification) Draw the trace of the change found on:<br>  - 0: none<br>  - 1: image<br>  - 2: gif<br>  - 3: video<br>  - 4: all",
+			"label": "Before sending a notification draw the trace of the change found on:",
 			"description": ""
 		},
 		"pointsDiscriminators": {
@@ -360,7 +360,7 @@
 			"description": "Los cuadros van a ser redimensionados a % del valor de este campo"
 		},
 		"detectionMethod": {
-			"label": "Método para detectar objetos<br> 0: No intentar detectar a una persona.<br> 1: HOG Descriptor, utiliza el método incorpado en opencv.<br> 2: YOLO V4 DNN, utiliza la red neural de \"dark net\", es mas preciso que HOG.",
+			"label": "Método para detectar personas",
 			"description": ""
 		},
 		"gifFrames": {
@@ -400,7 +400,7 @@
 			"description": "La sintaxis es <nCuadrosAntes>..<nCuadrosDespues>"
 		},
 		"type": {
-			"label": "Tipo de cámara<br>0   : Deshabilitada, La cámara está desactivada, no se muestra ni procesa fotogramas.<br>1   : Sentinela, Solo envia notificaciones sin buscar personas en los cuadros.<br>2   : Activa, Igual que Sentry pero intenta reconocer a una persona en los fotogramas seleccionados.",
+			"label": "Tipo de cámara:",
 			"description": "Los fotogramas a analizar una persona se lecciona en\n'Cantidad de fotogramas para buscar una persona antes y despues del cambio detectado'"
 		},
 		"thresholdNoise": {
@@ -452,7 +452,7 @@
 			"description": ""
 		},
 		"drawTraceOfChangeFoundOn": {
-			"label": "(Cuando se envie un notificacion) Dibujar el rastro de los cambios encontrados en:<br>  - 0: ninguna<br>  - 1: imagen<br>  - 2: gif<br>  - 3: video<br>  - 4: todos",
+			"label": "Cuando se envie un notificacion dibujar el rastro de los cambios encontrados en:",
 			"description": ""
 		},
 		"pointsDiscriminators": {
@@ -523,6 +523,16 @@
 		"could not copy file": "No se pudo copiar el archivo",
 		"could not connect to the server": "No se pudo conectar con el servidor",
 		"the connection to the server has been lost": "Se ha perdido la conexión con el servidor",
-		"verify that the server is running to diagnose the problem": "Verifica que el servidor este andando para diagnosticar el problema"
+		"verify that the server is running to diagnose the problem": "Verifica que el servidor este andando para diagnosticar el problema",
+		"Do not try detect people on the video": "No intentar detectar personas en el video.",
+		"hog descriptor, uses built in opencv hog descriptor": "HOG Descriptor, utiliza el método incorpado en opencv.",
+		"yolo v4 dnn, uses darknet neural net, more precise than hog": "YOLO V4 DNN, utiliza la red neural de \"dark net\", es mas preciso que HOG.",
+		"none": "ninguno",
+		"image": "imagen",
+		"gif": "gif",
+		"all": "todos",		
+		"Disabled, Camera is disabled, doesn't show or process frames": "Deshabilitada, La cámara está desactivada, no se muestra ni procesa fotogramas",
+		"Sentry, Only sends notifications": "Sentinela, Solo envia notificaciones sin buscar personas en los cuadros",
+		"Active, Same as Sentry but try to recognize a person in the frames selected": "Activa, Igual que Sentry pero intenta reconocer a una persona en los fotogramas seleccionados"
 	}
 }
