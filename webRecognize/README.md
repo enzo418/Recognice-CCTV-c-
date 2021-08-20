@@ -18,6 +18,24 @@
     2. `npm install`
     3. `npm run build`
 
+Finally to compile the server+recognizer run:
+    
+1. `cd ./webRecognize && mkdir build && cd /build/`
+
+2. Generate cmake files with or without cuda:
+
+    2.1. `cmake .. -DWITH_CUDA=ON`
+
+    or
+
+    2.1. `cmake .. -DWITH_CUDA=OFF`
+
+    CUDA is currently only necessary if you want to use the yolov4 network with good performance.
+3. `make`
+4. `./webRecognize`
+
+>Optionally you can pass the "--file_path=path" argument to start the recognizer with a file without having to choose it from the web.
+
 # Frontend
 The fronted is built dynamically. First we get the html-elements specifications for the camera and program configurations from "elements.json", then we get the translations from "translations.json". Then the users choices a configuration file and the program parses that in order to acquire the defaults value for each field. After that the program generates the elements from differents templates.
 
