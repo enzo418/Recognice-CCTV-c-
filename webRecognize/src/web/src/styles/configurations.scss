@@ -5,6 +5,15 @@
 
     .card-content-item {
         margin: 0.5rem 0;
+
+        .select {
+            display: block;
+            width: 100%;
+
+            select {
+                width: 100%;
+            }
+        }
     }
 
     .footer-camera-buttons {

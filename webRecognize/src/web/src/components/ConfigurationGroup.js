@@ -6,6 +6,7 @@ import NumberInput from "./Inputs/NumberInput";
 import TextInput from "./Inputs/TextInput";
 
 import {withTranslation} from "react-i18next";
+import SelectInput from "./Inputs/SelectInput";
 
 class ConfigurationGroup extends React.Component {
     constructor(props) {
@@ -55,6 +56,21 @@ class ConfigurationGroup extends React.Component {
                                 onChange={(value) => onChangeValue(element.target, value)}
                                 hidden={element.hidden}
                                 tooltip={t(element.target).description}></CheckBoxInput>
+                        );
+                    } else if (element.type === "select") {
+                        input = (
+                            <SelectInput
+                                key={element.target}
+                                name={element.target}
+                                placeHolder={element.placeholder}
+                                label={t(element.target).label}
+                                value={values[element.target] || ""}
+                                onChange={(value) =>
+                                    onChangeValue(element.target, element.is_integer_value ? parseInt(value) : value)
+                                }
+                                hidden={element.hidden}
+                                options={element.options}
+                                tooltip={t(element.target).description}></SelectInput>
                         );
                     }
 
