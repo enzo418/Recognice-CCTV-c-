@@ -342,9 +342,11 @@ class App extends React.Component {
     }
 
     playAudioAlert() {
-        var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
-        audio.volume = 0.5;
-        audio.play();
+        try {
+            var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
+            audio.volume = 0.5;
+            audio.play();
+        } catch (e) {}
     }
 
     setError(errorType) {
