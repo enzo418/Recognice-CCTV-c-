@@ -35,7 +35,7 @@ const ERRORS = {
     CONNECTION_LOST: "connection_lost"
 }
 
-const client = new W3CWebSocket("ws://localhost:3001/recognize");
+const client = new W3CWebSocket(`ws://${window.location.host}/recognize`);
 
 class App extends React.Component {
     constructor(props) {
