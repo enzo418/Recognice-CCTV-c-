@@ -50,6 +50,9 @@ $button-color: #fff;
 $button-hover-color: rgb(254, 255, 188);
 $button-focus-color: $yellow-crayola;
 
+// navbar
+$navbar-background-color: $eerie-darker;
+
 @import "~bulma/bulma";
 @import "./configurations.scss";
 @import "./notifications.scss";

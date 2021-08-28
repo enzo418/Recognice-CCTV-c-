@@ -42,7 +42,7 @@ class HomeNavBar extends React.Component {
                     </a>
                 </div>
 
-                <div id="navbar-status" className="navbar-menu">
+                <div id="navbar-status" className={"navbar-menu " + (this.state.showNavBar ? " is-active" : "")}>
                     <div className="navbar-start">
                         <div className="navbar-item">
                             <h1 id="button-state-recognizer">
