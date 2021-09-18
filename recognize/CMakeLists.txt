@@ -28,7 +28,7 @@ set(SOURCES ${COMMON_SRC} ${MAIN_SRC})
 message(${SOURCES})
 
 # Set cmake cxx flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread")
 
 add_executable(recognize ${SOURCES})
 
