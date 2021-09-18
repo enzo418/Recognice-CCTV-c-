@@ -3,21 +3,36 @@
 !*.cpp
 !*.hpp
 !*.h
+!*.h
 !*.md
 !.gitignore
 !*.js
 !*.css
+!*.scss
 !*.json
 !*.html
+!favicon.svg
+!.prettierrc
+!LICENSE
 
+# server
+!src/stream_content
+!uWebSockets/
+
+# web
 !src/
 !src/tests/
 !src/web/
 !src/web/assets/
 !src/web/src/
 !src/web/src/modules/
+!src/web/src/modules/canvas/
 !src/web/src/utils/
+!src/web/src/components/
+!src/web/src/components/Inputs
+!src/web/src/styles
 
 !CMakeLists.txt
 
 package-lock.json
+test_values.js

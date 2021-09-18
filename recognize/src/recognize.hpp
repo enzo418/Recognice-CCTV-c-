@@ -77,7 +77,7 @@ public:
 	Recognize(void);
 	~Recognize() = default;
 
-	bool Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread);
+	bool Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread, std::string& error);
 
 	void StartActionsBot();
 
@@ -87,5 +87,7 @@ public:
 	
 	void StartCamerasThreads();
 
+	// waits until all the threads are joined
+	// then returns
 	void CloseAndJoin();
 };

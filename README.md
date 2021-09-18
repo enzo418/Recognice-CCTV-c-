@@ -9,9 +9,10 @@ You can compile "recognize" alone and run it with its parameters and it will wor
 This repository contains the 3 projects related to the recognize.
 - **Recognize**: main program, shows the cameras, detects things and send alerts. Built with [`opencv`](https://opencv.org/) (capture video and then process and show those images), [`curl`](https://curl.se/) (send telegram notifications) and [`jsoncpp`](https://github.com/open-source-parsers/jsoncpp) (decode json from telegram bot messages).
 
-	- **webRecognize**: Web-GUI program to make it easier to configure the main program, can start it, stop it and show notifications. Client side built with pure js and html with `bulma` (style), `moment` (dates) and `jquery` (js to html helper). Server side uses [`seasocks`](https://github.com/mattgodbolt/seasocks/) to serve the files in a http server and provide WebSockets connections, also uses fmt.
+	- **webRecognize**: Web-GUI program to make it easier to configure the main program, can start it, stop it and show notifications. Client side built with pure js and html with `bulma` (style), `moment` (dates) and `jquery` (js to html helper). Server side uses [`uWebSockets`](https://github.com/uNetworking/uWebSockets/) to serve the files in a http server and provide WebSockets connections, the server also uses fmt.
 
 	- **wxRecognize**: First GUI made, then replaced with webRecognize so they have the same purpose. Built with [`wxWidgets`](wxwidgets.org).
 
 # Libs/headers requerired	
-Those described above for each project in Content.
+- The ones described above.
+- Check the README.md of each project folder.

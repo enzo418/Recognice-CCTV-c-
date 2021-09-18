@@ -1,0 +1,345 @@
+@charset "utf-8";
+
+$lemon-meringue: #f1e8b8ff;
+$yellow-crayola: #f9e784ff;
+$copper-crayola: #e58f65ff;
+$indian-red: #d05353ff;
+$eerie-black: #191919ff;
+$eerie-darker: #141414;
+$eerie-lighter: #292929;
+
+// Update Bulma's global variables
+$family-sans-serif: "Nunito", sans-serif;
+$grey-dark: #fff;
+$grey-light: $lemon-meringue;
+$primary: $eerie-black;
+$link: $yellow-crayola;
+$widescreen-enabled: false;
+$fullhd-enabled: false;
+
+// Update some of Bulma's component variables
+$body-background-color: $primary;
+// $control-border-width: 2px;
+// $input-border-color: transparent;
+// $input-shadow: none;
+
+// modal
+$modal-card-body-background-color: $eerie-black;
+$modal-card-head-background-color: $eerie-darker;
+
+// drop down
+$dropdown-content-background-color: $eerie-black;
+
+// card
+$card-background-color: $eerie-darker;
+$card-header-background-color: $eerie-lighter;
+$card-header-color: #fff;
+
+// input
+$input-background-color: $eerie-lighter;
+$input-color: #fff;
+$input-border-color: rgba(255, 255, 255, 0.309);
+$input-hover-color: $yellow-crayola;
+
+// tab
+$tabs-boxed-link-active-background-color: $primary;
+
+// button
+$button-background-color: $eerie-lighter;
+$button-color: #fff;
+$button-hover-color: rgb(254, 255, 188);
+$button-focus-color: $yellow-crayola;
+
+// navbar
+$navbar-background-color: $eerie-darker;
+
+@import "~bulma/bulma";
+@import "./configurations.scss";
+@import "./notifications.scss";
+@import "../../node_modules/bulma-calendar/dist/css/bulma-calendar.min";
+
+::-webkit-scrollbar-thumb {
+    background-color: #494e52;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #191c1d;
+}
+
+::-webkit-scrollbar {
+    background-color: #222526;
+    color: #b5aea2;
+}
+
+.card {
+	margin: 0 0 1rem 0;
+
+    .card-header {
+        .card-header-title {
+            text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    .card-content {
+        padding: 0 0.2rem 1.5rem 0.2rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-top: 0.5rem;
+    }
+
+    .configuration-group {
+        padding: 5px;
+        border: 1px solid #ffffff2b;
+        border-radius: 0.2rem;
+        margin: 0 5px 5px 0;
+        width: 49%;
+        height: fit-content;
+        display: flex;
+        flex-wrap: wrap;    
+        flex-direction: column; 
+
+        .configuration-group {
+            display: block;
+            width: auto;
+        }
+
+    }
+}
+
+.tabs{
+    margin-top: 1rem;
+ 
+    .tab span {
+        text-transform: capitalize;
+    }
+}
+
+.modal.modal-file {
+    .modal-card {
+        overflow: visible;
+        width: 60%;
+        top: 7px;
+        position: absolute;
+
+        .modal-card-foot {
+            display: flex;
+            align-content: center;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+
+        .modal-card-body {
+            overflow: visible;
+        }
+
+        .dropdown-content {            
+            height: 55vh;
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
+    }   
+}
+
+.modal {
+    .message-body{
+        border: 0;
+    }
+
+    .file-name-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        input {
+            margin-right: 0.5rem;
+        }
+    }
+}
+
+.modal-card-head {
+    > *:first-letter {
+        text-transform: uppercase;
+    }
+}
+
+.modal-canvas {
+    .modal-card {
+        max-width: 100%;
+        width: min-content;
+        height: min-content;
+        max-height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .buttons-modal-body {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ignored-areas-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+    }
+
+    &.exclusivity-areas {
+        .modal-card {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            margin: 0;
+            padding: 0;
+        
+            .exclusivity-areas-header {
+                width: 100%;
+                background-color: $primary;
+
+                p {
+                    color: #fff;
+                }
+
+                .button {
+                    margin: 0 0.5rem;
+                }
+            }
+
+            .message-body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border: 0;
+
+                .buttons-exclusivity-areas {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    margin-top: 0.5rem;
+                    width: 100%;
+                }
+
+                .buttons-modal-body {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: space-evenly;
+                    width: 100%;
+                }
+            }
+        }
+
+        .message-header-button {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .message-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .undo-redo {
+            display: flex;
+        }
+
+        .undo-redo > .button {
+            width: 100%;
+        }
+
+        #toggle-exclusivity-area-type {
+            flex-flow: nowrap;
+            margin: 0;
+            .button {
+                margin: 0;
+            }
+            .undo-redo .button {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+            }
+        }
+    }
+    
+}
+
+.navbar-menu {
+    .navbar-item {
+        transition: background-color 500ms ease-out;
+        
+        &:hover {
+            background-color: #44444482;
+            border-radius: 2px;
+        }
+
+        .hover::after {
+            content: "";
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+            position: absolute;
+            bottom: 0;
+            left: 2px;
+            transition: all 4s;
+        }
+
+        a:hover {
+            color: $link;
+        }
+    }
+}
+
+#alerts {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+// media
+@media only screen and (min-width: 500px) and (max-width: 771px) {
+	.card-content .configuration-group {
+		width: auto;
+	}
+
+	#modal-exclusivity-areas .message-header-button {		
+    	flex-wrap: wrap;
+	}
+
+	#modal-exclusivity-areas .message-header-button > .sizable {
+		width: 50%;
+		display: flex;
+	}
+}
+
+@media only screen and (min-width: 700px) and (max-width: 1103px) {
+	#modal-exclusivity-areas .message-header-button {		
+		flex-direction: column;
+	}	
+}
+
+@media only screen and (max-width: 500px) {
+	.card-content .configuration-group {
+		width: auto;
+	}
+
+	#modal-exclusivity-areas .message-header-button {		
+    	flex-wrap: wrap;
+	}
+
+	#modal-exclusivity-areas .message-header-button > .sizable {
+		width: 100%;
+		display: flex;
+	}
+}

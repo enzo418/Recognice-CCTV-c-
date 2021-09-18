@@ -33,7 +33,7 @@ namespace AreaSelector {
 	 * @param url source
 	 * @param frame frame captures
 	 */
-	bool GetFrame(const std::string& url, cv::Mat& frame);
+	bool GetFrame(const char* url, cv::Mat& frame);
 	
 	/**
 	 * @brief Callback for SelectCameraROI 
