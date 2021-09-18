@@ -17,8 +17,9 @@ import ModalSelectFileName from "./components/ModalSelectFileName";
 import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
 import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
-import {w3cwebsocket as W3CWebSocket} from "websocket";
+// import {w3cwebsocket as W3CWebSocket} from "websocket";
 import ModalConnectionLost from "./components/ModalConnectionLost";
+import { WrapperWebSocket } from "./modules/websocket_wrapper";
 
 const pages = {
     configurations: {
@@ -32,10 +33,8 @@ const pages = {
 };
 
 const ERRORS = {
-    CONNECTION_LOST: "connection_lost"
-}
-
-const client = new W3CWebSocket(`ws://${window.location.host}/recognize`);
+    CONNECTION_LOST: "connection_lost",
+};
 
 class App extends React.Component {
     constructor(props) {
@@ -86,9 +85,11 @@ class App extends React.Component {
 
                 // do not change cancel
                 onCancel: () => this.hideCanvasModal(),
-            },
-            notifications: [],
+            }
         };
+
+
+        this.socket = new WrapperWebSocket(`ws://${window.location.host}/recognize`);
 
         this.toggleRecognize = this.toggleRecognize.bind(this);
         this.changeConfiguration = this.changeConfiguration.bind(this);
@@ -120,42 +121,30 @@ class App extends React.Component {
         let lang = window.localStorage.getItem("lang") || "en";
         i18n.changeLanguage(lang);
 
-        fetch("/api/notifications")
-            .then((res) => res.json())
-            .then((res) => {
-                this.setState(() => ({notifications: utils.prepareNotifications(res.notifications)}));
-            });
-
-        client.onmessage = (message) => {
-            let data = JSON.parse(message.data);
-            console.log("Message: ", data);
-            if (data.notifications) {
-                this.setState((prev) => ({
-                    notifications: prev.notifications.concat(utils.prepareNotifications(data.notifications)),
-                }), () => {
-                    if (this.state.configuration["playSoundOnNotification"]) {
-                        this.playAudioAlert();
-                    }
-                });
-            }
-
-            if (data.recognize_state) {
-                if (typeof data.recognize_state.running !== 'undefined') {
-                    this.setState((prev) => {
-                        prev.recognize.running = data.recognize_state.running;
-                        return prev;
-                    });
+        this.socket.on("notifications", (notifications) => {
+            if (notifications) {
+                if (this.state.configuration["playSoundOnNotification"]) {
+                    this.playAudioAlert();
                 }
             }
-        };
+        });
 
-        client.onclose = () => {
+        this.socket.on("recognize_state", (recognize_state) => {
+            if (typeof recognize_state.running !== "undefined") {
+                this.setState((prev) => {
+                    prev.recognize.running = recognize_state.running;
+                    return prev;
+                });
+            }
+        });
+
+        this.socket.on("close", () => {
             this.setError(ERRORS.CONNECTION_LOST);
 
             if (this.state.configuration["playSoundOnNotification"]) {
                 this.playAudioAlert();
             }
-        };
+        });
     }
 
     hideCanvasModal() {
@@ -178,7 +167,7 @@ class App extends React.Component {
         fetch(url)
             .then((res) => res.json())
             .then((res) => this.addAlert(res.status))
-            .catch(error => {
+            .catch((error) => {
                 this.addAlert({status: "error", message: "could not connect to the server", extra: error.message});
                 // this.setError(ERRORS.CONNECTION_LOST);
             });
@@ -343,7 +332,7 @@ class App extends React.Component {
 
     playAudioAlert() {
         try {
-            var audio = new Audio('https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true');
+            var audio = new Audio("https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true");
             audio.volume = 0.5;
             audio.play();
         } catch (e) {}
@@ -369,12 +358,12 @@ class App extends React.Component {
                 {this.state.recognize.configuration.file === "" &&
                     this.props.location.pathname !== pages.notifications.path &&
                     this.state.fileNameToCopy === "" && (
-                        <ModalSelectConfiguration
-                            configurationFilesAvailables={this.state.configurationFilesAvailables}
-                            changeConfigurationFile={this.changeConfigurationFile}
-                            onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                        />
-                    )}
+                    <ModalSelectConfiguration
+                        configurationFilesAvailables={this.state.configurationFilesAvailables}
+                        changeConfigurationFile={this.changeConfigurationFile}
+                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
+                    />
+                )}
 
                 {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
                     <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
@@ -422,8 +411,8 @@ class App extends React.Component {
 
                     <Route path={pages.notifications.path}>
                         <NotificationPage
-                            notifications={this.state.notifications}
-                            configuration={this.state.configuration}></NotificationPage>
+                            configuration={this.state.configuration}
+                            socket={this.socket}></NotificationPage>
                     </Route>
                 </Switch>
 

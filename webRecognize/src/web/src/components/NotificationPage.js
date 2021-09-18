@@ -4,6 +4,7 @@ import moment from "moment";
 import {Translation} from "react-i18next";
 import NotificationsPaginator from "./NotificationsPaginator";
 import bulmaCalendar from "bulma-calendar/dist/js/bulma-calendar.min";
+import utils from "../utils/utils";
 
 const getHoursMinute = (date) => `${date.getHours()}:${date.getMinutes()}:00`;
 const getMomentTime = (date) => moment(getHoursMinute(date), 'hh:mm:ss');
@@ -12,6 +13,7 @@ class NotificationPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            notifications: [], // all the notifications
             showingNotifications: [], // notifications being shown
             lastNotificationsFilteredCalendar: [],
             calendar: null,
@@ -72,9 +74,9 @@ class NotificationPage extends React.Component {
     updateCalendarLimitis() {
         var minDate, maxDate;
 
-        if (this.props.notifications.length > 0) {
-            minDate = this.props.notifications[0].datetime;
-            maxDate = this.props.notifications[this.props.notifications.length - 1].datetime;
+        if (this.state.notifications.length > 0) {
+            minDate = this.state.notifications[0].datetime;
+            maxDate = this.state.notifications[this.state.notifications.length - 1].datetime;
         }
 
         if (!this.state.calendar || !this.state.calendar.isOpen()) {
@@ -88,14 +90,14 @@ class NotificationPage extends React.Component {
             end = e.data.date.end;
 
         this.setState((prev) => {
-            prev.showingNotifications = this.props.notifications.filter(
+            prev.showingNotifications = this.state.notifications.filter(
                 (not) => not.datetime >= start && not.datetime <= end
             );
 
             prev.lastNotificationsFilteredCalendar = prev.showingNotifications;
 
             // set time picker
-            if (prev.showingNotifications.length > 0) { 
+            if (prev.showingNotifications.length > 0) {
                 const timePickers = bulmaCalendar.attach('[type="time"]', {
                     color: "primary",
                     isRange: true,
@@ -115,18 +117,18 @@ class NotificationPage extends React.Component {
     }
 
     calendar_OnCancel(e) {
-        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.props.notifications) {
+        if (!e.data.datePicker.date.start && !e.data.datePicker.date.end && this.state.notifications) {
             // notificationPaginator.index = 0;
             this.setState(() => ({showingNotifications: []}));
 
-            // if (this.props.notifications === 0) {
+            // if (this.state.notifications === 0) {
             // } else {
             // notificationPaginator.gotoIndex(0);
             // }
         }
     }
 
-    timePicker_OnSelect(e) {
+    timePicker_OnSelect() {
     }
 
     timePicker_OnCancel(e) {
@@ -143,10 +145,26 @@ class NotificationPage extends React.Component {
     }
 
     componentDidMount() {
+        fetch("/api/notifications")
+            .then((res) => res.json())
+            .then((res) => {
+                this.setState(() => ({notifications: utils.prepareNotifications(res.notifications)}));
+            });
+
+        this.props.socket.on("notifications", (notifications) => {
+            if (notifications) {
+                this.setState(
+                    (prev) => ({
+                        notifications: prev.notifications.concat(utils.prepareNotifications(notifications)),
+                    })
+                );
+            }
+        });
+
         this.updateCalendarLimitis();
     }
 
-    componentDidUpdate() {        
+    componentDidUpdate() {
         // if calendar is not showing and there is no selected date:
         // this.updateCalendarLimitis();
     }
@@ -190,8 +208,8 @@ class NotificationPage extends React.Component {
                 </div>
 
                 <NotificationsPaginator
-                    notifications={this.state.showingNotifications.length > 0 ? this.state.showingNotifications : this.props.notifications}
-                    groups={this.getGroups(this.state.showingNotifications.length > 0 ? this.state.showingNotifications : this.props.notifications)}></NotificationsPaginator>
+                    notifications={this.state.showingNotifications.length > 0 ? this.state.showingNotifications : this.state.notifications}
+                    groups={this.getGroups(this.state.showingNotifications.length > 0 ? this.state.showingNotifications : this.state.notifications)}></NotificationsPaginator>
             </div>
         );
     }
@@ -199,7 +217,7 @@ class NotificationPage extends React.Component {
 
 NotificationPage.propTypes = {
     configuration: PropTypes.object.isRequired,
-    notifications: PropTypes.array.isRequired,
+    socket: PropTypes.object.isRequired
 };
 
 export default NotificationPage;

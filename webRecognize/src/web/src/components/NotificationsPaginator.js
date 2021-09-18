@@ -29,16 +29,16 @@ class NotificationsPaginator extends React.Component {
     onKeyPressed(e) {
         switch (e.key) {
             case "ArrowRight":
-                    this.nextNotification();         
+                this.nextNotification();
                 break;
             case "ArrowLeft":
-                    this.previousNotification();         
+                this.previousNotification();
                 break;
             case "ArrowUp":
-                    // ¿?
+            // ¿?
                 break;
             case "ArrowDown":
-                    // ¿?
+            // ¿?
                 break;
             default:
                 break;
@@ -96,7 +96,7 @@ class NotificationsPaginator extends React.Component {
                 {this.props.notifications.length > 0 && (
                     <div className="buttons-navigator-notification">
                         <button className="button navigator-notification buton-uttermost-start icon"
-                        onClick={() => this.gotoUttermost(false)}>
+                            onClick={() => this.gotoUttermost(false)}>
                             <i className="fas fa-angle-double-left"></i>
                         </button>
 
@@ -117,7 +117,7 @@ class NotificationsPaginator extends React.Component {
                         </button>
 
                         <button className="button navigator-notification buton-uttermost-end icon"
-                        onClick={() => this.gotoUttermost(true)}>
+                            onClick={() => this.gotoUttermost(true)}>
                             <i className="fas fa-angle-double-right"></i>
                         </button>
                     </div>
