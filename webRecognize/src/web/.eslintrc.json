@@ -39,7 +39,7 @@
         "no-control-regex": "error",
         "no-invalid-regexp": "error",
         "no-trailing-spaces": "error",
-        "indent": ["warn", 4],
+        "indent": ["warn", 4, { "SwitchCase": 1 }],
         "no-param-reassign": "off",
         "no-underscore-dangle": "off",
         "no-continue": "off",
