@@ -64,7 +64,9 @@ int main(int argc, char* argv[]){
 
 		Recognize recognize;
 
-		if (recognize.Start(std::ref(cfgs), false, cfgs.programConfig.telegramConfig.useTelegramBot)) {
+		std::string error;
+
+		if (recognize.Start(std::ref(cfgs), false, cfgs.programConfig.telegramConfig.useTelegramBot, error)) {
 
 			std::thread prev = std::thread(&Recognize::StartPreviewCameras, &recognize);
 

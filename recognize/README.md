@@ -4,7 +4,13 @@
 - Opencv >= 4.5 (was 3.0 before implementing yolov4 nn)
 
 ## Compiling
-- jsoncpp-devel (To decode incoming messages from the telegram api)
+- [jsoncpp](github.com/open-source-parsers/jsoncpp) (jsoncpp-devel) (To decode incoming messages from the telegram api)
+    - or compile it:
+        1. `git clone github.com/open-source-parsers/jsoncpp`
+        2. `cd jsoncpp && mkdir build && cd build`
+        3. `cmake -DCMAKE_BUILD_TYPE=release -DJSONCPP_LIB_BUILD_STATIC=ON-DJSONCPP_LIB_BUILD_SHARED=OFF -G "Unix Makefiles" ..`
+        4. `make`
+        5. `sudo make install`
 
 
 # Todo
@@ -12,6 +18,3 @@
 
 **2. Configuration:**
 - Allow the user to set a messaging service like dweet.io
-
-**3. Others**
-- Add a flag that, if enabled, will make log every 30m the average change of pixels. Also the maximun and minimum. With this the user will be able to set the perfect threshold for each hor/time of the day.

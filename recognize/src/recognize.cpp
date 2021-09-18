@@ -4,7 +4,7 @@ Recognize::Recognize() {
 	this->notificationWithMedia = std::make_unique<moodycamel::ReaderWriterQueue<std::tuple<Notification::Type, std::string, std::string, std::string>>>(100);
 }
 
-bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread) {	
+bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bool startActionsThread, std::string& error) {	
 	bool success = true;
 
 	this->close = false;
@@ -29,6 +29,15 @@ bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 	if (this->camerasConfigs.size() == 0) {
 		/// TODO: throw custom exception
 		std::cout << "Cameras size 0. Exiting." << std::endl;
+		error = "ERROR: There is 0 cameras in the current configuration.";
+		return false;
+	}
+
+	if (this->programConfig.numberGifFrames.framesBefore < this->programConfig.framesToAnalyzeChangeValidity.framesBefore) {
+		error = "ERROR: 'framesBefore' in 'numberGifFrames' cannot be less than 'framesBefore' in 'framesToAnalyzeChangeValidity' ";
+		return false;
+	} else if (this->programConfig.numberGifFrames.framesAfter < this->programConfig.framesToAnalyzeChangeValidity.framesAfter) {
+		error = "ERROR: 'framesAfter' in 'numberGifFrames' cannot be less than 'framesAfter' in 'framesToAnalyzeChangeValidity'";
 		return false;
 	}
 	
@@ -98,8 +107,6 @@ bool Recognize::Start(const Configurations& configs, bool startPreviewThread, bo
 }
 
 void Recognize::StartCamerasThreads() {
-	bool somethingDetected = false;
-
 	Utils::FixOrderCameras(this->camerasConfigs);
 	
 	// Create the cameras objs
@@ -426,11 +433,11 @@ void Recognize::StartNotificationsSender() {
 							// --------------------
 							cv::Mat& detected_frame = gif->firstFrameWithChangeDetected();
 
-							std::vector<std::tuple<size_t, cv::Rect, cv::Point>> trace = gif->getFindingsTrace();
+							std::vector<Finding> trace = gif->getFindingsTrace();
 
 							// draw finding rectangle
 							if (this->programConfig.drawChangeFoundBetweenFrames) {
-								cv::Rect bnd = std::get<1>(trace[0]);
+								cv::Rect bnd = trace[0].rect;
 								bnd.x += camera->config->roi.x;
 								bnd.y += camera->config->roi.y;
 								cv::rectangle(detected_frame, bnd, cv::Scalar(255,255,170), 1);
@@ -440,10 +447,10 @@ void Recognize::StartNotificationsSender() {
 							if (this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::All 
 								|| this->programConfig.drawTraceOfChangeFoundOn == DrawTraceOn::Image) {
 								for (size_t j = 0; j < trace.size(); j++) {
-									cv::circle(detected_frame, std::get<2>(trace[j]), 2, cv::Scalar(0, 0, 255), -1);
+									cv::circle(detected_frame, trace[j].center, 2, cv::Scalar(0, 0, 255), -1);
 									
 									if (j + 1 < trace.size()) {
-										cv::line(detected_frame, std::get<2>(trace[j]), std::get<2>(trace[j+1]), cv::Scalar(0,255,0));
+										cv::line(detected_frame, trace[j].center, trace[j+1].center, cv::Scalar(0,255,0));
 									}
 								}
 							}
@@ -511,7 +518,7 @@ void Recognize::StartNotificationsSender() {
 		// --------------------------------------------
 		for (auto &&camera : cameras) {
 			size_t size = camera->pendingNotifications.size();
-			
+
 			// iterate types priority
 			for (auto&& type : notificationTypesPriority) {				
 				// iterate notifications vector
@@ -519,7 +526,7 @@ void Recognize::StartNotificationsSender() {
 					Notification::Notification& notf = camera->pendingNotifications[i];
 					
 					if (notf.type == type && !notf.sended) {
-						std::cout << "Sending notification of type " << camera->pendingNotifications[i].type << std::endl;
+						std::cout << "Sending notification of type " << notf.type << std::endl;
 						
 						// Since merging multiple images into one file is cpu intensive, 
 						// and can take up to a few seconds on different processors, 

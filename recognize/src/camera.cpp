@@ -1,9 +1,8 @@
 #include "camera.hpp"
 
 Camera::Camera(CameraConfiguration& cameraConfig, ProgramConfiguration* programConfig, cv::HOGDescriptor* hog) : config(&cameraConfig), _programConfig(programConfig), _descriptor(hog) {
-	if (this->_programConfig->analizeBeforeAfterChangeFrames 
-		|| this->_programConfig->telegramConfig.sendGifWhenDetectChange
-		|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange) {
+	this->useGifOrVideo = this->_programConfig->useNotifications && (this->_programConfig->analizeBeforeAfterChangeFrames || this->_programConfig->useGif || this->_programConfig->sendVideo);
+	if (this->useGifOrVideo) {
 		this->currentGifFrames = std::make_unique<GifFrames>(_programConfig, config);
 		this->OpenVideoWriter();
 	}
@@ -258,13 +257,6 @@ void Camera::ReadFramesWithInterval() {
 	const bool showPreview = this->_programConfig->showPreview;   
 	const bool showProcessedImages = this->_programConfig->showProcessedFrames;
 	const bool showIgnoredAreas = this->_programConfig->showIgnoredAreas;
-	const bool useNotifications = this->_programConfig->telegramConfig.useTelegramBot 
-								  || this->_programConfig->localNotificationsConfig.useLocalNotifications;
-	const bool useGif = this->_programConfig->telegramConfig.sendGifWhenDetectChange
-						|| this->_programConfig->localNotificationsConfig.sendGifWhenDetectChange;
-	
-	const bool sendVideo = this->_programConfig->telegramConfig.sendVideoWhenDetectChange
-						|| this->_programConfig->localNotificationsConfig.sendVideoWhenDetectChange;
 
 	const bool saveChangeVideo = this->_programConfig->saveChangeInVideo;
 
@@ -312,7 +304,7 @@ void Camera::ReadFramesWithInterval() {
 			}
 
 			// Once a new frame is ready, update buffer frames
-			if (useNotifications && this->_programConfig->analizeBeforeAfterChangeFrames || useGif || sendVideo) {
+			if (this->useGifOrVideo) {
 				cv::resize(this->frame, this->frame, RESIZERESOLUTION);
 
 				// if the current gif is ready to be sent, move it to the vector of gifs ready
@@ -350,7 +342,7 @@ void Camera::ReadFramesWithInterval() {
 			if (this->totalNonZeroPixels > this->config->changeThreshold 
 				&& this->currentGifFrames->getState() == State::Initial) 
 			{
-				if (useNotifications) {
+				if (this->_programConfig->useNotifications) {
 					std::cout << "Change detected. Checking... Threshold: " << this->totalNonZeroPixels  << std::endl;
 
 					this->msBetweenFrames = this->_programConfig->msBetweenFrameAfterChange;
@@ -358,7 +350,7 @@ void Camera::ReadFramesWithInterval() {
 					size_t overlappingFindings = 0;
 					// since gif does this (check if change inside an ignored area) for each frame... 
 					// only do it if user wants a image				
-					if (!this->_programConfig->analizeBeforeAfterChangeFrames && !useGif) {
+					if (!this->_programConfig->analizeBeforeAfterChangeFrames && !this->_programConfig->useGif) {
 						this->lastFinding = FindRect(diff);
 						
 						for (auto &&i : this->config->ignoredAreas) {

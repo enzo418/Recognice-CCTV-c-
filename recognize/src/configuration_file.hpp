@@ -21,6 +21,8 @@
 #include "types_configuration.hpp"
 #include "utils.hpp"
 
+#include <string_view>
+
 namespace ConfigurationFile {
 	/**
 	* @brief Get around for windows calls
@@ -28,8 +30,8 @@ namespace ConfigurationFile {
 	*/
 	const char* GetFilePath(const char* fileName);
 
-	void OpenFileWrite(std::fstream& file, std::string& fn);
-	void OpenFileRead(std::fstream& file, std::string& fn);
+	void OpenFileWrite(std::fstream& file, const std::string& fn);
+	void OpenFileRead(std::fstream& file, const std::string& fn);
 
 	std::string GetDocumentationString();
 	std::string GetConfigurationFileHeaderString();
@@ -64,12 +66,12 @@ namespace ConfigurationFile {
 	* @param fileName Filename
 	* @param error Error, if any.
 	*/
-	Configurations ReadConfigurations(std::string filePath, std::string& error);
+	Configurations ReadConfigurations(const std::string& filePath, std::string& error);
 
 	/**
 	* @brief Writes the configuration into a file
 	* @param cfgs Configurations
 	* @param fileName Optional, if it's blank the will use the last file name.
 	*/
-	void SaveConfigurations(Configurations& cfgs, std::string filePath);
+	void SaveConfigurations(Configurations& cfgs, const std::string& filePath);
 };

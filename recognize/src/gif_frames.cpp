@@ -184,7 +184,7 @@ bool GifFrames::isValid() {
 				// 	);
 
 				this->findings.push_back(
-					std::make_tuple(
+					Finding(
 						offset + i, // finding index on "frames" member
 						finding.rect.boundingRect(), 
 						cv::Point(finding.center.x + this->camera->roi.x, finding.center.y + this->camera->roi.y)						
@@ -280,7 +280,7 @@ bool GifFrames::isValid() {
 								|| this->program->drawTraceOfChangeFoundOn == DrawTraceOn::Video;
 		
 		size_t currFinding_i = 0; 
-		std::tuple<size_t, cv::Rect, cv::Point> currFinding = this->findings[currFinding_i];
+		Finding& current_finding = this->findings[currFinding_i];
 		bool savedFirstFrameWithFinding = false;
 
 		std::vector<cv::Point> pointsDrawn;
@@ -289,27 +289,27 @@ bool GifFrames::isValid() {
 			cv::Mat& frame = frames[i];
 			
 			// if current finding "frames" index is i
-			if (std::get<0>(currFinding) == i) {
+			if (current_finding.frameIndex == i) {
 				// save the first frame in which a change has been found
-				if (!savedFirstFrameWithFinding) {
+				if (!savedFirstFrameWithFinding) {					
 					frame.copyTo(this->firstFrameWithDescription);
 					savedFirstFrameWithFinding = true;
 				}
 
 				// draw finding rectangle
 				if (program->drawChangeFoundBetweenFrames) {
-					cv::Rect bnd = std::get<1>(currFinding);
+					cv::Rect bnd = current_finding.rect;
 					bnd.x += camera->roi.x;
 					bnd.y += camera->roi.y;
 					cv::rectangle(frame, bnd, cv::Scalar(255,255,170), 1);
 				}
 
-				pointsDrawn.push_back(std::get<2>(currFinding));
+				pointsDrawn.push_back(current_finding.center);
 
 				// go to next finding
 				if (currFinding_i + 1 < this->findings.size()) {
 					currFinding_i += 1;
-					currFinding = this->findings[currFinding_i];
+					current_finding = this->findings[currFinding_i];
 				}
 			}
 
@@ -368,6 +368,6 @@ cv::Mat& GifFrames::firstFrameWithChangeDetected(){
 	return this->firstFrameWithDescription;
 }
 
-std::vector<std::tuple<size_t, cv::Rect, cv::Point>> GifFrames::getFindingsTrace() {
+std::vector<Finding> GifFrames::getFindingsTrace() {
 	return this->findings;
 }

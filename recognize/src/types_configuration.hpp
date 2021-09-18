@@ -154,6 +154,12 @@ struct ProgramConfiguration {
 	/*  - 4: all
 	*/
 	DrawTraceOn drawTraceOfChangeFoundOn = DrawTraceOn::All;
+
+	bool useNotifications = false;
+
+	bool useGif = false;
+	
+	bool sendVideo = false;
 };
 
 typedef std::vector<CameraConfiguration> CamerasConfigurations;

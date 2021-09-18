@@ -12,8 +12,9 @@ namespace Notification {
 	{
 		this->type = Type::IMAGE;
 
-		if (save) 
-			this->filename = this->datetime + ".jpg";	
+		if (save) {
+			this->filename = this->datetime + ".jpg";
+		}
 	}
 
 	Notification::Notification(std::string mediaPath, std::string caption, std::string build_command, std::string group_id) 
