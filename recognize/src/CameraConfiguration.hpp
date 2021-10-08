@@ -24,6 +24,13 @@ namespace Observer
         OBJECT_DETECTOR = 4
     };
 
+    enum EObjectDetectionMethod
+    {
+        NONE = 1,
+        HOG_DESCRIPTOR = 1,
+        YOLODNN_V4 = 2
+    };
+
     struct CameraConfiguration
     {
         std::string url;
@@ -65,6 +72,9 @@ namespace Observer
 
         // Restricted areas to check when validating a change
         std::vector<RestrictedArea> restrictedAreas;
+
+        // Method to dected the objects
+        EObjectDetectionMethod objectDetectionMethod;
     };
 
 } // namespace Observer

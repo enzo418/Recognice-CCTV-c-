@@ -8,15 +8,19 @@ namespace Observer
         private:
             std::chrono::time_point<std::chrono::high_resolution_clock> start;
 
-            double duration;
-
+            bool started;
+            
         public:
             Timer(bool startNow = false);
             void Start();
 
+            void Stop();
+
             double GetDuration();
 
             double GetDurationAndRestart();
+
+            bool Started();
     };
 
 } // namespace Observer

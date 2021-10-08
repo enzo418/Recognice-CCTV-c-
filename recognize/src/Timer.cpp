@@ -11,7 +11,14 @@ namespace Observer
 
     template <class Unit>
     void Timer<Unit>::Start() {
+        this->started = true;
+
         this->start = std::chrono::high_resolution_clock::now();
+    }
+
+    template <class Unit>
+    void Timer<Unit>::Stop() {
+        this->started = false;
     }
 
     template <class Unit>
@@ -22,12 +29,15 @@ namespace Observer
 
     template <class Unit>
     double Timer<Unit>::GetDurationAndRestart() {
-        const auto end = std::chrono::high_resolution_clock::now();
+        auto duration = this->GetDuration();
         
-        auto duration = (end - this->start) / Unit(1);
-        
-        this->start = end;
+        this->Start();
 
         return duration;
+    }
+
+    template <class Unit>
+    bool Timer<Unit>::Started() {
+        return this->started;
     }
 } // namespace Observer

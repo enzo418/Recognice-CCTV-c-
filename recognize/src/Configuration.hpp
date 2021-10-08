@@ -5,12 +5,6 @@
 
 namespace Observer
 {
-    enum EObjectDetectionMethod
-    {
-        NONE = 1,
-        HOG_DESCRIPTOR = 1,
-        YOLODNN_V4 = 2
-    };
 
     struct OutputPreviewConfiguration
     {
@@ -23,8 +17,8 @@ namespace Observer
 
     struct Configuration
     {
+        // absolute path
         std::string mediaFolderPath;
-        EObjectDetectionMethod objectDetectionMethod;
 
         TelegramNotificationsConfiguration telegramConfiguration;
 

@@ -18,6 +18,10 @@
 
 #include "Timer.hpp"
 
+#include "FrameProcessor.hpp"
+
+#include "ThresholdManager.hpp"
+
 namespace Observer
 {
     class CameraObserver
@@ -40,8 +44,15 @@ namespace Observer
 
             std::unique_ptr<VideoValidator> validator;
 
+            // timer to get a new frame every x ms
+            Timer<std::chrono::milliseconds> timerFrames;
+
+            FrameProcessor frameProcessor;
+
+            ThresholdManager thresholdManager;
+
         public:
-            CameraObserver(const std::string& url, CameraConfiguration configuration /**, CameraObserverBehaviour behaviour **/);
+            CameraObserver(CameraConfiguration configuration /**, CameraObserverBehaviour behaviour **/);
 
             void Start();
 
@@ -49,6 +60,8 @@ namespace Observer
 
         protected:
             void ProcessFrame(cv::Mat &frame);
+
+            void ChangeDetected();
     };
 
 } // namespace Observer

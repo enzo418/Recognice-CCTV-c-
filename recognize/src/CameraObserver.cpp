@@ -2,7 +2,7 @@
 
 namespace Observer
 {
-    CameraObserver::CameraObserver(const std::string& url, CameraConfiguration configuration) {
+    CameraObserver::CameraObserver(CameraConfiguration configuration) {
         // the compiler should be able to optimize it moving the configuration into the cfg stack
         this->cfg.emplace(configuration);
 
@@ -13,8 +13,10 @@ namespace Observer
 
     void CameraObserver::Start() {
         cv::Mat frame;
-        Timer<std::chrono::milliseconds> timerFrames(true);
+
         const auto minTimeBetweenFrames = 1000 / this->cfg->fps;
+        
+        timerFrames.Start();
 
         while (this->running)
         {
@@ -35,7 +37,23 @@ namespace Observer
     }
 
     void CameraObserver::ProcessFrame(cv::Mat& frame) {
-        
+        // get change from the last frame
+        double change = this->frameProcessor
+                                    .NormalizeFrame(frame)
+                                    .DetectChanges();
+
+        // get the average change
+        double avrg = this->thresholdManager.GetAverage();
+
+        if (change > avrg) {
+            this->ChangeDetected();
+        }
+
+        // give the change found to the thresh manager
+        this->thresholdManager.Add(change);
     }
 
+    void CameraObserver::ChangeDetected() {
+
+    }
 } // namespace Observer

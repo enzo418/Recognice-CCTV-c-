@@ -1,0 +1,36 @@
+#include "ThresholdManager.hpp"
+
+namespace Observer
+{
+    ThresholdManager::ThresholdManager(double pMinimumValue, double pUpdateFrequency, double pIncreaseFactor) {
+        this->thresholdAccumulator = 0;
+        this->thresholdSamples = 0;
+
+        this->minimumValue = pMinimumValue;
+        this->updateFrequency = pUpdateFrequency;
+        this->increaseFactor = pIncreaseFactor;
+    }
+
+    ThresholdManager& ThresholdManager::Add(double pThreshold) & {
+        if (!this->timer.Started()) {
+            this->timer.Start();
+        }
+
+        this->thresholdAccumulator += this->minimumValue + threshold;
+        this->thresholdSamples += 1;
+
+        if (this->timer.GetDuration() >= this->updateFrequency) {
+            this->threshold = this->thresholdAccumulator / this->thresholdSamples * this->increaseFactor;
+
+            this->thresholdAccumulator = 0;
+            this->thresholdSamples = 0;
+
+            this->timer.GetDurationAndRestart();
+        }
+    }
+
+    double ThresholdManager::GetAverage() {
+        return this->threshold;
+    }
+
+} // namespace Observer
