@@ -7,7 +7,7 @@ namespace Observer
         }
 
         bool ObserverCentral::Start(Configuration pConfig) {
-            this->config = config;
+            this->config = pConfig;
             this->StartAllCameras();
 
             if (this->config.outputConfiguration.showOutput) {
@@ -41,6 +41,12 @@ namespace Observer
             {
                 this->interalStartCamera(camcfg);
             }
+
+            for (auto &&camThread : this->camerasThreads)
+            {
+                camThread.camera->SubscribeToCameraEvents(&notificationController);
+                camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+            }
         }
 
         void ObserverCentral::StartPreview() {
@@ -49,6 +55,13 @@ namespace Observer
 
         void ObserverCentral::StopPreview() {
             // TODO:
+        }
+
+        void ObserverCentral::SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber) {
+            for (auto &&camThread : this->camerasThreads)
+            {
+                camThread.camera->SubscribeToThresholdUpdate(subscriber);
+            }
         }
 
         void ObserverCentral::interalStopCamera(ObserverCentral::CameraThread& camThread) {
@@ -65,20 +78,8 @@ namespace Observer
 
         ObserverCentral::CameraThread ObserverCentral::GetNewCameraThread(CameraConfiguration cfg) {
             ObserverCentral::CameraThread ct;
-            ct.camera = std::make_shared<CameraObserver>(cfg);
+            ct.camera = std::make_shared<CameraObserver>(&cfg);
             ct.thread = std::thread(&CameraObserver::Start, ct.camera);
             return ct;
-        }
-
-        void ObserverCentral::handleNewNotification(Notification notification){
-            // TODO:
-        }
-
-        void ObserverCentral::handleThresholdUpdated(CameraObserver camera, float threshold){
-            // TODO:
-        }
-
-        void ObserverCentral::handleNewFrame(cv::Mat frame, int cameraOrder){
-            // TODO:
         }
 } // namespace Observer

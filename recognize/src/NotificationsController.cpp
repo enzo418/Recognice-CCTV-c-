@@ -38,7 +38,7 @@ namespace Observer
 
         for (auto &&service : this->notDrawableServices[static_cast<int>(ETrazable::IMAGE)])
         {
-            
+            service->SendImage(path, notification.GetCaption());
         }        
 
         auto &servD = this->drawableServices[static_cast<int>(ETrazable::IMAGE)];
@@ -129,6 +129,18 @@ namespace Observer
         } else {
             notDrawableServices[static_cast<int>(ETrazable::VIDEO)].push_back(service);
         }
+    }
+
+    void NotificationsController::update(CameraConfiguration* cam, std::vector<cv::Mat> frames) {
+        // 1. Create a text notification
+            // a. Get camera name
+            // b. Add notification
+
+        // 2. Create a image notification using the first frame where the event happen
+
+        // 3. Create a video notification using the frames
+
+        // 4. call AddNotification for each one
     }
 
 } // namespace Observer

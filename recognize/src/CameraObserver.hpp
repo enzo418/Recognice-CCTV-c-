@@ -1,5 +1,21 @@
 #pragma once
 
+#include "OpencvVideoSource.hpp"
+#include "OpencvVideoWriter.hpp"
+
+#include "CameraConfiguration.hpp"
+#include "VideoValidator.hpp"
+#include "Timer.hpp"
+#include "FrameProcessor.hpp"
+#include "ThresholdManager.hpp"
+#include "BaseObserverPattern.hpp"
+
+// CameraEventSubscriber
+#include "NotificationsController.hpp"
+
+// FrameEventSubscriber
+#include "FrameDisplay.hpp"
+
 #include <string>
 #include <opencv2/opencv.hpp>
 
@@ -9,23 +25,32 @@
 // std::unique_ptr
 #include <memory>
 
-#include "OpencvVideoSource.hpp"
-#include "OpencvVideoWriter.hpp"
-
-#include "CameraConfiguration.hpp"
-
-#include "VideoValidator.hpp"
-
-#include "Timer.hpp"
-
-#include "FrameProcessor.hpp"
-
-#include "ThresholdManager.hpp"
-
 namespace Observer
 {
+    class ThresholdEventSubscriber : public ISubscriber<CameraConfiguration*, double> {
+        virtual void update(CameraConfiguration*, double) = 0;
+    };
+
+
+    /**
+     * @brief Observes a camera and publish events
+     * when movement is detected
+     */
     class CameraObserver
     {
+        public:
+            // TODO: The configuration should be passed on Start not on create if
+            // we allow to use the same camera instance to use after Stop
+            CameraObserver(CameraConfiguration* configuration /**, CameraObserverBehaviour behaviour **/);
+
+            void Start();
+
+            void Stop();
+
+            void SubscribeToCameraEvents(CameraEventSubscriber* subscriber);
+            void SubscribeToFramesUpdate(FrameEventSubscriber* subscriber);
+            void SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber);
+
         private:
             // is the camera running
             bool running;
@@ -40,7 +65,7 @@ namespace Observer
             OpencvVideoWritter writer;
 
             // camera configuration
-            std::optional<CameraConfiguration> cfg;
+            CameraConfiguration* cfg;
 
             std::unique_ptr<VideoValidator> validator;
 
@@ -51,12 +76,11 @@ namespace Observer
 
             ThresholdManager thresholdManager;
 
-        public:
-            CameraObserver(CameraConfiguration configuration /**, CameraObserverBehaviour behaviour **/);
+            Publisher<int, cv::Mat> framePublisher;
 
-            void Start();
+            Publisher<CameraConfiguration*, double> thresholdPublisher;
 
-            void Stop();
+            Publisher<CameraConfiguration*, std::vector<cv::Mat>> cameraEventsPublisher;
 
         protected:
             void ProcessFrame(cv::Mat &frame);

@@ -2,9 +2,8 @@
 
 namespace Observer
 {
-    CameraObserver::CameraObserver(CameraConfiguration configuration) {
-        // the compiler should be able to optimize it moving the configuration into the cfg stack
-        this->cfg.emplace(configuration);
+    CameraObserver::CameraObserver(CameraConfiguration* pConfiguration) {
+        this->cfg = pConfiguration;
 
         const bool szbuffer = this->cfg->videoValidatorBufferSize / 2;
 
@@ -26,6 +25,7 @@ namespace Observer
 
                 if (duration >= minTimeBetweenFrames)
                 {
+                    this->framePublisher.notifySubscribers(this->cfg->positionOnOutput, frame);
                     this->ProcessFrame(frame);
                 }
             }
@@ -47,6 +47,7 @@ namespace Observer
 
         if (change > avrg) {
             this->ChangeDetected();
+            this->thresholdPublisher.notifySubscribers(this->cfg, change);
         }
 
         // give the change found to the thresh manager
@@ -54,6 +55,19 @@ namespace Observer
     }
 
     void CameraObserver::ChangeDetected() {
-
+        auto frames = this->validator->GetFrames();
     }
+
+    void CameraObserver::SubscribeToCameraEvents(CameraEventSubscriber* subscriber) {
+        this->cameraEventsPublisher.subscribe(subscriber);
+    }
+
+    void CameraObserver::SubscribeToFramesUpdate(FrameEventSubscriber* subscriber) {
+        this->framePublisher.subscribe(subscriber);
+    }
+
+    void CameraObserver::SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber) {
+        this->thresholdPublisher.subscribe(subscriber);
+    }
+
 } // namespace Observer

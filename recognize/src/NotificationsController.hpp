@@ -6,8 +6,6 @@
 #include "TelegramNotifications.hpp"
 #include "LocalWebNotifications.hpp"
 
-#include "OrderedNotificationsRespository.hpp"
-
 #include "Semaphore.hpp"
 
 #include "SimpleBlockingQueue.hpp"
@@ -15,16 +13,20 @@
 #include <unordered_map>
 #include <algorithm>
 
+#include "BaseObserverPattern.hpp"
+
 namespace Observer
 {   
-    
+    class CameraEventSubscriber : public ISubscriber<CameraConfiguration*, std::vector<cv::Mat>> {
+        virtual void update(CameraConfiguration* cam, std::vector<cv::Mat> frames) = 0;
+    };
 
     /**
      * @brief Send notifications asynchronously.
      * To push a notification use AddNotification, do not use 
      * Send unless you do not mind thread locking.
      */
-    class NotificationsController
+    class NotificationsController : public CameraEventSubscriber
     {
     public:
         NotificationsController(Configuration* cfg);
@@ -68,6 +70,8 @@ namespace Observer
          * @param notification 
          */
         void Send(VideoNotification notification);
+
+        void update(CameraConfiguration* cam, std::vector<cv::Mat> frames);
 
     protected:
 
