@@ -27,7 +27,10 @@ namespace Observer
             bool AddFrame(cv::Mat& frame);
 
             /**
-             * @brief Get the frames
+             * @brief Returns the frames (not a copy), after
+             * this call the instace BECOMES UNUSABLE, any
+             * call to it's methods will cause a
+             * segmentation fault.
              * 
              * @return vector of frames
              */
