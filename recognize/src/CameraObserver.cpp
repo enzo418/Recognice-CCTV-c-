@@ -2,11 +2,14 @@
 
 namespace Observer
 {
-    CameraObserver::CameraObserver(CameraConfiguration* pConfiguration) {
-        this->cfg = pConfiguration;
-
+    CameraObserver::CameraObserver(CameraConfiguration* pCfg)
+    :   cfg(pCfg),
+        frameProcessor(this->cfg->roi, this->cfg->noiseThreshold),
+        thresholdManager(this->cfg->minimumChangeThreshold, this->cfg->increaseThresholdFactor, this->cfg->increaseThresholdFactor)
+    {
+        // VideoValidator needs to be initialized this way since
+        // we only know the buffer size here
         const bool szbuffer = this->cfg->videoValidatorBufferSize / 2;
-
         this->validator = std::make_unique<VideoValidator>(szbuffer, szbuffer);
     }
 

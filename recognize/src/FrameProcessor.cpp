@@ -23,13 +23,15 @@ namespace Observer
         // get the difference between the current and last frame
         cv::absdiff(this->lastFrame, frame, this->diffFrame);
 
-        // make the changes bigger 
+        // make the changes bigger
         cv::GaussianBlur(this->diffFrame, this->diffFrame, cv::Size(3, 3), 10);
 
         // remove small changes
         cv::threshold(this->diffFrame, this->diffFrame, this->noiseThreshold, 255, cv::THRESH_BINARY);
 
         frame.copyTo(this->lastFrame);
+
+        return *this;
     }
 
     double FrameProcessor::DetectChanges() {

@@ -2,22 +2,21 @@
 
 namespace Observer
 {
-        ObserverCentral::ObserverCentral() {
-
+        ObserverCentral::ObserverCentral(Configuration pConfig)
+        :   notificationController(&this->config),
+            frameDisplay(this->config.camerasConfiguration.size())
+        {
+            this->config = pConfig;
         }
 
-        bool ObserverCentral::Start(Configuration pConfig) {
-            this->config = pConfig;
+        bool ObserverCentral::Start() {
             this->StartAllCameras();
 
             if (this->config.outputConfiguration.showOutput) {
-                this->outputFrames.reserve(this->config.camerasConfiguration.size());
                 this->StartPreview();
             }
-        }
 
-        void ObserverCentral::StopCamera(std::string id) {
-            
+            return true;
         }
 
         void ObserverCentral::StopAllCameras() {
@@ -28,6 +27,10 @@ namespace Observer
             
             // TODO: Check for possible memory leak here
             this->camerasThreads.clear();
+        }
+
+        void ObserverCentral::StopCamera(std::string id) {
+            // TODO:
         }
 
         void ObserverCentral::StartCamera(std::string id) {
@@ -50,11 +53,11 @@ namespace Observer
         }
 
         void ObserverCentral::StartPreview() {
-            // TODO:
+            this->frameDisplay.Start();
         }
 
         void ObserverCentral::StopPreview() {
-            // TODO:
+            this->frameDisplay.Stop();
         }
 
         void ObserverCentral::SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber) {

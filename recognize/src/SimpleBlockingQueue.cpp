@@ -3,7 +3,7 @@
 namespace Observer
 {
     template <typename T>
-    void SimpleBlockingQueue<T>::push(T const& value) {            
+    void SimpleBlockingQueue<T>::push(T const& value) {
         this->mutex.lock();
         this->queue.push(value);
         this->mutex.unlock();

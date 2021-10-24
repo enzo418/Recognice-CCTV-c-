@@ -19,7 +19,7 @@ namespace Observer
              * 
              * @param value 
              */
-            void push(T const &value);
+            virtual void push(T const &value);
 
             /**
              * @brief Get a element from the queue.
@@ -27,7 +27,7 @@ namespace Observer
              * 
              * @return T  
              */
-            T pop();
+            virtual T pop();
 
             /**
              * @brief Returns the number of elements in the queue.
@@ -36,7 +36,7 @@ namespace Observer
              */
             size_t size();
 
-        private:
+        protected:
             std::mutex              mutex;            
             std::queue<T>           queue;
     };

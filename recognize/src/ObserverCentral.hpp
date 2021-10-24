@@ -15,9 +15,9 @@ namespace Observer
     class ObserverCentral
     {
         public:
-            ObserverCentral();
+            ObserverCentral(Configuration pConfig);
 
-            bool Start(Configuration config);
+            bool Start();
 
             void StopCamera(std::string id);
             void StopAllCameras();
@@ -36,7 +36,6 @@ namespace Observer
                 std::shared_ptr<CameraObserver> camera;
             };
 
-            std::vector<cv::Mat> outputFrames;
             Configuration config;
 
             std::vector<CameraThread> camerasThreads;

@@ -52,6 +52,9 @@ namespace Observer
             void SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber);
 
         private:
+            // camera configuration
+            CameraConfiguration* cfg;
+
             // is the camera running
             bool running;
 
@@ -63,9 +66,6 @@ namespace Observer
 
             // video output
             OpencvVideoWritter writer;
-
-            // camera configuration
-            CameraConfiguration* cfg;
 
             std::unique_ptr<VideoValidator> validator;
 
