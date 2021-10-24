@@ -26,6 +26,13 @@ namespace Observer
     }
 
     std::vector<cv::Mat> VideoValidator::GetFrames() {
-        // TODO
+        std::vector<cv::Mat> before = this->framesBefore->GetFrames();
+        std::vector<cv::Mat> after = this->framesAfter->GetFrames();
+
+        std::vector<cv::Mat> merged(before.size() + after.size());
+        std::swap_ranges(merged.begin(), merged.end() - before.size(), before.begin());
+        std::swap_ranges(merged.begin() + before.size(), merged.end(), after.begin());
+
+        return merged;
     }
 } // namespace Observer
