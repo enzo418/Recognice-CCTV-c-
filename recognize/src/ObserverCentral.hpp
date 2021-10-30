@@ -15,7 +15,7 @@ namespace Observer
     class ObserverCentral
     {
         public:
-            ObserverCentral(Configuration pConfig);
+            explicit ObserverCentral(Configuration pConfig);
 
             bool Start();
 
@@ -46,8 +46,26 @@ namespace Observer
 
             CameraThread GetNewCameraThread(CameraConfiguration cfg);
 
-            void interalStopCamera(CameraThread& camThread);
-            void interalStartCamera(CameraConfiguration cfg);
+            void internalStopCamera(CameraThread& camThread);
+            void internalStartCamera(CameraConfiguration cfg);
+
+            /* Proxy allows us to give our subscribers not only the threshold,
+            * but also the camera that updated the threshold.
+            */
+            class ProxyCameraEventPublisher : public CameraEventSubscriber {
+            public:
+                explicit ProxyCameraEventPublisher() { }
+
+                void subscribe(ThresholdEventSubscriber* subscriber) {
+                    this->cameraEventPublisher.subscribe(subscriber);
+                }
+
+                void update(CameraConfiguration* cam, RawCameraEvent ev) override {
+                    // TODO: Validate
+                }
+            private:
+                Publisher<CameraConfiguration*, double> cameraEventPublisher;
+            };
     };
 
 } // namespace Observer

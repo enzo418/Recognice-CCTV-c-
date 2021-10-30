@@ -26,6 +26,8 @@ namespace Observer
             this->thresholdSamples = 0;
 
             this->timer.GetDurationAndRestart();
+
+            this->notifySubscribers(this->threshold);
         }
     }
 

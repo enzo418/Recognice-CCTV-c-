@@ -22,7 +22,7 @@ namespace Observer
         void ObserverCentral::StopAllCameras() {
             for (auto &&camThread : this->camerasThreads)
             {
-                this->interalStopCamera(camThread);
+                this->internalStopCamera(camThread);
             }
             
             // TODO: Check for possible memory leak here
@@ -36,13 +36,13 @@ namespace Observer
         void ObserverCentral::StartCamera(std::string id) {
             // TODO:
             // get camera config based on id
-            // call this->interalStartCamera(camcfg);
+            // call this->internalStartCamera(camcfg);
         }
 
         void ObserverCentral::StartAllCameras() {
             for (auto &&camcfg : this->config.camerasConfiguration)
             {
-                this->interalStartCamera(camcfg);
+                this->internalStartCamera(camcfg);
             }
 
             for (auto &&camThread : this->camerasThreads)
@@ -67,7 +67,7 @@ namespace Observer
             }
         }
 
-        void ObserverCentral::interalStopCamera(ObserverCentral::CameraThread& camThread) {
+        void ObserverCentral::internalStopCamera(ObserverCentral::CameraThread& camThread) {
             camThread.camera->Stop();
 
             if (camThread.thread.joinable()){
@@ -75,7 +75,7 @@ namespace Observer
             }
         }
 
-        void ObserverCentral::interalStartCamera(CameraConfiguration cfg) {
+        void ObserverCentral::internalStartCamera(CameraConfiguration cfg) {
             this->camerasThreads.push_back(this->GetNewCameraThread(cfg));
         }
 

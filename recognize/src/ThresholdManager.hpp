@@ -1,9 +1,10 @@
 #pragma once
 #include "Timer.hpp"
+#include "BaseObserverPattern.hpp"
 
 namespace Observer
 {
-    class ThresholdManager
+    class ThresholdManager : public Publisher<double>
     {
     public:
         ThresholdManager(double minimumValue, double updateFrequency, double increaseFactor);
