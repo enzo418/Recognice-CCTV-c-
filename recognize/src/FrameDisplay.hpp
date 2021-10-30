@@ -2,6 +2,8 @@
 
 #include "BaseObserverPattern.hpp"
 #include "Configuration.hpp"
+#include "InterfaceFunctionality.hpp"
+#include "SimpleBlockingQueue.hpp"
 
 #include <thread>
 #include <chrono>
@@ -42,17 +44,17 @@ namespace Observer {
     /**
     * @todo write docs
     */
-    class FrameDisplay : public FrameEventSubscriber
+    class FrameDisplay : public FrameEventSubscriber,  public IFunctionality
     {
         public:
             /**
              * @param total Number of frames to display at the same time
              */
-            FrameDisplay(int total);
+            explicit FrameDisplay(int total);
 
-            void Start();
+            void Start() override;
 
-            void Stop();
+            void Stop() override;
 
             /**
              * @brief add a new frame to the available frames

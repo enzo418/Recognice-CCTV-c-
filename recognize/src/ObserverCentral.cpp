@@ -1,13 +1,14 @@
 #include "ObserverCentral.hpp"
 
+#include <utility>
+
 namespace Observer
 {
         ObserverCentral::ObserverCentral(Configuration pConfig)
         :   notificationController(&this->config),
-            frameDisplay(this->config.camerasConfiguration.size())
-        {
-            this->config = pConfig;
-        }
+            frameDisplay(static_cast<int>(this->config.camerasConfiguration.size())),
+            config(std::move(pConfig))
+        { }
 
         bool ObserverCentral::Start() {
             this->StartAllCameras();
@@ -16,7 +17,31 @@ namespace Observer
                 this->StartPreview();
             }
 
+            // Start event validator
+            // TODO: If user wants notifications:
+            this->functionalityThreads.emplace_back(
+                    // IFunctionality
+                    &this->eventValidator,
+
+                    // std::thread
+                    &EventValidator::Start, &this->eventValidator
+            );
+
             return true;
+        }
+
+        void ObserverCentral::Stop() {
+            this->StopAllCameras();
+
+            for(auto& funcThread : this->functionalityThreads) {
+                std::get<0>(funcThread)->Stop();
+                auto& thread = std::get<1>(funcThread);
+                if (thread.joinable()) {
+                    thread.join();
+                }
+            }
+
+            this->functionalityThreads.clear();
         }
 
         void ObserverCentral::StopAllCameras() {
@@ -25,7 +50,7 @@ namespace Observer
                 this->internalStopCamera(camThread);
             }
             
-            // TODO: Check for possible memory leak here
+            // NOTE: Check for possible memory leak here
             this->camerasThreads.clear();
         }
 
@@ -40,20 +65,22 @@ namespace Observer
         }
 
         void ObserverCentral::StartAllCameras() {
-            for (auto &&camcfg : this->config.camerasConfiguration)
+            for (auto &&configuration : this->config.camerasConfiguration)
             {
-                this->internalStartCamera(camcfg);
+                this->internalStartCamera(configuration);
             }
 
             for (auto &&camThread : this->camerasThreads)
             {
-                camThread.camera->SubscribeToCameraEvents(&notificationController);
+                camThread.camera->SubscribeToCameraEvents(&eventValidator);
                 camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
             }
         }
 
         void ObserverCentral::StartPreview() {
-            this->frameDisplay.Start();
+            this->functionalityThreads.emplace_back(
+                    &FrameDisplay::Start, &this->frameDisplay
+            );
         }
 
         void ObserverCentral::StopPreview() {

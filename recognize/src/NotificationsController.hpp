@@ -7,21 +7,16 @@
 #include "LocalWebNotifications.hpp"
 
 #include "Semaphore.hpp"
-
+#include "BaseObserverPattern.hpp"
+#include "RawCameraEvent.hpp"
+#include "BaseCameraEvent.hpp"
 #include "SimpleBlockingQueue.hpp"
 
 #include <unordered_map>
 #include <algorithm>
 
-#include "BaseObserverPattern.hpp"
-#include "RawCameraEvent.hpp"
-
 namespace Observer
-{   
-    class CameraEventSubscriber : public ISubscriber<CameraConfiguration*, RawCameraEvent> {
-        virtual void update(CameraConfiguration* cam, RawCameraEvent ev) = 0;
-    };
-
+{
     /**
      * @brief Send notifications asynchronously.
      * To push a notification use AddNotification, do not use 

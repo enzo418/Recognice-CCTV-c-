@@ -1,9 +1,12 @@
 #pragma once
+
 #include "Configuration.hpp"
 #include "Notification.hpp"
 #include "CameraObserver.hpp"
 #include "NotificationsController.hpp"
 #include "FrameDisplay.hpp"
+#include "EventValidator.hpp"
+#include "InterfaceFunctionality.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -28,6 +31,8 @@ namespace Observer
             void StartPreview();
             void StopPreview();
 
+            void Stop();
+
             void SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber);
 
         private:
@@ -40,11 +45,15 @@ namespace Observer
 
             std::vector<CameraThread> camerasThreads;
 
+            std::vector<std::pair<IFunctionality*, std::thread>> functionalityThreads;
+
             NotificationsController notificationController;
 
             FrameDisplay frameDisplay;
 
             CameraThread GetNewCameraThread(CameraConfiguration cfg);
+
+            EventValidator eventValidator;
 
             void internalStopCamera(CameraThread& camThread);
             void internalStartCamera(CameraConfiguration cfg);
