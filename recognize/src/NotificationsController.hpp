@@ -14,11 +14,12 @@
 #include <algorithm>
 
 #include "BaseObserverPattern.hpp"
+#include "RawCameraEvent.hpp"
 
 namespace Observer
 {   
-    class CameraEventSubscriber : public ISubscriber<CameraConfiguration*, std::vector<cv::Mat>> {
-        virtual void update(CameraConfiguration* cam, std::vector<cv::Mat> frames) = 0;
+    class CameraEventSubscriber : public ISubscriber<CameraConfiguration*, RawCameraEvent> {
+        virtual void update(CameraConfiguration* cam, RawCameraEvent ev) = 0;
     };
 
     /**
@@ -29,7 +30,7 @@ namespace Observer
     class NotificationsController : public CameraEventSubscriber
     {
     public:
-        NotificationsController(Configuration* cfg);
+        explicit NotificationsController(Configuration* cfg);
         ~NotificationsController();
 
         /**
@@ -71,7 +72,7 @@ namespace Observer
          */
         void Send(VideoNotification notification);
 
-        void update(CameraConfiguration* cam, std::vector<cv::Mat> frames);
+        void update(CameraConfiguration* cam, RawCameraEvent ev);
 
     protected:
 
@@ -95,6 +96,7 @@ namespace Observer
         SimpleBlockingQueue<TextNotification> textQueue;
         SimpleBlockingQueue<ImageNotification> imageQueue;
         SimpleBlockingQueue<VideoNotification> videoQueue;
+        int groupID;
     };
 
 } // namespace Observer

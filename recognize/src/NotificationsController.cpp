@@ -4,6 +4,7 @@ namespace Observer
 {
     NotificationsController::NotificationsController(Configuration* cfg) {
         this->config = cfg;
+        this->groupID = 0;
 
         auto ptrLocal = new LocalWebNotifications();
         auto ptrTelegram = new TelegramNotifications();
@@ -131,9 +132,10 @@ namespace Observer
         }
     }
 
-    void NotificationsController::update(CameraConfiguration* cam, std::vector<cv::Mat> frames) {
+    void NotificationsController::update(CameraConfiguration* cam, RawCameraEvent ev) {
         // 1. Create a text notification
             // a. Get camera name
+//            TextNotification textNotification(this->groupID, )
             // b. Add notification
 
         // 2. Create a image notification using the first frame where the event happen
@@ -141,6 +143,7 @@ namespace Observer
         // 3. Create a video notification using the frames
 
         // 4. call AddNotification for each one
+        this->groupID++;
     }
 
 } // namespace Observer

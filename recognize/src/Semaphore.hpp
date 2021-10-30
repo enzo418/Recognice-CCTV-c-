@@ -9,7 +9,7 @@
  */
 class Semaphore {
 public:
-    Semaphore (int pCount = 0) : count(pCount) {}
+    explicit Semaphore (int pCount = 0) : count(pCount) {}
 
     /**
      * @brief increments the internal counter and unblocks acquirers
