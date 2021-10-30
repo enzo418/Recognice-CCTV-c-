@@ -34,7 +34,6 @@ namespace Observer {
 
             // send the event
             if (result.valid) {
-                // TODO: Publish event
                 this->eventPublisher.notifySubscribers(cfg, ev);
             } else {
                 // TODO: Log the result.message

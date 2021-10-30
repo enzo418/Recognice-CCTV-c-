@@ -135,7 +135,7 @@ namespace Observer
     void NotificationsController::update(CameraConfiguration* cam, RawCameraEvent ev) {
         // 1. Create a text notification
             // a. Get camera name
-//            TextNotification textNotification(this->groupID, )
+//            TextNotification textNotification(this->groupID, event, ev.frames[ev.frameIndexOfFirstChange]);
             // b. Add notification
 
         // 2. Create a image notification using the first frame where the event happen

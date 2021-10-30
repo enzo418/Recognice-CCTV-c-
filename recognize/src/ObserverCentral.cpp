@@ -24,8 +24,11 @@ namespace Observer
                     &this->eventValidator,
 
                     // std::thread
-                    &EventValidator::Start, &this->eventValidator
+                    std::thread(&EventValidator::Start, &this->eventValidator)
             );
+
+            // subscribe notification controller to validated events
+            this->eventValidator.SubscribeToEventValidationDone(&this->notificationController);
 
             return true;
         }
@@ -79,7 +82,8 @@ namespace Observer
 
         void ObserverCentral::StartPreview() {
             this->functionalityThreads.emplace_back(
-                    &FrameDisplay::Start, &this->frameDisplay
+                    &this->frameDisplay,
+                    std::thread(&FrameDisplay::Start, &this->frameDisplay)
             );
         }
 
