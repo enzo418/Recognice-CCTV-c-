@@ -13,6 +13,8 @@
 // CameraEventSubscriber
 #include "NotificationsController.hpp"
 
+#include "InterfaceFunctionality.hpp"
+
 // FrameEventSubscriber
 #include "FrameDisplay.hpp"
 
@@ -35,7 +37,7 @@ namespace Observer
      * @brief Observes a camera and publish events
      * when movement is detected
      */
-    class CameraObserver
+    class CameraObserver : public IFunctionality
     {
         public:
             /* TODO: The configuration should be passed on Start not on create if
@@ -43,9 +45,9 @@ namespace Observer
             **/
             explicit CameraObserver(CameraConfiguration* configuration);
 
-            void Start();
+            void Start() override;
 
-            void Stop();
+            void Stop() override;
 
             void SubscribeToCameraEvents(CameraEventSubscriber* subscriber);
             void SubscribeToFramesUpdate(FrameEventSubscriber* subscriber);

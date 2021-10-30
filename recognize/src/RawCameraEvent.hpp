@@ -9,6 +9,8 @@
  */
 struct RawCameraEvent {
     public:
+        RawCameraEvent() {}
+
         // && -> pFrames can only be r-value (std::move is necessary)
         RawCameraEvent(std::vector<cv::Mat>&& pFrames, int pIndexFirst)
         :   frames(std::move(pFrames)),

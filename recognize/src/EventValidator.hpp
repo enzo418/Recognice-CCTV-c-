@@ -4,17 +4,23 @@
 #include "Semaphore.hpp"
 #include "SimpleBlockingQueue.hpp"
 #include "BaseEventValidator.hpp"
+#include "BaseCameraEvent.hpp"
+#include "InterfaceFunctionality.hpp"
 
 namespace Observer {
-    class EventValidator {
+    class EventValidator : public CameraEventSubscriber, public IFunctionality {
     public:
         EventValidator();
 
-        void Add(RawCameraEvent &ev);
+        void Add(CameraConfiguration* cfg, RawCameraEvent ev);
 
-        void Start();
+        void Start() override;
 
-        void Stop();
+        void Stop() override;
+
+        void SubscribeToEventValidationDone(CameraEventSubscriber* subscriber);
+
+        void update(CameraConfiguration* cfg, RawCameraEvent ev) override;
 
         ~EventValidator();
 
@@ -26,6 +32,8 @@ namespace Observer {
         IValidatorHandler* handler;
         std::vector<IValidatorHandler*> handlers;
 
-        SimpleBlockingQueue<RawCameraEvent> validationPool;
+        SimpleBlockingQueue<std::pair<CameraConfiguration*, RawCameraEvent>> validationPool;
+
+        CameraEventPublisher eventPublisher;
     };
 }

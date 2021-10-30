@@ -22,7 +22,7 @@ file(GLOB MAIN_SRC "${PROJECT_SOURCE_DIR}/sample/sample_main.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC} ${MAIN_SRC} src/BaseChainOfResponsibility.hpp src/ValidatorBySufficientSamples.cpp src/ValidatorBySufficientSamples.hpp src/EventValidator.cpp src/EventValidator.hpp src/BaseEventValidator.hpp)
+set(SOURCES ${COMMON_SRC} ${MAIN_SRC} src/BaseChainOfResponsibility.hpp src/ValidatorBySufficientSamples.cpp src/ValidatorBySufficientSamples.hpp src/EventValidator.cpp src/EventValidator.hpp src/BaseEventValidator.hpp src/BaseCameraEvent.hpp src/InterfaceFunctionality.hpp)
 
 # Print sources
 message(${SOURCES})
