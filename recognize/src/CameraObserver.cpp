@@ -5,12 +5,13 @@ namespace Observer
     CameraObserver::CameraObserver(CameraConfiguration* pCfg)
     :   cfg(pCfg),
         frameProcessor(this->cfg->roi, this->cfg->noiseThreshold),
-        thresholdManager(this->cfg->minimumChangeThreshold, this->cfg->increaseThresholdFactor, this->cfg->increaseThresholdFactor)
+        thresholdManager(this->cfg->minimumChangeThreshold, this->cfg->increaseThresholdFactor, this->cfg->increaseThresholdFactor),
+        thresholdPublisher(cfg)
     {
-        // VideoValidator needs to be initialized this way since
+        // VideoBuffer needs to be initialized this way since
         // we only know the buffer size here
         const bool szbuffer = this->cfg->videoValidatorBufferSize / 2;
-        this->validator = std::make_unique<VideoValidator>(szbuffer, szbuffer);
+        this->validator = std::make_unique<VideoBuffer>(szbuffer, szbuffer);
     }
 
     void CameraObserver::Start() {
@@ -46,11 +47,17 @@ namespace Observer
                                     .DetectChanges();
 
         // get the average change
-        double avrg = this->thresholdManager.GetAverage();
+        double average = this->thresholdManager.GetAverage();
 
-        if (change > avrg) {
+        if (change > average) {
             this->ChangeDetected();
-            this->thresholdPublisher.notifySubscribers(this->cfg, change);
+        }
+
+        // buffer is full, and we were waiting to Fill the buffer
+        if (this->validator->AddFrame(frame) && this->waitingBufferFill) {
+            this->waitingBufferFill = false;
+            auto event = this->validator->GetEventFound();
+            this->cameraEventsPublisher.notifySubscribers(this->cfg, std::move(event));
         }
 
         // give the change found to the thresh manager
@@ -58,7 +65,8 @@ namespace Observer
     }
 
     void CameraObserver::ChangeDetected() {
-        auto frames = this->validator->GetFrames();
+        this->validator->ChangeWasDetected();
+        this->waitingBufferFill = true;
     }
 
     void CameraObserver::SubscribeToCameraEvents(CameraEventSubscriber* subscriber) {

@@ -4,7 +4,7 @@
 #include "OpencvVideoWriter.hpp"
 
 #include "CameraConfiguration.hpp"
-#include "VideoValidator.hpp"
+#include "VideoBuffer.hpp"
 #include "Timer.hpp"
 #include "FrameProcessor.hpp"
 #include "ThresholdManager.hpp"
@@ -28,9 +28,8 @@
 namespace Observer
 {
     class ThresholdEventSubscriber : public ISubscriber<CameraConfiguration*, double> {
-        virtual void update(CameraConfiguration*, double) = 0;
+        void update(CameraConfiguration*, double) override = 0;
     };
-
 
     /**
      * @brief Observes a camera and publish events
@@ -39,9 +38,10 @@ namespace Observer
     class CameraObserver
     {
         public:
-            // TODO: The configuration should be passed on Start not on create if
-            // we allow to use the same camera instance to use after Stop
-            CameraObserver(CameraConfiguration* configuration /**, CameraObserverBehaviour behaviour **/);
+            /* TODO: The configuration should be passed on Start not on create if
+             * we allow to use the same camera instance to use after Stop
+            **/
+            explicit CameraObserver(CameraConfiguration* configuration);
 
             void Start();
 
@@ -67,7 +67,7 @@ namespace Observer
             // video output
             OpencvVideoWritter writer;
 
-            std::unique_ptr<VideoValidator> validator;
+            std::unique_ptr<VideoBuffer> validator;
 
             // timer to get a new frame every x ms
             Timer<std::chrono::milliseconds> timerFrames;
@@ -78,9 +78,34 @@ namespace Observer
 
             Publisher<int, cv::Mat> framePublisher;
 
-            Publisher<CameraConfiguration*, double> thresholdPublisher;
+            Publisher<CameraConfiguration*, RawCameraEvent> cameraEventsPublisher;
 
-            Publisher<CameraConfiguration*, std::vector<cv::Mat>> cameraEventsPublisher;
+            // this flag is used to know when
+            // we are waiting to fill the
+            // "after" buffer on validator.
+            bool waitingBufferFill;
+
+            /* Proxy allows us to give our subscribers not only the threshold,
+             * but also the camera that updated the threshold.
+            */
+            class ProxyThresholdPublisher : public ISubscriber<double> {
+            public:
+                explicit ProxyThresholdPublisher(CameraConfiguration* pCfg) : cfg(pCfg) { }
+
+                void subscribe(ThresholdEventSubscriber* subscriber) {
+                    this->thresholdPublisher.subscribe(subscriber);
+                }
+
+                void update(double thresh) override {
+                    this->thresholdPublisher.notifySubscribers(this->cfg, thresh);
+                }
+            private:
+                CameraConfiguration* cfg;
+                Publisher<CameraConfiguration*, double> thresholdPublisher;
+            };
+
+            // threshold publisher
+            ProxyThresholdPublisher thresholdPublisher;
 
         protected:
             void ProcessFrame(cv::Mat &frame);

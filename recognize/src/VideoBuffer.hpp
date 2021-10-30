@@ -1,14 +1,16 @@
 #pragma once
 
 #include "CicularFrameBuffer.hpp"
+#include "RawCameraEvent.hpp"
+
 #include <optional>
 
 namespace Observer
 {
-    class VideoValidator
+    class VideoBuffer
     {
         public:
-            VideoValidator(int sizeBufferBefore, int sizeBufferAfter);
+            VideoBuffer(int sizeBufferBefore, int sizeBufferAfter);
 
             void ChangeWasDetected();
 
@@ -16,10 +18,11 @@ namespace Observer
 
             bool CheckIfTheChangeIsValid();
 
-            std::vector<cv::Mat> GetFrames();
+            RawCameraEvent GetEventFound();
 
         private:
             bool changeDetected;
+            int firstFrameWhereChangeWasFound;
 
             // delayed initialization with optional
             std::optional<CicularFrameBuffer> framesBefore;
