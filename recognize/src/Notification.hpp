@@ -15,10 +15,9 @@ namespace Observer
 
         int GetGroupID();
 
-        std::string GetCaption();
+        virtual std::string GetCaption() = 0;
 
-        Event &GetEvent();
-
+        Event& GetEvent() &;
     protected:
         int groupID;
         Event event;

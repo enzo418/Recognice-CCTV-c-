@@ -1,9 +1,15 @@
 #include "ImageNotification.hpp"
 
+#include <utility>
+
 namespace Observer
 {
-    ImageNotification::ImageNotification(int pGroupID, Event pEvent, std::string pText, cv::Mat& frame) 
-        : text(pText), Notification(pGroupID, pEvent) {
+    ImageNotification::ImageNotification(
+            int pGroupID,
+            Event pEvent,
+            std::string pText,
+            cv::Mat& frame)
+        : text(std::move(pText)), Notification(pGroupID, std::move(pEvent)) {
         frame.copyTo(image);
     }
 

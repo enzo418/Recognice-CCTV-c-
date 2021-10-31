@@ -16,9 +16,18 @@ namespace Observer
     class ImageNotification : public Notification
     {
     public:
-        ImageNotification(int groupID, Event event, std::string text, cv::Mat& frame);
+        /**
+         * Creates a image notification.
+         * Don't worry deleting the frame after creating this object since
+         * we copy it.
+         *
+         * @param groupID
+         * @param text caption
+         * @param frame frame, as reference but copied on ctor.
+         */
+        ImageNotification(int groupID, Event ev, std::string text, cv::Mat& frame);
 
-        std::string GetCaption();
+        std::string GetCaption() override;
 
         std::string GetImagePath();
 

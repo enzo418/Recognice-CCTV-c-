@@ -19,9 +19,9 @@ namespace Observer
     class VideoNotification : public Notification
     {
     public:
-        VideoNotification(int groupID, Event event, std::string text, std::vector<cv::Mat>&& frames);
+        VideoNotification(int groupID, Event ev, std::string text, std::vector<cv::Mat>&& frames);
 
-        std::string GetCaption();
+        std::string GetCaption() override;
 
         std::string GetVideoPath();
 

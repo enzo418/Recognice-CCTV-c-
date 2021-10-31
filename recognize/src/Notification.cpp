@@ -8,7 +8,7 @@ namespace Observer
         return this->groupID;
     }
 
-    Event& Notification::GetEvent() {
+    Event& Notification::GetEvent() & {
         return this->event;
     }
 

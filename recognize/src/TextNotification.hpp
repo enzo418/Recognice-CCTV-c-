@@ -12,9 +12,9 @@ namespace Observer
         std::string text;
 
     public:
-        TextNotification(int groupID, Event event, std::string text);
+        TextNotification(int groupID, Event ev, std::string text);
 
-        std::string GetCaption();
+        std::string GetCaption() override;
     };
 
 } // namespace Observer

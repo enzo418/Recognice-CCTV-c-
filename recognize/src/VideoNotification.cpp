@@ -1,13 +1,17 @@
 #include "VideoNotification.hpp"
 
+#include <utility>
+
 namespace Observer
 {
     VideoNotification::VideoNotification(
-        int pGroupID, 
-        Event pEvent, 
+        int pGroupID,
+        Event pEvent,
         std::string pText, 
         std::vector<cv::Mat>&& pFrames
-    ) : text(pText), frames(std::move(pFrames)), Notification(pGroupID, pEvent) {}
+    ) : text(std::move(pText)),
+        frames(std::move(pFrames)),
+        Notification(pGroupID, std::move(pEvent)) {}
 
     std::string VideoNotification::GetCaption() {
         return this->text;
