@@ -17,4 +17,14 @@ namespace Observer::SpecialFunctions
         ss << std::put_time(now_tm, "%d_%m_%Y_%H_%M_%S");
         return ss.str();
     }
+
+    std::string FormatNotificationTextString(std::string str, const std::string& name) {
+        size_t pos = str.find("{N}");
+
+        if (pos != std::string::npos) {
+            return str.replace(pos, 3, name);
+        }
+
+        return str;
+    }
 } // namespace Observer

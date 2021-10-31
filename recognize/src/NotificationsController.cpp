@@ -132,17 +132,38 @@ namespace Observer
         }
     }
 
-    void NotificationsController::update(CameraConfiguration* cam, RawCameraEvent ev) {
+    void NotificationsController::update(Event event, RawCameraEvent rawCameraEvent) {
         // 1. Create a text notification
-            // a. Get camera name
-//            TextNotification textNotification(this->groupID, event, ev.frames[ev.frameIndexOfFirstChange]);
-            // b. Add notification
+        // 1. a. Get camera name
+        std::string cameraName = event.GetCameraName();
 
-        // 2. Create a image notification using the first frame where the event happen
+        // 1. b. Replace template text notification
+        std::string text = SpecialFunctions::FormatNotificationTextString(
+                this->config->notificationTextTemplate,
+                cameraName
+                );
+
+        // 1. c. Create the notification
+        TextNotification textNotification(this->groupID, event, text);
+
+        // 2. Create an image notification using the first frame where the event happen
+        int indexFirst = event.GetFirstFrameWhereFindingWasFound();
+        ImageNotification imageNotification(this->groupID, event,cameraName, rawCameraEvent.GetFrameAt(indexFirst));
 
         // 3. Create a video notification using the frames
+        VideoNotification videoNotification(
+                this->groupID,
+                event,
+                cameraName,
+                std::move(rawCameraEvent.PopFrames())
+                );
 
         // 4. call AddNotification for each one
+        this->AddNotification(textNotification);
+        this->AddNotification(imageNotification);
+        this->AddNotification(videoNotification);
+
+        // 5. increment group id
         this->groupID++;
     }
 

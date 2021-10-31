@@ -33,6 +33,8 @@ namespace Observer
 
     struct CameraConfiguration
     {
+        std::string name;
+
         std::string url;
         
         // camera max fps to use. Lower fps lowers the CPU usage

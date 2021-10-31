@@ -11,6 +11,7 @@
 #include "RawCameraEvent.hpp"
 #include "BaseCameraEvent.hpp"
 #include "SimpleBlockingQueue.hpp"
+#include "Event.hpp"
 
 #include <unordered_map>
 #include <algorithm>
@@ -22,7 +23,7 @@ namespace Observer
      * To push a notification use AddNotification, do not use 
      * Send unless you do not mind thread locking.
      */
-    class NotificationsController : public CameraEventSubscriber
+    class NotificationsController : public ISubscriber<Event, RawCameraEvent>
     {
     public:
         explicit NotificationsController(Configuration* cfg);
@@ -67,7 +68,7 @@ namespace Observer
          */
         void Send(VideoNotification notification);
 
-        void update(CameraConfiguration* cam, RawCameraEvent ev);
+        void update(Event event, RawCameraEvent rawCameraEvent) override;
 
     protected:
 

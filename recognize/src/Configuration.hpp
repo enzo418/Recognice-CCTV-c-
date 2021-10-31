@@ -20,6 +20,8 @@ namespace Observer
         // absolute path
         std::string mediaFolderPath;
 
+        std::string notificationTextTemplate;
+
         TelegramNotificationsConfiguration telegramConfiguration;
 
         LocalWebNotificationsConfiguration localWebConfiguration;
