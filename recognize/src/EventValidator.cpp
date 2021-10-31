@@ -22,19 +22,25 @@ namespace Observer {
             this->smpQueue.acquire();
 
             // declare event and configuration
-            RawCameraEvent ev;
+            RawCameraEvent rawCameraEvent;
             CameraConfiguration* cfg;
 
             // get next pool item
-            std::tie(cfg, ev) = std::move(this->validationPool.pop());
+            std::tie(cfg, rawCameraEvent) = std::move(this->validationPool.pop());
 
             // validate the event
             ValidationResult result;
-            this->handler->Handle(ev, result);
+            this->handler->Handle(rawCameraEvent, result);
 
             // send the event
-            if (result.valid) {
-                this->eventPublisher.notifySubscribers(cfg, ev);
+            if (result.IsValid()) {
+                Event& event = result.GetEvent();
+
+                // set camera name
+                event.SetCameraName(cfg->name);
+
+                // notify all the subscribers with the event
+                this->eventPublisher.notifySubscribers(std::move(event), std::move(rawCameraEvent));
             } else {
                 // TODO: Log the result.message
             }
@@ -55,7 +61,7 @@ namespace Observer {
         this->running = false;
     }
 
-    void EventValidator::SubscribeToEventValidationDone(CameraEventSubscriber* subscriber) {
+    void EventValidator::SubscribeToEventValidationDone(ISubscriber<Event>* subscriber) {
         this->eventPublisher.subscribe(subscriber);
     }
 }

@@ -6,6 +6,7 @@
 #include "BaseEventValidator.hpp"
 #include "BaseCameraEvent.hpp"
 #include "InterfaceFunctionality.hpp"
+#include "Event.hpp"
 
 namespace Observer {
     class EventValidator : public CameraEventSubscriber, public IFunctionality {
@@ -18,7 +19,7 @@ namespace Observer {
 
         void Stop() override;
 
-        void SubscribeToEventValidationDone(CameraEventSubscriber* subscriber);
+        void SubscribeToEventValidationDone(ISubscriber<Event>* subscriber);
 
         void update(CameraConfiguration* cfg, RawCameraEvent ev) override;
 
@@ -34,6 +35,6 @@ namespace Observer {
 
         SimpleBlockingQueue<std::pair<CameraConfiguration*, RawCameraEvent>> validationPool;
 
-        CameraEventPublisher eventPublisher;
+        Publisher<Event, RawCameraEvent> eventPublisher;
     };
 }
