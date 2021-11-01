@@ -2,10 +2,10 @@
 
 namespace Observer
 {
-    OpencvVideoWritter::OpencvVideoWritter(){};
+    OpencvVideoWritter::OpencvVideoWritter() = default;;
 
     bool OpencvVideoWritter::Open(const std::string &path, const double& framerate, const int& codecID, const cv::Size& frameSize){
-        this->writer.open(path, codecID, framerate, frameSize);
+        return this->writer.open(path, codecID, framerate, frameSize);
     }
 
     void OpencvVideoWritter::Close() {

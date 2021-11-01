@@ -29,6 +29,8 @@ namespace Observer
 
             this->notifySubscribers(this->threshold);
         }
+
+        return *this;
     }
 
     double ThresholdManager::GetAverage() {

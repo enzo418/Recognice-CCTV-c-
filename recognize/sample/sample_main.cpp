@@ -1,4 +1,4 @@
-#include "../src/recognize.hpp"
+/*#include "../src/recognize.hpp"
 
 // For another way of detection see https://sites.google.com/site/wujx2001/home/c4 https://github.com/sturkmen72/C4-Real-time-pedestrian-detection/blob/master/c4-pedestrian-detector.cpp
 int main(int argc, char* argv[]){
@@ -86,4 +86,8 @@ int main(int argc, char* argv[]){
 		std::cerr << "Error. The configuration file is not valid." << std::endl;
 		exit(-1);
 	}
+}
+*/
+int main() {
+
 }

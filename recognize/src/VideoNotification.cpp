@@ -44,5 +44,7 @@ namespace Observer
         }
         
         this->writer.Close();
+
+        return true;
     }
 } // namespace Observer

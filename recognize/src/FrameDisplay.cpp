@@ -12,9 +12,12 @@ namespace Observer {
 
         std::vector<cv::Mat> framesToShow(maxFrames);
         while(this->running) {
+            this->mtxFrames.lock();
             for(int i = 0; i < this->maxFrames; i++) {
-                framesToShow[i] = this->frames[i].pop();
+                framesToShow[i] = this->frames[i].front();
+                this->frames[i].pop();
             }
+            this->mtxFrames.unlock();
 
             // TODO: Show frames
 
@@ -27,6 +30,8 @@ namespace Observer {
     }
 
     void FrameDisplay::update(int cameraPos, cv::Mat frame) {
+        this->mtxFrames.lock();
         this->frames[cameraPos].push(frame);
+        this->mtxFrames.unlock();
     }
 }

@@ -6,19 +6,19 @@ namespace Observer
 {
     class OpencvVideoSource : public VideoSource
     {
-        private:
-            cv::VideoCapture capturer;
-
         public:
             OpencvVideoSource();
 
-            void Open(const std::string& url);
+            void Open(const std::string& url) override;
 
-            void Close(const std::string& url);
+            void Close(const std::string& url) override;
 
-            bool GetNextFrame(cv::Mat&);
+            bool GetNextFrame(cv::Mat&) override;
 
-            bool isOpened();
+            bool isOpened() override;
+
+        private:
+            cv::VideoCapture videoCapture;
     };
     
 } // namespace Observer

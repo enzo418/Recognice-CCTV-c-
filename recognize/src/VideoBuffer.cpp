@@ -23,6 +23,7 @@ namespace Observer
 
     bool VideoBuffer::CheckIfTheChangeIsValid() {
         // TODO
+        return true;
     }
 
     RawCameraEvent VideoBuffer::GetEventFound() {

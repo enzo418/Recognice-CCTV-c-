@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Event.hpp"
 
 #include <utility>
@@ -37,10 +35,6 @@ namespace Observer {
     }
 
     Event::Event() = default;
-
-    void Event::MoveFrames(std::vector<cv::Mat>&& pFrames) {
-        this->frames = std::move(pFrames);
-    }
 
     void Event::AddStandarFinding(StandarFindingEvent&& finding) {
         this->standarFindings.push_back(std::move(finding));

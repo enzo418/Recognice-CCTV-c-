@@ -1,5 +1,3 @@
-#pragma once
-
 #include "RestClientLocalWebNotifications.hpp"
 
 #include <utility>
@@ -12,7 +10,7 @@ namespace Observer {
     }
 
     void RestClientLocalWebNotifications::SendText(std::string text) {
-        const std::string url = this->restServerUrl + "/addTextNotification";
+        /*const std::string url = this->restServerUrl + "/addTextNotification";
 
         RestClient::Response r = RestClient::post(
                 this->restServerUrl + "/addTextNotification",
@@ -23,11 +21,11 @@ namespace Observer {
             // TODO: Log ok
         } else {
             // TODO: Log error r.body
-        }
+        }*/
     }
 
     void RestClientLocalWebNotifications::SendImage(std::string path, std::string text) {
-        const std::string url = this->restServerUrl + "/addImageNotification";
+        /*const std::string url = this->restServerUrl + "/addImageNotification";
 
         RestClient::Response r = RestClient::post(
                 url,
@@ -38,11 +36,11 @@ namespace Observer {
             // TODO: Log ok
         } else {
             // TODO: Log error r.body
-        }
+        }*/
     }
 
     void RestClientLocalWebNotifications::SendVideo(std::string path, std::string text) {
-        const std::string url = this->restServerUrl + "/addVideoNotification";
+        /*const std::string url = this->restServerUrl + "/addVideoNotification";
 
         RestClient::Response r = RestClient::post(
                 url,
@@ -53,6 +51,6 @@ namespace Observer {
             // TODO: Log ok
         } else {
             // TODO: Log error r.body
-        }
+        }*/
     }
 };

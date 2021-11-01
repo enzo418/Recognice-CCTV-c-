@@ -15,4 +15,8 @@
         5. `sudo make install`
 
 - [restclient-cpp](https://github.com/mrtazz/restclient-cpp) Used to conect to the web server
-    1. Instructions on the github page
+        1. `git clone https://github.com/mrtazz/restclient-cpp`
+        2. `cd restclient-cpp && mkdir build && cd build`
+        3. `cmake ..`
+        4. `make -j4`
+        5. `sudo make install`

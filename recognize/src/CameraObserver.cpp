@@ -8,6 +8,9 @@ namespace Observer
         thresholdManager(this->cfg->minimumChangeThreshold, this->cfg->increaseThresholdFactor, this->cfg->increaseThresholdFactor),
         thresholdPublisher(cfg)
     {
+        this->running = false;
+        this->waitingBufferFill = false;
+
         // VideoBuffer needs to be initialized this way since
         // we only know the buffer size here
         const bool szbuffer = this->cfg->videoValidatorBufferSize / 2;

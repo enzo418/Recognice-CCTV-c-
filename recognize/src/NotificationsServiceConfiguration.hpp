@@ -45,7 +45,9 @@ namespace Observer
         std::string chatID;
     };
 
-    struct LocalWebNotificationsConfiguration : NotificationsServiceConfiguration { };
+    struct LocalWebNotificationsConfiguration : NotificationsServiceConfiguration {
+        std::string webServerUrl;
+    };
 
     //////////////////////////////////////////////
     // Enum as bitfield, lets set the operators //

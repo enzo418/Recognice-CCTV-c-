@@ -1,14 +1,14 @@
-#include "CicularFrameBuffer.hpp"
+#include "CircularFrameBuffer.hpp"
 
 namespace Observer {
-    CicularFrameBuffer::CicularFrameBuffer(int bufferSize) {
+    CircularFrameBuffer::CircularFrameBuffer(int bufferSize) {
         // reserve enough buffer size for the frames
         this->frames.reserve(bufferSize);
 
         this->framesPosition = 0;
     }
 
-    bool CicularFrameBuffer::AddFrame(cv::Mat& frame) {
+    bool CircularFrameBuffer::AddFrame(cv::Mat& frame) {
         this->frames[this->framesPosition] = frame.clone();
         
         const int next = this->framesPosition + 1;
@@ -19,7 +19,7 @@ namespace Observer {
         return isFull;
     }
 
-    std::vector<cv::Mat> CicularFrameBuffer::GetFrames() {
+    std::vector<cv::Mat> CircularFrameBuffer::GetFrames() {
         // First order the frames
 
         // this->frames:

@@ -20,26 +20,46 @@ namespace Observer {
             virtual void push(T const &value);
             virtual size_t size();
 
-            T pop()  {
-                super::mutex.lock();
+            virtual T pop();
 
-                T elment(std::move(super::queue.back()));
-
-                // if only 1 frames is left, don't delete it
-                if (super::queue.size() > 1) {
-                    super::queue.pop();
-                }
-
-                super::mutex.unlock();
-
-                return elment;
-            }
+            FrameQueue(FrameQueue&&)  noexcept = default;
 
             virtual ~FrameQueue();
 
         private:
             using super = SimpleBlockingQueue<T>;
     };
+
+    template<typename T>
+    T FrameQueue<T>::pop() {
+        super::mutex.lock();
+
+        T elment(std::move(super::queue.back()));
+
+        // if only 1 frames is left, don't delete it
+        if (super::queue.size() > 1) {
+            super::queue.pop();
+        }
+
+        super::mutex.unlock();
+
+        return elment;
+    }
+
+    template<typename T>
+    void FrameQueue<T>::push(const T &value) {
+        SimpleBlockingQueue<T>::push(value);
+    }
+
+    template<typename T>
+    size_t FrameQueue<T>::size() {
+        return SimpleBlockingQueue<T>::size();
+    }
+
+    template<typename T>
+    FrameQueue<T>::~FrameQueue() {
+        ~SimpleBlockingQueue<T>();
+    }
 
     /**
     * @todo write docs
@@ -64,7 +84,7 @@ namespace Observer {
             void update(int framePosition, cv::Mat frame) override;
 
         private:
-            std::vector<FrameQueue<cv::Mat>> frames;
+            std::vector<std::queue<cv::Mat>> frames;
             std::mutex mtxFrames;
 
             int maxFrames;

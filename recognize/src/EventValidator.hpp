@@ -19,7 +19,7 @@ namespace Observer {
 
         void Stop() override;
 
-        void SubscribeToEventValidationDone(ISubscriber<Event>* subscriber);
+        void SubscribeToEventValidationDone(ISubscriber<Event, RawCameraEvent>* subscriber);
 
         void update(CameraConfiguration* cfg, RawCameraEvent ev) override;
 

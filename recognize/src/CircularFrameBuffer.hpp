@@ -5,14 +5,14 @@
 
 namespace Observer
 {
-    class CicularFrameBuffer {
+    class CircularFrameBuffer {
         public:
             /**
              * @brief Construct a new Cicular Frame Buffer object
              * 
              * @param bufferSize max buffer size
              */
-            CicularFrameBuffer(int bufferSize);
+            CircularFrameBuffer(int bufferSize);
             
             /**
              * @brief Adds a frame to the buffer.

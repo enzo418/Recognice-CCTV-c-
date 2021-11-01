@@ -4,7 +4,7 @@
 
 #include "MessagingService.hpp"
 #include "TelegramNotifications.hpp"
-#include "LocalWebNotifications.hpp"
+#include "RestClientLocalWebNotifications.hpp"
 
 #include "Semaphore.hpp"
 #include "BaseObserverPattern.hpp"

@@ -2,18 +2,22 @@
 
 namespace Observer
 {
-    OpencvVideoSource::OpencvVideoSource() { }
+    OpencvVideoSource::OpencvVideoSource() = default;
 
     void OpencvVideoSource::Open(const std::string& url) {
-        this->capturer.open(url);
+        this->videoCapture.open(url);
     }
 
     bool OpencvVideoSource::isOpened() {
-        return this->capturer.isOpened();
+        return this->videoCapture.isOpened();
     }
 
     bool OpencvVideoSource::GetNextFrame(cv::Mat& frame) {
-        return this->capturer.read(frame);
+        return this->videoCapture.read(frame);
+    }
+
+    void OpencvVideoSource::Close(const std::string &url) {
+        this->videoCapture.release();
     }
 
 } // namespace Observer

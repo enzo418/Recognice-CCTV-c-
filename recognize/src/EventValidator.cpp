@@ -61,7 +61,7 @@ namespace Observer {
         this->running = false;
     }
 
-    void EventValidator::SubscribeToEventValidationDone(ISubscriber<Event>* subscriber) {
+    void EventValidator::SubscribeToEventValidationDone(ISubscriber<Event, RawCameraEvent>* subscriber) {
         this->eventPublisher.subscribe(subscriber);
     }
 }

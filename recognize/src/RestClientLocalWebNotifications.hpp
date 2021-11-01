@@ -2,10 +2,11 @@
 
 #include "LocalWebNotifications.hpp"
 #include "SpecialFunctions.hpp"
-#include <restclient-cpp/restclient.h>
+//#include <restclient-cpp/restclient.h>
 
 namespace Observer {
     class RestClientLocalWebNotifications : public LocalWebNotifications {
+    public:
         explicit RestClientLocalWebNotifications(std::string restServerUrl);
 
         void SendText(std::string text) override;

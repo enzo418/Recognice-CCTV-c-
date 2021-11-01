@@ -5,9 +5,9 @@
 namespace Observer
 {
         ObserverCentral::ObserverCentral(Configuration pConfig)
-        :   notificationController(&this->config),
-            frameDisplay(static_cast<int>(this->config.camerasConfiguration.size())),
-            config(std::move(pConfig))
+        :   frameDisplay(static_cast<int>(this->config.camerasConfiguration.size())),
+            config(std::move(pConfig)),
+            notificationController(&this->config)
         { }
 
         bool ObserverCentral::Start() {

@@ -8,7 +8,7 @@ namespace Observer
     class VideoWriter
     {
     public:
-        VideoWriter();
+        VideoWriter() = default;
 
         virtual bool Open(const std::string &string, const double& framerate, const int& codecID, const cv::Size& frameSize) = 0;
 

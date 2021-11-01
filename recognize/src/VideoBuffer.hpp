@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CicularFrameBuffer.hpp"
+#include "CircularFrameBuffer.hpp"
 #include "RawCameraEvent.hpp"
 
 #include <optional>
@@ -25,7 +25,7 @@ namespace Observer
             int firstFrameWhereChangeWasFound;
 
             // delayed initialization with optional
-            std::optional<CicularFrameBuffer> framesBefore;
-            std::optional<CicularFrameBuffer> framesAfter;
+            std::optional<CircularFrameBuffer> framesBefore;
+            std::optional<CircularFrameBuffer> framesAfter;
     };
 } // namespace Observer

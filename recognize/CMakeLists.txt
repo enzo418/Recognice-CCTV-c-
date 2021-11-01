@@ -11,18 +11,62 @@ find_package(CURL REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
+#find_package(restclient-cpp REQUIRED)
+
 # =========
 #  Sources 
 # =========
-set(source_dir "${PROJECT_SOURCE_DIR}/src")
-
-file(GLOB COMMON_SRC "${source_dir}/*.cpp")
-
-file(GLOB MAIN_SRC "${PROJECT_SOURCE_DIR}/sample/sample_main.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC} ${MAIN_SRC} src/BaseChainOfResponsibility.hpp src/ValidatorBySufficientSamples.cpp src/ValidatorBySufficientSamples.hpp src/EventValidator.cpp src/EventValidator.hpp src/BaseEventValidator.hpp src/BaseCameraEvent.hpp src/InterfaceFunctionality.hpp src/CommonEventValidator.hpp src/Event.cpp src/RawCameraEvent.cpp src/RestClientLocalWebNotifications.cpp src/RestClientLocalWebNotifications.hpp)
+set(SOURCES
+        sample/sample_main.cpp
+        src/Timer.hpp
+        src/BaseCameraEvent.hpp
+        src/BaseChainOfResponsibility.hpp
+        src/BaseEventValidator.hpp
+        src/BaseObserverPattern.hpp
+        src/bitmask_operators.hpp
+        src/CameraConfiguration.hpp
+        src/SimpleBlockingQueue.hpp
+
+        src/CircularFrameBuffer.cpp
+        src/CircularFrameBuffer.hpp
+        src/RawCameraEvent.cpp src/RawCameraEvent.hpp
+
+        src/CommonEventValidator.hpp
+        src/Configuration.hpp
+        src/Event.cpp  src/Event.hpp
+        src/EventValidator.cpp src/EventValidator.hpp
+        src/FrameDisplay.cpp src/FrameDisplay.hpp
+        src/FrameProcessor.cpp src/FrameProcessor.hpp
+
+        src/ImageNotification.cpp src/ImageNotification.hpp
+        src/InterfaceFunctionality.hpp
+        src/MessagingService.hpp
+        src/Notification.cpp src/Notification.hpp
+        src/NotificationsServiceConfiguration.hpp
+        src/OpencvVideoSource.cpp src/OpencvVideoSource.hpp
+        src/OpencvVideoWriter.cpp src/OpencvVideoWriter.hpp
+        src/RestClientLocalWebNotifications.cpp src/RestClientLocalWebNotifications.hpp
+        src/Semaphore.hpp
+        src/SpecialFunctions.hpp src/SpecialFunctions.cpp
+        src/TelegramNotifications.cpp src/TelegramNotifications.hpp
+        src/TextNotification.cpp src/TextNotification.hpp
+        src/ThresholdManager.cpp src/ThresholdManager.hpp
+        src/ValidatorBySufficientSamples.cpp src/ValidatorBySufficientSamples.hpp
+        src/VideoBuffer.cpp src/VideoBuffer.hpp
+        src/VideoNotification.cpp src/VideoNotification.hpp
+        src/VideoSource.hpp
+        src/VideoWriter.hpp
+
+        src/LocalWebNotifications.cpp src/LocalWebNotifications.hpp
+        src/ObserverCentral.cpp src/ObserverCentral.hpp
+
+        src/NotificationsController.cpp src/NotificationsController.hpp
+
+        src/CameraObserver.cpp
+        src/CameraObserver.hpp)
 
 # Print sources
 message(${SOURCES})

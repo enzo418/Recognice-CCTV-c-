@@ -24,7 +24,7 @@ public:
     virtual Handler *SetNext(Handler *handler) = 0;
     virtual T Handle(R request, T& result) = 0;
 
-    virtual ~Handler() = 0;
+    virtual ~Handler() = default;
 };
 
  /**

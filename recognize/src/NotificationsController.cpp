@@ -6,7 +6,7 @@ namespace Observer
         this->config = cfg;
         this->groupID = 0;
 
-        auto ptrLocal = new LocalWebNotifications();
+        auto ptrLocal = new RestClientLocalWebNotifications(cfg->localWebConfiguration.webServerUrl);
         auto ptrTelegram = new TelegramNotifications();
 
         this->AddServiceToDrawable(ptrLocal, &this->config->localWebConfiguration);

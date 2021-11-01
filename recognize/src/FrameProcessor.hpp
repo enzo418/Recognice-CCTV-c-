@@ -28,8 +28,6 @@ namespace Observer
         FrameProcessor& NormalizeFrame(cv::Mat &frame) &;
 
         double DetectChanges();
-
-        void ProcessChanges(double changes);
     };
     
 } // namespace Observer
