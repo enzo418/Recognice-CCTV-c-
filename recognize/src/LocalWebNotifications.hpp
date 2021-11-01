@@ -6,12 +6,14 @@ namespace Observer
     class LocalWebNotifications : public MessagingService
     {
     public:
-        LocalWebNotifications();
+        explicit LocalWebNotifications(std::string restServerUrl);
     
-        virtual void SendText(std::string text);
-        virtual void SendImage(std::string path, std::string message);
-        virtual void SendVideo(std::string path, std::string caption);
-    private:
+        virtual void SendText(std::string text) = 0;
+        virtual void SendImage(std::string path, std::string message) = 0;
+        virtual void SendVideo(std::string path, std::string caption) = 0;
+
+    protected:
+        std::string restServerUrl;
     };
-    
+
 } // namespace Observer

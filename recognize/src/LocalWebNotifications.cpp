@@ -1,20 +1,11 @@
 #include "LocalWebNotifications.hpp"
 
+#include <utility>
+
 namespace Observer
 {
-    LocalWebNotifications::LocalWebNotifications() {
-
-    }
-    
-    void LocalWebNotifications::SendText(std::string text) {
-        
-    }
-
-    void LocalWebNotifications::SendImage(std::string path, std::string message) {
-
-    }
-
-    void LocalWebNotifications::SendVideo(std::string path, std::string caption) {
+    LocalWebNotifications::LocalWebNotifications(std::string pRestServerUrl)
+    : restServerUrl(std::move(pRestServerUrl)) {
 
     }
 

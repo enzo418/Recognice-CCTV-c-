@@ -27,4 +27,25 @@ namespace Observer::SpecialFunctions
 
         return str;
     }
+
+    /**
+     * Returns a JSON string with all the pairs given
+     * e.g.
+     *  > func({{"url", "test"}, {"path", "c:/here"}})
+     *  < {"url": "test","path": "c:/here"}
+     * @param pairs all the key-value pairs to generate
+     * @return
+     */
+    std::string JsonStringGenerator(const std::vector<std::pair<std::string, std::string>>& pairs) {
+        std::string res = "{";
+
+        for (auto &&i : pairs) {
+            res += "\"" + i.first + "\": \""+ i.second + "\",";
+        }
+
+        res.pop_back(); // pop last ,
+        res += "}";
+
+        return res;
+    }
 } // namespace Observer
