@@ -3,7 +3,7 @@
 # Requeriments	
 - Opencv >= 4.5 (or 3.0 without yolov4 nn)
 - jsoncpp
-- restclient-cpp
+- curly.hpp
 
 ## Compiling
 - [jsoncpp](github.com/open-source-parsers/jsoncpp) (jsoncpp-devel) (To decode incoming messages from the telegram api)
@@ -14,9 +14,4 @@
         4. `make`
         5. `sudo make install`
 
-- [restclient-cpp](https://github.com/mrtazz/restclient-cpp) Used to conect to the web server
-        1. `git clone https://github.com/mrtazz/restclient-cpp`
-        2. `cd restclient-cpp && mkdir build && cd build`
-        3. `cmake ..`
-        4. `make -j4`
-        5. `sudo make install`
+- [curly.hpp](https://github.com/BlackMATov/curly.hpp) used as a http client. Already included on the project.

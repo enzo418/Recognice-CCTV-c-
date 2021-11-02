@@ -11,7 +11,7 @@ find_package(CURL REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
-#find_package(restclient-cpp REQUIRED)
+add_subdirectory(src/external/curly.hpp)
 
 # =========
 #  Sources 
@@ -26,7 +26,7 @@ set(SOURCES
         src/BaseChainOfResponsibility.hpp
         src/BaseEventValidator.hpp
         src/BaseObserverPattern.hpp
-        src/bitmask_operators.hpp
+        src/external/bitmask_operators.hpp
         src/CameraConfiguration.hpp
         src/SimpleBlockingQueue.hpp
 
@@ -68,6 +68,8 @@ set(SOURCES
         src/CameraObserver.cpp
         src/CameraObserver.hpp)
 
+
+
 # Print sources
 message(${SOURCES})
 
@@ -80,4 +82,4 @@ add_executable(recognize ${SOURCES})
 include_directories(${CURL_INCLUDE_DIR})
 
 # set -l of opencv and curl
-target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp)
+target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp)

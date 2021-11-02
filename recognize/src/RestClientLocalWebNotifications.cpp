@@ -10,47 +10,64 @@ namespace Observer {
     }
 
     void RestClientLocalWebNotifications::SendText(std::string text) {
-        /*const std::string url = this->restServerUrl + "/addTextNotification";
+        const std::string url = this->restServerUrl + "/addTextNotification";
 
-        RestClient::Response r = RestClient::post(
-                this->restServerUrl + "/addTextNotification",
-                "application/json",
-                SpecialFunctions::JsonStringGenerator({{"text", text}}));
-
-        if (r.code == 200) {
-            // TODO: Log ok
-        } else {
-            // TODO: Log error r.body
-        }*/
+        curly_hpp::request_builder()
+                .method(curly_hpp::http_method::POST)
+                .url(url)
+                .header("Content-Type", "application/json")
+                .content(SpecialFunctions::JsonStringGenerator({{"text", text}}))
+                .callback([](curly_hpp::request request){
+                    if ( request.is_done() ) {
+                        auto response = request.take();
+                        // TODO: Log ok
+                        std::cout << "Status code: " << response.http_code() << std::endl;
+                    } else {
+                        // TODO: Log error r.body
+                        std::cout << "Error message: " << request.get_error() << std::endl;
+                    }
+                })
+                .send();
     }
 
     void RestClientLocalWebNotifications::SendImage(std::string path, std::string text) {
-        /*const std::string url = this->restServerUrl + "/addImageNotification";
+        const std::string url = this->restServerUrl + "/addImageNotification";
 
-        RestClient::Response r = RestClient::post(
-                url,
-                "application/json",
-                SpecialFunctions::JsonStringGenerator({{"text", text}, {"image_path", path}}));
-
-        if (r.code == 200) {
-            // TODO: Log ok
-        } else {
-            // TODO: Log error r.body
-        }*/
+        curly_hpp::request_builder()
+                .method(curly_hpp::http_method::POST)
+                .url(url)
+                .header("Content-Type", "application/json")
+                .content(SpecialFunctions::JsonStringGenerator({{"text", text}, {"image_path", path}}))
+                .callback([](curly_hpp::request request){
+                    if ( request.is_done() ) {
+                        auto response = request.take();
+                        // TODO: Log ok
+                        std::cout << "Status code: " << response.http_code() << std::endl;
+                    } else {
+                        // TODO: Log error r.body
+                        std::cout << "Error message: " << request.get_error() << std::endl;
+                    }
+                })
+                .send();
     }
 
     void RestClientLocalWebNotifications::SendVideo(std::string path, std::string text) {
-        /*const std::string url = this->restServerUrl + "/addVideoNotification";
-
-        RestClient::Response r = RestClient::post(
-                url,
-                "application/json",
-                SpecialFunctions::JsonStringGenerator({{"text", text}, {"video_path", path}}));
-
-        if (r.code == 200) {
-            // TODO: Log ok
-        } else {
-            // TODO: Log error r.body
-        }*/
+        const std::string url = this->restServerUrl + "/addVideoNotification";
+        curly_hpp::request_builder()
+                .method(curly_hpp::http_method::POST)
+                .url(url)
+                .header("Content-Type", "application/json")
+                .content(SpecialFunctions::JsonStringGenerator({{"text", text}, {"video_path", path}}))
+                .callback([](curly_hpp::request request){
+                    if ( request.is_done() ) {
+                        auto response = request.take();
+                        // TODO: Log ok
+                        std::cout << "Status code: " << response.http_code() << std::endl;
+                    } else {
+                        // TODO: Log error r.body
+                        std::cout << "Error message: " << request.get_error() << std::endl;
+                    }
+                })
+                .send();
     }
 };

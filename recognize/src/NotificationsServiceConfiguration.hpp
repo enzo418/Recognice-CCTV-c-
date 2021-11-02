@@ -5,7 +5,7 @@
 // include bitmask operators
 // explained in
 // https://www.justsoftwaresolutions.co.uk/cplusplus/using-enum-classes-as-bitfields.html
-#include "bitmask_operators.hpp"
+#include "external/bitmask_operators.hpp"
 
 namespace Observer
 {
