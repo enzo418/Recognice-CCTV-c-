@@ -4,7 +4,8 @@
 #include "../src/ConfigurationParser.hpp"
 
 int main(int argc, char** argv) {
-    std::string pathConfig = "./config.yml";
+    std::string pathConfig;
+    std::string outputConfig = "./config_ouput.yml";
 
     const std::string keys =
             "{help h       |            | show help message}"
@@ -34,4 +35,8 @@ int main(int argc, char** argv) {
     std::cout << "mediaFolderPath: " << cfg.mediaFolderPath << std::endl;
     std::cout << "scaleFactor: " << cfg.outputConfiguration.scaleFactor << std::endl;
     std::cout << "api: " << cfg.telegramConfiguration.apiKey << std::endl;
+
+    cv::FileStorage fileStorageWrite(outputConfig, cv::FileStorage::WRITE);
+    Observer::ConfigurationParser::EmmitYAML(fileStorageWrite, cfg);
+//    fileStorageWrite << "configuration" << "{" << "test" << "{" << "inside_test" << 2 << "}" << "test2" << "hola" << "}";
 }

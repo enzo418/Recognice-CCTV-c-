@@ -2,10 +2,9 @@
 
 #include "Configuration.hpp"
 #include "LocalWebNotifications.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace cv {
-
-
     // vector<Rect>
     /**
      * Custom template to avoid using opencv write templates
@@ -15,14 +14,10 @@ namespace cv {
      * @param x
      */
     template<typename T>
-    static void write_mine(FileStorage& fs, const std::string&, const std::vector<T>& x){
-        CV_Assert(false);
-//        fs  << "["
-//            << "x" << x.x
-//            << "y" << x.y
-//            << "width" << x.width
-//            << "height" << x.height
-//            << "]";
+    static void write_mine(FileStorage& fs, const std::string& n, const std::vector<T>& y){
+        for(auto&& x : y) {
+            write(fs, n, x);
+        }
     }
 
     /**
@@ -53,12 +48,18 @@ namespace cv {
     }
 
     // Configuration
-    static void write(FileStorage& fs, const std::string&, const Observer::Configuration& x){
-        fs << "[" << "mediaFolderPath" << x.mediaFolderPath << "notificationTextTemplate" << x.notificationTextTemplate << "]"
-        << "telegramNotificationsConfiguration" << x.telegramConfiguration
-        << "localWebNotificationsConfiguration" << x.localWebConfiguration
-        << "outputPreviewConfiguration" << x.outputConfiguration
-        << "cameraConfiguration" << x.camerasConfiguration;
+    static void write(FileStorage& fs, const std::string& n, const Observer::Configuration& x){
+        fs << "mediaFolderPath" << x.mediaFolderPath << "notificationTextTemplate" << x.notificationTextTemplate
+
+        << "telegramNotificationsConfiguration" << "{";
+        write(fs, x.telegramConfiguration);
+        fs << "}"
+        << "localWebNotificationsConfiguration" << "{" ;
+        write(fs, x.localWebConfiguration); fs << "}"
+        << "outputPreviewConfiguration" << "{";
+        write(fs, x.outputConfiguration); fs << "}"
+        << "cameraConfiguration" << "{";
+        write_mine(fs, String(), x.camerasConfiguration); fs << "}";
     }
 
     static void read(const FileNode& node, Observer::Configuration& x, const Observer::Configuration& default_value = Observer::Configuration()){
@@ -78,10 +79,10 @@ namespace cv {
     static void write(FileStorage& fs, const std::string&, const Observer::OutputPreviewConfiguration& x){
         fs  << "showOutput" << x.showOutput
             << "resolution"
-                    << "["
+                    << "{"
                     << "width" << x.resolution.width
                     << "height" << x.resolution.height
-                    << "]"
+                    << "}"
             << "scaleFactor" << x.scaleFactor
             << "showIgnoredAreas" << x.showIgnoredAreas
             << "showProcessedFrames" << x.showProcessedFrames;
@@ -104,7 +105,8 @@ namespace cv {
 
     // NotificationsServiceConfiguration
     static void write(FileStorage& fs, const std::string&, const Observer::NotificationsServiceConfiguration& x){
-        fs << "secondsBetweenTextNotification" << x.secondsBetweenTextNotification
+        fs << "enabled" << x.enabled
+        << "secondsBetweenTextNotification" << x.secondsBetweenTextNotification
         << "secondsBetweenImageNotification" << x.secondsBetweenImageNotification
         << "secondsBetweenVideoNotification" << x.secondsBetweenVideoNotification
         << "noticationsToSend" << x.noticationsToSend
@@ -118,6 +120,7 @@ namespace cv {
         if(node.empty())
             x = default_value;
         else {
+            node["enabled"] >> x.enabled;
             node["secondsBetweenTextNotification"] >> x.secondsBetweenTextNotification;
             node["secondsBetweenImageNotification"] >> x.secondsBetweenImageNotification;
             node["secondsBetweenVideoNotification"] >> x.secondsBetweenVideoNotification;
@@ -128,11 +131,11 @@ namespace cv {
     }
 
     // TelegramNotificationsConfiguration
-    static void write(FileStorage& fs, const std::string&, const Observer::TelegramNotificationsConfiguration& x){
+    static void write(FileStorage& fs, const std::string&n, const Observer::TelegramNotificationsConfiguration& x){
         fs
         << "apiKey" << x.apiKey
-        << "chatID" << x.chatID
-        << static_cast<Observer::NotificationsServiceConfiguration>(x);
+        << "chatID" << x.chatID;
+        write(fs, n, static_cast<Observer::NotificationsServiceConfiguration>(x));
     }
 
     static void read(const FileNode& node,
@@ -148,9 +151,9 @@ namespace cv {
     }
 
     // LocalWebNotificationsConfiguration
-    static void write(FileStorage& fs, const std::string&, const Observer::LocalWebNotificationsConfiguration& x){
-        fs  << "webServerUrl" << x.webServerUrl
-            << static_cast<Observer::NotificationsServiceConfiguration>(x);
+    static void write(FileStorage& fs, const std::string& n, const Observer::LocalWebNotificationsConfiguration& x){
+        fs  << "webServerUrl" << x.webServerUrl;
+        write(fs, n, static_cast<Observer::NotificationsServiceConfiguration>(x));
     }
 
     static void read(const FileNode& node,
@@ -168,12 +171,12 @@ namespace cv {
 
     // Rect
     static void write(FileStorage& fs, const std::string&, const cv::Rect& x){
-        fs  << "["
+        fs  << "{"
             << "x" << x.x
             << "y" << x.y
             << "width" << x.width
             << "height" << x.height
-            << "]";
+            << "}";
     }
 
     static void read(const FileNode& node,
@@ -191,10 +194,10 @@ namespace cv {
 
     // RestrictedArea
     static void write(FileStorage& fs, const std::string&, const Observer::RestrictedArea& x){
-        fs  << "["
+        fs  << "{"
             << "points" << x.points
             << "type" << x.type
-            << "]";
+            << "}";
     }
 
     static void read(const FileNode& node,
@@ -223,9 +226,14 @@ namespace cv {
         << "increaseThresholdFactor" << x.increaseThresholdFactor
         << "secondsBetweenTresholdUpdate" << x.secondsBetweenTresholdUpdate
         << "saveDetectedChangeInVideo" << x.saveDetectedChangeInVideo
-        << "ignoredAreas" << x.ignoredAreas
+        << "ignoredAreas" << "[";
+        write_mine(fs, String(), x.ignoredAreas);
+        fs << "]"
         << "videoValidatorBufferSize" << x.videoValidatorBufferSize
-        << "restrictedAreas" << x.restrictedAreas
+        << "restrictedAreas" << "[";
+        write_mine(fs, String(), x.restrictedAreas);
+        fs
+        << "]"
         << "objectDetectionMethod" << x.objectDetectionMethod;
     }
 
@@ -265,10 +273,10 @@ namespace cv {
 
     // Point
     static void write(FileStorage& fs, const std::string&, const cv::Point& x){
-        fs  << "["
+        fs  << "{"
             << "x" << x.x
             << "y" << x.y
-            << "]";
+            << "}";
     }
 
     static void read(const FileNode& node,
@@ -283,8 +291,68 @@ namespace cv {
     }
 }
 
-namespace Observer::ConfigurationParser {
-    Configuration ParseYAML(cv::FileStorage& fs);
+namespace YAML {
+    template<>
+    struct convert<Observer::Configuration> {
+        static Node encode(const Observer::Configuration& rhs) {
+            Node node;
 
+            node["mediaFolderPath"] = rhs.mediaFolderPath;
+            node["notificationTextTemplate"] = rhs.notificationTextTemplate;
+            node["telegramNotificationsConfiguration"] = rhs.telegramConfiguration;
+            node["localWebNotificationsConfiguration"] = rhs.localWebConfiguration;
+            node["outputPreviewConfiguration"] = rhs.outputConfiguration;
+            node["cameraConfiguration"] = rhs.camerasConfiguration;
+            return node;
+        }
+
+        static bool decode(const Node& node, Observer::Configuration& rhs) {
+            rhs.mediaFolderPath = node["mediaFolderPath"].as<std::string>();
+            rhs.notificationTextTemplate = node["notificationTextTemplate"].as<std::string>();
+            rhs.localWebConfiguration = node["localWebConfiguration"].as<Observer::LocalWebNotificationsConfiguration>();
+            rhs.telegramConfiguration = node["telegramConfiguration"].as<Observer::TelegramNotificationsConfiguration>();
+            rhs.outputConfiguration = node["outputConfiguration"].as<Observer::OutputPreviewConfiguration>();
+            rhs.camerasConfiguration = node["camerasConfiguration"].as<std::vector<Observer::CameraConfiguration>>();
+            return true;
+        }
+    };
+
+    void EncodeNotificationsServiceConfiguration(Node& node,
+                                                 Observer::NotificationsServiceConfiguration& cfg) {
+        node["enabled"] = cfg.enabled;
+        node["secondsBetweenTextNotification"] = cfg.secondsBetweenTextNotification;
+        node["secondsBetweenImageNotification"] = cfg.secondsBetweenImageNotification;
+        node["secondsBetweenVideoNotification"] = cfg.secondsBetweenVideoNotification;
+        node["noticationsToSend"] = cfg.noticationsToSend;
+        node["onNotifSendExtraImageNotfWithAllTheCameras"] = cfg.onNotifSendExtraImageNotfWithAllTheCameras;
+        node["drawTraceOfChangeOn"] = cfg.drawTraceOfChangeOn;
+    }
+
+    template<>
+    struct convert<Observer::LocalWebNotificationsConfiguration> {
+        static Node encode(Observer::LocalWebNotificationsConfiguration& rhs) {
+            Node node;
+
+            node["webServerUrl"] = rhs.webServerUrl;
+            EncodeNotificationsServiceConfiguration(node,
+                                                    dynamic_cast<Observer::NotificationsServiceConfiguration &>(rhs));
+            return node;
+        }
+
+        static bool decode(const Node& node, Observer::LocalWebNotificationsConfiguration& rhs) {
+            rhs.webServerUrl = node["webServerUrl"].as<std::string>();
+            // DecodeNot...
+            return true;
+        }
+    };
+}
+
+namespace Observer::ConfigurationParser {
+    // opencv
+    Configuration ParseYAML(cv::FileStorage& fs);
     void EmmitYAML(cv::FileStorage& fs, const Configuration& cfg);
+
+    // yamlcpp
+    Configuration ParseYAML(YAML::Node& node);
+    void EmmitYAML(std::ofstream& fs, const Configuration& cfg);
 }

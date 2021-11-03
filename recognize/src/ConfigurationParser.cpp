@@ -9,6 +9,18 @@ namespace Observer::ConfigurationParser {
     }
 
     void EmmitYAML(cv::FileStorage& fs, const Configuration& cfg) {
-        fs << "configuration" << cfg;
+        fs << "configuration" << "{";
+        write(fs, cfg);
+        fs << "}";
+    }
+
+
+    Configuration ParseYAML(YAML::Node& node) {
+        Configuration cfg;
+
+    }
+
+    void EmmitYAML(std::ofstream& fs, const Configuration& cfg) {
+//        fs << "configuration" << cfg;
     }
 }
