@@ -8,6 +8,8 @@ find_package(OpenCV REQUIRED)
 set(CURL_LIBRARY "-lcurl") 
 find_package(CURL REQUIRED) 
 
+find_package(yaml-cpp REQUIRED)
+
 # Json package
 # find_package(JSON REQUIRED)
 
@@ -17,7 +19,7 @@ add_subdirectory(src/external/curly.hpp)
 #  Sources 
 # =========
 
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
+#set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
 set(SOURCES
         sample/sample_main.cpp
@@ -66,7 +68,7 @@ set(SOURCES
         src/NotificationsController.cpp src/NotificationsController.hpp
 
         src/CameraObserver.cpp
-        src/CameraObserver.hpp)
+        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp)
 
 
 
