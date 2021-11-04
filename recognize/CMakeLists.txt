@@ -52,7 +52,7 @@ set(SOURCES
         src/OpencvVideoWriter.cpp src/OpencvVideoWriter.hpp
         src/RestClientLocalWebNotifications.cpp src/RestClientLocalWebNotifications.hpp
         src/Semaphore.hpp
-        src/SpecialFunctions.hpp src/SpecialFunctions.cpp
+        src/utils/SpecialFunctions.hpp src/utils/SpecialFunctions.cpp
         src/TelegramNotifications.cpp src/TelegramNotifications.hpp
         src/TextNotification.cpp src/TextNotification.hpp
         src/ThresholdManager.cpp src/ThresholdManager.hpp
@@ -68,7 +68,7 @@ set(SOURCES
         src/NotificationsController.cpp src/NotificationsController.hpp
 
         src/CameraObserver.cpp
-        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp)
+        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp src/utils/StringUtility.cpp src/utils/StringUtility.hpp)
 
 
 
@@ -83,5 +83,8 @@ add_executable(recognize ${SOURCES})
 # Include curl
 include_directories(${CURL_INCLUDE_DIR})
 
+# Include yaml
+include_directories(${YAML_CPP_INCLUDE_DIR})
+
 # set -l of opencv and curl
-target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp)
+target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp)
