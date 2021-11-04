@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <filesystem>
 #include "../src/ConfigurationParser.hpp"
+#include "../src/ObserverCentral.hpp"
 
 int main(int argc, char** argv) {
     std::string pathConfig;
@@ -24,19 +25,28 @@ int main(int argc, char** argv) {
 
     std::cout << "file: " << pathConfig << " curr dir: " << std::filesystem::current_path().string() << std::endl;
 
-    cv::FileStorage fileStorage(pathConfig, cv::FileStorage::READ);
+//    cv::FileStorage fileStorage(pathConfig, cv::FileStorage::READ);
+//
+//    int test_int = -1;
+//    fileStorage["test_int"] >> test_int;
+//    std::cout << "test_int: " << test_int << std::endl;
+//
+//    auto cfg = Observer::ConfigurationParser::ParseYAML(fileStorage);
+//
+//    std::cout << "mediaFolderPath: " << cfg.mediaFolderPath << std::endl;
+//    std::cout << "scaleFactor: " << cfg.outputConfiguration.scaleFactor << std::endl;
+//    std::cout << "api: " << cfg.telegramConfiguration.apiKey << std::endl;
+//
+//    cv::FileStorage fileStorageWrite(outputConfig, cv::FileStorage::WRITE);
+//    Observer::ConfigurationParser::EmmitYAML(fileStorageWrite, cfg);
+////    fileStorageWrite << "configuration" << "{" << "test" << "{" << "inside_test" << 2 << "}" << "test2" << "hola" << "}";
 
-    int test_int = -1;
-    fileStorage["test_int"] >> test_int;
-    std::cout << "test_int: " << test_int << std::endl;
+    YAML::Node config = YAML::LoadFile(outputConfig);
+    auto cfg = Observer::ConfigurationParser::ParseYAML(config);
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(fileStorage);
+//    std::ofstream fout(outputConfig);
+//    Observer::ConfigurationParser::EmmitYAML(fout, cfg);
 
-    std::cout << "mediaFolderPath: " << cfg.mediaFolderPath << std::endl;
-    std::cout << "scaleFactor: " << cfg.outputConfiguration.scaleFactor << std::endl;
-    std::cout << "api: " << cfg.telegramConfiguration.apiKey << std::endl;
-
-    cv::FileStorage fileStorageWrite(outputConfig, cv::FileStorage::WRITE);
-    Observer::ConfigurationParser::EmmitYAML(fileStorageWrite, cfg);
-//    fileStorageWrite << "configuration" << "{" << "test" << "{" << "inside_test" << 2 << "}" << "test2" << "hola" << "}";
+    Observer::ObserverCentral observer(cfg);
+    observer.Start();
 }
