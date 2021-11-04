@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Notification.hpp"
-#include "SpecialFunctions.hpp"
+#include "utils/SpecialFunctions.hpp"
 
 #include <string>
 #include <filesystem>

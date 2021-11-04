@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LocalWebNotifications.hpp"
-#include "SpecialFunctions.hpp"
+#include "utils/SpecialFunctions.hpp"
 //#include <restclient-cpp/restclient.h>
 #include "external/curly.hpp/curly.hpp"
 

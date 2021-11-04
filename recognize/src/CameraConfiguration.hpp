@@ -2,6 +2,7 @@
 
 #include <string>
 #include <opencv2/opencv.hpp>
+#include "external/bitmask_operators.hpp"
 
 namespace Observer
 {
@@ -27,8 +28,8 @@ namespace Observer
     enum EObjectDetectionMethod
     {
         NONE = 1,
-        HOG_DESCRIPTOR = 1,
-        YOLODNN_V4 = 2
+        HOG_DESCRIPTOR = 2,
+        YOLODNN_V4 = 4
     };
 
     struct CameraConfiguration
