@@ -59,4 +59,16 @@ namespace Observer::ConfigurationParser {
         out["configuration"] = cfg;
         fs << out;
     }
+	
+	std::string ConfigurationToJson(const Configuration& cfg) {
+		YAML::Node node;
+		node["configuration"] = cfg;
+		YAML::Emitter emitter;
+        emitter << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << node;
+        return std::string(emitter.c_str() + 1);  // Strip leading [ character
+	}
+	
+    Configuration JsonToConfiguration(YAML::Node& node) {
+		return ParseYAML(node);
+	}
 }

@@ -37,11 +37,10 @@ int main(int argc, char** argv) {
         // Convert to json (There is nothing wrong with it converting the
         // numbers to string since the client can parse them again into 
         // a number)
-        YAML::Emitter emitter2;
-        emitter2 << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << config;
-        std::string out2(emitter2.c_str() + 1);  // Strip leading [ character
-        std::cout << "Output with BeginSeq:\n" << out2 << '\n';
-
+		std::ofstream jsonout("output.json");
+		auto jsonstr = Observer::ConfigurationParser::ConfigurationToJson(cfg);
+		jsonout << jsonstr;
+		jsonout.close();
 
     std::ofstream fout(outputConfig);
     Observer::ConfigurationParser::EmmitYAML(fout, cfg);
