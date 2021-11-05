@@ -41,12 +41,21 @@ int main(int argc, char** argv) {
 //    Observer::ConfigurationParser::EmmitYAML(fileStorageWrite, cfg);
 ////    fileStorageWrite << "configuration" << "{" << "test" << "{" << "inside_test" << 2 << "}" << "test2" << "hola" << "}";
 
-    YAML::Node config = YAML::LoadFile(outputConfig);
-    auto cfg = Observer::ConfigurationParser::ParseYAML(config);
+        YAML::Node config = YAML::LoadFile(outputConfig);
+        auto cfg = Observer::ConfigurationParser::ParseYAML(config);
+
+        // Convert to json (There is nothing wrong with it converting the
+        // numbers to string since the client can parse them again into 
+        // a number)
+        YAML::Emitter emitter2;
+        emitter2 << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << config;
+        std::string out2(emitter2.c_str() + 1);  // Strip leading [ character
+        std::cout << "Output with BeginSeq:\n" << out2 << '\n';
+
 
 //    std::ofstream fout(outputConfig);
 //    Observer::ConfigurationParser::EmmitYAML(fout, cfg);
 
-    Observer::ObserverCentral observer(cfg);
-    observer.Start();
+//    Observer::ObserverCentral observer(cfg);
+//    observer.Start();
 }

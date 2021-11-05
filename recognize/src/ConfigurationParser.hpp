@@ -337,6 +337,8 @@ namespace YAML {
             Node node;
 
             node["webServerUrl"] = rhs.webServerUrl;
+            
+            // TODO: Do not use a function, use the convert struct!!
             EncodeNotificationsServiceConfiguration(node,
                                                     static_cast<Observer::NotificationsServiceConfiguration>(rhs));
             return node;
@@ -344,6 +346,8 @@ namespace YAML {
 
         static bool decode(const Node& node, Observer::LocalWebNotificationsConfiguration& rhs) {
             rhs.webServerUrl = node["webServerUrl"].as<std::string>();
+            
+            // TODO: Do not use a function, use the convert struct!!
             DecodeNotificationsServiceConfiguration(node, rhs);
             return true;
         }
@@ -356,6 +360,8 @@ namespace YAML {
 
             node["apiKey"] = rhs.apiKey;
             node["chatID"] = rhs.chatID;
+            
+            // TODO: Do not use a function, use the convert struct!!
             EncodeNotificationsServiceConfiguration(node,
                                                     static_cast<Observer::NotificationsServiceConfiguration>(rhs));
             return node;
@@ -364,6 +370,8 @@ namespace YAML {
         static bool decode(const Node& node, Observer::TelegramNotificationsConfiguration& rhs) {
              rhs.apiKey = node["apiKey"].as<std::string>();
              rhs.chatID = node["chatID"].as<std::string>();
+             
+            // TODO: Do not use a function, use the convert struct!!
             DecodeNotificationsServiceConfiguration(node, rhs);
             return true;
         }
@@ -809,11 +817,17 @@ namespace Observer::ConfigurationParser {
             int mPos;
     };
 
-    // opencv
+    // opencv - TODO: Delete opencv parser!
     Configuration ParseYAML(cv::FileStorage& fs);
     void EmmitYAML(cv::FileStorage& fs, const Configuration& cfg);
 
     // yamlcpp
     Configuration ParseYAML(YAML::Node& node);
     void EmmitYAML(std::ofstream& fs, const Configuration& cfg);
+    
+    // TODO: example on main
+    std::string ConfigurationToJson(const Configuration& cfg);
+    
+    // TODO: Just read the json file, yamlcpp can parse it
+    Configuration JsonToConfiguration(YAML::Node& node);
 }
