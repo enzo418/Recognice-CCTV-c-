@@ -72,27 +72,3 @@ namespace Observer::ConfigurationParser {
         fs << out;
     }
 }
-
-namespace YAML {
-    void EncodeNotificationsServiceConfiguration(Node& node,
-                                                 const Observer::NotificationsServiceConfiguration& cfg) {
-        node["enabled"] = cfg.enabled;
-        node["secondsBetweenTextNotification"] = cfg.secondsBetweenTextNotification;
-        node["secondsBetweenImageNotification"] = cfg.secondsBetweenImageNotification;
-        node["secondsBetweenVideoNotification"] = cfg.secondsBetweenVideoNotification;
-        node["noticationsToSend"] = cfg.noticationsToSend;
-        node["onNotifSendExtraImageNotfWithAllTheCameras"] = cfg.onNotifSendExtraImageNotfWithAllTheCameras;
-        node["drawTraceOfChangeOn"] = cfg.drawTraceOfChangeOn;
-    }
-
-    void DecodeNotificationsServiceConfiguration(const Node& node,
-                                                 Observer::NotificationsServiceConfiguration& cfg) {
-        cfg.enabled = node["enabled"].as<bool>();
-        cfg.secondsBetweenTextNotification = node["secondsBetweenTextNotification"].as<double>();
-        cfg.secondsBetweenImageNotification = node["secondsBetweenImageNotification"].as<double>();
-        cfg.secondsBetweenVideoNotification = node["secondsBetweenVideoNotification"].as<double>();
-        cfg.noticationsToSend = node["noticationsToSend"].as<Observer::ENotificationType>();
-        cfg.onNotifSendExtraImageNotfWithAllTheCameras = node["onNotifSendExtraImageNotfWithAllTheCameras"].as<bool>();
-        cfg.drawTraceOfChangeOn = node["drawTraceOfChangeOn"].as<Observer::ETrazable>();
-    }
-}

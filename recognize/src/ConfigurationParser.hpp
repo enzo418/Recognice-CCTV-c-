@@ -330,25 +330,48 @@ namespace YAML {
 
     void DecodeNotificationsServiceConfiguration(const Node& node,
                                                  Observer::NotificationsServiceConfiguration& cfg);
+    template<>
+    struct convert<Observer::NotificationsServiceConfiguration> {
+        static Node encode(const Observer::NotificationsServiceConfiguration& rhs) {
+            Node node;
+			node["enabled"] = rhs.enabled;
+			node["secondsBetweenTextNotification"] = rhs.secondsBetweenTextNotification;
+			node["secondsBetweenImageNotification"] = rhs.secondsBetweenImageNotification;
+			node["secondsBetweenVideoNotification"] = rhs.secondsBetweenVideoNotification;
+			node["noticationsToSend"] = rhs.noticationsToSend;
+			node["onNotifSendExtraImageNotfWithAllTheCameras"] = rhs.onNotifSendExtraImageNotfWithAllTheCameras;
+			node["drawTraceOfChangeOn"] = rhs.drawTraceOfChangeOn;
+            return node;
+        }
+
+        static bool decode(const Node& node, Observer::NotificationsServiceConfiguration& rhs) {
+			rhs.enabled = node["enabled"].as<bool>();
+			rhs.secondsBetweenTextNotification = node["secondsBetweenTextNotification"].as<double>();
+			rhs.secondsBetweenImageNotification = node["secondsBetweenImageNotification"].as<double>();
+			rhs.secondsBetweenVideoNotification = node["secondsBetweenVideoNotification"].as<double>();
+			rhs.noticationsToSend = node["noticationsToSend"].as<Observer::ENotificationType>();
+			rhs.onNotifSendExtraImageNotfWithAllTheCameras = node["onNotifSendExtraImageNotfWithAllTheCameras"].as<bool>();
+			rhs.drawTraceOfChangeOn = node["drawTraceOfChangeOn"].as<Observer::ETrazable>();
+            return true;
+        }
+    };
 
     template<>
     struct convert<Observer::LocalWebNotificationsConfiguration> {
         static Node encode(const Observer::LocalWebNotificationsConfiguration& rhs) {
-            Node node;
-
+            // call encode of "superclass"
+			Node node = convert<Observer::NotificationsServiceConfiguration>::encode(rhs);
             node["webServerUrl"] = rhs.webServerUrl;
-            
-            // TODO: Do not use a function, use the convert struct!!
-            EncodeNotificationsServiceConfiguration(node,
-                                                    static_cast<Observer::NotificationsServiceConfiguration>(rhs));
+			
             return node;
         }
 
         static bool decode(const Node& node, Observer::LocalWebNotificationsConfiguration& rhs) {
+			convert<Observer::NotificationsServiceConfiguration>::decode(
+				node, 
+				dynamic_cast<Observer::NotificationsServiceConfiguration&>(rhs)
+			);
             rhs.webServerUrl = node["webServerUrl"].as<std::string>();
-            
-            // TODO: Do not use a function, use the convert struct!!
-            DecodeNotificationsServiceConfiguration(node, rhs);
             return true;
         }
     };
@@ -356,23 +379,21 @@ namespace YAML {
     template<>
     struct convert<Observer::TelegramNotificationsConfiguration> {
         static Node encode(const Observer::TelegramNotificationsConfiguration& rhs) {
-            Node node;
-
+            Node node = convert<Observer::NotificationsServiceConfiguration>::encode(rhs);
+			
             node["apiKey"] = rhs.apiKey;
             node["chatID"] = rhs.chatID;
-            
-            // TODO: Do not use a function, use the convert struct!!
-            EncodeNotificationsServiceConfiguration(node,
-                                                    static_cast<Observer::NotificationsServiceConfiguration>(rhs));
             return node;
         }
 
         static bool decode(const Node& node, Observer::TelegramNotificationsConfiguration& rhs) {
-             rhs.apiKey = node["apiKey"].as<std::string>();
-             rhs.chatID = node["chatID"].as<std::string>();
-             
-            // TODO: Do not use a function, use the convert struct!!
-            DecodeNotificationsServiceConfiguration(node, rhs);
+			convert<Observer::NotificationsServiceConfiguration>::decode(
+				node, 
+				dynamic_cast<Observer::NotificationsServiceConfiguration&>(rhs)
+			);
+			
+			rhs.apiKey = node["apiKey"].as<std::string>();
+			rhs.chatID = node["chatID"].as<std::string>();
             return true;
         }
     };
@@ -556,12 +577,12 @@ namespace YAML {
             }
 
             Observer::StringUtility::StringToLower(val);
-
-            if (val == "None") {
+			
+            if (val == "none") {
                 rhs = RType::NONE;
-            } else if (val == "Hog Descriptor") {
+            } else if (val == "hog descriptor") {
                 rhs = RType::HOG_DESCRIPTOR;
-            } else if (val == "Yolo DNN V4") {
+            } else if (val == "yolo dnn v4") {
                 rhs = RType::YOLODNN_V4;
             }
 
@@ -644,10 +665,6 @@ namespace YAML {
 
             try {
                 types = node.as<std::vector<std::string>>();
-//                auto const end = node.end();
-//                for (YAML::const_iterator it = node.begin(); it!= end; ++it) {
-//                    types.emplace_back(it->as<std::string>());
-//                }
             } catch (const BadConversion& e) {
                 return false;
             }
