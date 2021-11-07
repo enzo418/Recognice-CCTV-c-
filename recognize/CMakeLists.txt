@@ -71,6 +71,10 @@ set(SOURCES
         src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp src/utils/StringUtility.cpp src/utils/StringUtility.hpp)
 
 
+# If the cmake file isn't included then use the sample program
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+        set(SOURCES ${SOURCES} sample/sample_main.cpp)
+endif()
 
 # Print sources
 message(${SOURCES})
