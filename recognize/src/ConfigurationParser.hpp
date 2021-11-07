@@ -2,7 +2,8 @@
 
 #include "Configuration.hpp"
 #include "LocalWebNotifications.hpp"
-#include "utils/StringUtility.hpp"
+#include "utils/SpecialStrings.hpp"
+#include "utils/SpecialEnums.hpp"
 
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -353,15 +354,15 @@ namespace YAML {
             Node node;
             std::vector<std::string> out;
             
-            if ((rhs & RType::TEXT) == RType::TEXT) {
+            if (is_bit_flag(rhs, RType::TEXT)) {
                 out.emplace_back("Text");
             }
             
-            if ((rhs & RType::IMAGE) == RType::IMAGE) {
+            if (is_bit_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
             
-            if ((rhs & RType::VIDEO) == RType::VIDEO) {
+            if (is_bit_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
             
@@ -457,11 +458,11 @@ namespace YAML {
             Node node;
             std::vector<std::string> out;
             
-            if ((rhs & RType::IMAGE) == RType::IMAGE) {
+            if (is_bit_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
             
-            if ((rhs & RType::VIDEO) == RType::VIDEO) {
+            if (is_bit_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
             

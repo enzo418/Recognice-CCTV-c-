@@ -12,6 +12,7 @@
 #include "BaseCameraEvent.hpp"
 #include "SimpleBlockingQueue.hpp"
 #include "Event.hpp"
+#include "utils/SpecialEnums.hpp"
 
 #include <unordered_map>
 #include <algorithm>

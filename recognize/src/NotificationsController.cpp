@@ -37,12 +37,12 @@ namespace Observer
         // 2. For each service that doesn't need the trace call SendVideo(imagepath)
         const std::string &path = notification.GetImagePath();
 
-        for (auto &&service : this->notDrawableServices[static_cast<int>(ETrazable::IMAGE)])
+        for (auto &&service : this->notDrawableServices[flag_to_int(ETrazable::IMAGE)])
         {
             service->SendImage(path, notification.GetCaption());
         }        
 
-        auto &servD = this->drawableServices[static_cast<int>(ETrazable::IMAGE)];
+        auto &servD = this->drawableServices[flag_to_int(ETrazable::IMAGE)];
         // guard: if there is at leat 1 service that need the trace
         if (!servD.empty()) {
             // 3. Draw trace on image
@@ -60,17 +60,17 @@ namespace Observer
         // notification.BuildNotification(this->config->mediaFolderPath, )
 
         // 2. For each service that doesn't need the trace call SendVideo(videopath)
-        for (auto &&service : this->notDrawableServices[static_cast<int>(ETrazable::VIDEO)])
+        for (auto &&service : this->notDrawableServices[flag_to_int(ETrazable::VIDEO)])
         {
             
         }    
 
         // guard: if there is at leat 1 service that need the trace
-        if (!this->drawableServices[static_cast<int>(ETrazable::VIDEO)].empty()) {
+        if (!this->drawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 3. Draw trace on video
             
             // 4. For each service that need the trace call SendVideo(video2path)
-            for (auto &&service : this->drawableServices[static_cast<int>(ETrazable::VIDEO)])
+            for (auto &&service : this->drawableServices[flag_to_int(ETrazable::VIDEO)])
             {
                 
             }            
@@ -119,16 +119,16 @@ namespace Observer
     }
 
     void NotificationsController::AddServiceToDrawable(MessagingService* service, NotificationsServiceConfiguration* cfg) {
-        if ((cfg->drawTraceOfChangeOn & ETrazable::IMAGE) == ETrazable::IMAGE) {
-            drawableServices[static_cast<int>(ETrazable::IMAGE)].push_back(service);
+        if (is_bit_flag(cfg->drawTraceOfChangeOn, ETrazable::IMAGE)) {
+            drawableServices[flag_to_int(ETrazable::IMAGE)].push_back(service);
         } else {
-            notDrawableServices[static_cast<int>(ETrazable::IMAGE)].push_back(service);
+            notDrawableServices[flag_to_int(ETrazable::IMAGE)].push_back(service);
         }
 
-        if ((cfg->drawTraceOfChangeOn & ETrazable::VIDEO) == ETrazable::VIDEO) {
-            drawableServices[static_cast<int>(ETrazable::VIDEO)].push_back(service);
+        if (is_bit_flag(cfg->drawTraceOfChangeOn, ETrazable::VIDEO)) {
+            drawableServices[flag_to_int(ETrazable::VIDEO)].push_back(service);
         } else {
-            notDrawableServices[static_cast<int>(ETrazable::VIDEO)].push_back(service);
+            notDrawableServices[flag_to_int(ETrazable::VIDEO)].push_back(service);
         }
     }
 

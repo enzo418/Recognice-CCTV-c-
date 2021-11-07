@@ -68,7 +68,9 @@ set(SOURCES
         src/NotificationsController.cpp src/NotificationsController.hpp
 
         src/CameraObserver.cpp
-        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp src/utils/StringUtility.cpp src/utils/StringUtility.hpp)
+        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp 
+        src/utils/SpecialStrings.cpp src/utils/SpecialStrings.hpp
+        src/utils/SpecialEnums.hpp)
 
 
 # If the cmake file isn't included then use the sample program
