@@ -16,6 +16,8 @@ namespace Observer
     {
         std::vector<cv::Point> points;
         ERestrictionType type;
+
+        bool operator==(const RestrictedArea&) const = default;
     };
 
     enum ECameraType
@@ -78,6 +80,8 @@ namespace Observer
 
         // Method to dected the objects
         EObjectDetectionMethod objectDetectionMethod;
+
+        bool operator==(const CameraConfiguration&) const = default;
     };
 
 } // namespace Observer

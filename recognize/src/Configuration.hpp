@@ -13,6 +13,8 @@ namespace Observer
         double scaleFactor;
         bool showIgnoredAreas;
         bool showProcessedFrames;
+        
+        bool operator==(const OutputPreviewConfiguration&) const = default;
     };
 
     struct Configuration
@@ -29,6 +31,8 @@ namespace Observer
         OutputPreviewConfiguration outputConfiguration;
 
         std::vector<CameraConfiguration> camerasConfiguration;
+
+        bool operator==(const Configuration&) const = default;
     };
 
 } // namespace Observer
