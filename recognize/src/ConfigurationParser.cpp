@@ -2,7 +2,8 @@
 #include <opencv2/opencv.hpp>
 
 namespace Observer::ConfigurationParser {
-    Configuration ParseYAML(YAML::Node& node) {
+    Configuration ParseYAML(const std::string& filePath) {
+        YAML::Node node = YAML::LoadFile(filePath);
         Configuration cfg;
         
         try {
@@ -54,21 +55,32 @@ namespace Observer::ConfigurationParser {
         return cfg;
     }
 
-    void EmmitYAML(std::ofstream& fs, const Configuration& cfg) {
+    void EmmitYAML(const std::string& filePath, const Configuration& cfg) {
+        std::ofstream fs(filePath);
+
         YAML::Node out;
         out["configuration"] = cfg;
         fs << out;
+        
+        fs.close();
     }
-	
-	std::string ConfigurationToJson(const Configuration& cfg) {
+
+    std::string GetConfigurationAsJSON(const Configuration &cfg) {
 		YAML::Node node;
 		node["configuration"] = cfg;
 		YAML::Emitter emitter;
         emitter << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << node;
-        return std::string(emitter.c_str() + 1);  // Strip leading [ character
+        return std::string(emitter.c_str() + 1);  // Strip leading [ character      
+    }
+
+    void EmmitJSON(const std::string &filePath, const Configuration &cfg) {
+        std::ofstream jsonout(filePath);
+		auto jsonstr = GetConfigurationAsJSON(cfg);
+		jsonout << jsonstr;
+		jsonout.close();
 	}
 	
-    Configuration JsonToConfiguration(YAML::Node& node) {
-		return ParseYAML(node);
+    Configuration ParseJSON(const std::string& filePath) {
+		return ParseYAML(filePath);
 	}
 }

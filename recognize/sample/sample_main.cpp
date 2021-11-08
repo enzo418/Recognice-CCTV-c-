@@ -1,6 +1,8 @@
+#include <chrono>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <filesystem>
+#include <thread>
 #include "../src/ConfigurationParser.hpp"
 #include "../src/ObserverCentral.hpp"
 
@@ -31,20 +33,17 @@ int main(int argc, char** argv) {
 //    std::cout << "scaleFactor: " << cfg.outputConfiguration.scaleFactor << std::endl;
 //    std::cout << "api: " << cfg.telegramConfiguration.apiKey << std::endl;
 
-        YAML::Node config = YAML::LoadFile(pathConfig);
-        auto cfg = Observer::ConfigurationParser::ParseYAML(config);
+    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
 
-        // Convert to json (There is nothing wrong with it converting the
-        // numbers to string since the client can parse them again into 
-        // a number)
-		std::ofstream jsonout("output.json");
-		auto jsonstr = Observer::ConfigurationParser::ConfigurationToJson(cfg);
-		jsonout << jsonstr;
-		jsonout.close();
+    // Convert to json (There is nothing wrong with it converting the
+    // numbers to string since the client can parse them again into 
+    // a number)
+    Observer::ConfigurationParser::EmmitJSON("output.json", cfg);
+    
+    Observer::ConfigurationParser::EmmitYAML(outputConfig, cfg);
 
-    std::ofstream fout(outputConfig);
-    Observer::ConfigurationParser::EmmitYAML(fout, cfg);
+    Observer::ObserverCentral observer(cfg);
+    observer.Start();
 
-//    Observer::ObserverCentral observer(cfg);
-//    observer.Start();
+    std::this_thread::sleep_for(std::chrono::hours(30));
 }

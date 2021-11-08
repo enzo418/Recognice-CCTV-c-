@@ -2,6 +2,7 @@
 
 #include "Configuration.hpp"
 #include "LocalWebNotifications.hpp"
+#include "NotificationsServiceConfiguration.hpp"
 #include "utils/SpecialStrings.hpp"
 #include "utils/SpecialEnums.hpp"
 
@@ -354,15 +355,15 @@ namespace YAML {
             Node node;
             std::vector<std::string> out;
             
-            if (is_bit_flag(rhs, RType::TEXT)) {
+            if (has_flag(rhs, RType::TEXT)) {
                 out.emplace_back("Text");
             }
             
-            if (is_bit_flag(rhs, RType::IMAGE)) {
+            if (has_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
             
-            if (is_bit_flag(rhs, RType::VIDEO)) {
+            if (has_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
             
@@ -376,6 +377,8 @@ namespace YAML {
                 return false;
             }
             std::vector<std::string> types;
+
+            rhs = Observer::ENotificationType::NONE;
 
             try {
                 types = node.as<std::vector<std::string>>();
@@ -458,11 +461,11 @@ namespace YAML {
             Node node;
             std::vector<std::string> out;
             
-            if (is_bit_flag(rhs, RType::IMAGE)) {
+            if (has_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
             
-            if (is_bit_flag(rhs, RType::VIDEO)) {
+            if (has_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
             
@@ -475,6 +478,9 @@ namespace YAML {
             if (!node.IsSequence()) {
                 return false;
             }
+
+            rhs = Observer::ETrazable::NONE;
+
             std::vector<std::string> types;
 
             try {            
@@ -488,11 +494,11 @@ namespace YAML {
             }
 
             if (ExistsInVector(types, "image")) {
-                rhs |= RType::IMAGE;
+                set_flag(rhs, RType::IMAGE);
             }
 
             if (ExistsInVector(types, "video")) {
-                rhs |= RType::VIDEO;
+                set_flag(rhs, RType::VIDEO);
             }
 
             return true;
@@ -549,9 +555,12 @@ namespace Observer::ConfigurationParser {
     };
 	
     // yamlcpp
-    Configuration ParseYAML(YAML::Node& node);
-    void EmmitYAML(std::ofstream& fs, const Configuration& cfg);
-    
-    std::string ConfigurationToJson(const Configuration& cfg);
-    Configuration JsonToConfiguration(YAML::Node& node);
+    Configuration ParseYAML(const std::string& filePath);
+    void EmmitYAML(const std::string& filePath, const Configuration& cfg);
+
+    Configuration ParseJSON(const std::string &filePath);
+    void EmmitJSON(const std::string &filePath,
+                          const Configuration &cfg);
+
+    std::string GetConfigurationAsJSON(const Configuration& cfg);
 }
