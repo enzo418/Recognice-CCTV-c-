@@ -16,8 +16,8 @@ namespace Observer
         VIDEO = 4
     };
 
-    enum class ETrazable
-    {
+    enum class ETrazable {
+        NONE = 0,
         IMAGE = 1,
         VIDEO = 2
     };
@@ -35,18 +35,24 @@ namespace Observer
         bool onNotifSendExtraImageNotfWithAllTheCameras;
 
         ETrazable drawTraceOfChangeOn;
+
+        bool operator==(const NotificationsServiceConfiguration&) const = default;
     };
 
     // Subclasses
 
-    struct TelegramNotificationsConfiguration : NotificationsServiceConfiguration
+    struct TelegramNotificationsConfiguration : public NotificationsServiceConfiguration
     {
         std::string apiKey;
         std::string chatID;
+
+        bool operator==(const TelegramNotificationsConfiguration&) const = default;
     };
 
-    struct LocalWebNotificationsConfiguration : NotificationsServiceConfiguration {
+    struct LocalWebNotificationsConfiguration : public NotificationsServiceConfiguration {
         std::string webServerUrl;
+
+        bool operator==(const LocalWebNotificationsConfiguration&) const = default;
     };
 
     //////////////////////////////////////////////
