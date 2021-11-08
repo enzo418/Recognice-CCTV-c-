@@ -4,8 +4,18 @@
 
 namespace Observer {
     template <typename TF, typename TB>
-    inline bool is_bit_flag(const TF flag, const TB bit) noexcept {
+    inline bool has_flag(const TF flag, const TB bit) noexcept {
         return (flag & bit) == bit;
+    }
+
+    template <typename TL, typename TF>
+    inline void set_flag(TL& lhs, const TF flag) noexcept {
+        lhs |= flag;
+    }
+
+    template <typename TL, typename TF>
+    inline void clear_flag(TL& lhs, const TF flag) noexcept {
+        lhs &= ~flag;
     }
     
     template <typename TF>

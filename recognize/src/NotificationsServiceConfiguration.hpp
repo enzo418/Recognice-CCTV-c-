@@ -9,8 +9,8 @@
 
 namespace Observer
 {
-    enum class ENotificationType
-    {
+    enum class ENotificationType {
+        NONE = 0,
         TEXT = 1,
         IMAGE = 2,
         VIDEO = 4

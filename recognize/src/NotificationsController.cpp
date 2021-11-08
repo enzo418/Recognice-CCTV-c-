@@ -119,13 +119,13 @@ namespace Observer
     }
 
     void NotificationsController::AddServiceToDrawable(MessagingService* service, NotificationsServiceConfiguration* cfg) {
-        if (is_bit_flag(cfg->drawTraceOfChangeOn, ETrazable::IMAGE)) {
+        if (has_flag(cfg->drawTraceOfChangeOn, ETrazable::IMAGE)) {
             drawableServices[flag_to_int(ETrazable::IMAGE)].push_back(service);
         } else {
             notDrawableServices[flag_to_int(ETrazable::IMAGE)].push_back(service);
         }
 
-        if (is_bit_flag(cfg->drawTraceOfChangeOn, ETrazable::VIDEO)) {
+        if (has_flag(cfg->drawTraceOfChangeOn, ETrazable::VIDEO)) {
             drawableServices[flag_to_int(ETrazable::VIDEO)].push_back(service);
         } else {
             notDrawableServices[flag_to_int(ETrazable::VIDEO)].push_back(service);
