@@ -145,3 +145,5 @@ TEST_F(ConfigurationTest, ShouldEmmitAndParseFromJson) {
     EXPECT_TRUE(readedCfg.camerasConfiguration == config.camerasConfiguration);
     ASSERT_TRUE(readedCfg == config);
 }
+
+// TODO: Add throw tests
