@@ -21,70 +21,25 @@ add_subdirectory(src/external/curly.hpp)
 
 #set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES
-        sample/sample_main.cpp
-        src/Timer.hpp
-        src/BaseCameraEvent.hpp
-        src/BaseChainOfResponsibility.hpp
-        src/BaseEventValidator.hpp
-        src/BaseObserverPattern.hpp
-        src/external/bitmask_operators.hpp
-        src/CameraConfiguration.hpp
-        src/SimpleBlockingQueue.hpp
-
-        src/CircularFrameBuffer.cpp
-        src/CircularFrameBuffer.hpp
-        src/RawCameraEvent.cpp src/RawCameraEvent.hpp
-
-        src/CommonEventValidator.hpp
-        src/Configuration.hpp
-        src/Event.cpp  src/Event.hpp
-        src/EventValidator.cpp src/EventValidator.hpp
-        src/FrameDisplay.cpp src/FrameDisplay.hpp
-        src/FrameProcessor.cpp src/FrameProcessor.hpp
-
-        src/ImageNotification.cpp src/ImageNotification.hpp
-        src/InterfaceFunctionality.hpp
-        src/MessagingService.hpp
-        src/Notification.cpp src/Notification.hpp
-        src/NotificationsServiceConfiguration.hpp
-        src/OpencvVideoSource.cpp src/OpencvVideoSource.hpp
-        src/OpencvVideoWriter.cpp src/OpencvVideoWriter.hpp
-        src/RestClientLocalWebNotifications.cpp src/RestClientLocalWebNotifications.hpp
-        src/Semaphore.hpp
-        src/utils/SpecialFunctions.hpp src/utils/SpecialFunctions.cpp
-        src/TelegramNotifications.cpp src/TelegramNotifications.hpp
-        src/TextNotification.cpp src/TextNotification.hpp
-        src/ThresholdManager.cpp src/ThresholdManager.hpp
-        src/ValidatorBySufficientSamples.cpp src/ValidatorBySufficientSamples.hpp
-        src/VideoBuffer.cpp src/VideoBuffer.hpp
-        src/VideoNotification.cpp src/VideoNotification.hpp
-        src/VideoSource.hpp
-        src/VideoWriter.hpp
-
-        src/LocalWebNotifications.cpp src/LocalWebNotifications.hpp
-        src/ObserverCentral.cpp src/ObserverCentral.hpp
-
-        src/NotificationsController.cpp src/NotificationsController.hpp
-
-        src/CameraObserver.cpp
-        src/CameraObserver.hpp src/ConfigurationParser.cpp src/ConfigurationParser.hpp 
-        src/utils/SpecialStrings.cpp src/utils/SpecialStrings.hpp
-        src/utils/SpecialEnums.hpp)
-
+include(src/CMakeLists.txt)
 
 # If the cmake file isn't included then use the sample program
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
-        set(SOURCES ${SOURCES} sample/sample_main.cpp)
+        set(SOURCES ${COMMON_SOURCES} sample/sample_main.cpp)
 endif()
 
 # Print sources
-message(${SOURCES})
+message(${COMMON_SOURCES})
 
 # Set cmake cxx flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
+set (CMAKE_CXX_STANDARD 20)
 
 add_executable(recognize ${SOURCES})
+
+# clangd:
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Include curl
 include_directories(${CURL_INCLUDE_DIR})
@@ -92,5 +47,29 @@ include_directories(${CURL_INCLUDE_DIR})
 # Include yaml
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
+set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp)
+
 # set -l of opencv and curl
-target_link_libraries(recognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp)
+target_link_libraries(recognize ${LIBS})
+
+# =====
+# tests
+# =====
+include(tests/Tests.cmake)
+
+enable_testing()
+
+add_executable(
+    tests
+    "${TESTS_SOURCES}"
+    "${COMMON_SOURCES}"
+)
+
+target_link_libraries(
+    tests
+    gtest_main
+    ${LIBS}
+)
+
+include(GoogleTest)
+gtest_discover_tests(tests)
