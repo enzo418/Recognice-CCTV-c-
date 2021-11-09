@@ -13,7 +13,7 @@
 // CameraEventSubscriber
 #include "NotificationsController.hpp"
 
-#include "InterfaceFunctionality.hpp"
+#include "IFunctionality.hpp"
 
 // FrameEventSubscriber
 #include "FrameDisplay.hpp"

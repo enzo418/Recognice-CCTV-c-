@@ -5,7 +5,7 @@
 #include "SimpleBlockingQueue.hpp"
 #include "BaseEventValidator.hpp"
 #include "BaseCameraEvent.hpp"
-#include "InterfaceFunctionality.hpp"
+#include "IFunctionality.hpp"
 #include "Event.hpp"
 
 namespace Observer {

@@ -13,6 +13,7 @@
 #include "SimpleBlockingQueue.hpp"
 #include "Event.hpp"
 #include "utils/SpecialEnums.hpp"
+#include "IFunctionality.hpp"
 
 #include <unordered_map>
 #include <algorithm>
@@ -24,7 +25,7 @@ namespace Observer
      * To push a notification use AddNotification, do not use 
      * Send unless you do not mind thread locking.
      */
-    class NotificationsController : public ISubscriber<Event, RawCameraEvent>
+    class NotificationsController : public ISubscriber<Event, RawCameraEvent>, public IFunctionality
     {
     public:
         explicit NotificationsController(Configuration* cfg);
@@ -51,6 +52,19 @@ namespace Observer
          */
         void AddNotification(VideoNotification videoNotf);
 
+        void update(Event event, RawCameraEvent rawCameraEvent) override;
+
+        void Start() override;
+
+        void Stop() override;
+
+    protected:
+
+        /**
+         * @brief Main loop that consumes the notifications queue
+         */
+        void ConsumeNotifications();
+
         /**
          * @brief sends a text notifications to all services.
          * @param notification 
@@ -69,16 +83,9 @@ namespace Observer
          */
         void Send(VideoNotification notification);
 
-        void update(Event event, RawCameraEvent rawCameraEvent) override;
-
-    protected:
-
-        /**
-         * @brief Main loop that consumes the notifications queue
-         */
-        void ConsumeNotifications();
-
     private:
+        bool running;
+      
         void AddServiceToDrawable(MessagingService* service, NotificationsServiceConfiguration* cfg);
 
         std::vector<MessagingService*> services;

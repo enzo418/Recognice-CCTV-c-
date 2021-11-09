@@ -6,7 +6,7 @@
 #include "NotificationsController.hpp"
 #include "FrameDisplay.hpp"
 #include "EventValidator.hpp"
-#include "InterfaceFunctionality.hpp"
+#include "IFunctionality.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <vector>

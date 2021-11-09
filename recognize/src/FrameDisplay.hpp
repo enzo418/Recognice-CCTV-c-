@@ -2,7 +2,7 @@
 
 #include "BaseObserverPattern.hpp"
 #include "Configuration.hpp"
-#include "InterfaceFunctionality.hpp"
+#include "IFunctionality.hpp"
 #include "SimpleBlockingQueue.hpp"
 
 #include <thread>
