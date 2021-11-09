@@ -2,118 +2,113 @@
 
 #include <utility>
 
-namespace Observer
-{
-        ObserverCentral::ObserverCentral(Configuration pConfig)
-        :   frameDisplay(static_cast<int>(this->config.camerasConfiguration.size())),
-            config(std::move(pConfig)),
-            notificationController(&this->config)
-        { }
+namespace Observer {
+    ObserverCentral::ObserverCentral(Configuration pConfig)
+        : frameDisplay(
+              static_cast<int>(this->config.camerasConfiguration.size())),
+          config(std::move(pConfig)),
+          notificationController(&this->config) {}
 
-        bool ObserverCentral::Start() {
-            this->StartAllCameras();
+    bool ObserverCentral::Start() {
+        this->StartAllCameras();
 
-            if (this->config.outputConfiguration.showOutput) {
-                this->StartPreview();
-            }
-
-            // Start event validator
-            // TODO: If user wants notifications:
-            this->functionalityThreads.emplace_back(
-                    // IFunctionality
-                    &this->eventValidator,
-
-                    // std::thread
-                    std::thread(&EventValidator::Start, &this->eventValidator)
-            );
-
-            // subscribe notification controller to validated events
-            this->eventValidator.SubscribeToEventValidationDone(&this->notificationController);
-
-            return true;
+        if (this->config.outputConfiguration.showOutput) {
+            this->StartPreview();
         }
 
-        void ObserverCentral::Stop() {
-            this->StopAllCameras();
+        // Start event validator
+        // TODO: If user wants notifications:
+        this->functionalityThreads.emplace_back(
+            // IFunctionality
+            &this->eventValidator,
 
-            for(auto& funcThread : this->functionalityThreads) {
-                std::get<0>(funcThread)->Stop();
-                auto& thread = std::get<1>(funcThread);
-                if (thread.joinable()) {
-                    thread.join();
-                }
-            }
+            // std::thread
+            std::thread(&EventValidator::Start, &this->eventValidator));
 
-            this->functionalityThreads.clear();
-        }
+        // subscribe notification controller to validated events
+        this->eventValidator.SubscribeToEventValidationDone(
+            &this->notificationController);
 
-        void ObserverCentral::StopAllCameras() {
-            for (auto &&camThread : this->camerasThreads)
-            {
-                this->internalStopCamera(camThread);
-            }
-            
-            // NOTE: Check for possible memory leak here
-            this->camerasThreads.clear();
-        }
+        return true;
+    }
 
-        void ObserverCentral::StopCamera(std::string id) {
-            // TODO:
-        }
+    void ObserverCentral::Stop() {
+        this->StopAllCameras();
 
-        void ObserverCentral::StartCamera(std::string id) {
-            // TODO:
-            // get camera config based on id
-            // call this->internalStartCamera(camcfg);
-        }
-
-        void ObserverCentral::StartAllCameras() {
-            for (auto &&configuration : this->config.camerasConfiguration)
-            {
-                this->internalStartCamera(configuration);
-            }
-
-            for (auto &&camThread : this->camerasThreads)
-            {
-                camThread.camera->SubscribeToCameraEvents(&eventValidator);
-                camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+        for (auto& funcThread : this->functionalityThreads) {
+            std::get<0>(funcThread)->Stop();
+            auto& thread = std::get<1>(funcThread);
+            if (thread.joinable()) {
+                thread.join();
             }
         }
 
-        void ObserverCentral::StartPreview() {
-            this->functionalityThreads.emplace_back(
-                    &this->frameDisplay,
-                    std::thread(&FrameDisplay::Start, &this->frameDisplay)
-            );
+        this->functionalityThreads.clear();
+    }
+
+    void ObserverCentral::StopAllCameras() {
+        for (auto&& camThread : this->camerasThreads) {
+            this->internalStopCamera(camThread);
         }
 
-        void ObserverCentral::StopPreview() {
-            this->frameDisplay.Stop();
+        // NOTE: Check for possible memory leak here
+        this->camerasThreads.clear();
+    }
+
+    void ObserverCentral::StopCamera(std::string id) {
+        // TODO:
+    }
+
+    void ObserverCentral::StartCamera(std::string id) {
+        // TODO:
+        // get camera config based on id
+        // call this->internalStartCamera(camcfg);
+    }
+
+    void ObserverCentral::StartAllCameras() {
+        for (auto&& configuration : this->config.camerasConfiguration) {
+            this->internalStartCamera(configuration);
         }
 
-        void ObserverCentral::SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber) {
-            for (auto &&camThread : this->camerasThreads)
-            {
-                camThread.camera->SubscribeToThresholdUpdate(subscriber);
-            }
+        for (auto&& camThread : this->camerasThreads) {
+            camThread.camera->SubscribeToCameraEvents(&eventValidator);
+            camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
         }
+    }
 
-        void ObserverCentral::internalStopCamera(ObserverCentral::CameraThread& camThread) {
-            camThread.camera->Stop();
+    void ObserverCentral::StartPreview() {
+        this->functionalityThreads.emplace_back(
+            &this->frameDisplay,
+            std::thread(&FrameDisplay::Start, &this->frameDisplay));
+    }
 
-            if (camThread.thread.joinable()){
-                camThread.thread.join();
-            }
+    void ObserverCentral::StopPreview() { this->frameDisplay.Stop(); }
+
+    void ObserverCentral::SubscribeToThresholdUpdate(
+        ThresholdEventSubscriber* subscriber) {
+        for (auto&& camThread : this->camerasThreads) {
+            camThread.camera->SubscribeToThresholdUpdate(subscriber);
         }
+    }
 
-        void ObserverCentral::internalStartCamera(CameraConfiguration cfg) {
-            this->camerasThreads.push_back(this->GetNewCameraThread(cfg));
-        }
+    void ObserverCentral::internalStopCamera(
+        ObserverCentral::CameraThread& camThread) {
+        camThread.camera->Stop();
 
-        ObserverCentral::CameraThread ObserverCentral::GetNewCameraThread(CameraConfiguration cfg) {
-            ObserverCentral::CameraThread ct;
-            ct.camera = std::make_shared<CameraObserver>(&cfg);
-            ct.thread = std::thread(&CameraObserver::Start, ct.camera);
-            return ct;
+        if (camThread.thread.joinable()) {
+            camThread.thread.join();
         }
-} // namespace Observer
+    }
+
+    void ObserverCentral::internalStartCamera(CameraConfiguration cfg) {
+        this->camerasThreads.push_back(this->GetNewCameraThread(cfg));
+    }
+
+    ObserverCentral::CameraThread ObserverCentral::GetNewCameraThread(
+        CameraConfiguration cfg) {
+        ObserverCentral::CameraThread ct;
+        ct.camera = std::make_shared<CameraObserver>(&cfg);
+        ct.thread = std::thread(&CameraObserver::Start, ct.camera);
+        return ct;
+    }
+}  // namespace Observer

@@ -1,21 +1,22 @@
 #pragma once
 
-#include "Event.hpp"
-
 #include <iostream>
 #include <vector>
 
+#include "Event.hpp"
+
 namespace Observer {
     struct ValidationResult {
-    public:
-        ValidationResult() : valid(false) {} // for use as default inside template
+       public:
+        ValidationResult()
+            : valid(false) {}  // for use as default inside template
 
         explicit ValidationResult(bool pResult) : valid(pResult) {}
 
-        ValidationResult(bool pResult, std::vector <std::string> &pMessages) :
-                valid(pResult), messages(pMessages) {}
+        ValidationResult(bool pResult, std::vector<std::string>& pMessages)
+            : valid(pResult), messages(pMessages) {}
 
         bool valid = false;
-        std::vector <std::string> messages{};
+        std::vector<std::string> messages {};
     };
-}
+}  // namespace Observer

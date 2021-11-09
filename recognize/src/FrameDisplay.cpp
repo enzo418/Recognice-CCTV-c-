@@ -1,4 +1,5 @@
 #include "FrameDisplay.hpp"
+
 #include "SimpleBlockingQueue.hpp"
 
 namespace Observer {
@@ -11,9 +12,9 @@ namespace Observer {
         this->running = true;
 
         std::vector<cv::Mat> framesToShow(maxFrames);
-        while(this->running) {
+        while (this->running) {
             this->mtxFrames.lock();
-            for(int i = 0; i < this->maxFrames; i++) {
+            for (int i = 0; i < this->maxFrames; i++) {
                 framesToShow[i] = this->frames[i].front();
                 this->frames[i].pop();
             }
@@ -25,13 +26,11 @@ namespace Observer {
         }
     }
 
-    void FrameDisplay::Stop() {
-        this->running = false;
-    }
+    void FrameDisplay::Stop() { this->running = false; }
 
     void FrameDisplay::update(int cameraPos, cv::Mat frame) {
         this->mtxFrames.lock();
         this->frames[cameraPos].push(frame);
         this->mtxFrames.unlock();
     }
-}
+}  // namespace Observer

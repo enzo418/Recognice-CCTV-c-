@@ -10,37 +10,38 @@
  *      There will be multiple handlers, but the default will return true,
  *      meaning that if none could determine that it was invalid, the
  *      result is valid.
-*/
+ */
 
- /**
-  * The Handler interface declares a method for building the chain of handlers.
-  * It also declares a method for executing a request.
-  * @tparam T
-  * @tparam R
-  */
+/**
+ * The Handler interface declares a method for building the chain of handlers.
+ * It also declares a method for executing a request.
+ * @tparam T
+ * @tparam R
+ */
 template <typename T, typename R>
 class Handler {
-public:
-    virtual Handler *SetNext(Handler *handler) = 0;
+   public:
+    virtual Handler* SetNext(Handler* handler) = 0;
     virtual T Handle(R request, T& result) = 0;
 
     virtual ~Handler() = default;
 };
 
- /**
-  * The default chaining behavior will be implemented inside a base handler class.
-  * @tparam T
-  * @tparam R
-  */
+/**
+ * The default chaining behavior will be implemented inside a base handler
+ * class.
+ * @tparam T
+ * @tparam R
+ */
 template <typename T, typename R>
 class AbstractHandler : public Handler<T, R> {
-private:
-    Handler<T, R> *nextHandler;
+   private:
+    Handler<T, R>* nextHandler;
 
-public:
-    AbstractHandler() : nextHandler(nullptr) {    }
+   public:
+    AbstractHandler() : nextHandler(nullptr) {}
 
-    Handler<T, R> *SetNext(Handler<T, R> *handler) override {
+    Handler<T, R>* SetNext(Handler<T, R>* handler) override {
         this->nextHandler = handler;
 
         return handler;

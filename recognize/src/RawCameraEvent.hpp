@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <opencv2/opencv.hpp>
+#include <vector>
 
 namespace Observer {
     /**
@@ -9,17 +9,17 @@ namespace Observer {
      * first frame where a change was found.
      */
     struct RawCameraEvent {
-    public:
+       public:
         RawCameraEvent() = default;
 
         // && -> pFrames can only be r-value (std::move is necessary)
-        RawCameraEvent(std::vector<cv::Mat> &&pFrames, int pIndexFirst)
-                : frames(std::move(pFrames)),
-                  frameIndexOfFirstChange(pIndexFirst) {}
+        RawCameraEvent(std::vector<cv::Mat>&& pFrames, int pIndexFirst)
+            : frames(std::move(pFrames)),
+              frameIndexOfFirstChange(pIndexFirst) {}
 
-        cv::Mat &GetFrameAt(int index) &;
+        cv::Mat& GetFrameAt(int index) &;
 
-        std::vector<cv::Mat> &GetFrames() &;
+        std::vector<cv::Mat>& GetFrames() &;
 
         /**
          * Returns a move instructor of the frames,
@@ -28,8 +28,8 @@ namespace Observer {
          */
         std::vector<cv::Mat> PopFrames();
 
-    private:
+       private:
         std::vector<cv::Mat> frames;
-        int frameIndexOfFirstChange{};
+        int frameIndexOfFirstChange {};
     };
-}
+}  // namespace Observer

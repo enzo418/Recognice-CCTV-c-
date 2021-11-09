@@ -17,9 +17,9 @@ namespace Observer {
     inline void clear_flag(TL& lhs, const TF flag) noexcept {
         lhs &= ~flag;
     }
-    
+
     template <typename TF>
     inline int flag_to_int(const TF flag) noexcept {
         return static_cast<int>(flag);
     }
-}
+}  // namespace Observer

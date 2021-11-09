@@ -2,11 +2,8 @@
 
 #include <utility>
 
-namespace Observer
-{
+namespace Observer {
     LocalWebNotifications::LocalWebNotifications(std::string pRestServerUrl)
-    : restServerUrl(std::move(pRestServerUrl)) {
+        : restServerUrl(std::move(pRestServerUrl)) {}
 
-    }
-
-} // namespace Observer
+}  // namespace Observer

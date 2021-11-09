@@ -1,16 +1,16 @@
 #pragma once
 
-#include "ValidatorBySufficientSamples.hpp"
+#include "BaseCameraEvent.hpp"
+#include "BaseEventValidator.hpp"
+#include "Event.hpp"
+#include "IFunctionality.hpp"
 #include "Semaphore.hpp"
 #include "SimpleBlockingQueue.hpp"
-#include "BaseEventValidator.hpp"
-#include "BaseCameraEvent.hpp"
-#include "IFunctionality.hpp"
-#include "Event.hpp"
+#include "ValidatorBySufficientSamples.hpp"
 
 namespace Observer {
     class EventValidator : public CameraEventSubscriber, public IFunctionality {
-    public:
+       public:
         EventValidator();
 
         void Add(CameraConfiguration* cfg, RawCameraEvent ev);
@@ -19,13 +19,14 @@ namespace Observer {
 
         void Stop() override;
 
-        void SubscribeToEventValidationDone(ISubscriber<Event, RawCameraEvent>* subscriber);
+        void SubscribeToEventValidationDone(
+            ISubscriber<Event, RawCameraEvent>* subscriber);
 
         void update(CameraConfiguration* cfg, RawCameraEvent ev) override;
 
         ~EventValidator();
 
-    private:
+       private:
         bool running;
 
         Semaphore smpQueue;
@@ -33,8 +34,9 @@ namespace Observer {
         IValidatorHandler* handler;
         std::vector<IValidatorHandler*> handlers;
 
-        SimpleBlockingQueue<std::pair<CameraConfiguration*, RawCameraEvent>> validationPool;
+        SimpleBlockingQueue<std::pair<CameraConfiguration*, RawCameraEvent>>
+            validationPool;
 
         Publisher<Event, RawCameraEvent> eventPublisher;
     };
-}
+}  // namespace Observer

@@ -1,26 +1,25 @@
 #pragma once
 
 #include <chrono>
-namespace Observer
-{
+namespace Observer {
     template <class Unit>
     class Timer {
-        private:
-            std::chrono::time_point<std::chrono::high_resolution_clock> start;
+       private:
+        std::chrono::time_point<std::chrono::high_resolution_clock> start;
 
-            bool started;
-            
-        public:
-            Timer(bool startNow = false);
-            void Start();
+        bool started;
 
-            void Stop();
+       public:
+        Timer(bool startNow = false);
+        void Start();
 
-            double GetDuration();
+        void Stop();
 
-            double GetDurationAndRestart();
+        double GetDuration();
 
-            bool Started();
+        double GetDurationAndRestart();
+
+        bool Started();
     };
 
     template <class Unit>
@@ -62,4 +61,4 @@ namespace Observer
         return this->started;
     }
 
-} // namespace Observer
+}  // namespace Observer

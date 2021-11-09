@@ -3,28 +3,23 @@
 #include <utility>
 
 namespace Observer {
-    StandarFindingEvent::StandarFindingEvent(int pFrameIndex, cv::Point pCenter, cv::Rect pRect)  :
-            findingFrameIndex(pFrameIndex),
-            center(std::move(pCenter)),
-            rect(std::move(pRect)) {
-
-    }
+    StandarFindingEvent::StandarFindingEvent(int pFrameIndex, cv::Point pCenter,
+                                             cv::Rect pRect)
+        : findingFrameIndex(pFrameIndex),
+          center(std::move(pCenter)),
+          rect(std::move(pRect)) {}
 
     int StandarFindingEvent::GetFindingIndex() {
         return this->findingFrameIndex;
     }
 
-    cv::Point StandarFindingEvent::GetCenter() {
-        return this->center;
-    }
+    cv::Point StandarFindingEvent::GetCenter() { return this->center; }
 
-    cv::Rect StandarFindingEvent::GetRect() {
-        return this->rect;
-    }
+    cv::Rect StandarFindingEvent::GetRect() { return this->rect; }
 
-    ClassifierFindingEvent::ClassifierFindingEvent(int pFrameIndex, std::vector<cv::Point> pPoints) :
-            findingFrameIndex(pFrameIndex),
-            points(std::move(pPoints)) {}
+    ClassifierFindingEvent::ClassifierFindingEvent(
+        int pFrameIndex, std::vector<cv::Point> pPoints)
+        : findingFrameIndex(pFrameIndex), points(std::move(pPoints)) {}
 
     int ClassifierFindingEvent::GetFindingIndex() {
         return this->findingFrameIndex;
@@ -48,9 +43,7 @@ namespace Observer {
         this->cameraName = std::move(pCameraName);
     }
 
-    std::string Event::GetCameraName() {
-        return this->cameraName;
-    }
+    std::string Event::GetCameraName() { return this->cameraName; }
 
     int Event::GetFirstFrameWhereFindingWasFound() {
         int index = 0;
@@ -72,4 +65,4 @@ namespace Observer {
 
         return index;
     }
-};
+};  // namespace Observer

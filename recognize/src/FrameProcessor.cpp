@@ -1,7 +1,6 @@
 #include "FrameProcessor.hpp"
 
-namespace Observer
-{
+namespace Observer {
     FrameProcessor::FrameProcessor(cv::Rect roi, double noiseThreshold) {
         this->roi = roi;
         this->noiseThreshold = noiseThreshold;
@@ -14,8 +13,8 @@ namespace Observer
 
         // crop the frame
         if (!this->roi.empty()) {
-		    frame = frame(this->roi);
-	    }
+            frame = frame(this->roi);
+        }
 
         // to black and white
         cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
@@ -27,7 +26,8 @@ namespace Observer
         cv::GaussianBlur(this->diffFrame, this->diffFrame, cv::Size(3, 3), 10);
 
         // remove small changes
-        cv::threshold(this->diffFrame, this->diffFrame, this->noiseThreshold, 255, cv::THRESH_BINARY);
+        cv::threshold(this->diffFrame, this->diffFrame, this->noiseThreshold,
+                      255, cv::THRESH_BINARY);
 
         frame.copyTo(this->lastFrame);
 
@@ -37,4 +37,4 @@ namespace Observer
     double FrameProcessor::DetectChanges() {
         return cv::countNonZero(this->diffFrame);
     }
-} // namespace Observer
+}  // namespace Observer

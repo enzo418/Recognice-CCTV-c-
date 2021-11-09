@@ -3,12 +3,12 @@
 namespace Observer {
     EventValidator::EventValidator() {
         auto validatorBySufficientSamples = new ValidatorBySufficientSamples();
-//        validatorBySufficientSamples.SetNext()
+        //        validatorBySufficientSamples.SetNext()
         handlers.push_back(validatorBySufficientSamples);
     }
 
     EventValidator::~EventValidator() {
-        for(auto& h : this->handlers) {
+        for (auto& h : this->handlers) {
             delete h;
         }
 
@@ -26,7 +26,8 @@ namespace Observer {
             CameraConfiguration* cfg;
 
             // get next pool item
-            std::tie(cfg, rawCameraEvent) = std::move(this->validationPool.pop());
+            std::tie(cfg, rawCameraEvent) =
+                std::move(this->validationPool.pop());
 
             // validate the event
             ValidationResult result;
@@ -40,7 +41,8 @@ namespace Observer {
                 event.SetCameraName(cfg->name);
 
                 // notify all the subscribers with the event
-                this->eventPublisher.notifySubscribers(std::move(event), std::move(rawCameraEvent));
+                this->eventPublisher.notifySubscribers(
+                    std::move(event), std::move(rawCameraEvent));
             } else {
                 // TODO: Log the result.message
             }
@@ -53,15 +55,14 @@ namespace Observer {
         this->validationPool.push(std::make_pair(cfg, std::move(ev)));
     }
 
-    void EventValidator::update(CameraConfiguration *cam, RawCameraEvent ev) {
+    void EventValidator::update(CameraConfiguration* cam, RawCameraEvent ev) {
         this->Add(cam, std::move(ev));
     }
 
-    void EventValidator::Stop() {
-        this->running = false;
-    }
+    void EventValidator::Stop() { this->running = false; }
 
-    void EventValidator::SubscribeToEventValidationDone(ISubscriber<Event, RawCameraEvent>* subscriber) {
+    void EventValidator::SubscribeToEventValidationDone(
+        ISubscriber<Event, RawCameraEvent>* subscriber) {
         this->eventPublisher.subscribe(subscriber);
     }
-}
+}  // namespace Observer

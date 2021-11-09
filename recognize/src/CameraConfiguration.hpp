@@ -1,45 +1,33 @@
 #pragma once
 
-#include <string>
 #include <opencv2/opencv.hpp>
+#include <string>
+
 #include "external/bitmask_operators.hpp"
 
-namespace Observer
-{
-    enum ERestrictionType
-    {
-        ALLOW = 1,
-        DENY = 2
-    };
+namespace Observer {
+    enum ERestrictionType { ALLOW = 1, DENY = 2 };
 
-    struct RestrictedArea
-    {
+    struct RestrictedArea {
         std::vector<cv::Point> points;
         ERestrictionType type;
 
         bool operator==(const RestrictedArea&) const = default;
     };
 
-    enum ECameraType
-    {
-        DISABLED = 1,
-        NOTIFICATOR = 2,
-        OBJECT_DETECTOR = 4
-    };
+    enum ECameraType { DISABLED = 1, NOTIFICATOR = 2, OBJECT_DETECTOR = 4 };
 
-    enum EObjectDetectionMethod
-    {
+    enum EObjectDetectionMethod {
         NONE = 1,
         HOG_DESCRIPTOR = 2,
         YOLODNN_V4 = 4
     };
 
-    struct CameraConfiguration
-    {
+    struct CameraConfiguration {
         std::string name;
 
         std::string url;
-        
+
         // camera max fps to use. Lower fps lowers the CPU usage
         double fps;
 
@@ -48,7 +36,7 @@ namespace Observer
 
         // position of the camera in the preview. 0 = top left
         int positionOnOutput;
-        
+
         // rotation of the camera in degrees
         double rotation;
 
@@ -84,4 +72,4 @@ namespace Observer
         bool operator==(const CameraConfiguration&) const = default;
     };
 
-} // namespace Observer
+}  // namespace Observer

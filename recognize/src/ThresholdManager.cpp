@@ -1,8 +1,9 @@
 #include "ThresholdManager.hpp"
 
-namespace Observer
-{
-    ThresholdManager::ThresholdManager(double pMinimumValue, double pUpdateFrequency, double pIncreaseFactor) {
+namespace Observer {
+    ThresholdManager::ThresholdManager(double pMinimumValue,
+                                       double pUpdateFrequency,
+                                       double pIncreaseFactor) {
         this->thresholdAccumulator = 0;
         this->thresholdSamples = 0;
 
@@ -20,7 +21,8 @@ namespace Observer
         this->thresholdSamples += 1;
 
         if (this->timer.GetDuration() >= this->updateFrequency) {
-            this->threshold = this->thresholdAccumulator / this->thresholdSamples * this->increaseFactor;
+            this->threshold = this->thresholdAccumulator /
+                              this->thresholdSamples * this->increaseFactor;
 
             this->thresholdAccumulator = 0;
             this->thresholdSamples = 0;
@@ -33,8 +35,6 @@ namespace Observer
         return *this;
     }
 
-    double ThresholdManager::GetAverage() {
-        return this->threshold;
-    }
+    double ThresholdManager::GetAverage() { return this->threshold; }
 
-} // namespace Observer
+}  // namespace Observer

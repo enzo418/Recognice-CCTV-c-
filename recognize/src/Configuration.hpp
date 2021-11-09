@@ -3,22 +3,19 @@
 #include "CameraConfiguration.hpp"
 #include "NotificationsServiceConfiguration.hpp"
 
-namespace Observer
-{
+namespace Observer {
 
-    struct OutputPreviewConfiguration
-    {
+    struct OutputPreviewConfiguration {
         bool showOutput;
         cv::Size resolution;
         double scaleFactor;
         bool showIgnoredAreas;
         bool showProcessedFrames;
-        
+
         bool operator==(const OutputPreviewConfiguration&) const = default;
     };
 
-    struct Configuration
-    {
+    struct Configuration {
         // absolute path
         std::string mediaFolderPath;
 
@@ -35,4 +32,4 @@ namespace Observer
         bool operator==(const Configuration&) const = default;
     };
 
-} // namespace Observer
+}  // namespace Observer

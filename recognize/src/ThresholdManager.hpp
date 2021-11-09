@@ -1,19 +1,18 @@
 #pragma once
-#include "Timer.hpp"
 #include "BaseObserverPattern.hpp"
+#include "Timer.hpp"
 
-namespace Observer
-{
-    class ThresholdManager : public Publisher<double>
-    {
-    public:
-        ThresholdManager(double minimumValue, double updateFrequency, double increaseFactor);
+namespace Observer {
+    class ThresholdManager : public Publisher<double> {
+       public:
+        ThresholdManager(double minimumValue, double updateFrequency,
+                         double increaseFactor);
 
         ThresholdManager& Add(double threshold) &;
 
         double GetAverage();
 
-    private:
+       private:
         double threshold;
         double thresholdAccumulator;
         double thresholdSamples;
@@ -25,4 +24,4 @@ namespace Observer
 
         Timer<std::chrono::seconds> timer;
     };
-} // namespace Observer
+}  // namespace Observer

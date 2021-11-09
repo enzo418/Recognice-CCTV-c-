@@ -1,80 +1,80 @@
 #pragma once
 
-#include "Configuration.hpp"
-#include "Notification.hpp"
-#include "CameraObserver.hpp"
-#include "NotificationsController.hpp"
-#include "FrameDisplay.hpp"
-#include "EventValidator.hpp"
-#include "IFunctionality.hpp"
-
-#include <opencv2/opencv.hpp>
-#include <vector>
-#include <thread>
 #include <memory>
+#include <opencv2/opencv.hpp>
+#include <thread>
+#include <vector>
 
-namespace Observer
-{
-    class ObserverCentral
-    {
-        public:
-            explicit ObserverCentral(Configuration pConfig);
+#include "CameraObserver.hpp"
+#include "Configuration.hpp"
+#include "EventValidator.hpp"
+#include "FrameDisplay.hpp"
+#include "IFunctionality.hpp"
+#include "Notification.hpp"
+#include "NotificationsController.hpp"
 
-            bool Start();
+namespace Observer {
+    class ObserverCentral {
+       public:
+        explicit ObserverCentral(Configuration pConfig);
 
-            void StopCamera(std::string id);
-            void StopAllCameras();
+        bool Start();
 
-            void StartCamera(std::string id);
-            void StartAllCameras();
+        void StopCamera(std::string id);
+        void StopAllCameras();
 
-            void StartPreview();
-            void StopPreview();
+        void StartCamera(std::string id);
+        void StartAllCameras();
 
-            void Stop();
+        void StartPreview();
+        void StopPreview();
 
-            void SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber);
+        void Stop();
 
-        private:
-            struct CameraThread {
-                std::thread thread;
-                std::shared_ptr<CameraObserver> camera;
-            };
+        void SubscribeToThresholdUpdate(ThresholdEventSubscriber* subscriber);
 
-            Configuration config;
+       private:
+        struct CameraThread {
+            std::thread thread;
+            std::shared_ptr<CameraObserver> camera;
+        };
 
-            std::vector<CameraThread> camerasThreads;
+        Configuration config;
 
-            std::vector<std::pair<IFunctionality*, std::thread>> functionalityThreads;
+        std::vector<CameraThread> camerasThreads;
 
-            NotificationsController notificationController;
+        std::vector<std::pair<IFunctionality*, std::thread>>
+            functionalityThreads;
 
-            FrameDisplay frameDisplay;
+        NotificationsController notificationController;
 
-            CameraThread GetNewCameraThread(CameraConfiguration cfg);
+        FrameDisplay frameDisplay;
 
-            EventValidator eventValidator;
+        CameraThread GetNewCameraThread(CameraConfiguration cfg);
 
-            void internalStopCamera(CameraThread& camThread);
-            void internalStartCamera(CameraConfiguration cfg);
+        EventValidator eventValidator;
 
-            /* Proxy allows us to give our subscribers not only the threshold,
-            * but also the camera that updated the threshold.
-            */
-            class ProxyCameraEventPublisher : public CameraEventSubscriber {
-            public:
-                explicit ProxyCameraEventPublisher() { }
+        void internalStopCamera(CameraThread& camThread);
+        void internalStartCamera(CameraConfiguration cfg);
 
-                void subscribe(ThresholdEventSubscriber* subscriber) {
-                    this->cameraEventPublisher.subscribe(subscriber);
-                }
+        /* Proxy allows us to give our subscribers not only the threshold,
+         * but also the camera that updated the threshold.
+         */
+        class ProxyCameraEventPublisher : public CameraEventSubscriber {
+           public:
+            explicit ProxyCameraEventPublisher() {}
 
-                void update(CameraConfiguration* cam, RawCameraEvent ev) override {
-                    // TODO: Validate
-                }
-            private:
-                Publisher<CameraConfiguration*, double> cameraEventPublisher;
-            };
+            void subscribe(ThresholdEventSubscriber* subscriber) {
+                this->cameraEventPublisher.subscribe(subscriber);
+            }
+
+            void update(CameraConfiguration* cam, RawCameraEvent ev) override {
+                // TODO: Validate
+            }
+
+           private:
+            Publisher<CameraConfiguration*, double> cameraEventPublisher;
+        };
     };
 
-} // namespace Observer
+}  // namespace Observer

@@ -1,31 +1,29 @@
 #pragma once
 
+#include <optional>
+
 #include "CircularFrameBuffer.hpp"
 #include "RawCameraEvent.hpp"
 
-#include <optional>
+namespace Observer {
+    class VideoBuffer {
+       public:
+        VideoBuffer(int sizeBufferBefore, int sizeBufferAfter);
 
-namespace Observer
-{
-    class VideoBuffer
-    {
-        public:
-            VideoBuffer(int sizeBufferBefore, int sizeBufferAfter);
+        void ChangeWasDetected();
 
-            void ChangeWasDetected();
+        bool AddFrame(cv::Mat& frame);
 
-            bool AddFrame(cv::Mat &frame);
+        bool CheckIfTheChangeIsValid();
 
-            bool CheckIfTheChangeIsValid();
+        RawCameraEvent GetEventFound();
 
-            RawCameraEvent GetEventFound();
+       private:
+        bool changeDetected;
+        int firstFrameWhereChangeWasFound;
 
-        private:
-            bool changeDetected;
-            int firstFrameWhereChangeWasFound;
-
-            // delayed initialization with optional
-            std::optional<CircularFrameBuffer> framesBefore;
-            std::optional<CircularFrameBuffer> framesAfter;
+        // delayed initialization with optional
+        std::optional<CircularFrameBuffer> framesBefore;
+        std::optional<CircularFrameBuffer> framesAfter;
     };
-} // namespace Observer
+}  // namespace Observer

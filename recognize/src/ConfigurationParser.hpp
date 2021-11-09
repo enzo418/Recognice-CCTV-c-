@@ -1,119 +1,153 @@
 #pragma once
 
+#include <yaml-cpp/yaml.h>
+
+#include <algorithm>
+#include <exception>
+#include <fstream>
+
 #include "Configuration.hpp"
 #include "LocalWebNotifications.hpp"
 #include "NotificationsServiceConfiguration.hpp"
-#include "utils/SpecialStrings.hpp"
 #include "utils/SpecialEnums.hpp"
+#include "utils/SpecialStrings.hpp"
 
-#include <yaml-cpp/yaml.h>
-#include <fstream>
-#include <algorithm>
-#include <exception>
-
-#define ExistsInVector(svector, find_this) std::find(std::begin(svector), std::end(svector), find_this) != std::end(svector)
+#define ExistsInVector(svector, find_this)                          \
+    std::find(std::begin(svector), std::end(svector), find_this) != \
+        std::end(svector)
 
 namespace YAML {
-    template<>
+    template <>
     struct convert<Observer::Configuration> {
         static Node encode(const Observer::Configuration& rhs) {
             Node node;
 
             node["mediaFolderPath"] = rhs.mediaFolderPath;
             node["notificationTextTemplate"] = rhs.notificationTextTemplate;
-            node["telegramNotificationsConfiguration"] = rhs.telegramConfiguration;
-            node["localWebNotificationsConfiguration"] = rhs.localWebConfiguration;
+            node["telegramNotificationsConfiguration"] =
+                rhs.telegramConfiguration;
+            node["localWebNotificationsConfiguration"] =
+                rhs.localWebConfiguration;
             node["outputPreviewConfiguration"] = rhs.outputConfiguration;
             node["cameraConfiguration"] = rhs.camerasConfiguration;
             return node;
         }
 
         static bool decode(const Node& node, Observer::Configuration& rhs) {
-//            auto cfgNode = node["configuration"];
+            //            auto cfgNode = node["configuration"];
             rhs.mediaFolderPath = node["mediaFolderPath"].as<std::string>();
-            rhs.notificationTextTemplate = node["notificationTextTemplate"].as<std::string>();
-            rhs.localWebConfiguration = node["localWebNotificationsConfiguration"].as<Observer::LocalWebNotificationsConfiguration>();
-            rhs.telegramConfiguration = node["telegramNotificationsConfiguration"].as<Observer::TelegramNotificationsConfiguration>();
-            rhs.outputConfiguration = node["outputPreviewConfiguration"].as<Observer::OutputPreviewConfiguration>();
-            rhs.camerasConfiguration = node["cameraConfiguration"].as<std::vector<Observer::CameraConfiguration>>();
+            rhs.notificationTextTemplate =
+                node["notificationTextTemplate"].as<std::string>();
+            rhs.localWebConfiguration =
+                node["localWebNotificationsConfiguration"]
+                    .as<Observer::LocalWebNotificationsConfiguration>();
+            rhs.telegramConfiguration =
+                node["telegramNotificationsConfiguration"]
+                    .as<Observer::TelegramNotificationsConfiguration>();
+            rhs.outputConfiguration =
+                node["outputPreviewConfiguration"]
+                    .as<Observer::OutputPreviewConfiguration>();
+            rhs.camerasConfiguration =
+                node["cameraConfiguration"]
+                    .as<std::vector<Observer::CameraConfiguration>>();
             return true;
         }
     };
 
-    void EncodeNotificationsServiceConfiguration(Node& node,
-                                                 const Observer::NotificationsServiceConfiguration& cfg);
+    void EncodeNotificationsServiceConfiguration(
+        Node& node, const Observer::NotificationsServiceConfiguration& cfg);
 
-    void DecodeNotificationsServiceConfiguration(const Node& node,
-                                                 Observer::NotificationsServiceConfiguration& cfg);
-    template<>
+    void DecodeNotificationsServiceConfiguration(
+        const Node& node, Observer::NotificationsServiceConfiguration& cfg);
+    template <>
     struct convert<Observer::NotificationsServiceConfiguration> {
-        static Node encode(const Observer::NotificationsServiceConfiguration& rhs) {
+        static Node encode(
+            const Observer::NotificationsServiceConfiguration& rhs) {
             Node node;
-			node["enabled"] = rhs.enabled;
-			node["secondsBetweenTextNotification"] = rhs.secondsBetweenTextNotification;
-			node["secondsBetweenImageNotification"] = rhs.secondsBetweenImageNotification;
-			node["secondsBetweenVideoNotification"] = rhs.secondsBetweenVideoNotification;
-			node["noticationsToSend"] = rhs.noticationsToSend;
-			node["onNotifSendExtraImageNotfWithAllTheCameras"] = rhs.onNotifSendExtraImageNotfWithAllTheCameras;
-			node["drawTraceOfChangeOn"] = rhs.drawTraceOfChangeOn;
+            node["enabled"] = rhs.enabled;
+            node["secondsBetweenTextNotification"] =
+                rhs.secondsBetweenTextNotification;
+            node["secondsBetweenImageNotification"] =
+                rhs.secondsBetweenImageNotification;
+            node["secondsBetweenVideoNotification"] =
+                rhs.secondsBetweenVideoNotification;
+            node["noticationsToSend"] = rhs.noticationsToSend;
+            node["onNotifSendExtraImageNotfWithAllTheCameras"] =
+                rhs.onNotifSendExtraImageNotfWithAllTheCameras;
+            node["drawTraceOfChangeOn"] = rhs.drawTraceOfChangeOn;
             return node;
         }
 
-        static bool decode(const Node& node, Observer::NotificationsServiceConfiguration& rhs) {
-			rhs.enabled = node["enabled"].as<bool>();
-			rhs.secondsBetweenTextNotification = node["secondsBetweenTextNotification"].as<double>();
-			rhs.secondsBetweenImageNotification = node["secondsBetweenImageNotification"].as<double>();
-			rhs.secondsBetweenVideoNotification = node["secondsBetweenVideoNotification"].as<double>();
-			rhs.noticationsToSend = node["noticationsToSend"].as<Observer::ENotificationType>();
-			rhs.onNotifSendExtraImageNotfWithAllTheCameras = node["onNotifSendExtraImageNotfWithAllTheCameras"].as<bool>();
-			rhs.drawTraceOfChangeOn = node["drawTraceOfChangeOn"].as<Observer::ETrazable>();
+        static bool decode(const Node& node,
+                           Observer::NotificationsServiceConfiguration& rhs) {
+            rhs.enabled = node["enabled"].as<bool>();
+            rhs.secondsBetweenTextNotification =
+                node["secondsBetweenTextNotification"].as<double>();
+            rhs.secondsBetweenImageNotification =
+                node["secondsBetweenImageNotification"].as<double>();
+            rhs.secondsBetweenVideoNotification =
+                node["secondsBetweenVideoNotification"].as<double>();
+            rhs.noticationsToSend =
+                node["noticationsToSend"].as<Observer::ENotificationType>();
+            rhs.onNotifSendExtraImageNotfWithAllTheCameras =
+                node["onNotifSendExtraImageNotfWithAllTheCameras"].as<bool>();
+            rhs.drawTraceOfChangeOn =
+                node["drawTraceOfChangeOn"].as<Observer::ETrazable>();
             return true;
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::LocalWebNotificationsConfiguration> {
-        static Node encode(const Observer::LocalWebNotificationsConfiguration& rhs) {
+        static Node encode(
+            const Observer::LocalWebNotificationsConfiguration& rhs) {
             // call encode of "superclass"
-			Node node = convert<Observer::NotificationsServiceConfiguration>::encode(rhs);
+            Node node =
+                convert<Observer::NotificationsServiceConfiguration>::encode(
+                    rhs);
             node["webServerUrl"] = rhs.webServerUrl;
-			
+
             return node;
         }
 
-        static bool decode(const Node& node, Observer::LocalWebNotificationsConfiguration& rhs) {
-			convert<Observer::NotificationsServiceConfiguration>::decode(
-				node, 
-				dynamic_cast<Observer::NotificationsServiceConfiguration&>(rhs)
-			);
+        static bool decode(const Node& node,
+                           Observer::LocalWebNotificationsConfiguration& rhs) {
+            convert<Observer::NotificationsServiceConfiguration>::decode(
+                node,
+                dynamic_cast<Observer::NotificationsServiceConfiguration&>(
+                    rhs));
             rhs.webServerUrl = node["webServerUrl"].as<std::string>();
             return true;
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::TelegramNotificationsConfiguration> {
-        static Node encode(const Observer::TelegramNotificationsConfiguration& rhs) {
-            Node node = convert<Observer::NotificationsServiceConfiguration>::encode(rhs);
-			
+        static Node encode(
+            const Observer::TelegramNotificationsConfiguration& rhs) {
+            Node node =
+                convert<Observer::NotificationsServiceConfiguration>::encode(
+                    rhs);
+
             node["apiKey"] = rhs.apiKey;
             node["chatID"] = rhs.chatID;
             return node;
         }
 
-        static bool decode(const Node& node, Observer::TelegramNotificationsConfiguration& rhs) {
-			convert<Observer::NotificationsServiceConfiguration>::decode(
-				node, 
-				dynamic_cast<Observer::NotificationsServiceConfiguration&>(rhs)
-			);
-			
-			rhs.apiKey = node["apiKey"].as<std::string>();
-			rhs.chatID = node["chatID"].as<std::string>();
+        static bool decode(const Node& node,
+                           Observer::TelegramNotificationsConfiguration& rhs) {
+            convert<Observer::NotificationsServiceConfiguration>::decode(
+                node,
+                dynamic_cast<Observer::NotificationsServiceConfiguration&>(
+                    rhs));
+
+            rhs.apiKey = node["apiKey"].as<std::string>();
+            rhs.chatID = node["chatID"].as<std::string>();
             return true;
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::OutputPreviewConfiguration> {
         static Node encode(const Observer::OutputPreviewConfiguration& rhs) {
             Node node;
@@ -126,7 +160,8 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, Observer::OutputPreviewConfiguration& rhs) {
+        static bool decode(const Node& node,
+                           Observer::OutputPreviewConfiguration& rhs) {
             rhs.showOutput = node["showOutput"].as<bool>();
             rhs.resolution = node["resolution"].as<cv::Size>();
             rhs.scaleFactor = node["scaleFactor"].as<double>();
@@ -137,7 +172,7 @@ namespace YAML {
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::CameraConfiguration> {
         static Node encode(const Observer::CameraConfiguration& rhs) {
             Node node;
@@ -152,7 +187,8 @@ namespace YAML {
             node["noiseThreshold"] = rhs.noiseThreshold;
             node["minimumChangeThreshold"] = rhs.minimumChangeThreshold;
             node["increaseThresholdFactor"] = rhs.increaseThresholdFactor;
-            node["secondsBetweenTresholdUpdate"] = rhs.secondsBetweenTresholdUpdate;
+            node["secondsBetweenTresholdUpdate"] =
+                rhs.secondsBetweenTresholdUpdate;
             node["saveDetectedChangeInVideo"] = rhs.saveDetectedChangeInVideo;
             node["ignoredAreas"] = rhs.ignoredAreas;
             node["videoValidatorBufferSize"] = rhs.videoValidatorBufferSize;
@@ -161,7 +197,8 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, Observer::CameraConfiguration& rhs) {
+        static bool decode(const Node& node,
+                           Observer::CameraConfiguration& rhs) {
             rhs.name = node["name"].as<std::string>();
             rhs.url = node["url"].as<std::string>();
             rhs.fps = node["fps"].as<double>();
@@ -170,20 +207,29 @@ namespace YAML {
             rhs.rotation = node["rotation"].as<double>();
             rhs.type = node["type"].as<Observer::ECameraType>();
             rhs.noiseThreshold = node["noiseThreshold"].as<double>();
-            rhs.minimumChangeThreshold = node["minimumChangeThreshold"].as<int>();
-            rhs.increaseThresholdFactor = node["increaseThresholdFactor"].as<double>();
-            rhs.secondsBetweenTresholdUpdate = node["secondsBetweenTresholdUpdate"].as<int>();
-            rhs.saveDetectedChangeInVideo = node["saveDetectedChangeInVideo"].as<bool>();
+            rhs.minimumChangeThreshold =
+                node["minimumChangeThreshold"].as<int>();
+            rhs.increaseThresholdFactor =
+                node["increaseThresholdFactor"].as<double>();
+            rhs.secondsBetweenTresholdUpdate =
+                node["secondsBetweenTresholdUpdate"].as<int>();
+            rhs.saveDetectedChangeInVideo =
+                node["saveDetectedChangeInVideo"].as<bool>();
             rhs.ignoredAreas = node["ignoredAreas"].as<std::vector<cv::Rect>>();
-            rhs.videoValidatorBufferSize = node["videoValidatorBufferSize"].as<int>();
-            rhs.restrictedAreas = node["restrictedAreas"].as<std::vector<Observer::RestrictedArea>>();
-            rhs.objectDetectionMethod = node["objectDetectionMethod"].as<Observer::EObjectDetectionMethod>();
+            rhs.videoValidatorBufferSize =
+                node["videoValidatorBufferSize"].as<int>();
+            rhs.restrictedAreas =
+                node["restrictedAreas"]
+                    .as<std::vector<Observer::RestrictedArea>>();
+            rhs.objectDetectionMethod =
+                node["objectDetectionMethod"]
+                    .as<Observer::EObjectDetectionMethod>();
 
             return true;
         }
     };
 
-    template<>
+    template <>
     struct convert<cv::Rect> {
         static Node encode(const cv::Rect& rhs) {
             Node node;
@@ -205,7 +251,7 @@ namespace YAML {
         }
     };
 
-    template<>
+    template <>
     struct convert<cv::Size> {
         static Node encode(const cv::Size& rhs) {
             Node node;
@@ -223,7 +269,7 @@ namespace YAML {
         }
     };
 
-    template<>
+    template <>
     struct convert<cv::Point> {
         static Node encode(const cv::Point& rhs) {
             Node node;
@@ -241,7 +287,7 @@ namespace YAML {
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::RestrictedArea> {
         static Node encode(const Observer::RestrictedArea& rhs) {
             Node node;
@@ -259,11 +305,12 @@ namespace YAML {
         }
     };
 
-    template<>
+    template <>
     struct convert<Observer::EObjectDetectionMethod> {
-    private:
+       private:
         using RType = Observer::EObjectDetectionMethod;
-    public:
+
+       public:
         static Node encode(const Observer::EObjectDetectionMethod& rhs) {
             Node node;
 
@@ -278,11 +325,12 @@ namespace YAML {
                     node = "Yolo DNN V4";
                     break;
             }
-            
+
             return node;
         }
 
-        static bool decode(const Node& node, Observer::EObjectDetectionMethod& rhs) {
+        static bool decode(const Node& node,
+                           Observer::EObjectDetectionMethod& rhs) {
             std::string val;
 
             try {
@@ -292,7 +340,7 @@ namespace YAML {
             }
 
             Observer::StringUtility::StringToLower(val);
-			
+
             if (val == "none") {
                 rhs = RType::NONE;
             } else if (val == "hog descriptor") {
@@ -304,12 +352,13 @@ namespace YAML {
             return true;
         }
     };
-    
-    template<>
+
+    template <>
     struct convert<Observer::ERestrictionType> {
-    private:
+       private:
         using RType = Observer::ERestrictionType;
-    public:
+
+       public:
         static Node encode(const Observer::ERestrictionType& rhs) {
             Node node;
 
@@ -321,7 +370,7 @@ namespace YAML {
                     node = "Deny";
                     break;
             }
-            
+
             return node;
         }
 
@@ -345,30 +394,31 @@ namespace YAML {
             return true;
         }
     };
-    
-    template<>
+
+    template <>
     struct convert<Observer::ENotificationType> {
-    private:
+       private:
         using RType = Observer::ENotificationType;
-    public:
+
+       public:
         static Node encode(const Observer::ENotificationType& rhs) {
             Node node;
             std::vector<std::string> out;
-            
+
             if (has_flag(rhs, RType::TEXT)) {
                 out.emplace_back("Text");
             }
-            
+
             if (has_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
-            
+
             if (has_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
-            
+
             node = out;
-            
+
             return node;
         }
 
@@ -386,8 +436,8 @@ namespace YAML {
                 return false;
             }
 
-            for(auto& val : types) {
-                Observer::StringUtility::StringToLower(val);            
+            for (auto& val : types) {
+                Observer::StringUtility::StringToLower(val);
             }
 
             if (ExistsInVector(types, "text")) {
@@ -405,12 +455,13 @@ namespace YAML {
             return true;
         }
     };
-    
-    template<>
+
+    template <>
     struct convert<Observer::ECameraType> {
-    private:
+       private:
         using RType = Observer::ECameraType;
-    public:
+
+       public:
         static Node encode(const Observer::ECameraType& rhs) {
             Node node;
 
@@ -425,7 +476,7 @@ namespace YAML {
                     node = "Object Detector";
                     break;
             }
-            
+
             return node;
         }
 
@@ -451,26 +502,27 @@ namespace YAML {
             return true;
         }
     };
-    
-    template<>
+
+    template <>
     struct convert<Observer::ETrazable> {
-    private:
+       private:
         using RType = Observer::ETrazable;
-    public:
+
+       public:
         static Node encode(const Observer::ETrazable& rhs) {
             Node node;
             std::vector<std::string> out;
-            
+
             if (has_flag(rhs, RType::IMAGE)) {
                 out.emplace_back("Image");
             }
-            
+
             if (has_flag(rhs, RType::VIDEO)) {
                 out.emplace_back("Video");
             }
-            
+
             node = out;
-            
+
             return node;
         }
 
@@ -483,14 +535,14 @@ namespace YAML {
 
             std::vector<std::string> types;
 
-            try {            
+            try {
                 types = node.as<std::vector<std::string>>();
             } catch (const BadConversion& e) {
                 return false;
             }
 
-            for(auto& val : types) {
-                Observer::StringUtility::StringToLower(val);            
+            for (auto& val : types) {
+                Observer::StringUtility::StringToLower(val);
             }
 
             if (ExistsInVector(types, "image")) {
@@ -504,63 +556,49 @@ namespace YAML {
             return true;
         }
     };
-}
+}  // namespace YAML
 
 namespace Observer::ConfigurationParser {
     struct MissingKey : public std::exception {
-        public:
-            MissingKey(const std::string& pKeymissing) : keymissing(std::move(pKeymissing)) {
+       public:
+        MissingKey(const std::string& pKeymissing)
+            : keymissing(std::move(pKeymissing)) {}
 
-            }
+        const char* what() const throw() {
+            return ("Missing Key '" + this->keymissing + "'").c_str();
+        }
 
-            const char* what () const throw () {
-                return ("Missing Key '" + this->keymissing + "'").c_str();
-            }
-            
-            std::string keyMissing() const {
-                return this->keymissing;
-            }
+        std::string keyMissing() const { return this->keymissing; }
 
-        private:
-            std::string keymissing;
+       private:
+        std::string keymissing;
     };
-    
+
     struct WrongType : public std::exception {
-        public:
-            WrongType(int pLine, int pColumn, int pPosition) 
-            : mLine(pLine), mCol(pColumn), mPos(pPosition) {
+       public:
+        WrongType(int pLine, int pColumn, int pPosition)
+            : mLine(pLine), mCol(pColumn), mPos(pPosition) {}
 
-            }
+        const char* what() const throw() { return "Bad conversion."; }
 
-            const char* what () const throw () {
-                return "Bad conversion.";
-            }
-            
-            int line () const {
-                return this->mLine;
-            }
-            
-            int column () const {
-                return this->mCol;
-            }
-            
-            int position () const {
-                return this->mPos;
-            }
+        int line() const { return this->mLine; }
 
-        private:
-            int mLine;
-            int mCol;
-            int mPos;
+        int column() const { return this->mCol; }
+
+        int position() const { return this->mPos; }
+
+       private:
+        int mLine;
+        int mCol;
+        int mPos;
     };
-	
+
     // yamlcpp
     Configuration ParseYAML(const std::string& filePath);
     void EmmitYAML(const std::string& filePath, const Configuration& cfg);
 
-    Configuration ParseJSON(const std::string &filePath);
-    void EmmitJSON(const std::string &filePath,
-                          const Configuration &cfg);
+    Configuration ParseJSON(const std::string& filePath);
+    void EmmitJSON(const std::string& filePath, const Configuration& cfg);
 
     std::string GetConfigurationAsJSON(const Configuration& cfg);
-}
+}  // namespace Observer::ConfigurationParser

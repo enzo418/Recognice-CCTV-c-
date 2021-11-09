@@ -1,54 +1,51 @@
 #pragma once
 
-#include "Configuration.hpp"
-
-#include "MessagingService.hpp"
-#include "TelegramNotifications.hpp"
-#include "RestClientLocalWebNotifications.hpp"
-
-#include "Semaphore.hpp"
-#include "BaseObserverPattern.hpp"
-#include "RawCameraEvent.hpp"
-#include "BaseCameraEvent.hpp"
-#include "SimpleBlockingQueue.hpp"
-#include "Event.hpp"
-#include "utils/SpecialEnums.hpp"
-#include "IFunctionality.hpp"
-
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
 
-namespace Observer
-{
+#include "BaseCameraEvent.hpp"
+#include "BaseObserverPattern.hpp"
+#include "Configuration.hpp"
+#include "Event.hpp"
+#include "IFunctionality.hpp"
+#include "MessagingService.hpp"
+#include "RawCameraEvent.hpp"
+#include "RestClientLocalWebNotifications.hpp"
+#include "Semaphore.hpp"
+#include "SimpleBlockingQueue.hpp"
+#include "TelegramNotifications.hpp"
+#include "utils/SpecialEnums.hpp"
+
+namespace Observer {
     /**
      * @brief Send notifications asynchronously.
-     * To push a notification use AddNotification, do not use 
+     * To push a notification use AddNotification, do not use
      * Send unless you do not mind thread locking.
      */
-    class NotificationsController : public ISubscriber<Event, RawCameraEvent>, public IFunctionality
-    {
-    public:
+    class NotificationsController : public ISubscriber<Event, RawCameraEvent>,
+                                    public IFunctionality {
+       public:
         explicit NotificationsController(Configuration* cfg);
         ~NotificationsController();
 
         /**
          * @brief Adds a notification to the notifications queue
-         * 
-         * @param notification 
+         *
+         * @param notification
          */
         void AddNotification(TextNotification textNotf);
 
         /**
          * @brief Adds a notification to the notifications queue
-         * 
-         * @param notification 
+         *
+         * @param notification
          */
         void AddNotification(ImageNotification imageNotf);
 
         /**
          * @brief Adds a notification to the notifications queue
-         * 
-         * @param notification 
+         *
+         * @param notification
          */
         void AddNotification(VideoNotification videoNotf);
 
@@ -58,8 +55,7 @@ namespace Observer
 
         void Stop() override;
 
-    protected:
-
+       protected:
         /**
          * @brief Main loop that consumes the notifications queue
          */
@@ -67,31 +63,34 @@ namespace Observer
 
         /**
          * @brief sends a text notifications to all services.
-         * @param notification 
+         * @param notification
          */
         void Send(TextNotification notification);
 
         /**
          * @brief build and sends a image notifications to all services.
-         * @param notification 
+         * @param notification
          */
         void Send(ImageNotification notification);
 
         /**
          * @brief build and sends a video notifications to all services.
-         * @param notification 
+         * @param notification
          */
         void Send(VideoNotification notification);
 
-    private:
+       private:
         bool running;
-      
-        void AddServiceToDrawable(MessagingService* service, NotificationsServiceConfiguration* cfg);
+
+        void AddServiceToDrawable(MessagingService* service,
+                                  NotificationsServiceConfiguration* cfg);
 
         std::vector<MessagingService*> services;
 
-        std::unordered_map<int, std::vector<MessagingService*>> drawableServices;
-        std::unordered_map<int, std::vector<MessagingService*>> notDrawableServices;
+        std::unordered_map<int, std::vector<MessagingService*>>
+            drawableServices;
+        std::unordered_map<int, std::vector<MessagingService*>>
+            notDrawableServices;
 
         Configuration* config;
 
@@ -103,4 +102,4 @@ namespace Observer
         int groupID;
     };
 
-} // namespace Observer
+}  // namespace Observer

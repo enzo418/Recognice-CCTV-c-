@@ -1,7 +1,6 @@
 #include "VideoBuffer.hpp"
 
-namespace Observer
-{
+namespace Observer {
     VideoBuffer::VideoBuffer(int sizeBufferBefore, int sizeBufferAfter) {
         this->framesBefore.emplace(sizeBufferBefore);
         this->framesAfter.emplace(sizeBufferAfter);
@@ -9,11 +8,9 @@ namespace Observer
         this->changeDetected = false;
     }
 
-    void VideoBuffer::ChangeWasDetected() {
-        this->changeDetected = true;
-    }
+    void VideoBuffer::ChangeWasDetected() { this->changeDetected = true; }
 
-    bool VideoBuffer::AddFrame(cv::Mat &frame) {
+    bool VideoBuffer::AddFrame(cv::Mat& frame) {
         if (changeDetected) {
             return this->framesAfter->AddFrame(frame);
         } else {
@@ -32,11 +29,13 @@ namespace Observer
         int firstFrameWhereChangeWasFound = before.size() - 1;
 
         std::vector<cv::Mat> merged(before.size() + after.size());
-        std::swap_ranges(merged.begin(), merged.end() - before.size(), before.begin());
-        std::swap_ranges(merged.begin() + before.size(), merged.end(), after.begin());
+        std::swap_ranges(merged.begin(), merged.end() - before.size(),
+                         before.begin());
+        std::swap_ranges(merged.begin() + before.size(), merged.end(),
+                         after.begin());
 
         RawCameraEvent ev(std::move(merged), firstFrameWhereChangeWasFound);
 
         return ev;
     }
-} // namespace Observer
+}  // namespace Observer

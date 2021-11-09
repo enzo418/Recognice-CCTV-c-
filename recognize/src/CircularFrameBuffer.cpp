@@ -10,7 +10,7 @@ namespace Observer {
 
     bool CircularFrameBuffer::AddFrame(cv::Mat& frame) {
         this->frames[this->framesPosition] = frame.clone();
-        
+
         const int next = this->framesPosition + 1;
 
         const bool isFull = next > this->frames.capacity();
@@ -41,15 +41,18 @@ namespace Observer {
 
             // Assume framesPosition = 2
 
-            // swap from "frames" starting from N1 to N3, leaving it "ordered" starting from position 0 -> N1 N2 N3
+            // swap from "frames" starting from N1 to N3, leaving it "ordered"
+            // starting from position 0 -> N1 N2 N3
             std::swap_ranges(ordered.begin(),
 
                              ordered.end() - this->framesPosition,
 
                              frames.begin() + this->framesPosition);
 
-            // swap from "frames" starting from N4 to N5, leaving it "ordered" starting from position 3
-            std::swap_ranges(ordered.begin() + (this->frames.capacity() - this->framesPosition),
+            // swap from "frames" starting from N4 to N5, leaving it "ordered"
+            // starting from position 3
+            std::swap_ranges(ordered.begin() + (this->frames.capacity() -
+                                                this->framesPosition),
 
                              ordered.end(),
 
@@ -60,4 +63,4 @@ namespace Observer {
 
         return std::move(this->frames);
     }
-}
+}  // namespace Observer
