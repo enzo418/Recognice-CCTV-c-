@@ -1,0 +1,6 @@
+build=g++ ~/test.cpp `pkg-config --cflags opencv` -std=c++20 -o /tmp/a.out `pkg-config --libs opencv` -lpthread
+executable=/tmp/a.out
+executable_args=4
+samples_cpu=2
+samples_memory=0
+functions=OptimizedStackWithHstack
