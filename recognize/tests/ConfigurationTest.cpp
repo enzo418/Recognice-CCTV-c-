@@ -100,12 +100,7 @@ class ConfigurationTest : public ::testing::Test {
   Configuration config;
 };
 
-TEST_F(ConfigurationTest, ShouldEmmitAndParseFromYAML) {
-    const std::string file = "test1.yaml";
-    ConfigurationParser::EmmitYAML(file, config);
-
-    Configuration readedCfg = ConfigurationParser::ParseYAML(file);
-
+void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
     /**
      * Do not use Assert_EQ since google test implements its
      * own overloads for the == operator. To ensure that it's
@@ -114,13 +109,22 @@ TEST_F(ConfigurationTest, ShouldEmmitAndParseFromYAML) {
      * All the EXPECT are done like this to know wich is
      * component failing to validate.
      */
-    EXPECT_TRUE(readedCfg.mediaFolderPath == config.mediaFolderPath);
-    EXPECT_TRUE(readedCfg.notificationTextTemplate == config.notificationTextTemplate);
-    EXPECT_TRUE(readedCfg.outputConfiguration == config.outputConfiguration);
-    EXPECT_TRUE(readedCfg.telegramConfiguration == config.telegramConfiguration);
-    EXPECT_TRUE(readedCfg.localWebConfiguration == config.localWebConfiguration);
-    EXPECT_TRUE(readedCfg.camerasConfiguration == config.camerasConfiguration);
-    ASSERT_TRUE(readedCfg == config);
+    EXPECT_TRUE(cfg1.mediaFolderPath == cfg2.mediaFolderPath);
+    EXPECT_TRUE(cfg1.notificationTextTemplate == cfg2.notificationTextTemplate);
+    EXPECT_TRUE(cfg1.outputConfiguration == cfg2.outputConfiguration);
+    EXPECT_TRUE(cfg1.telegramConfiguration == cfg2.telegramConfiguration);
+    EXPECT_TRUE(cfg1.localWebConfiguration == cfg2.localWebConfiguration);
+    EXPECT_TRUE(cfg1.camerasConfiguration == cfg2.camerasConfiguration);
+    ASSERT_TRUE(cfg1 == cfg2);
+}
+
+TEST_F(ConfigurationTest, ShouldEmmitAndParseFromYAML) {
+    const std::string file = "test1.yaml";
+    ConfigurationParser::EmmitYAML(file, config);
+
+    Configuration readedCfg = ConfigurationParser::ParseYAML(file);
+
+    checkConfiguration(readedCfg, config);
 }
 
 TEST_F(ConfigurationTest, ShouldEmmitAndParseFromJson) {
@@ -129,21 +133,7 @@ TEST_F(ConfigurationTest, ShouldEmmitAndParseFromJson) {
 
     Configuration readedCfg = ConfigurationParser::ParseJSON(file);
 
-    /**
-     * Do not use Assert_EQ since google test implements its
-     * own overloads for the == operator. To ensure that it's
-     * using our == operator we need to use assert/expect true.
-     *
-     * All the EXPECT are done like this to know wich is
-     * component failing to validate.
-     */
-    EXPECT_TRUE(readedCfg.mediaFolderPath == config.mediaFolderPath);
-    EXPECT_TRUE(readedCfg.notificationTextTemplate == config.notificationTextTemplate);
-    EXPECT_TRUE(readedCfg.outputConfiguration == config.outputConfiguration);
-    EXPECT_TRUE(readedCfg.telegramConfiguration == config.telegramConfiguration);
-    EXPECT_TRUE(readedCfg.localWebConfiguration == config.localWebConfiguration);
-    EXPECT_TRUE(readedCfg.camerasConfiguration == config.camerasConfiguration);
-    ASSERT_TRUE(readedCfg == config);
+    checkConfiguration(readedCfg, config);
 }
 
 // TODO: Add throw tests
