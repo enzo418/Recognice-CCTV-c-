@@ -22,7 +22,7 @@ set(COMMON_SOURCES
         src/FrameProcessor.cpp src/FrameProcessor.hpp
 
         src/ImageNotification.cpp src/ImageNotification.hpp
-        src/InterfaceFunctionality.hpp
+        src/IFunctionality.hpp
         src/MessagingService.hpp
         src/Notification.cpp src/Notification.hpp
         src/NotificationsServiceConfiguration.hpp
