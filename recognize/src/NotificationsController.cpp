@@ -105,10 +105,6 @@ namespace Observer {
             // 1. semaphore adquire - There is at leat 1 notification
             smpQueue.acquire();
 
-            // 2. n = repository.get() - Get the prioritary notification (Text >
-            // Image > Video)
-            // 3. this->send(n)
-
             /// TODO: Improve quality with a unorded_map with the queues, like
             /// drawable
             if (this->textQueue.size() > 0) {
