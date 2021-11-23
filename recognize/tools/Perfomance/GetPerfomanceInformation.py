@@ -22,7 +22,7 @@ import perfomance_runner as perf
 
 logging.basicConfig(
     filename='perfomance.log',
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s %(levelname)-8s %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -100,7 +100,7 @@ def run_perfomance_tests(profile: Profile):
     # memory
 
     memory_results = []
-    for n in range(profile.samples_cpu):
+    for n in range(profile.samples_memory):
         log.info(f"Running memory perfomance test number {n}")
         try:
             memory_results.append(
