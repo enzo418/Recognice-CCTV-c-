@@ -2,6 +2,7 @@
 
 #include "BaseObserverPattern.hpp"
 #include "CameraConfiguration.hpp"
+#include "RawCameraEvent.hpp"
 
 namespace Observer {
     using CameraEventPublisher =
