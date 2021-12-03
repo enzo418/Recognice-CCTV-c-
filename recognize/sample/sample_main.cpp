@@ -6,6 +6,11 @@
 #include "../src/ConfigurationParser.hpp"
 #include "../src/ObserverCentral.hpp"
 
+#include "../src/implementations/opencv/VideoSource.hpp"
+#include "../src/implementations/opencv/VideoWriter.hpp"
+#include "../src/implementations/opencv/ImageTransformation.hpp"
+#include "../src/implementations/opencv/ImagePersistence.hpp"
+
 int main(int argc, char** argv) {
     std::string pathConfig;
     std::string outputConfig = "./config_ouput.yml";
@@ -42,7 +47,7 @@ int main(int argc, char** argv) {
     
     Observer::ConfigurationParser::EmmitYAML(outputConfig, cfg);
 
-    Observer::ObserverCentral observer(cfg);
+    Observer::ObserverCentral<cv::Mat> observer(cfg);
     observer.Start();
 
     std::this_thread::sleep_for(std::chrono::hours(30));
