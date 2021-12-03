@@ -163,7 +163,7 @@ namespace YAML {
         static bool decode(const Node& node,
                            Observer::OutputPreviewConfiguration& rhs) {
             rhs.showOutput = node["showOutput"].as<bool>();
-            rhs.resolution = node["resolution"].as<cv::Size>();
+            rhs.resolution = node["resolution"].as<Observer::Size>();
             rhs.scaleFactor = node["scaleFactor"].as<double>();
             rhs.showIgnoredAreas = node["showIgnoredAreas"].as<bool>();
             rhs.showProcessedFrames = node["showProcessedFrames"].as<bool>();
@@ -202,7 +202,7 @@ namespace YAML {
             rhs.name = node["name"].as<std::string>();
             rhs.url = node["url"].as<std::string>();
             rhs.fps = node["fps"].as<double>();
-            rhs.roi = node["roi"].as<cv::Rect>();
+            rhs.roi = node["roi"].as<Observer::Rect>();
             rhs.positionOnOutput = node["positionOnOutput"].as<int>();
             rhs.rotation = node["rotation"].as<double>();
             rhs.type = node["type"].as<Observer::ECameraType>();
@@ -215,7 +215,8 @@ namespace YAML {
                 node["secondsBetweenTresholdUpdate"].as<int>();
             rhs.saveDetectedChangeInVideo =
                 node["saveDetectedChangeInVideo"].as<bool>();
-            rhs.ignoredAreas = node["ignoredAreas"].as<std::vector<cv::Rect>>();
+            rhs.ignoredAreas =
+                node["ignoredAreas"].as<std::vector<Observer::Rect>>();
             rhs.videoValidatorBufferSize =
                 node["videoValidatorBufferSize"].as<int>();
             rhs.restrictedAreas =
@@ -230,8 +231,8 @@ namespace YAML {
     };
 
     template <>
-    struct convert<cv::Rect> {
-        static Node encode(const cv::Rect& rhs) {
+    struct convert<Observer::Rect> {
+        static Node encode(const Observer::Rect& rhs) {
             Node node;
 
             node["x"] = rhs.x;
@@ -241,7 +242,7 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, cv::Rect& rhs) {
+        static bool decode(const Node& node, Observer::Rect& rhs) {
             rhs.x = node["x"].as<int>();
             rhs.y = node["y"].as<int>();
             rhs.width = node["width"].as<int>();
@@ -252,8 +253,8 @@ namespace YAML {
     };
 
     template <>
-    struct convert<cv::Size> {
-        static Node encode(const cv::Size& rhs) {
+    struct convert<Observer::Size> {
+        static Node encode(const Observer::Size& rhs) {
             Node node;
 
             node["width"] = rhs.width;
@@ -261,7 +262,7 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, cv::Size& rhs) {
+        static bool decode(const Node& node, Observer::Size& rhs) {
             rhs.width = node["width"].as<int>();
             rhs.height = node["height"].as<int>();
 
@@ -270,8 +271,8 @@ namespace YAML {
     };
 
     template <>
-    struct convert<cv::Point> {
-        static Node encode(const cv::Point& rhs) {
+    struct convert<Observer::Point> {
+        static Node encode(const Observer::Point& rhs) {
             Node node;
 
             node["x"] = rhs.x;
@@ -279,7 +280,7 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, cv::Point& rhs) {
+        static bool decode(const Node& node, Observer::Point& rhs) {
             rhs.x = node["x"].as<int>();
             rhs.y = node["y"].as<int>();
 
@@ -298,7 +299,7 @@ namespace YAML {
         }
 
         static bool decode(const Node& node, Observer::RestrictedArea& rhs) {
-            rhs.points = node["points"].as<std::vector<cv::Point>>();
+            rhs.points = node["points"].as<std::vector<Observer::Point>>();
             rhs.type = node["type"].as<Observer::ERestrictionType>();
 
             return true;

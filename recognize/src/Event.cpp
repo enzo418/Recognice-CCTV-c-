@@ -3,8 +3,8 @@
 #include <utility>
 
 namespace Observer {
-    StandarFindingEvent::StandarFindingEvent(int pFrameIndex, cv::Point pCenter,
-                                             cv::Rect pRect)
+    StandarFindingEvent::StandarFindingEvent(int pFrameIndex, Point pCenter,
+                                             Rect pRect)
         : findingFrameIndex(pFrameIndex),
           center(std::move(pCenter)),
           rect(std::move(pRect)) {}
@@ -13,19 +13,19 @@ namespace Observer {
         return this->findingFrameIndex;
     }
 
-    cv::Point StandarFindingEvent::GetCenter() { return this->center; }
+    Point StandarFindingEvent::GetCenter() { return this->center; }
 
-    cv::Rect StandarFindingEvent::GetRect() { return this->rect; }
+    Rect StandarFindingEvent::GetRect() { return this->rect; }
 
-    ClassifierFindingEvent::ClassifierFindingEvent(
-        int pFrameIndex, std::vector<cv::Point> pPoints)
+    ClassifierFindingEvent::ClassifierFindingEvent(int pFrameIndex,
+                                                   std::vector<Point> pPoints)
         : findingFrameIndex(pFrameIndex), points(std::move(pPoints)) {}
 
     int ClassifierFindingEvent::GetFindingIndex() {
         return this->findingFrameIndex;
     }
 
-    std::vector<cv::Point>& ClassifierFindingEvent::GetObjectPoints() & {
+    std::vector<Point>& ClassifierFindingEvent::GetObjectPoints() & {
         return this->points;
     }
 

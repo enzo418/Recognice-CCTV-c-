@@ -9,20 +9,23 @@
 #include "ValidatorBySufficientSamples.hpp"
 
 namespace Observer {
-    class EventValidator : public CameraEventSubscriber, public IFunctionality {
+    template <typename TFrame>
+    class EventValidator : public CameraEventSubscriber<TFrame>,
+                           public IFunctionality {
        public:
         EventValidator();
 
-        void Add(CameraConfiguration* cfg, RawCameraEvent ev);
+        void Add(CameraConfiguration* cfg, RawCameraEvent<TFrame> ev);
 
         void Start() override;
 
         void Stop() override;
 
         void SubscribeToEventValidationDone(
-            ISubscriber<Event, RawCameraEvent>* subscriber);
+            ISubscriber<Event, RawCameraEvent<TFrame>>* subscriber);
 
-        void update(CameraConfiguration* cfg, RawCameraEvent ev) override;
+        void update(CameraConfiguration* cfg,
+                    RawCameraEvent<TFrame> ev) override;
 
         ~EventValidator();
 
@@ -31,12 +34,14 @@ namespace Observer {
 
         Semaphore smpQueue;
 
-        IValidatorHandler* handler;
-        std::vector<IValidatorHandler*> handlers;
+        typename ValidatorHandler<TFrame>::IValidatorHandler* handler;
+        std::vector<typename ValidatorHandler<TFrame>::IValidatorHandler*>
+            handlers;
 
-        SimpleBlockingQueue<std::pair<CameraConfiguration*, RawCameraEvent>>
+        SimpleBlockingQueue<
+            std::pair<CameraConfiguration*, RawCameraEvent<TFrame>>>
             validationPool;
 
-        Publisher<Event, RawCameraEvent> eventPublisher;
+        Publisher<Event, RawCameraEvent<TFrame>> eventPublisher;
     };
 }  // namespace Observer

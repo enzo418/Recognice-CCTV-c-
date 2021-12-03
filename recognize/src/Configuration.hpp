@@ -2,12 +2,12 @@
 
 #include "CameraConfiguration.hpp"
 #include "NotificationsServiceConfiguration.hpp"
+#include "Size.hpp"
 
 namespace Observer {
-
     struct OutputPreviewConfiguration {
         bool showOutput;
-        cv::Size resolution;
+        Size resolution;
         double scaleFactor;
         bool showIgnoredAreas;
         bool showProcessedFrames;

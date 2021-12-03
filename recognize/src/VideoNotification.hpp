@@ -7,23 +7,25 @@
 #include <vector>
 
 #include "Notification.hpp"
-#include "OpencvVideoWriter.hpp"
+#include "Size.hpp"
+#include "VideoWriter.hpp"
 #include "utils/SpecialFunctions.hpp"
 
 namespace Observer {
 
     namespace fs = std::filesystem;
 
+    template <typename TFrame>
     class VideoNotification : public Notification {
        public:
         VideoNotification(int groupID, Event ev, std::string text,
-                          std::vector<cv::Mat>&& frames);
+                          std::vector<TFrame>&& frames);
 
         std::string GetCaption() override;
 
         std::string GetVideoPath();
 
-        std::vector<cv::Mat>& GetFrames();
+        std::vector<TFrame>& GetFrames();
 
         /**
          * @brief Build a video notification.
@@ -39,7 +41,7 @@ namespace Observer {
          */
         bool BuildNotification(const std::string& mediaFolderPath,
                                double frameRate, int codecID,
-                               const cv::Size frameSize);
+                               const Size frameSize);
 
        private:
         std::string text;
@@ -47,10 +49,54 @@ namespace Observer {
         // absolute path
         std::string outputVideoPath;
 
-        std::vector<cv::Mat> frames;
+        std::vector<TFrame> frames;
 
-        // video output
-        OpencvVideoWritter writer;
+        // video writer
+        VideoWriter<TFrame> writer;
     };
 
+    template <typename TFrame>
+    VideoNotification<TFrame>::VideoNotification(int pGroupID, Event pEvent,
+                                                 std::string pText,
+                                                 std::vector<TFrame>&& pFrames)
+        : text(std::move(pText)),
+          frames(std::move(pFrames)),
+          Notification(pGroupID, std::move(pEvent)) {}
+
+    template <typename TFrame>
+    std::string VideoNotification<TFrame>::GetCaption() {
+        return this->text;
+    }
+
+    template <typename TFrame>
+    std::string VideoNotification<TFrame>::GetVideoPath() {
+        return this->outputVideoPath;
+    }
+
+    template <typename TFrame>
+    std::vector<TFrame>& VideoNotification<TFrame>::GetFrames() {
+        return this->frames;
+    }
+
+    template <typename TFrame>
+    bool VideoNotification<TFrame>::BuildNotification(
+        const std::string& mediaFolderPath, double frameRate, int codecID,
+        const Size frameSize) {
+        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
+        const std::string fileName = time + ".mkv";
+        const std::string& path =
+            fs::path(mediaFolderPath) / fs::path(fileName);
+
+        this->outputVideoPath = path;
+
+        this->writer.Open(fileName, frameRate, codecID, frameSize);
+
+        for (auto&& frame : this->frames) {
+            this->writer.WriteFrame(frame);
+        }
+
+        this->writer.Close();
+
+        return true;
+    }
 }  // namespace Observer

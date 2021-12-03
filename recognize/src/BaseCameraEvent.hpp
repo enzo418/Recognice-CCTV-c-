@@ -5,11 +5,10 @@
 #include "RawCameraEvent.hpp"
 
 namespace Observer {
-    using CameraEventPublisher =
-        Publisher<CameraConfiguration*, RawCameraEvent>;
-
+    template <typename TFrame>
     class CameraEventSubscriber
-        : public ISubscriber<CameraConfiguration*, RawCameraEvent> {
-        void update(CameraConfiguration* cam, RawCameraEvent ev) override = 0;
+        : public ISubscriber<CameraConfiguration*, RawCameraEvent<TFrame>> {
+        void update(CameraConfiguration* cam,
+                    RawCameraEvent<TFrame> ev) override = 0;
     };
 };  // namespace Observer

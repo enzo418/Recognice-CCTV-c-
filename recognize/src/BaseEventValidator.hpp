@@ -5,6 +5,8 @@
 #include "RawCameraEvent.hpp"
 
 namespace Observer {
+
+    template <typename TFrame>
     struct ValidationResult {
        public:
         ValidationResult()
@@ -33,27 +35,31 @@ namespace Observer {
         Event event;
     };
 
-    using IValidatorHandler = Handler<ValidationResult, RawCameraEvent&>;
-
     /**
      * BaseConcreteHandler
      */
-    class ValidatorHandler
-        : public AbstractHandler<ValidationResult, RawCameraEvent&> {
+    template <typename TFrame>
+    class ValidatorHandler : public AbstractHandler<ValidationResult<TFrame>,
+                                                    RawCameraEvent<TFrame>&> {
        public:
-        ValidationResult Handle(RawCameraEvent& request,
-                                ValidationResult& result) override {
+        using IValidatorHandler =
+            Handler<ValidationResult<TFrame>, RawCameraEvent<TFrame>&>;
+
+        ValidationResult<TFrame> Handle(
+            RawCameraEvent<TFrame>& request,
+            ValidationResult<TFrame>& result) override {
             auto res = this->isValid(request, result);
             if (res.IsValid()) {
                 return res;
             } else {
-                return AbstractHandler<ValidationResult,
-                                       RawCameraEvent&>::Handle(request,
-                                                                result);
+                return AbstractHandler<ValidationResult<TFrame>,
+                                       RawCameraEvent<TFrame>&>::Handle(request,
+                                                                        result);
             }
         }
 
-        virtual ValidationResult isValid(RawCameraEvent& request,
-                                         ValidationResult& result) = 0;
+        virtual ValidationResult<TFrame> isValid(
+            RawCameraEvent<TFrame>& request,
+            ValidationResult<TFrame>& result) = 0;
     };
 }  // namespace Observer

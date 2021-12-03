@@ -4,13 +4,18 @@
 #include <string>
 
 namespace Observer {
-    class VideoSource {
+    // all the implementations (VideoSource) will provide a type
+    template <typename T>
+    class VideoSource;
+
+    template <typename TFrame>
+    class IVideoSource {
        public:
         virtual void Open(const std::string& url) = 0;
 
         virtual void Close(const std::string& url) = 0;
 
-        virtual bool GetNextFrame(cv::Mat&) = 0;
+        virtual bool GetNextFrame(TFrame&) = 0;
 
         virtual bool isOpened() = 0;
     };

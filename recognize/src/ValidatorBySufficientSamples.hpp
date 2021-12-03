@@ -7,9 +7,11 @@
 #include "ValidatorBySufficientSamples.hpp"
 
 namespace Observer {
-    class ValidatorBySufficientSamples : public ValidatorHandler {
+    template <typename TFrame>
+    class ValidatorBySufficientSamples : public ValidatorHandler<TFrame> {
        public:
-        ValidationResult isValid(RawCameraEvent& request,
-                                 ValidationResult& result) override;
+        ValidationResult<TFrame> isValid(
+            RawCameraEvent<TFrame>& request,
+            ValidationResult<TFrame>& result) override;
     };
 }  // namespace Observer

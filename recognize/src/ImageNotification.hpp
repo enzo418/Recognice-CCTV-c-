@@ -4,6 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "ImagePersistence.hpp"
+#include "ImageTransformation.hpp"
 #include "Notification.hpp"
 #include "utils/SpecialFunctions.hpp"
 
@@ -11,6 +13,7 @@ namespace Observer {
 
     namespace fs = std::filesystem;
 
+    template <typename TFrame>
     class ImageNotification : public Notification {
        public:
         /**
@@ -23,13 +26,13 @@ namespace Observer {
          * @param frame frame, as reference but copied on ctor.
          */
         ImageNotification(int groupID, Event ev, std::string text,
-                          cv::Mat& frame);
+                          TFrame& frame);
 
         std::string GetCaption() override;
 
         std::string GetImagePath();
 
-        cv::Mat& GetImage();
+        TFrame& GetImage();
 
         /**
          * @brief Build a image notification.
@@ -48,7 +51,42 @@ namespace Observer {
         // absolute path
         std::string outputImagePath;
 
-        cv::Mat image;
+        TFrame image;
     };
 
+    template <typename TFrame>
+    ImageNotification<TFrame>::ImageNotification(int pGroupID, Event pEvent,
+                                                 std::string pText,
+                                                 TFrame& frame)
+        : text(std::move(pText)), Notification(pGroupID, std::move(pEvent)) {
+        ImageTransformation<TFrame>::CopyImage(frame, image);
+    }
+
+    template <typename TFrame>
+    std::string ImageNotification<TFrame>::GetCaption() {
+        return this->text;
+    }
+
+    template <typename TFrame>
+    std::string ImageNotification<TFrame>::GetImagePath() {
+        return this->outputImagePath;
+    }
+
+    template <typename TFrame>
+    TFrame& ImageNotification<TFrame>::GetImage() {
+        return this->image;
+    }
+
+    template <typename TFrame>
+    bool ImageNotification<TFrame>::BuildNotification(
+        const std::string& mediaFolderPath) {
+        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
+        const std::string fileName = time + ".jpg";
+        const std::string& path =
+            fs::path(mediaFolderPath) / fs::path(fileName);
+
+        this->outputImagePath = path;
+
+        return ImagePersistence<TFrame>::SaveImage(path, this->image);
+    }
 }  // namespace Observer

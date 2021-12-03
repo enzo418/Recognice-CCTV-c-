@@ -6,7 +6,6 @@
 #include "Notification.hpp"
 #include "TextNotification.hpp"
 #include "VideoNotification.hpp"
-
 namespace Observer {
     class MessagingService {
        public:

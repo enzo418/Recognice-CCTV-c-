@@ -10,8 +10,9 @@
 #include "SimpleBlockingQueue.hpp"
 
 namespace Observer {
-    class FrameEventSubscriber : public ISubscriber<int, cv::Mat> {
-        virtual void update(int camerapos, cv::Mat frame) = 0;
+    template <typename TFrame>
+    class FrameEventSubscriber : public ISubscriber<int, TFrame> {
+        virtual void update(int camerapos, TFrame frame) = 0;
     };
 
     template <typename T>
@@ -64,7 +65,9 @@ namespace Observer {
     /**
      * @todo write docs
      */
-    class FrameDisplay : public FrameEventSubscriber, public IFunctionality {
+    template <typename TFrame>
+    class FrameDisplay : public FrameEventSubscriber<TFrame>,
+                         public IFunctionality {
        public:
         /**
          * @param total Number of frames to display at the same time
@@ -80,14 +83,57 @@ namespace Observer {
          *
          * @param framePosition 0 = top left, 1 = top right, ...
          */
-        void update(int framePosition, cv::Mat frame) override;
+        void update(int framePosition, TFrame frame) override;
 
        private:
-        std::vector<std::queue<cv::Mat>> frames;
+        std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
 
         int maxFrames;
 
         bool running;
     };
+
+    template <typename TFrame>
+    FrameDisplay<TFrame>::FrameDisplay(int total) : maxFrames(total) {
+        this->running = false;
+        this->frames.reserve(total);
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::Start() {
+        this->running = true;
+
+        // TODO: Create window x
+
+        std::vector<TFrame> framesToShow(maxFrames);
+        while (this->running) {
+            this->mtxFrames.lock();
+
+            for (int i = 0; i < this->maxFrames; i++) {
+                framesToShow[i] = this->frames[i].front();
+                this->frames[i].pop();
+            }
+
+            this->mtxFrames.unlock();
+
+            // TODO: Show frames on window x
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+
+        // TODO: Destroy window x
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::Stop() {
+        this->running = false;
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::update(int cameraPos, TFrame frame) {
+        this->mtxFrames.lock();
+        this->frames[cameraPos].push(frame);
+        this->mtxFrames.unlock();
+    }
 }  // namespace Observer

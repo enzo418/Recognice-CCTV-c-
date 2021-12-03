@@ -3,13 +3,15 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "Point.hpp"
+#include "Rect.hpp"
 #include "external/bitmask_operators.hpp"
 
 namespace Observer {
     enum ERestrictionType { ALLOW = 1, DENY = 2 };
 
     struct RestrictedArea {
-        std::vector<cv::Point> points;
+        std::vector<Point> points;
         ERestrictionType type;
 
         bool operator==(const RestrictedArea&) const = default;
@@ -32,7 +34,7 @@ namespace Observer {
         double fps;
 
         // region of interest
-        cv::Rect roi;
+        Rect roi;
 
         // position of the camera in the preview. 0 = top left
         int positionOnOutput;
@@ -58,7 +60,7 @@ namespace Observer {
         bool saveDetectedChangeInVideo = true;
 
         // list of rectangles to ignore if a change happens inside it
-        std::vector<cv::Rect> ignoredAreas;
+        std::vector<Rect> ignoredAreas;
 
         // How much frames to use to validate the change
         int videoValidatorBufferSize = 30;

@@ -3,34 +3,37 @@
 #include <opencv2/opencv.hpp>
 #include <utility>
 
+#include "Point.hpp"
+#include "Rect.hpp"
+
 namespace Observer {
     class StandarFindingEvent {
        public:
-        StandarFindingEvent(int pFrameIndex, cv::Point pCenter, cv::Rect pRect);
+        StandarFindingEvent(int pFrameIndex, Point pCenter, Rect pRect);
 
         int GetFindingIndex();
 
-        cv::Point GetCenter();
+        Point GetCenter();
 
-        cv::Rect GetRect();
+        Rect GetRect();
 
        private:
         int findingFrameIndex;
-        cv::Point center;
-        cv::Rect rect;
+        Point center;
+        Rect rect;
     };
 
     class ClassifierFindingEvent {
        public:
-        ClassifierFindingEvent(int pFrameIndex, std::vector<cv::Point> pPoints);
+        ClassifierFindingEvent(int pFrameIndex, std::vector<Point> pPoints);
 
         int GetFindingIndex();
 
-        std::vector<cv::Point>& GetObjectPoints() &;
+        std::vector<Point>& GetObjectPoints() &;
 
        private:
         int findingFrameIndex;
-        std::vector<cv::Point> points;
+        std::vector<Point> points;
     };
 
     class Event {

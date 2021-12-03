@@ -1,13 +1,17 @@
 #pragma once
 
 #include <cstdint>
+#include <tuple>
 
 namespace Observer {
     struct Point {
-        Point(int16_t pX, int16_t pY)
-            : x(pX), y(pY) {};
+        Point(int pX, int pY) : x(pX), y(pY) {};
 
-        int16_t x;
-        int16_t y;
+        int x;
+        int y;
+
+        bool operator==(const Point& other) const {
+            return std::tie(x, y) == std::tie(other.x, other.y);
+        }
     };
-}
+}  // namespace Observer

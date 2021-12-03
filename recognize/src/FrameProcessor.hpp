@@ -29,9 +29,9 @@ namespace Observer {
        public:
         /**
          * @brief Construct a new Frame Processor object
-         * 
+         *
          * @param roi region of interest to crop
-         * @param noiseThreshold 
+         * @param noiseThreshold
          * @param rotation angle to rotate the image in degrees
          */
         FrameProcessor(Rect roi, double noiseThreshold, double rotation);
@@ -42,7 +42,8 @@ namespace Observer {
     };
 
     template <typename T>
-    FrameProcessor<T>::FrameProcessor(Rect pRoi, double pNoiseThreshold, double pRotation) {
+    FrameProcessor<T>::FrameProcessor(Rect pRoi, double pNoiseThreshold,
+                                      double pRotation) {
         this->roi = pRoi;
         this->noiseThreshold = pNoiseThreshold;
         this->rotation = pRotation;
@@ -74,7 +75,7 @@ namespace Observer {
         // remove small changes/noise
         ImageTransformation<T>::Threshold(this->diffFrame, this->diffFrame,
                                           this->noiseThreshold, 255,
-                                          cv::THRESH_BINARY);
+                                          THRESHOLD_BINARY);
 
         ImageTransformation<T>::CopyImage(frame, lastFrame);
 

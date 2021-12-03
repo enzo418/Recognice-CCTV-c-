@@ -1,5 +1,8 @@
 #include "../src/Configuration.hpp"
 #include "../src/ConfigurationParser.hpp"
+#include "../src/Size.hpp"
+#include "../src/Rect.hpp"
+#include "../src/Point.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -13,7 +16,7 @@ class ConfigurationTest : public ::testing::Test {
   void SetUp() override {
      OutputPreviewConfiguration outputPreview = {
       .showOutput = true,
-      .resolution = cv::Size(205, 418),
+      .resolution = Size(205, 418),
       .scaleFactor = 1.02,
       .showIgnoredAreas = true,
       .showProcessedFrames = false,
@@ -51,7 +54,7 @@ class ConfigurationTest : public ::testing::Test {
       .name = "TestCamera1",
       .url = "rtsp://example.com/media.mp4",
       .fps = 42,
-      .roi = cv::Rect(10, 10, 640, 360),
+      .roi = Rect(10, 10, 640, 360),
       .positionOnOutput = 0,
       .rotation = -5,
       .type = ECameraType::NOTIFICATOR,
@@ -60,10 +63,10 @@ class ConfigurationTest : public ::testing::Test {
       .increaseThresholdFactor = 1.03,
       .secondsBetweenTresholdUpdate = 5,
       .saveDetectedChangeInVideo = false,
-      .ignoredAreas = {cv::Rect(15, 15, 640, 360), cv::Rect(5, 15, 123, 435),
-                       cv::Rect(7, 7, 112, 444)},
+      .ignoredAreas = {Rect(15, 15, 640, 360), Rect(5, 15, 123, 435),
+                       Rect(7, 7, 112, 444)},
       .videoValidatorBufferSize = 60,
-      .restrictedAreas = {{{cv::Point(10, 10), cv::Point(5, 5)},
+      .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
                            ERestrictionType::ALLOW}},
       .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
   };
@@ -72,7 +75,7 @@ class ConfigurationTest : public ::testing::Test {
       .name = "TestCamera2",
       .url = "rtsp://example.com/media.mp4/streamid=1",
       .fps = 10,
-      .roi = cv::Rect(1, 1, 233, 233),
+      .roi = Rect(1, 1, 233, 233),
       .positionOnOutput = 1,
       .rotation = 99,
       .type = ECameraType::OBJECT_DETECTOR,
@@ -81,9 +84,9 @@ class ConfigurationTest : public ::testing::Test {
       .increaseThresholdFactor = 5.002,
       .secondsBetweenTresholdUpdate = 7,
       .saveDetectedChangeInVideo = true,
-      .ignoredAreas = {cv::Rect(2, 2, 622, 117)},
+      .ignoredAreas = {Rect(2, 2, 622, 117)},
       .videoValidatorBufferSize = 10,
-      .restrictedAreas = {{{cv::Point(10, 10), cv::Point(5, 5)},
+      .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
                            ERestrictionType::DENY}},
       .objectDetectionMethod = EObjectDetectionMethod::NONE,
   };
