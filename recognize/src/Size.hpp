@@ -4,7 +4,7 @@
 #include <tuple>
 namespace Observer {
     struct Size {
-        Size();
+        Size() = default;
         Size(int pWidth, int pHeight) : width(pWidth), height(pHeight) {};
 
         int width;

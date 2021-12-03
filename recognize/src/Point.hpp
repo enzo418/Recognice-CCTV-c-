@@ -5,7 +5,7 @@
 
 namespace Observer {
     struct Point {
-        Point();
+        Point() = default;
         Point(int pX, int pY) : x(pX), y(pY) {};
 
         int x;

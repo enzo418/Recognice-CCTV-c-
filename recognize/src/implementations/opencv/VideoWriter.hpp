@@ -9,15 +9,16 @@ namespace Observer {
         cv::VideoWriter writer;
 
        public:
-        VideoWriter();
+        VideoWriter() = default;
 
         bool Open(const std::string& path, const double& framerate,
-                  const int& codecID, const cv::Size& frameSize) {
-            return this->writer.open(path, codecID, framerate, frameSize);
+                  const int& codecID, const Size& frameSize) override {
+            cv::Size sz(frameSize.width, frameSize.height);
+            return this->writer.open(path, codecID, framerate, sz);
         }
 
-        void Close() { this->writer.release(); }
+        void Close() override { this->writer.release(); }
 
-        void WriteFrame(cv::Mat& frame) { this->writer.write(frame); }
+        void WriteFrame(cv::Mat& frame) override { this->writer.write(frame); }
     };
 }  // namespace Observer
