@@ -87,6 +87,8 @@ namespace Observer {
 
         this->outputImagePath = path;
 
-        return ImagePersistence<TFrame>::SaveImage(path, this->image);
+        ImagePersistence<TFrame>::SaveImage(path, this->image);
+
+        return true;
     }
 }  // namespace Observer
