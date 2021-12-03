@@ -1,7 +1,9 @@
+#include "../../ImageTransformation.hpp"
+
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
 
-#include "ImageTransformation.hpp"
 #include "opencv4/opencv2/opencv.hpp"
 namespace Observer {
     template <>
@@ -141,6 +143,11 @@ namespace Observer {
             source.copyTo(dst);
         }
 
+        static void Resize(cv::Mat& source, cv::Mat& dst, const Size& size) {
+            cv::Size sz(size.width, size.height);
+            cv::resize(source, dst, sz);
+        }
+
         static void Threshold(cv::Mat& source, cv::Mat& dst, double threshold,
                               double max, int type) {
             switch (type) {
@@ -168,7 +175,7 @@ namespace Observer {
             return cv::countNonZero(image);
         }
 
-        static inline void CropImage(cv::Mat& source, cv::Mat& dst, Rect& roi) {
+        static inline void CropImage(cv::Mat& source, cv::Mat& dst, const Rect& roi) {
             dst = source(cv::Rect(roi.x, roi.y, roi.width, roi.height));
         }
     };

@@ -99,7 +99,7 @@ namespace Observer {
          * @param dst destionation image
          * @param size size
          */
-        static void Resize(T& source, T& dst, Size& size);
+        static void Resize(T& source, T& dst, const Size& size);
 
         /**
          * @brief Calculates the absolute difference element by element
@@ -148,7 +148,7 @@ namespace Observer {
          * @param dst destionation image
          * @param roi region of interest
          */
-        static inline void CropImage(T& source, T& dst, Rect& roi);
+        static inline void CropImage(T& source, T& dst, const Rect& roi);
 
         /**
          * @brief This function applies fixed-level thresholding to a image.
