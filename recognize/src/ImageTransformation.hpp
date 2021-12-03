@@ -2,8 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "Size.hpp"
 #include "Rect.hpp"
+#include "Size.hpp"
 
 namespace Observer {
     // Forward declaration of the struct
@@ -132,7 +132,7 @@ namespace Observer {
             int conversionType = ColorSpaceConversion::COLOR_RGB2GRAY);
 
         /**
-         * @brief Copy a image
+         * @brief Copy a image. Deep copy.
          *
          * @param source source to be copied
          * @param dst destination of the copy
@@ -170,7 +170,7 @@ namespace Observer {
 
         /**
          * @brief Count the number of non-zero elements in the image
-         * 
+         *
          * @param image Gray image (SINGLE-CHANNEL)
          * @return int count
          */
