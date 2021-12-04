@@ -122,9 +122,10 @@ namespace Observer {
         OBSERVER_TRACE("Received event from camera '{}', adding it to the pool",
                        cfg->name);
 
+        this->validationPool.push(std::make_pair(cfg, std::move(ev)));
+
         // add 1 item to poll
         this->smpQueue.release();
-        this->validationPool.push(std::make_pair(cfg, std::move(ev)));
     }
 
     template <typename TFrame>
