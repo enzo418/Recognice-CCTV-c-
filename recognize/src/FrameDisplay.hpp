@@ -102,7 +102,7 @@ namespace Observer {
     template <typename TFrame>
     FrameDisplay<TFrame>::FrameDisplay(int total) : maxFrames(total) {
         this->running = false;
-        this->frames.reserve(total);
+        this->frames.resize(total);
     }
 
     template <typename TFrame>
@@ -114,24 +114,37 @@ namespace Observer {
         TFrame frame;
 
         std::vector<TFrame> framesToShow(maxFrames);
+        std::vector<bool> cameraFirstFrameReaded(maxFrames);
+
+        const auto maxHStack = this->maxFrames == 1 ? 1 : 2;
+
+        TFrame* referenceFrameForBlankImage;
+
         while (this->running) {
             this->smpFrames.acquire();
 
             this->mtxFrames.lock();
 
             for (int i = 0; i < this->maxFrames; i++) {
-                framesToShow[i] = this->frames[i].front();                    
-                this->frames[i].pop();
+                if (!frames[i].empty()) {
+                    cameraFirstFrameReaded[i] = true;
+                    framesToShow[i] = this->frames[i].front();
+                    referenceFrameForBlankImage = &framesToShow[i];
+                    this->frames[i].pop();
+                } else if (!cameraFirstFrameReaded[i]) {
+                    framesToShow[i] = ImageTransformation<TFrame>::BlackImage(
+                        referenceFrameForBlankImage);
+                }
             }
 
             this->mtxFrames.unlock();
 
             frame = ImageTransformation<TFrame>::StackImages(
-                &framesToShow[0], framesToShow.size());
+                &framesToShow[0], this->maxFrames, maxHStack);
 
             ImageDisplay<TFrame>::ShowImage("images", frame);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
         ImageDisplay<TFrame>::DestroyWindow("images");
