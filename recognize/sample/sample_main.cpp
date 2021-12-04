@@ -10,6 +10,7 @@
 #include "../src/implementations/opencv/VideoWriter.hpp"
 #include "../src/implementations/opencv/ImageTransformation.hpp"
 #include "../src/implementations/opencv/ImagePersistence.hpp"
+#include "../src/implementations/opencv/ImageDisplay.hpp"
 
 int main(int argc, char** argv) {
     std::string pathConfig;
@@ -32,20 +33,7 @@ int main(int argc, char** argv) {
 
     std::cout << "file: " << pathConfig << " curr dir: " << std::filesystem::current_path().string() << std::endl;
 
-//    auto cfg = Observer::ConfigurationParser::ParseYAML(fileStorage);
-//
-//    std::cout << "mediaFolderPath: " << cfg.mediaFolderPath << std::endl;
-//    std::cout << "scaleFactor: " << cfg.outputConfiguration.scaleFactor << std::endl;
-//    std::cout << "api: " << cfg.telegramConfiguration.apiKey << std::endl;
-
     auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
-
-    // Convert to json (There is nothing wrong with it converting the
-    // numbers to string since the client can parse them again into 
-    // a number)
-    Observer::ConfigurationParser::EmmitJSON("output.json", cfg);
-    
-    Observer::ConfigurationParser::EmmitYAML(outputConfig, cfg);
 
     Observer::ObserverCentral<cv::Mat> observer(cfg);
     observer.Start();
