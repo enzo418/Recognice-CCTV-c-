@@ -9,6 +9,7 @@
 #include "IFunctionality.hpp"
 #include "ImageDisplay.hpp"
 #include "ImageTransformation.hpp"
+#include "Semaphore.hpp"
 #include "SimpleBlockingQueue.hpp"
 
 namespace Observer {
@@ -91,6 +92,8 @@ namespace Observer {
         std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
 
+        Semaphore smpFrames;
+
         int maxFrames;
 
         bool running;
@@ -108,21 +111,25 @@ namespace Observer {
 
         ImageDisplay<TFrame>::CreateWindow("images");
 
+        TFrame frame;
+
         std::vector<TFrame> framesToShow(maxFrames);
         while (this->running) {
+            this->smpFrames.acquire();
+
             this->mtxFrames.lock();
 
             for (int i = 0; i < this->maxFrames; i++) {
-                framesToShow[i] = this->frames[i].front();
+                framesToShow[i] = this->frames[i].front();                    
                 this->frames[i].pop();
             }
 
             this->mtxFrames.unlock();
 
-            TFrame show = ImageTransformation<TFrame>::StackImages(
+            frame = ImageTransformation<TFrame>::StackImages(
                 &framesToShow[0], framesToShow.size());
 
-            ImageDisplay<TFrame>::ShowImage("images", show);
+            ImageDisplay<TFrame>::ShowImage("images", frame);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
@@ -140,5 +147,7 @@ namespace Observer {
         this->mtxFrames.lock();
         this->frames[cameraPos].push(frame);
         this->mtxFrames.unlock();
+
+        this->smpFrames.release();
     }
 }  // namespace Observer
