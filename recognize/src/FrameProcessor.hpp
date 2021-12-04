@@ -47,6 +47,7 @@ namespace Observer {
         this->roi = pRoi;
         this->noiseThreshold = pNoiseThreshold;
         this->rotation = pRotation;
+        this->lastFrame = ImageTransformation<T>::BlackImage();
     }
 
     template <typename T>
@@ -63,6 +64,9 @@ namespace Observer {
         // to black and white
         ImageTransformation<T>::ToColorSpace(
             frame, frame, ColorSpaceConversion::COLOR_RGB2GRAY);
+
+        // TODO: PROBLABLY HERE IS MISMATCH OF SIZES BETWEEN lastframe and
+        // frame, since lastframe in the first iteration is empty (BlackImage)        
 
         // get the difference between the current and last frame
         ImageTransformation<T>::AbsoluteDifference(this->lastFrame, frame,
