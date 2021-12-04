@@ -88,14 +88,10 @@ namespace Observer {
         : frameDisplay(
               static_cast<int>(this->config.camerasConfiguration.size())),
           config(std::move(pConfig)),
-          notificationController(&this->config) {
-        // initialize logger
-        LogManager::Initialize();
-        OBSERVER_INFO("Hi");
-    }
+          notificationController(&this->config) {}
 
     template <typename TFrame>
-    bool ObserverCentral<TFrame>::Start() {      
+    bool ObserverCentral<TFrame>::Start() {
         OBSERVER_TRACE("Starting the cameras");
         this->StartAllCameras();
 
