@@ -8,18 +8,18 @@
 #include "VideoBuffer.hpp"
 #include "VideoSource.hpp"
 #include "VideoWriter.hpp"
+#include "log/log.hpp"
 
 // CameraEventSubscriber
+#include "FrameDisplay.hpp"
 #include "IFunctionality.hpp"
 #include "NotificationsController.hpp"
+#include "VideoSource.hpp"
+#include "VideoWriter.hpp"
 
 // FrameEventSubscriber
 #include <iostream>
 #include <string>
-
-#include "FrameDisplay.hpp"
-#include "VideoSource.hpp"
-#include "VideoWriter.hpp"
 
 // std::optional
 #include <optional>
@@ -140,7 +140,7 @@ namespace Observer {
         this->source.Open(this->cfg->url);
 
         if (!this->source.isOpened()) {
-            // TODO: LOG errro, maybe throw?
+            OBSERVER_WARN("Couldn't connect to camera {}", this->cfg->url);
         }
 
         timerFrames.Start();
@@ -156,6 +156,8 @@ namespace Observer {
                 }
             }
         }
+
+        OBSERVER_TRACE("Camera '{}' closed", this->cfg->name);
 
         this->source.Close();
     }
@@ -182,6 +184,11 @@ namespace Observer {
         if (this->videoBufferForValidation->AddFrame(frame) ==
             BufferState::BUFFER_READY) {
             auto event = this->videoBufferForValidation->GetEventFound();
+
+            OBSERVER_TRACE(
+                "Change detected on camera '{}', notifying subscribers",
+                this->cfg->name);
+
             this->cameraEventsPublisher.notifySubscribers(this->cfg,
                                                           std::move(event));
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numeric>
+
 #include "BaseCameraEvent.hpp"
 #include "BaseEventValidator.hpp"
 #include "Event.hpp"
@@ -7,6 +9,7 @@
 #include "Semaphore.hpp"
 #include "SimpleBlockingQueue.hpp"
 #include "ValidatorBySufficientSamples.hpp"
+#include "log/log.hpp"
 
 namespace Observer {
     template <typename TFrame>
@@ -47,7 +50,8 @@ namespace Observer {
 
     template <typename TFrame>
     EventValidator<TFrame>::EventValidator() {
-        auto validatorBySufficientSamples = new ValidatorBySufficientSamples<TFrame>();
+        auto validatorBySufficientSamples =
+            new ValidatorBySufficientSamples<TFrame>();
         //        validatorBySufficientSamples.SetNext()
         handlers.push_back(validatorBySufficientSamples);
 
@@ -78,12 +82,17 @@ namespace Observer {
             std::tie(cfg, rawCameraEvent) =
                 std::move(this->validationPool.pop());
 
+            OBSERVER_TRACE("New event from camera '{}' received, analyzing it.",
+                           cfg->name);
+
             // validate the event
             ValidationResult<TFrame> result;
             this->handler->Handle(rawCameraEvent, result);
 
             // send the event
             if (result.IsValid()) {
+                OBSERVER_TRACE("Event from camera '{}' was valid", cfg->name);
+
                 Event& event = result.GetEvent();
 
                 // set camera name
@@ -93,25 +102,41 @@ namespace Observer {
                 this->eventPublisher.notifySubscribers(
                     std::move(event), std::move(rawCameraEvent));
             } else {
-                // TODO: Log the result.message
+                OBSERVER_TRACE(
+                    "Event from camera '{}' was not valid due to {}.",
+                    cfg->name,
+                    std::accumulate(result.GetMessages().begin(),
+                                    result.GetMessages().end(), std::string(),
+                                    [](const std::string& a,
+                                       const std::string& b) -> std::string {
+                                        return a + (a.length() > 0 ? "," : "") +
+                                               b;
+                                    }));
             }
         }
     }
 
     template <typename TFrame>
-    void EventValidator<TFrame>::Add(CameraConfiguration* cfg, RawCameraEvent<TFrame> ev) {
+    void EventValidator<TFrame>::Add(CameraConfiguration* cfg,
+                                     RawCameraEvent<TFrame> ev) {
+        OBSERVER_TRACE("Received event from camera '{}', adding it to the pool",
+                       cfg->name);
+
         // add 1 item to poll
         this->smpQueue.release();
         this->validationPool.push(std::make_pair(cfg, std::move(ev)));
     }
 
     template <typename TFrame>
-    void EventValidator<TFrame>::update(CameraConfiguration* cam, RawCameraEvent<TFrame> ev) {
+    void EventValidator<TFrame>::update(CameraConfiguration* cam,
+                                        RawCameraEvent<TFrame> ev) {
         this->Add(cam, std::move(ev));
     }
 
     template <typename TFrame>
-    void EventValidator<TFrame>::Stop() { this->running = false; }
+    void EventValidator<TFrame>::Stop() {
+        this->running = false;
+    }
 
     template <typename TFrame>
     void EventValidator<TFrame>::SubscribeToEventValidationDone(

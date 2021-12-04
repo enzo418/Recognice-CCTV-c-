@@ -4,6 +4,8 @@ project(Recognize VERSION 1.0.0)
 # Opencv package
 find_package(OpenCV REQUIRED)
 
+find_package(spdlog REQUIRED)
+
 # Curl package
 set(CURL_LIBRARY "-lcurl") 
 find_package(CURL REQUIRED) 
@@ -47,7 +49,7 @@ include_directories(${CURL_INCLUDE_DIR})
 # Include yaml
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
-set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp)
+set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp spdlog)
 
 # set -l of opencv and curl
 target_link_libraries(recognize ${LIBS})

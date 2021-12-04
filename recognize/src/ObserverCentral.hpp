@@ -1,5 +1,9 @@
 #pragma once
 
+// include logging utils
+#include "log/log.hpp"
+
+// use SPD logger implementation
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <thread>
@@ -84,16 +88,23 @@ namespace Observer {
         : frameDisplay(
               static_cast<int>(this->config.camerasConfiguration.size())),
           config(std::move(pConfig)),
-          notificationController(&this->config) {}
+          notificationController(&this->config) {
+        // initialize logger
+        LogManager::Initialize();
+        OBSERVER_INFO("Hi");
+    }
 
     template <typename TFrame>
-    bool ObserverCentral<TFrame>::Start() {
+    bool ObserverCentral<TFrame>::Start() {      
+        OBSERVER_TRACE("Starting the cameras");
         this->StartAllCameras();
 
         if (this->config.outputConfiguration.showOutput) {
+            OBSERVER_TRACE("Starting the preview");
             this->StartPreview();
         }
 
+        OBSERVER_TRACE("Starting the event validator");
         // Start event validator
         // TODO: If user wants notifications:
         this->functionalityThreads.emplace_back(
@@ -103,6 +114,7 @@ namespace Observer {
             // std::thread
             std::thread(&EventValidator<TFrame>::Start, &this->eventValidator));
 
+        OBSERVER_TRACE("Subscribing notifications controller to events");
         // subscribe notification controller to validated events
         this->eventValidator.SubscribeToEventValidationDone(
             &this->notificationController);
@@ -190,7 +202,8 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void ObserverCentral<TFrame>::internalStartCamera(CameraConfiguration* cfg) {
+    void ObserverCentral<TFrame>::internalStartCamera(
+        CameraConfiguration* cfg) {
         this->camerasThreads.push_back(this->GetNewCameraThread(cfg));
     }
 

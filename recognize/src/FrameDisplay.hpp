@@ -121,7 +121,7 @@ namespace Observer {
         TFrame* referenceFrameForBlankImage;
 
         while (this->running) {
-            this->smpFrames.acquire();
+            // this->smpFrames.acquire();
 
             this->mtxFrames.lock();
 
@@ -161,6 +161,6 @@ namespace Observer {
         this->frames[cameraPos].push(frame);
         this->mtxFrames.unlock();
 
-        this->smpFrames.release();
+        // this->smpFrames.release();
     }
 }  // namespace Observer

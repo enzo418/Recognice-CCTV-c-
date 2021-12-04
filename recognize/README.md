@@ -15,3 +15,9 @@
         5. `sudo make install`
 
 - [curly.hpp](https://github.com/BlackMATov/curly.hpp) used as a http client. Already included on the project.
+
+- [spdlog](https://github.com/gabime/spdlog) logging
+    1. `git clone https://github.com/gabime/spdlog`
+    2. `cd spdlog && mkdir build && cd build`
+    3. `cmake .. && make -j`
+    4. `sudo make install`

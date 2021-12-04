@@ -57,4 +57,8 @@ set(COMMON_SOURCES
         src/implementations/opencv/ImageTransformation.hpp
         src/implementations/opencv/ImagePersistence.hpp
         src/implementations/opencv/ImageDisplay.hpp
+        
+        src/log/managers/LogManagerSPD.hpp src/log/managers/LogManagerSPD.cpp
+        src/log/managers/log_constants.hpp
+        src/log/log.hpp
 )
