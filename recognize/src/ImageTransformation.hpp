@@ -140,6 +140,14 @@ namespace Observer {
         static inline void CopyImage(T& source, T& dst);
 
         /**
+         * @brief Creates a black image.
+         *
+         * @param reference image to use as a reference while creating the black
+         * image (e.g. it will use the same width, height and type)
+         */
+        static inline cv::Mat BlackImage(T* reference = nullptr);
+
+        /**
          * @brief Crop a image, no data is copied.
          * The destionation image pointer will be pointing to the the sub-array
          * associated with the specified roi.

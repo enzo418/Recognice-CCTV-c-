@@ -178,5 +178,13 @@ namespace Observer {
         static inline void CropImage(cv::Mat& source, cv::Mat& dst, const Rect& roi) {
             dst = source(cv::Rect(roi.x, roi.y, roi.width, roi.height));
         }
+
+        static inline cv::Mat BlackImage(cv::Mat* reference = nullptr) {
+            if (reference) {
+                return cv::Mat::zeros(cv::Size(reference->cols, reference->cols), reference->type());
+            } else {
+                return cv::Mat::zeros(360, 640, CV_8UC1);
+            }
+        }
     };
 }  // namespace Observer
