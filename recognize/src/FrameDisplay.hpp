@@ -92,8 +92,6 @@ namespace Observer {
         std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
 
-        Semaphore smpFrames;
-
         int maxFrames;
 
         bool running;
@@ -121,8 +119,6 @@ namespace Observer {
         TFrame* referenceFrameForBlankImage = nullptr;
 
         while (this->running) {
-            // this->smpFrames.acquire();
-
             this->mtxFrames.lock();
 
             for (int i = 0; i < this->maxFrames; i++) {
@@ -160,7 +156,5 @@ namespace Observer {
         this->mtxFrames.lock();
         this->frames[cameraPos].push(frame);
         this->mtxFrames.unlock();
-
-        // this->smpFrames.release();
     }
 }  // namespace Observer
