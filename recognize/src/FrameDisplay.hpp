@@ -118,7 +118,7 @@ namespace Observer {
 
         const auto maxHStack = this->maxFrames == 1 ? 1 : 2;
 
-        TFrame* referenceFrameForBlankImage;
+        TFrame* referenceFrameForBlankImage = nullptr;
 
         while (this->running) {
             // this->smpFrames.acquire();
