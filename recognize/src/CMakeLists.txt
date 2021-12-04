@@ -56,4 +56,5 @@ set(COMMON_SOURCES
 
         src/implementations/opencv/ImageTransformation.hpp
         src/implementations/opencv/ImagePersistence.hpp
+        src/implementations/opencv/ImageDisplay.hpp
 )

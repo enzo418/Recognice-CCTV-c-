@@ -7,6 +7,8 @@
 #include "BaseObserverPattern.hpp"
 #include "Configuration.hpp"
 #include "IFunctionality.hpp"
+#include "ImageDisplay.hpp"
+#include "ImageTransformation.hpp"
 #include "SimpleBlockingQueue.hpp"
 
 namespace Observer {
@@ -104,7 +106,7 @@ namespace Observer {
     void FrameDisplay<TFrame>::Start() {
         this->running = true;
 
-        // TODO: Create window x
+        ImageDisplay<TFrame>::CreateWindow("images");
 
         std::vector<TFrame> framesToShow(maxFrames);
         while (this->running) {
@@ -117,12 +119,15 @@ namespace Observer {
 
             this->mtxFrames.unlock();
 
-            // TODO: Show frames on window x
+            TFrame show = ImageTransformation<TFrame>::StackImages(
+                &framesToShow[0], framesToShow.size());
+
+            ImageDisplay<TFrame>::ShowImage("images", show);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
 
-        // TODO: Destroy window x
+        ImageDisplay<TFrame>::DestroyWindow("images");
     }
 
     template <typename TFrame>
