@@ -11,6 +11,7 @@ namespace Observer {
     struct ImageDisplay<cv::Mat> {
         static void CreateWindow(const std::string& name) {
             cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
+            cv::startWindowThread();
         }
 
         static inline void ShowImage(const std::string& windowName, cv::Mat& image) {
