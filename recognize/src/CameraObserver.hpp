@@ -14,7 +14,7 @@
 #include "NotificationsController.hpp"
 
 // FrameEventSubscriber
-#include <opencv2/opencv.hpp>
+#include <iostream>
 #include <string>
 
 #include "FrameDisplay.hpp"
@@ -69,7 +69,7 @@ namespace Observer {
         // video output
         VideoWriter<TFrame> writer;
 
-        std::unique_ptr<VideoBuffer<TFrame>> validator;
+        std::unique_ptr<VideoBuffer<TFrame>> videoBufferForValidation;
 
         // timer to get a new frame every x ms
         Timer<std::chrono::milliseconds> timerFrames;
@@ -82,11 +82,6 @@ namespace Observer {
 
         Publisher<CameraConfiguration*, RawCameraEvent<TFrame>>
             cameraEventsPublisher;
-
-        // this flag is used to know when
-        // we are waiting to fill the
-        // "after" buffer on validator.
-        bool waitingBufferFill;
 
         /* Proxy allows us to give our subscribers not only the threshold,
          * but also the camera that updated the threshold.
@@ -116,6 +111,8 @@ namespace Observer {
         void ProcessFrame(TFrame& frame);
 
         void ChangeDetected();
+
+        void NewVideoBuffer();
     };
 
     template <typename TFrame>
@@ -128,20 +125,23 @@ namespace Observer {
                            this->cfg->increaseThresholdFactor),
           thresholdPublisher(cfg) {
         this->running = false;
-        this->waitingBufferFill = false;
 
-        // VideoBuffer needs to be initialized this way since
-        // we only know the buffer size here
-        const bool szbuffer = this->cfg->videoValidatorBufferSize / 2;
-        this->validator =
-            std::make_unique<VideoBuffer<TFrame>>(szbuffer, szbuffer);
+        this->NewVideoBuffer();
     }
 
     template <typename TFrame>
     void CameraObserver<TFrame>::Start() {
+        this->running = true;
+
         TFrame frame;
 
         const auto minTimeBetweenFrames = 1000 / this->cfg->fps;
+
+        this->source.Open(this->cfg->url);
+
+        if (!this->source.isOpened()) {
+            // TODO: LOG errro, maybe throw?
+        }
 
         timerFrames.Start();
 
@@ -156,6 +156,8 @@ namespace Observer {
                 }
             }
         }
+
+        this->source.Close();
     }
 
     template <typename TFrame>
@@ -176,12 +178,14 @@ namespace Observer {
             this->ChangeDetected();
         }
 
-        // buffer is full, and we were waiting to Fill the buffer
-        if (this->validator->AddFrame(frame) && this->waitingBufferFill) {
-            this->waitingBufferFill = false;
-            auto event = this->validator->GetEventFound();
+        // buffer ready means that both sub-buffer have been filled
+        if (this->videoBufferForValidation->AddFrame(frame) ==
+            BufferState::BUFFER_READY) {
+            auto event = this->videoBufferForValidation->GetEventFound();
             this->cameraEventsPublisher.notifySubscribers(this->cfg,
                                                           std::move(event));
+
+            this->NewVideoBuffer();
         }
 
         // give the change found to the thresh manager
@@ -190,8 +194,7 @@ namespace Observer {
 
     template <typename TFrame>
     void CameraObserver<TFrame>::ChangeDetected() {
-        this->validator->ChangeWasDetected();
-        this->waitingBufferFill = true;
+        this->videoBufferForValidation->ChangeWasDetected();
     }
 
     template <typename TFrame>
@@ -212,4 +215,10 @@ namespace Observer {
         this->thresholdPublisher.subscribe(subscriber);
     }
 
+    template <typename TFrame>
+    void CameraObserver<TFrame>::NewVideoBuffer() {
+        const auto szbuffer = this->cfg->videoValidatorBufferSize / 2;
+        this->videoBufferForValidation =
+            std::make_unique<VideoBuffer<TFrame>>(szbuffer, szbuffer);
+    }
 }  // namespace Observer

@@ -36,11 +36,17 @@ TYPED_TEST(VideoBufferTest, SimpleAdd) {
         images[i] = ImageTransformation<TypeParam>::BlackImage();
     }
 
+    // buffer is idle
+    EXPECT_EQ(this->buffer.GetState(), BUFFER_IDLE);
+
     for (int i = 0; i < BUFFER_SIZE * 2; i++) {
         if (i == BUFFER_SIZE / 2) this->buffer.ChangeWasDetected();
 
         this->buffer.AddFrame(images[i]);
     }
+
+    // expect the buffer to be full
+    EXPECT_EQ(this->buffer.GetState(), BUFFER_READY);
 
     auto ev = this->buffer.GetEventFound();
     auto& frames = ev.GetFrames();
