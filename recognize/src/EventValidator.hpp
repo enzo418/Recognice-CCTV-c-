@@ -50,6 +50,8 @@ namespace Observer {
         auto validatorBySufficientSamples = new ValidatorBySufficientSamples<TFrame>();
         //        validatorBySufficientSamples.SetNext()
         handlers.push_back(validatorBySufficientSamples);
+
+        this->handler = handlers[0];
     }
 
     template <typename TFrame>
