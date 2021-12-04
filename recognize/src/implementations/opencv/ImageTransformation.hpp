@@ -1,9 +1,9 @@
-#include "../../ImageTransformation.hpp"
-
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "../../ImageTransformation.hpp"
+#include "../../log/log.hpp"
 #include "opencv4/opencv2/opencv.hpp"
 namespace Observer {
     template <>
@@ -39,8 +39,11 @@ namespace Observer {
             try {
                 cv::hconcat(images, arraySize, res);
             } catch (const std::exception& e) {
-                // TODO: LOG?
-                // std::cout << "Exception: " << e.what() << std::endl;
+                OBSERVER_WARN(
+                    "Unexpected error while stacking the images, mesage: "
+                    "{}",
+                    e.what());
+
                 // return a black image of some size
                 res =
                     cv::Mat(640 * arraySize, 360, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -175,13 +178,16 @@ namespace Observer {
             return cv::countNonZero(image);
         }
 
-        static inline void CropImage(cv::Mat& source, cv::Mat& dst, const Rect& roi) {
+        static inline void CropImage(cv::Mat& source, cv::Mat& dst,
+                                     const Rect& roi) {
             dst = source(cv::Rect(roi.x, roi.y, roi.width, roi.height));
         }
 
         static inline cv::Mat BlackImage(cv::Mat* reference = nullptr) {
             if (reference) {
-                return cv::Mat::zeros(cv::Size(reference->cols, reference->cols), reference->type());
+                return cv::Mat::zeros(
+                    cv::Size(reference->cols, reference->cols),
+                    reference->type());
             } else {
                 return cv::Mat::zeros(360, 640, CV_8UC1);
             }

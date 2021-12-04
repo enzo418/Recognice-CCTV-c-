@@ -3,6 +3,17 @@
 #include <utility>
 
 namespace Observer {
+    void log_htpp_response(curly_hpp::request request) {
+        if (request.is_done()) {
+            auto response = request.take();
+            OBSERVER_INFO("Notification sended, status code: {}",
+                          response.http_code());
+        } else {
+            OBSERVER_WARN("Couldn't send the notification, message: {}",
+                          request.get_error());
+        }
+    }
+
     RestClientLocalWebNotifications::RestClientLocalWebNotifications(
         std::string pRestServerUrl)
         : LocalWebNotifications(std::move(pRestServerUrl)) {}
@@ -15,18 +26,7 @@ namespace Observer {
             .url(url)
             .header("Content-Type", "application/json")
             .content(SpecialFunctions::JsonStringGenerator({{"text", text}}))
-            .callback([](curly_hpp::request request) {
-                if (request.is_done()) {
-                    auto response = request.take();
-                    // TODO: Log ok
-                    std::cout << "Status code: " << response.http_code()
-                              << std::endl;
-                } else {
-                    // TODO: Log error r.body
-                    std::cout << "Error message: " << request.get_error()
-                              << std::endl;
-                }
-            })
+            .callback(log_htpp_response)
             .send();
     }
 
@@ -40,18 +40,7 @@ namespace Observer {
             .header("Content-Type", "application/json")
             .content(SpecialFunctions::JsonStringGenerator(
                 {{"text", text}, {"image_path", path}}))
-            .callback([](curly_hpp::request request) {
-                if (request.is_done()) {
-                    auto response = request.take();
-                    // TODO: Log ok
-                    std::cout << "Status code: " << response.http_code()
-                              << std::endl;
-                } else {
-                    // TODO: Log error r.body
-                    std::cout << "Error message: " << request.get_error()
-                              << std::endl;
-                }
-            })
+            .callback(log_htpp_response)
             .send();
     }
 
@@ -64,18 +53,7 @@ namespace Observer {
             .header("Content-Type", "application/json")
             .content(SpecialFunctions::JsonStringGenerator(
                 {{"text", text}, {"video_path", path}}))
-            .callback([](curly_hpp::request request) {
-                if (request.is_done()) {
-                    auto response = request.take();
-                    // TODO: Log ok
-                    std::cout << "Status code: " << response.http_code()
-                              << std::endl;
-                } else {
-                    // TODO: Log error r.body
-                    std::cout << "Error message: " << request.get_error()
-                              << std::endl;
-                }
-            })
+            .callback(log_htpp_response)
             .send();
     }
 };  // namespace Observer

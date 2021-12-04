@@ -10,15 +10,16 @@ namespace Observer::ConfigurationParser {
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
         } catch (const YAML::InvalidNode& ex) {
-            // Log
-            std::cout << "Couldn't parse the configuration file: " << std::endl;
-
+            std::string message = "";
             if (!ex.mark.is_null()) {
-                std::cout << "\n\t Line: " << ex.mark.line
-                          << "\n\t Pos: " << ex.mark.pos << std::endl;
+                message = "Line: " + std::to_string(ex.mark.line) +
+                          " Pos: " + std::to_string(ex.mark.pos);
             }
+            message += " - " + ex.msg;
 
-            std::cout << "\tError: " << ex.msg << std::endl;
+            // Log
+            OBSERVER_ERROR("Couldn't parse the configuration file: {}",
+                           message);
 
             auto key = Observer::StringUtility::GetStringBetweenDelimiter(
                 ex.msg, "\"", "\"");
@@ -41,16 +42,20 @@ namespace Observer::ConfigurationParser {
                     throw WrongType(ex.mark.line, ex.mark.column, ex.mark.pos);
                 } */
         catch (const YAML::ParserException& ex) {
-            std::cout << "Couldn't parse the configuration file: " << std::endl;
-
+            std::string message = "";
             if (!ex.mark.is_null()) {
-                std::cout << "\n\t Line: " << ex.mark.line
-                          << "\n\t Pos: " << ex.mark.pos << std::endl;
+                message = "Line: " + std::to_string(ex.mark.line) +
+                          " Pos: " + std::to_string(ex.mark.pos);
             }
+            message += " - " + ex.msg;
 
-            std::cout << "\tError: " << ex.msg << std::endl;
+            // Log
+            OBSERVER_ERROR("Couldn't parse the configuration file: {}",
+                           message);
         } catch (const std::exception& ex) {
-            std::cout << "Couldn't parse the configuration file: " << std::endl;
+            OBSERVER_ERROR("Couldn't parse the configuration file: {}",
+                           ex.what());
+            // TODO: This is soooooooo bad... return false or something...
         }
 
         return cfg;

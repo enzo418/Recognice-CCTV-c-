@@ -4,6 +4,7 @@
 #include "utils/SpecialFunctions.hpp"
 //#include <restclient-cpp/restclient.h>
 #include "external/curly.hpp/curly.hpp"
+#include "log/log.hpp"
 
 namespace Observer {
     class RestClientLocalWebNotifications : public LocalWebNotifications {

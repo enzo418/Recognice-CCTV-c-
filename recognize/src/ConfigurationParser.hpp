@@ -9,6 +9,7 @@
 #include "Configuration.hpp"
 #include "LocalWebNotifications.hpp"
 #include "NotificationsServiceConfiguration.hpp"
+#include "log/log.hpp"
 #include "utils/SpecialEnums.hpp"
 #include "utils/SpecialStrings.hpp"
 
