@@ -47,7 +47,7 @@ namespace Observer {
     template <typename TFrame>
     CircularFrameBuffer<TFrame>::CircularFrameBuffer(int bufferSize) {
         // reserve enough buffer size for the frames
-        this->frames.reserve(bufferSize);
+        this->frames.resize(bufferSize);
 
         this->framesPosition = 0;
     }
@@ -58,7 +58,7 @@ namespace Observer {
 
         const int next = this->framesPosition + 1;
 
-        const bool isFull = next > this->frames.capacity();
+        const bool isFull = next >= this->frames.capacity();
         this->framesPosition = isFull ? 0 : next;
 
         return isFull;
