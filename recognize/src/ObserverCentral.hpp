@@ -51,12 +51,12 @@ namespace Observer {
 
         FrameDisplay<TFrame> frameDisplay;
 
-        CameraThread GetNewCameraThread(CameraConfiguration cfg);
+        CameraThread GetNewCameraThread(CameraConfiguration* cfg);
 
         EventValidator<TFrame> eventValidator;
 
         void internalStopCamera(CameraThread& camThread);
-        void internalStartCamera(CameraConfiguration cfg);
+        void internalStartCamera(CameraConfiguration* cfg);
 
         /* Proxy allows us to give our subscribers not only the threshold,
          * but also the camera that updated the threshold.
@@ -149,8 +149,8 @@ namespace Observer {
 
     template <typename TFrame>
     void ObserverCentral<TFrame>::StartAllCameras() {
-        for (auto&& configuration : this->config.camerasConfiguration) {
-            this->internalStartCamera(configuration);
+        for (auto& configuration : this->config.camerasConfiguration) {
+            this->internalStartCamera(&configuration);
         }
 
         for (auto&& camThread : this->camerasThreads) {
@@ -190,15 +190,15 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void ObserverCentral<TFrame>::internalStartCamera(CameraConfiguration cfg) {
+    void ObserverCentral<TFrame>::internalStartCamera(CameraConfiguration* cfg) {
         this->camerasThreads.push_back(this->GetNewCameraThread(cfg));
     }
 
     template <typename TFrame>
     typename ObserverCentral<TFrame>::CameraThread
-    ObserverCentral<TFrame>::GetNewCameraThread(CameraConfiguration cfg) {
+    ObserverCentral<TFrame>::GetNewCameraThread(CameraConfiguration* cfg) {
         ObserverCentral<TFrame>::CameraThread ct;
-        ct.camera = std::make_shared<CameraObserver<TFrame>>(&cfg);
+        ct.camera = std::make_shared<CameraObserver<TFrame>>(cfg);
         ct.thread = std::thread(&CameraObserver<TFrame>::Start, ct.camera);
         return ct;
     }
