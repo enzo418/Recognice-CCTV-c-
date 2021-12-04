@@ -12,7 +12,7 @@ namespace Observer {
             this->videoCapture.open(url);
         }
 
-        void Close(const std::string& url) override {
+        void Close() override {
             this->videoCapture.release();
         }
 

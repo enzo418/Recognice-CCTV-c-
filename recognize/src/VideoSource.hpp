@@ -13,7 +13,7 @@ namespace Observer {
        public:
         virtual void Open(const std::string& url) = 0;
 
-        virtual void Close(const std::string& url) = 0;
+        virtual void Close() = 0;
 
         virtual bool GetNextFrame(TFrame&) = 0;
 
