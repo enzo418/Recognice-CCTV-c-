@@ -12,6 +12,7 @@
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
 #include "Configuration/Configuration.hpp"
+#include "Configuration/OutputPreviewConfiguration.hpp"
 
 namespace Observer {
     /**
@@ -24,7 +25,7 @@ namespace Observer {
         /**
          * @param total Number of frames to display at the same time
          */
-        explicit FrameDisplay(int total);
+        explicit FrameDisplay(int total, OutputPreviewConfiguration* cfg);
 
         void Start() override;
 
@@ -41,13 +42,17 @@ namespace Observer {
         std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
 
+        OutputPreviewConfiguration* cfg;
+
         int maxFrames;
 
         bool running;
     };
 
     template <typename TFrame>
-    FrameDisplay<TFrame>::FrameDisplay(int total) : maxFrames(total) {
+    FrameDisplay<TFrame>::FrameDisplay(int total,
+                                       OutputPreviewConfiguration* pCfg)
+        : maxFrames(total), cfg(pCfg) {
         this->running = false;
         this->frames.resize(total);
     }
@@ -86,6 +91,15 @@ namespace Observer {
 
             frame = ImageTransformation<TFrame>::StackImages(
                 &framesToShow[0], this->maxFrames, maxHStack);
+
+            if (!this->cfg->resolution.empty()) {
+                ImageTransformation<TFrame>::Resize(frame, frame,
+                                                    this->cfg->resolution);
+            } else {
+                ImageTransformation<TFrame>::Resize(frame, frame,
+                                                    this->cfg->scaleFactor,
+                                                    this->cfg->scaleFactor);
+            }
 
             ImageDisplay<TFrame>::ShowImage("images", frame);
 

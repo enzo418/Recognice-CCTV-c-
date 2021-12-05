@@ -87,7 +87,8 @@ namespace Observer {
     template <typename TFrame>
     ObserverCentral<TFrame>::ObserverCentral(Configuration pConfig)
         : frameDisplay(
-              static_cast<int>(this->config.camerasConfiguration.size())),
+              static_cast<int>(this->config.camerasConfiguration.size()),
+              &this->config.outputConfiguration),
           config(std::move(pConfig)),
           notificationController(&this->config) {}
 

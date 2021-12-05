@@ -14,5 +14,7 @@ namespace Observer {
             return std::tie(other.height, other.width) ==
                    std::tie(height, width);
         };
+
+        bool empty() { return width == 0 || height == 0; }
     };
 }  // namespace Observer

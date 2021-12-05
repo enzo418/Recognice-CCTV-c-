@@ -102,6 +102,16 @@ namespace Observer {
         static void Resize(T& source, T& dst, const Size& size);
 
         /**
+         * @brief Scales a image
+         *
+         * @param soruce source image
+         * @param dst destionation image
+         * @param scaleFactor scale factor
+         */
+        static void Resize(T& soruce, T& dst, const double scaleFactorX,
+                           const double scaleFactorY);
+
+        /**
          * @brief Calculates the absolute difference element by element
          * between two images
          *

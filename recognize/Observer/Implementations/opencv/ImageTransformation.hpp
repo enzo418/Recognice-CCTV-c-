@@ -151,6 +151,12 @@ namespace Observer {
             cv::resize(source, dst, sz);
         }
 
+        static void Resize(cv::Mat& source, cv::Mat& dst,
+                           const double scaleFactorX,
+                           const double scaleFactorY) {
+            cv::resize(source, dst, cv::Size(), scaleFactorX, scaleFactorY);
+        }
+
         static void Threshold(cv::Mat& source, cv::Mat& dst, double threshold,
                               double max, int type) {
             switch (type) {
