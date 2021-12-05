@@ -26,6 +26,8 @@ namespace Observer {
 
         double rotation;
 
+        bool firstCall;
+
        public:
         /**
          * @brief Construct a new Frame Processor object
@@ -48,6 +50,7 @@ namespace Observer {
         this->noiseThreshold = pNoiseThreshold;
         this->rotation = pRotation;
         this->lastFrame = ImageTransformation<T>::BlackImage();
+        this->firstCall = true;
     }
 
     template <typename T>
@@ -65,8 +68,11 @@ namespace Observer {
         ImageTransformation<T>::ToColorSpace(
             frame, frame, ColorSpaceConversion::COLOR_RGB2GRAY);
 
-        // TODO: PROBLABLY HERE IS MISMATCH OF SIZES BETWEEN lastframe and
-        // frame, since lastframe in the first iteration is empty (BlackImage)
+        // set lastFrame to a valid frame so we can operate over it
+        if (firstCall) {
+            firstCall = false;
+            ImageTransformation<T>::CopyImage(frame, this->lastFrame);
+        }
 
         // get the difference between the current and last frame
         ImageTransformation<T>::AbsoluteDifference(this->lastFrame, frame,
