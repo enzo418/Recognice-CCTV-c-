@@ -160,7 +160,9 @@ namespace Observer {
     template <typename TFrame>
     void ObserverCentral<TFrame>::StartAllCameras() {
         for (auto& configuration : this->config.camerasConfiguration) {
-            this->internalStartCamera(&configuration);
+            if (configuration.type != ECameraType::DISABLED) {
+                this->internalStartCamera(&configuration);
+            }
         }
 
         for (auto&& camThread : this->camerasThreads) {
