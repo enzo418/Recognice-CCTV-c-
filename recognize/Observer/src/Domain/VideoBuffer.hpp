@@ -29,8 +29,6 @@ namespace Observer {
          */
         int AddFrame(TFrame& frame);
 
-        bool CheckIfTheChangeIsValid();
-
         CameraEvent<TFrame> GetEventFound();
 
         int GetState();
@@ -72,12 +70,6 @@ namespace Observer {
         }
 
         return bufferState;
-    }
-
-    template <typename TFrame>
-    bool VideoBuffer<TFrame>::CheckIfTheChangeIsValid() {
-        // TODO
-        return true;
     }
 
     template <typename TFrame>
