@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../Pattern/ChainOfResponsibilityBasics.hpp"
-#include "../Event/Event.hpp"
 #include "../Event/CameraEvent.hpp"
+#include "../Event/Event.hpp"
 #include "ValidationResult.hpp"
 
 namespace Observer {
@@ -11,8 +11,8 @@ namespace Observer {
                                                     CameraEvent<TFrame>&> {
        public:
         ValidationResult<TFrame> Handle(
-                CameraEvent<TFrame>& request,
-                ValidationResult<TFrame>& result) override {
+            CameraEvent<TFrame>& request,
+            ValidationResult<TFrame>& result) override {
             auto res = this->isValid(request, result);
             if (res.IsValid()) {
                 return res;
@@ -24,7 +24,6 @@ namespace Observer {
         }
 
         virtual ValidationResult<TFrame> isValid(
-                CameraEvent<TFrame>& request,
-                ValidationResult<TFrame>& result) = 0;
+            CameraEvent<TFrame>& request, ValidationResult<TFrame>& result) = 0;
     };
 }  // namespace Observer

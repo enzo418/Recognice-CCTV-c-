@@ -43,7 +43,6 @@ namespace Observer {
         int framesPosition;
     };
 
-
     template <typename TFrame>
     CircularFrameBuffer<TFrame>::CircularFrameBuffer(int bufferSize) {
         // reserve enough buffer size for the frames

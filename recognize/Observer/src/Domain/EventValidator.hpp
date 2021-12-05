@@ -2,16 +2,16 @@
 
 #include <numeric>
 
-#include "../Pattern/Event/IEventSubscriber.hpp"
-#include "../Pattern/Camera/ICameraEventSubscriber.hpp"
-#include "../Pattern/Validation/IValidatorHandler.hpp"
 #include "../IFunctionality.hpp"
 #include "../Log/log.hpp"
+#include "../Pattern/Camera/ICameraEventSubscriber.hpp"
+#include "../Pattern/Event/IEventSubscriber.hpp"
+#include "../Pattern/Validation/IValidatorHandler.hpp"
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
 #include "Event/Event.hpp"
-#include "Validators/ValidatorHandler.hpp"
 #include "Validators/ValidatorBySufficientSamples.hpp"
+#include "Validators/ValidatorHandler.hpp"
 
 namespace Observer {
     template <typename TFrame>
@@ -26,7 +26,8 @@ namespace Observer {
 
         void Stop() override;
 
-        void SubscribeToEventValidationDone(IEventSubscriber<TFrame>* subscriber);
+        void SubscribeToEventValidationDone(
+            IEventSubscriber<TFrame>* subscriber);
 
         void update(CameraConfiguration* cfg, CameraEvent<TFrame> ev) override;
 

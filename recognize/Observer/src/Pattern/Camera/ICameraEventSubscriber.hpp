@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../ObserverBasics.hpp"
-#include "../../Domain/Event/CameraEvent.hpp"
 #include "../../Domain/Configuration/CameraConfiguration.hpp"
+#include "../../Domain/Event/CameraEvent.hpp"
+#include "../ObserverBasics.hpp"
 
 namespace Observer {
     template <typename TFrame>

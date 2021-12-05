@@ -1,19 +1,19 @@
 #pragma once
 
+#include "../Log/log.hpp"
 #include "../Pattern/Camera/IThresholdEventSubscriber.hpp"
 #include "../Pattern/ObserverBasics.hpp"
+#include "../Timer.hpp"
 #include "Configuration/CameraConfiguration.hpp"
 #include "FrameProcessor.hpp"
 #include "ThresholdManager.hpp"
-#include "../Timer.hpp"
 #include "VideoBuffer.hpp"
 #include "VideoSource.hpp"
 #include "VideoWriter.hpp"
-#include "../Log/log.hpp"
 
 // CameraEventSubscriber
-#include "FrameDisplay.hpp"
 #include "../IFunctionality.hpp"
+#include "FrameDisplay.hpp"
 #include "NotificationsController.hpp"
 #include "VideoSource.hpp"
 #include "VideoWriter.hpp"
@@ -45,7 +45,8 @@ namespace Observer {
 
         void Stop() override;
 
-        void SubscribeToCameraEvents(ICameraEventSubscriber<TFrame>* subscriber);
+        void SubscribeToCameraEvents(
+            ICameraEventSubscriber<TFrame>* subscriber);
         void SubscribeToFramesUpdate(IFrameSubscriber<TFrame>* subscriber);
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
@@ -202,19 +203,19 @@ namespace Observer {
 
     template <typename TFrame>
     void CameraObserver<TFrame>::SubscribeToCameraEvents(
-            ICameraEventSubscriber<TFrame>* subscriber) {
+        ICameraEventSubscriber<TFrame>* subscriber) {
         this->cameraEventsPublisher.subscribe(subscriber);
     }
 
     template <typename TFrame>
     void CameraObserver<TFrame>::SubscribeToFramesUpdate(
-            IFrameSubscriber<TFrame>* subscriber) {
+        IFrameSubscriber<TFrame>* subscriber) {
         this->framePublisher.subscribe(subscriber);
     }
 
     template <typename TFrame>
     void CameraObserver<TFrame>::SubscribeToThresholdUpdate(
-            IThresholdEventSubscriber* subscriber) {
+        IThresholdEventSubscriber* subscriber) {
         this->thresholdPublisher.subscribe(subscriber);
     }
 

@@ -9,11 +9,11 @@
 #include <thread>
 #include <vector>
 
+#include "../IFunctionality.hpp"
 #include "CameraObserver.hpp"
 #include "Configuration/Configuration.hpp"
 #include "EventValidator.hpp"
 #include "FrameDisplay.hpp"
-#include "../IFunctionality.hpp"
 #include "Notification/Notification.hpp"
 #include "NotificationsController.hpp"
 
@@ -65,7 +65,8 @@ namespace Observer {
         /* Proxy allows us to give our subscribers not only the threshold,
          * but also the camera that updated the threshold.
          */
-        class ProxyCameraEventPublisher : public ICameraEventSubscriber<TFrame> {
+        class ProxyCameraEventPublisher
+            : public ICameraEventSubscriber<TFrame> {
            public:
             explicit ProxyCameraEventPublisher() {}
 
@@ -181,7 +182,7 @@ namespace Observer {
 
     template <typename TFrame>
     void ObserverCentral<TFrame>::SubscribeToThresholdUpdate(
-            IThresholdEventSubscriber* subscriber) {
+        IThresholdEventSubscriber* subscriber) {
         for (auto&& camThread : this->camerasThreads) {
             camThread.camera->SubscribeToThresholdUpdate(subscriber);
         }

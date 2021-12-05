@@ -3,9 +3,9 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "../../../vendor/bitmask_operators.hpp"
 #include "../../Point.hpp"
 #include "../../Rect.hpp"
-#include "../../../vendor/bitmask_operators.hpp"
 
 namespace Observer {
     enum ERestrictionType { ALLOW = 1, DENY = 2 };

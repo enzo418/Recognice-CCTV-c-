@@ -1,7 +1,7 @@
 #include <opencv2/core/persistence.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include "../../src/ImagePersistence.hpp"
 
+#include "../../src/ImagePersistence.hpp"
 #include "opencv4/opencv2/opencv.hpp"
 
 namespace Observer {

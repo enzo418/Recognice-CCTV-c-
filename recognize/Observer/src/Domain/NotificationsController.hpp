@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "../Pattern/Event/IEventSubscriber.hpp"
-#include "../Pattern/Camera/ICameraEventSubscriber.hpp"
-#include "../Pattern/ObserverBasics.hpp"
 #include "../IFunctionality.hpp"
+#include "../Pattern/Camera/ICameraEventSubscriber.hpp"
+#include "../Pattern/Event/IEventSubscriber.hpp"
+#include "../Pattern/ObserverBasics.hpp"
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
 #include "../Utils/SpecialEnums.hpp"
-#include "Event/CameraEvent.hpp"
 #include "Configuration/Configuration.hpp"
+#include "Event/CameraEvent.hpp"
 #include "Event/Event.hpp"
 #include "Notification/IMessagingService.hpp"
 #include "Notification/RestClientLocalWebNotifications.hpp"
@@ -24,9 +24,8 @@ namespace Observer {
      * Send unless you do not mind thread locking.
      */
     template <typename TFrame>
-    class NotificationsController
-        : public IEventSubscriber<TFrame>,
-          public IFunctionality {
+    class NotificationsController : public IEventSubscriber<TFrame>,
+                                    public IFunctionality {
         /**
          * @brief Todo: Make a specializations of this class as opencv,
          * NotificationsConntrollerOPV,

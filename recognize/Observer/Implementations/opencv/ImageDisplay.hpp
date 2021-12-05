@@ -2,9 +2,9 @@
 
 #include <iostream>
 #include <opencv2/highgui.hpp>
-#include "opencv2/opencv.hpp"
 
 #include "../../src/ImageDisplay.hpp"
+#include "opencv2/opencv.hpp"
 
 namespace Observer {
     template <>
@@ -14,7 +14,8 @@ namespace Observer {
             cv::startWindowThread();
         }
 
-        static inline void ShowImage(const std::string& windowName, cv::Mat& image) {
+        static inline void ShowImage(const std::string& windowName,
+                                     cv::Mat& image) {
             cv::imshow(windowName, image);
         }
 

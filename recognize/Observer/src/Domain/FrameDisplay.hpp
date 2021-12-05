@@ -4,14 +4,14 @@
 #include <mutex>
 #include <thread>
 
-#include "../Pattern/ObserverBasics.hpp"
-#include "../Pattern/Camera/IFrameSubscriber.hpp"
-#include "Configuration/Configuration.hpp"
 #include "../IFunctionality.hpp"
 #include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
+#include "../Pattern/Camera/IFrameSubscriber.hpp"
+#include "../Pattern/ObserverBasics.hpp"
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
+#include "Configuration/Configuration.hpp"
 
 namespace Observer {
     /**

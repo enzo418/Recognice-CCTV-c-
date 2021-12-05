@@ -9,7 +9,7 @@
 namespace Observer {
     struct Rect {
         Rect() = default;
-        
+
         Rect(int pX, int pY, int pWidth, int pHeight)
             : x(pX), y(pY), width(pWidth), height(pHeight) {};
 
