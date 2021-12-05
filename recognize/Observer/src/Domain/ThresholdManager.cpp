@@ -6,6 +6,7 @@ namespace Observer {
                                        double pIncreaseFactor) {
         this->thresholdAccumulator = 0;
         this->thresholdSamples = 0;
+        this->threshold = 0;
 
         this->minimumValue = pMinimumValue;
         this->updateFrequency = pUpdateFrequency;
@@ -17,7 +18,7 @@ namespace Observer {
             this->timer.Start();
         }
 
-        this->thresholdAccumulator += this->minimumValue + threshold;
+        this->thresholdAccumulator += this->minimumValue + pThreshold;
         this->thresholdSamples += 1;
 
         if (this->timer.GetDuration() >= this->updateFrequency) {
