@@ -4,11 +4,10 @@
 #include <fstream>
 #include <opencv4/opencv2/core/types.hpp>
 
-#include "../src/VideoBuffer.hpp"
+#include "../Observer/src/Domain/VideoBuffer.hpp"
 
 // include all the implementations
-#include "../src/implementations/opencv/ImageTransformation.hpp"
-
+#include "../Observer/Implementations/opencv/ImageTransformation.hpp"
 
 using namespace Observer;
 
@@ -56,7 +55,7 @@ TYPED_TEST(VideoBufferTest, SimpleAdd) {
 
 TYPED_TEST(VideoBufferTest, OverrideAdd) {
     const int addTotal = BUFFER_SIZE * 4;
-    
+
     for (int i = 0; i < addTotal; i++) {
         if (i == BUFFER_SIZE) this->buffer.ChangeWasDetected();
 

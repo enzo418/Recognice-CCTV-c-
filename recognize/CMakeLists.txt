@@ -15,7 +15,7 @@ find_package(yaml-cpp REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
-add_subdirectory(src/external/curly.hpp)
+add_subdirectory(Observer/vendor/curly.hpp)
 
 # =========
 #  Sources 
@@ -23,11 +23,11 @@ add_subdirectory(src/external/curly.hpp)
 
 #set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-include(src/CMakeLists.txt)
+include(Observer/CMakeLists.txt)
 
 # If the cmake file isn't included then use the sample program
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
-        set(SOURCES ${COMMON_SOURCES} sample/sample_main.cpp)
+        set(SOURCES ${COMMON_SOURCES} Observer/Observer.cpp)
 endif()
 
 # Print sources

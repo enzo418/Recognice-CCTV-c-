@@ -1,0 +1,109 @@
+#pragma once
+
+#include <chrono>
+#include <mutex>
+#include <thread>
+
+#include "../Pattern/ObserverBasics.hpp"
+#include "../Pattern/Camera/IFrameSubscriber.hpp"
+#include "Configuration/Configuration.hpp"
+#include "../IFunctionality.hpp"
+#include "../ImageDisplay.hpp"
+#include "../ImageTransformation.hpp"
+#include "../Semaphore.hpp"
+#include "../SimpleBlockingQueue.hpp"
+
+namespace Observer {
+    /**
+     * @todo write docs
+     */
+    template <typename TFrame>
+    class FrameDisplay : public IFrameSubscriber<TFrame>,
+                         public IFunctionality {
+       public:
+        /**
+         * @param total Number of frames to display at the same time
+         */
+        explicit FrameDisplay(int total);
+
+        void Start() override;
+
+        void Stop() override;
+
+        /**
+         * @brief add a new frame to the available frames
+         *
+         * @param framePosition 0 = top left, 1 = top right, ...
+         */
+        void update(int framePosition, TFrame frame) override;
+
+       private:
+        std::vector<std::queue<TFrame>> frames;
+        std::mutex mtxFrames;
+
+        int maxFrames;
+
+        bool running;
+    };
+
+    template <typename TFrame>
+    FrameDisplay<TFrame>::FrameDisplay(int total) : maxFrames(total) {
+        this->running = false;
+        this->frames.resize(total);
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::Start() {
+        this->running = true;
+
+        ImageDisplay<TFrame>::CreateWindow("images");
+
+        TFrame frame;
+
+        std::vector<TFrame> framesToShow(maxFrames);
+        std::vector<bool> cameraFirstFrameReaded(maxFrames);
+
+        const auto maxHStack = this->maxFrames == 1 ? 1 : 2;
+
+        TFrame* referenceFrameForBlankImage = nullptr;
+
+        while (this->running) {
+            this->mtxFrames.lock();
+
+            for (int i = 0; i < this->maxFrames; i++) {
+                if (!frames[i].empty()) {
+                    cameraFirstFrameReaded[i] = true;
+                    framesToShow[i] = this->frames[i].front();
+                    referenceFrameForBlankImage = &framesToShow[i];
+                    this->frames[i].pop();
+                } else if (!cameraFirstFrameReaded[i]) {
+                    framesToShow[i] = ImageTransformation<TFrame>::BlackImage(
+                        referenceFrameForBlankImage);
+                }
+            }
+
+            this->mtxFrames.unlock();
+
+            frame = ImageTransformation<TFrame>::StackImages(
+                &framesToShow[0], this->maxFrames, maxHStack);
+
+            ImageDisplay<TFrame>::ShowImage("images", frame);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+
+        ImageDisplay<TFrame>::DestroyWindow("images");
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::Stop() {
+        this->running = false;
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::update(int cameraPos, TFrame frame) {
+        this->mtxFrames.lock();
+        this->frames[cameraPos].push(frame);
+        this->mtxFrames.unlock();
+    }
+}  // namespace Observer

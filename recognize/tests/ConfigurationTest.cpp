@@ -1,8 +1,8 @@
-#include "../src/Configuration.hpp"
-#include "../src/ConfigurationParser.hpp"
-#include "../src/Size.hpp"
-#include "../src/Rect.hpp"
-#include "../src/Point.hpp"
+#include "../Observer/src/Domain/Configuration/Configuration.hpp"
+#include "../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
+#include "../Observer/src/Size.hpp"
+#include "../Observer/src/Rect.hpp"
+#include "../Observer/src/Point.hpp"
 
 #include <cstdlib>
 #include <fstream>
