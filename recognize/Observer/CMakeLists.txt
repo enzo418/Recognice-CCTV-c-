@@ -65,6 +65,7 @@ set(SRC_
         src/Utils/SpecialStrings.cpp src/Utils/SpecialStrings.hpp
         src/Utils/SpecialEnums.hpp
         src/Utils/SpecialFunctions.hpp src/Utils/SpecialFunctions.cpp
+        src/Utils/CurlWrapper.cpp src/Utils/CurlWrapper.hpp
 
         # extensions
         Extensions/opencv/extension_cv.hpp Extensions/opencv/extension_cv.cpp
