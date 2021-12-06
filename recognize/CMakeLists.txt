@@ -15,8 +15,6 @@ find_package(yaml-cpp REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
-add_subdirectory(Observer/vendor/curly.hpp)
-
 # =========
 #  Sources 
 # =========
@@ -49,7 +47,7 @@ include_directories(${CURL_INCLUDE_DIR})
 # Include yaml
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
-set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp curly.hpp yaml-cpp spdlog)
+set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
 
 # set -l of opencv and curl
 target_link_libraries(recognize ${LIBS})

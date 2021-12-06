@@ -118,7 +118,10 @@ namespace Observer {
 
         auto ptrLocal = new RestClientLocalWebNotifications(
             cfg->localWebConfiguration.webServerUrl);
-        auto ptrTelegram = new TelegramNotifications();
+        auto ptrTelegram =
+            new TelegramNotifications(&cfg->telegramConfiguration);
+
+        this->services = {ptrLocal, ptrTelegram};
 
         this->AddServiceToDrawable(ptrLocal,
                                    &this->config->localWebConfiguration);
