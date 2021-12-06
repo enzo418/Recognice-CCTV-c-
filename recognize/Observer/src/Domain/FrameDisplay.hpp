@@ -25,7 +25,9 @@ namespace Observer {
         /**
          * @param total Number of frames to display at the same time
          */
-        explicit FrameDisplay(int total, OutputPreviewConfiguration* cfg);
+        explicit FrameDisplay(OutputPreviewConfiguration* cfg);
+
+        void SetNumberCameras(int total);
 
         void Start() override;
 
@@ -50,15 +52,18 @@ namespace Observer {
     };
 
     template <typename TFrame>
-    FrameDisplay<TFrame>::FrameDisplay(int total,
-                                       OutputPreviewConfiguration* pCfg)
-        : maxFrames(total), cfg(pCfg) {
+    FrameDisplay<TFrame>::FrameDisplay(OutputPreviewConfiguration* pCfg)
+        : cfg(pCfg) {
         this->running = false;
-        this->frames.resize(total);
+        this->maxFrames = -1;
     }
 
     template <typename TFrame>
     void FrameDisplay<TFrame>::Start() {
+        OBSERVER_ASSERT(
+            this->maxFrames != -1,
+            "SetNumberCameras should be called before calling start");
+
         this->running = true;
 
         ImageDisplay<TFrame>::CreateWindow("images");
@@ -119,5 +124,11 @@ namespace Observer {
         this->mtxFrames.lock();
         this->frames[cameraPos].push(frame);
         this->mtxFrames.unlock();
+    }
+
+    template <typename TFrame>
+    void FrameDisplay<TFrame>::SetNumberCameras(int total) {
+        this->frames.resize(total);
+        this->maxFrames = total;
     }
 }  // namespace Observer
