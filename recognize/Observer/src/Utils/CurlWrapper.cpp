@@ -4,16 +4,6 @@
 
 #include <memory>
 
-void parse_url_qparams(std::string& url, CurlWrapper::qparams& qparams) {
-    if (!qparams.empty()) {
-        url += "?";
-        for (auto const& param : qparams) {
-            url += param.first + "=" + param.second + "&";
-        }
-        url.pop_back();
-    }
-}
-
 CurlWrapper::CurlWrapper() { this->curl_ = curl_easy_init(); }
 CurlWrapper::~CurlWrapper() {
     if (this->curl_ != nullptr) {
@@ -29,26 +19,24 @@ CurlWrapper::~CurlWrapper() {
     }
 }
 
-CurlWrapper& CurlWrapper::url(const std::string& url, bool ipv6) {
+CurlWrapper& CurlWrapper::url(std::string url, bool ipv6) {
     this->ipv6_ = ipv6;
     this->url_ = url;
 
     return *this;
 }
 
-CurlWrapper& CurlWrapper::qparam(const std::string& param,
-                                 const std::string& value) {
+CurlWrapper& CurlWrapper::qparam(std::string param, std::string value) {
     this->qparams_.insert_or_assign(param, value);
     return *this;
 }
 
-CurlWrapper& CurlWrapper::header(const std::string& param,
-                                 const std::string& value) {
+CurlWrapper& CurlWrapper::header(std::string param, std::string value) {
     this->headers_.insert_or_assign(param, value);
     return *this;
 }
 
-CurlWrapper& CurlWrapper::body(const std::string& pBody) {
+CurlWrapper& CurlWrapper::body(std::string pBody) {
     this->body_ = pBody;
     return *this;
 }
@@ -61,7 +49,7 @@ CurlWrapper& CurlWrapper::method(CURLoption method) {
 
 curl_wrapper_response CurlWrapper::perform(bool customWrite) {
     // --- Set url
-    parse_url_qparams(this->url_, this->qparams_);
+    build_url_with_qparams();
 
     curl_easy_setopt(this->curl_, CURLOPT_URL, url_.c_str());
 
@@ -125,3 +113,18 @@ CurlWrapper& CurlWrapper::formAdd(const std::string& name, int value_content,
 CURL* CurlWrapper::get() { return this->curl_; }
 
 curl_httppost* CurlWrapper::getPost() { return this->post_; }
+
+void CurlWrapper::build_url_with_qparams() {
+    if (!this->qparams_.empty()) {
+        this->url_ += "?";
+        for (auto const& param : this->qparams_) {
+            this->url_ +=
+                param.first + "=" + this->encode_url(param.second) + "&";
+        }
+        this->url_.pop_back();
+    }
+}
+
+std::string CurlWrapper::encode_url(const std::string& url) {
+    return std::string(curl_easy_escape(this->curl_, url.c_str(), url.size()));
+}

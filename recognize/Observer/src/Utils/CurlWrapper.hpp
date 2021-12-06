@@ -35,13 +35,13 @@ class CurlWrapper {
     CurlWrapper();
     ~CurlWrapper();
 
-    CurlWrapper& url(const std::string& url, bool ipv6 = false);
+    CurlWrapper& url(std::string url, bool ipv6 = false);
 
-    CurlWrapper& qparam(const std::string& param, const std::string& value);
+    CurlWrapper& qparam(std::string param, std::string value);
 
-    CurlWrapper& header(const std::string& param, const std::string& value);
+    CurlWrapper& header(std::string param, std::string value);
 
-    CurlWrapper& body(const std::string& body);
+    CurlWrapper& body(std::string body);
 
     CurlWrapper& method(CURLoption method);
 
@@ -94,6 +94,10 @@ class CurlWrapper {
     std::string url_;
     bool ipv6_;
     std::string body_;
+
+   private:
+    void build_url_with_qparams();
+    std::string encode_url(const std::string&);
 };
 
 template <typename... Args>
