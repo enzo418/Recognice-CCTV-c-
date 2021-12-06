@@ -198,5 +198,10 @@ namespace Observer {
                 return cv::Mat::zeros(360, 640, CV_8UC3);
             }
         }
+
+        static Size GetSize(cv::Mat& image) {
+            auto sz = image.size();
+            return Size(sz.width, sz.height);
+        }
     };
 }  // namespace Observer

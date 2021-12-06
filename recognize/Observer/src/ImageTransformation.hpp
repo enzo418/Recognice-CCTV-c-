@@ -193,5 +193,13 @@ namespace Observer {
          * @return int count
          */
         static int CountNonZero(T& image);
+
+        /**
+         * @brief Get the Size object
+         *
+         * @param image
+         * @return Size
+         */
+        static Size GetSize(T& image);
     };
 }  // namespace Observer
