@@ -23,7 +23,7 @@ namespace Observer {
 
         auto res = CurlWrapper()
                        .url(url)
-                       .qparam("text", "text")
+                       .qparam("text", text)
                        .method(CURLOPT_HTTPGET)
                        .perform();
 
