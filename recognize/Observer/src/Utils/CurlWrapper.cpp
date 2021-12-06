@@ -4,6 +4,16 @@
 
 #include <memory>
 
+void parse_url_qparams(std::string& url, CurlWrapper::qparams& qparams) {
+    if (!qparams.empty()) {
+        url += "?";
+        for (auto const& param : qparams) {
+            url += param.first + "=" + param.second + "&";
+        }
+        url.pop_back();
+    }
+}
+
 CurlWrapper::CurlWrapper() { this->curl_ = curl_easy_init(); }
 CurlWrapper::~CurlWrapper() {
     if (this->curl_ != nullptr) {
@@ -13,16 +23,33 @@ CurlWrapper::~CurlWrapper() {
     if (post_ != nullptr) {
         curl_formfree(post_);
     }
+
+    if (this->headers_list_) {
+        curl_slist_free_all(headers_list_);
+    }
 }
 
 CurlWrapper& CurlWrapper::url(const std::string& url, bool ipv6) {
-    curl_easy_setopt(this->curl_, CURLOPT_URL, url.c_str());
+    this->ipv6_ = ipv6;
+    this->url_ = url;
 
-    if (!ipv6) {
-        // reduce dns time
-        curl_easy_setopt(this->curl_, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-    }
+    return *this;
+}
 
+CurlWrapper& CurlWrapper::qparam(const std::string& param,
+                                 const std::string& value) {
+    this->qparams_.insert_or_assign(param, value);
+    return *this;
+}
+
+CurlWrapper& CurlWrapper::header(const std::string& param,
+                                 const std::string& value) {
+    this->headers_.insert_or_assign(param, value);
+    return *this;
+}
+
+CurlWrapper& CurlWrapper::body(const std::string& pBody) {
+    this->body_ = pBody;
     return *this;
 }
 
@@ -33,10 +60,35 @@ CurlWrapper& CurlWrapper::method(CURLoption method) {
 }
 
 curl_wrapper_response CurlWrapper::perform(bool customWrite) {
+    // --- Set url
+    parse_url_qparams(this->url_, this->qparams_);
+
+    curl_easy_setopt(this->curl_, CURLOPT_URL, url_.c_str());
+
+    if (!this->ipv6_) {
+        // reduce dns time
+        curl_easy_setopt(this->curl_, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    }
+
+    // -- Set headers
+    if (!headers_.empty()) {
+        for (auto const& param : headers_) {
+            headers_list_ = curl_slist_append(
+                headers_list_, (param.first + ": " + param.second).c_str());
+        }
+
+        curl_easy_setopt(this->curl_, CURLOPT_HTTPHEADER, headers_list_);
+    }
+
     // delay method so we can ad the post as a valid pointer,
     // and not as nullptr
     if (this->method_ == CURLOPT_HTTPPOST) {
         curl_easy_setopt(this->curl_, CURLOPT_HTTPPOST, post_);
+
+        if (!this->body_.empty()) {
+            curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDS,
+                             this->body_.c_str());
+        }
     } else {
         curl_easy_setopt(this->curl_, this->method_, 1l);
     }
@@ -56,9 +108,11 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
     }
 
     // perform
-    curl_easy_perform(this->curl_);
+    auto curl_code = curl_easy_perform(this->curl_);
+    curl_easy_getinfo(this->curl_, CURLINFO_RESPONSE_CODE, &httpCode);
 
-    return curl_wrapper_response(httpCode, httpData);
+    return curl_wrapper_response(httpCode, httpData,
+                                 curl_code != CURLE_ABORTED_BY_CALLBACK);
 }
 
 CurlWrapper& CurlWrapper::formAdd(const std::string& name, int value_content,

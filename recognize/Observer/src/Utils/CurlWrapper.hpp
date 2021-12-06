@@ -2,12 +2,13 @@
 
 #include <curl/curl.h>
 
+#include <map>
 #include <string>
 #include <string_view>
 
 namespace {
-    std::size_t callback(const char* in, std::size_t size, std::size_t num,
-                         std::string* out) {
+    inline std::size_t callback(const char* in, std::size_t size,
+                                std::size_t num, std::string* out) {
         const std::size_t totalBytes(size * num);
         out->append(in, totalBytes);
         return totalBytes;
@@ -15,10 +16,18 @@ namespace {
 }  // namespace
 
 struct curl_wrapper_response {
-    curl_wrapper_response(int pCode, const std::string& pContent)
-        : code(pCode), content(pContent) {}
+    curl_wrapper_response(int pCode, const std::string& pContent,
+                          bool pCurl_sucess)
+        : code(pCode), content(pContent), curl_sucess(pCurl_sucess) {}
+
+    bool isDone() { return this->curl_sucess; }
+
     int code;
     std::string content;
+
+   private:
+    // wether curl could send it
+    bool curl_sucess;
 };
 
 class CurlWrapper {
@@ -27,6 +36,13 @@ class CurlWrapper {
     ~CurlWrapper();
 
     CurlWrapper& url(const std::string& url, bool ipv6 = false);
+
+    CurlWrapper& qparam(const std::string& param, const std::string& value);
+
+    CurlWrapper& header(const std::string& param, const std::string& value);
+
+    CurlWrapper& body(const std::string& body);
+
     CurlWrapper& method(CURLoption method);
 
     template <typename... Args>
@@ -60,11 +76,24 @@ class CurlWrapper {
     CURL* get();
     curl_httppost* getPost();
 
+    using qparams = std::map<std::string, std::string>;
+    using headers = std::map<std::string, std::string>;
+
    private:
     CURL* curl_ = nullptr;
     struct curl_httppost* post_ = nullptr;
     struct curl_httppost* last_ = nullptr;
+    struct curl_slist* headers_list_ = NULL;
+
+   private:
+    qparams qparams_;
+    headers headers_;
+
+   private:
     CURLoption method_;
+    std::string url_;
+    bool ipv6_;
+    std::string body_;
 };
 
 template <typename... Args>
