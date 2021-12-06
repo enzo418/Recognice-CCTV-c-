@@ -333,6 +333,7 @@ namespace Observer {
             std::move(rawCameraEvent.PopFrames()));
 
         videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
+        videoNotification.SetFrameSize(rawCameraEvent.GetFramesSize());
 
         // 4. call AddNotification for each one
         this->AddNotification(textNotification);

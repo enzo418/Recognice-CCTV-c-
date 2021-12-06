@@ -25,8 +25,10 @@ namespace Observer {
         std::vector<TFrame>& GetFrames() &;
 
         double GetFrameRate();
+        Size GetFramesSize();
 
         void SetFrameRate(double pFrameRate);
+        void SetFrameSize(Size pFrameSize);
 
         /**
          * Returns a move instructor of the frames,
@@ -61,6 +63,11 @@ namespace Observer {
     }
 
     template <typename TFrame>
+    Size CameraEvent<TFrame>::GetFramesSize() {
+        return this->framesSize;
+    }
+
+    template <typename TFrame>
     double CameraEvent<TFrame>::GetFrameRate() {
         return this->frameRate;
     }
@@ -68,6 +75,11 @@ namespace Observer {
     template <typename TFrame>
     void CameraEvent<TFrame>::SetFrameRate(double pFrameRate) {
         this->frameRate = pFrameRate;
+    }
+
+    template <typename TFrame>
+    void CameraEvent<TFrame>::SetFrameSize(Size pFrameSize) {
+        this->framesSize = pFrameSize;
     }
 
 }  // namespace Observer

@@ -178,13 +178,22 @@ namespace Observer {
         // buffer ready means that both sub-buffer have been filled
         if (this->videoBufferForValidation->AddFrame(frame) ==
             BufferState::BUFFER_READY) {
-            auto event = this->videoBufferForValidation->GetEventFound();
+            // get the frames that triggered the event
+            auto frames = this->videoBufferForValidation->PopAllFrames();
+
+            // build the event
+            CameraEvent event(
+                std::move(frames),
+                this->videoBufferForValidation->GetIndexMiddleFrame());
+
             event.SetFrameRate(this->averageFPS);
+            event.SetFrameSize(ImageTransformation<TFrame>::GetSize(frame));
 
             OBSERVER_TRACE(
                 "Change detected on camera '{}', notifying subscribers",
                 this->cfg->name);
 
+            // notify our subscribers
             this->cameraEventsPublisher.notifySubscribers(this->cfg,
                                                           std::move(event));
 

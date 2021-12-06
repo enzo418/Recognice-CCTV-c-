@@ -3,15 +3,16 @@
 #include <optional>
 
 #include "../CircularFrameBuffer.hpp"
+#include "../Log/log.hpp"
 #include "Event/CameraEvent.hpp"
-
 namespace Observer {
 
     enum BufferState {
         BUFFER_IDLE = 0,  // idle -> nothing happend
         BUFFER_WAITING_FILL_UP_BEFORE = 1,
         BUFFER_WAITING_FILL_UP_AFTER = 2,  // wainting -> an event occurred
-        BUFFER_READY = 3,  // before and after buffer are fullfilled
+        BUFFER_READY = 3,     // before and after buffer are fullfilled
+        BUFFER_UNDEFINED = 4  // buffer is almost in an undefined bhvr.
     };
 
     template <typename TFrame>
@@ -29,12 +30,26 @@ namespace Observer {
          */
         int AddFrame(TFrame& frame);
 
-        CameraEvent<TFrame> GetEventFound();
+        /**
+         * @brief Returns all frames in the buffer in a single list,
+         * sorted with respect to the time they were added.
+         * After this call no call to AddFrames should be done.
+         *
+         * @return std::vector<TFrame>
+         */
+        std::vector<TFrame> PopAllFrames();
+
+        /**
+         * @brief Get the index of the middle frame of the buffer.
+         *
+         * @return int
+         */
+        int GetIndexMiddleFrame();
 
         int GetState();
 
        private:
-        int firstFrameWhereChangeWasFound;
+        int indexMiddleFrame;
 
         // delayed initialization with optional
         CircularFrameBuffer<TFrame> framesBefore;
@@ -56,6 +71,10 @@ namespace Observer {
 
     template <typename TFrame>
     int VideoBuffer<TFrame>::AddFrame(TFrame& frame) {
+        OBSERVER_ASSERT(
+            this->bufferState != BUFFER_UNDEFINED,
+            "No call to AddFrame should be done after PopAllFrames");
+
         if (this->bufferState == BUFFER_WAITING_FILL_UP_AFTER) {
             if (this->framesAfter.AddFrame(frame)) {
                 this->bufferState = BUFFER_READY;
@@ -73,10 +92,12 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    CameraEvent<TFrame> VideoBuffer<TFrame>::GetEventFound() {
+    std::vector<TFrame> VideoBuffer<TFrame>::PopAllFrames() {
+        this->bufferState = BUFFER_UNDEFINED;
+
         std::vector<TFrame> before = this->framesBefore.GetFrames();
         std::vector<TFrame> after = this->framesAfter.GetFrames();
-        int firstFrameWhereChangeWasFound = before.size() - 1;
+        this->indexMiddleFrame = before.size() - 1;
 
         std::vector<TFrame> merged(before.size() + after.size());
         std::swap_ranges(merged.begin(), merged.end() - before.size(),
@@ -84,13 +105,16 @@ namespace Observer {
         std::swap_ranges(merged.begin() + before.size(), merged.end(),
                          after.begin());
 
-        CameraEvent ev(std::move(merged), firstFrameWhereChangeWasFound);
-
-        return ev;
+        return std::move(merged);
     }
 
     template <typename TFrame>
     int VideoBuffer<TFrame>::GetState() {
         return this->bufferState;
+    }
+
+    template <typename TFrame>
+    int VideoBuffer<TFrame>::GetIndexMiddleFrame() {
+        return this->indexMiddleFrame;
     }
 }  // namespace Observer

@@ -47,8 +47,7 @@ TYPED_TEST(VideoBufferTest, SimpleAdd) {
     // expect the buffer to be full
     EXPECT_EQ(this->buffer.GetState(), BUFFER_READY);
 
-    auto ev = this->buffer.GetEventFound();
-    auto& frames = ev.GetFrames();
+    auto frames = this->buffer.PopAllFrames();
 
     ASSERT_EQ(frames.size(), BUFFER_SIZE * 2);
 }
@@ -64,9 +63,9 @@ TYPED_TEST(VideoBufferTest, OverrideAdd) {
         this->buffer.AddFrame(img);
     }
 
-    auto ev = this->buffer.GetEventFound();
+    auto frames = this->buffer.PopAllFrames();
 
     // expect size to be eq to BUFFER_SIZE in left + BUFFER_SIZE in right,
     // BUFFER_SIZE * 2
-    ASSERT_EQ(ev.GetFrames().size(), BUFFER_SIZE * 2);
+    ASSERT_EQ(frames.size(), BUFFER_SIZE * 2);
 }

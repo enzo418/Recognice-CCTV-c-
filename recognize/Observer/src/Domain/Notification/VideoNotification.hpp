@@ -95,8 +95,6 @@ namespace Observer {
         OBSERVER_ASSERT(!frames.empty(),
                         "Empty frames while building a video notification");
 
-        this->frameSize = ImageTransformation<TFrame>::GetSize(frames[0]);
-
         const std::string time = Observer::SpecialFunctions::GetCurrentTime();
         const std::string fileName = time + ".mp4";
         const std::string& path =
@@ -126,5 +124,10 @@ namespace Observer {
     template <typename TFrame>
     void VideoNotification<TFrame>::SetFrameRate(double pFrameRate) {
         this->frameRate = pFrameRate;
+    }
+
+    template <typename TFrame>
+    void VideoNotification<TFrame>::SetFrameSize(Size pFrameSize) {
+        this->frameSize = pFrameSize;
     }
 }  // namespace Observer
