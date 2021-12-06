@@ -1,4 +1,6 @@
 #pragma once
+#include <limits>
+
 #include "../Pattern/ObserverBasics.hpp"
 #include "../Timer.hpp"
 

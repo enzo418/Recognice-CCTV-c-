@@ -98,7 +98,7 @@ namespace Observer {
         this->frameSize = ImageTransformation<TFrame>::GetSize(frames[0]);
 
         const std::string time = Observer::SpecialFunctions::GetCurrentTime();
-        const std::string fileName = time + ".mkv";
+        const std::string fileName = time + ".mp4";
         const std::string& path =
             fs::path(mediaFolderPath) / fs::path(fileName);
 

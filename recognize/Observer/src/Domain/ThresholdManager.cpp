@@ -6,7 +6,7 @@ namespace Observer {
                                        double pIncreaseFactor) {
         this->thresholdAccumulator = 0;
         this->thresholdSamples = 0;
-        this->threshold = 0;
+        this->threshold = std::numeric_limits<double>::max();
 
         this->minimumValue = pMinimumValue;
         this->updateFrequency = pUpdateFrequency;

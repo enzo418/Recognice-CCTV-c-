@@ -115,7 +115,7 @@ namespace Observer {
        private:
         void UpdateFPS();
         double averageFPS {0};
-        int frameCount;
+        int frameCount {0};
         Timer<std::chrono::seconds> timerFPS;
     };
 
@@ -199,6 +199,7 @@ namespace Observer {
         double average = this->thresholdManager.GetAverage();
 
         if (change > average) {
+            OBSERVER_TRACE("Change {} - AVRG: {}", change, average);
             this->ChangeDetected();
         }
 
@@ -242,8 +243,13 @@ namespace Observer {
 
         if (timerFPS.GetDuration() >= 1) {
             this->averageFPS = (this->averageFPS + frameCount) / 2;
-            timerFPS.GetDurationAndRestart();
+
+            // restart timer
+            timerFPS.Start();
+
             this->frameCount = 0;
+
+            OBSERVER_TRACE("FPS: {}", this->averageFPS);
         }
     }
 }  // namespace Observer
