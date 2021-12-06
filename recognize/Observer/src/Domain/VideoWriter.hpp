@@ -21,6 +21,8 @@ namespace Observer {  // all the implementations (VideoWriter) will provide a
         virtual void Close() = 0;
 
         virtual void WriteFrame(TFrame& frame) = 0;
+
+        virtual int GetDefaultCodec() = 0;
     };
 
 }  // namespace Observer

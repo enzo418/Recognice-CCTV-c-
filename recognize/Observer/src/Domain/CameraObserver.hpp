@@ -19,6 +19,7 @@
 #include "VideoWriter.hpp"
 
 // FrameEventSubscriber
+#include <chrono>
 #include <iostream>
 #include <string>
 
@@ -110,6 +111,12 @@ namespace Observer {
         void ChangeDetected();
 
         void NewVideoBuffer();
+
+       private:
+        void UpdateFPS();
+        double averageFPS {0};
+        int frameCount;
+        Timer<std::chrono::seconds> timerFPS;
     };
 
     template <typename TFrame>
@@ -141,6 +148,7 @@ namespace Observer {
         }
 
         timerFrames.Start();
+        timerFPS.Start();
 
         while (this->running) {
             if (this->source.GetNextFrame(frame)) {
@@ -150,6 +158,7 @@ namespace Observer {
                     this->framePublisher.notifySubscribers(
                         this->cfg->positionOnOutput, frame);
                     this->ProcessFrame(frame);
+                    this->UpdateFPS();
                 }
             }
         }
@@ -166,21 +175,11 @@ namespace Observer {
 
     template <typename TFrame>
     void CameraObserver<TFrame>::ProcessFrame(TFrame& frame) {
-        // get change from the last frame
-        double change =
-            this->frameProcessor.NormalizeFrame(frame).DetectChanges();
-
-        // get the average change
-        double average = this->thresholdManager.GetAverage();
-
-        if (change > average) {
-            this->ChangeDetected();
-        }
-
         // buffer ready means that both sub-buffer have been filled
         if (this->videoBufferForValidation->AddFrame(frame) ==
             BufferState::BUFFER_READY) {
             auto event = this->videoBufferForValidation->GetEventFound();
+            event.SetFrameRate(this->averageFPS);
 
             OBSERVER_TRACE(
                 "Change detected on camera '{}', notifying subscribers",
@@ -190,6 +189,17 @@ namespace Observer {
                                                           std::move(event));
 
             this->NewVideoBuffer();
+        }
+
+        // get change from the last frame
+        double change =
+            this->frameProcessor.NormalizeFrame(frame).DetectChanges();
+
+        // get the average change
+        double average = this->thresholdManager.GetAverage();
+
+        if (change > average) {
+            this->ChangeDetected();
         }
 
         // give the change found to the thresh manager
@@ -224,5 +234,15 @@ namespace Observer {
         const auto szbuffer = this->cfg->videoValidatorBufferSize / 2;
         this->videoBufferForValidation =
             std::make_unique<VideoBuffer<TFrame>>(szbuffer, szbuffer);
+    }
+
+    template <typename TFrame>
+    void CameraObserver<TFrame>::UpdateFPS() {
+        frameCount++;
+
+        if (timerFPS.GetDuration() >= 1) {
+            this->averageFPS = (this->averageFPS + frameCount) / 2;
+            timerFPS.GetDurationAndRestart();
+        }
     }
 }  // namespace Observer

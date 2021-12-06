@@ -3,6 +3,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include "../../Size.hpp"
+
 namespace Observer {
     /**
      * @brief Holds all the frames and the
@@ -22,6 +24,10 @@ namespace Observer {
 
         std::vector<TFrame>& GetFrames() &;
 
+        double GetFrameRate();
+
+        void SetFrameRate(double pFrameRate);
+
         /**
          * Returns a move instructor of the frames,
          * this object should be deleted after this call.
@@ -32,6 +38,11 @@ namespace Observer {
        private:
         std::vector<TFrame> frames;
         int frameIndexOfFirstChange {};
+
+        // frame rate of the recorded video
+        double frameRate;
+
+        Size framesSize;
     };
 
     template <typename TFrame>
@@ -48,4 +59,15 @@ namespace Observer {
     std::vector<TFrame> CameraEvent<TFrame>::PopFrames() {
         return std::move(this->frames);
     }
+
+    template <typename TFrame>
+    double CameraEvent<TFrame>::GetFrameRate() {
+        return this->frameRate;
+    }
+
+    template <typename TFrame>
+    void CameraEvent<TFrame>::SetFrameRate(double pFrameRate) {
+        this->frameRate = pFrameRate;
+    }
+
 }  // namespace Observer

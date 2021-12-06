@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../ImageTransformation.hpp"
+#include "../../Log/log.hpp"
 #include "../../Size.hpp"
 #include "../../Utils/SpecialFunctions.hpp"
 #include "../VideoWriter.hpp"
@@ -39,9 +41,11 @@ namespace Observer {
          * @return true if could build the video
          * @return false
          */
-        bool BuildNotification(const std::string& mediaFolderPath,
-                               double frameRate, int codecID,
-                               const Size frameSize);
+        bool BuildNotification(const std::string& mediaFolderPath);
+
+        void SetCodec(int codec);
+        void SetFrameRate(double frameRate);
+        void SetFrameSize(Size frameSize);
 
        private:
         std::string text;
@@ -53,6 +57,12 @@ namespace Observer {
 
         // video writer
         VideoWriter<TFrame> writer;
+
+        int codec;
+
+        double frameRate;
+
+        Size frameSize;
     };
 
     template <typename TFrame>
@@ -61,7 +71,8 @@ namespace Observer {
                                                  std::vector<TFrame>&& pFrames)
         : text(std::move(pText)),
           frames(std::move(pFrames)),
-          Notification(pGroupID, std::move(pEvent)) {}
+          Notification(pGroupID, std::move(pEvent)),
+          codec(-418) {}
 
     template <typename TFrame>
     std::string VideoNotification<TFrame>::GetCaption() {
@@ -80,8 +91,12 @@ namespace Observer {
 
     template <typename TFrame>
     bool VideoNotification<TFrame>::BuildNotification(
-        const std::string& mediaFolderPath, double frameRate, int codecID,
-        const Size frameSize) {
+        const std::string& mediaFolderPath) {
+        OBSERVER_ASSERT(!frames.empty(),
+                        "Empty frames while building a video notification");
+
+        this->frameSize = ImageTransformation<TFrame>::GetSize(frames[0]);
+
         const std::string time = Observer::SpecialFunctions::GetCurrentTime();
         const std::string fileName = time + ".mkv";
         const std::string& path =
@@ -89,7 +104,10 @@ namespace Observer {
 
         this->outputVideoPath = path;
 
-        this->writer.Open(fileName, frameRate, codecID, frameSize);
+        this->writer.Open(
+            this->outputVideoPath, this->frameRate,
+            this->codec == -418 ? this->writer.GetDefaultCodec() : this->codec,
+            this->frameSize);
 
         for (auto&& frame : this->frames) {
             this->writer.WriteFrame(frame);
@@ -98,5 +116,15 @@ namespace Observer {
         this->writer.Close();
 
         return true;
+    }
+
+    template <typename TFrame>
+    void VideoNotification<TFrame>::SetCodec(int pCodec) {
+        this->codec = pCodec;
+    }
+
+    template <typename TFrame>
+    void VideoNotification<TFrame>::SetFrameRate(double pFrameRate) {
+        this->frameRate = pFrameRate;
     }
 }  // namespace Observer

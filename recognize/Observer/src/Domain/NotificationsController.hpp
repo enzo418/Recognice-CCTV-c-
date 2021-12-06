@@ -189,12 +189,14 @@ namespace Observer {
     void NotificationsController<TFrame>::Send(
         VideoNotification<TFrame> notification) {
         // 1. Build
-        // notification.BuildNotification(this->config->mediaFolderPath, )
+        notification.BuildNotification(this->config->mediaFolderPath);
 
         // 2. For each service that doesn't need the trace call
         // SendVideo(videopath)
         for (auto&& service :
              this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
+            service->SendVideo(notification.GetVideoPath(),
+                               notification.GetCaption());
         }
 
         // guard: if there is at leat 1 service that need the trace
@@ -329,6 +331,8 @@ namespace Observer {
         VideoNotification<TFrame> videoNotification(
             this->groupID, event, cameraName,
             std::move(rawCameraEvent.PopFrames()));
+
+        videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
 
         // 4. call AddNotification for each one
         this->AddNotification(textNotification);

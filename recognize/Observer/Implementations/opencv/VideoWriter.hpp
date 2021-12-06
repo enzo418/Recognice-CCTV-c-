@@ -20,5 +20,9 @@ namespace Observer {
         void Close() override { this->writer.release(); }
 
         void WriteFrame(cv::Mat& frame) override { this->writer.write(frame); }
+
+        int GetDefaultCodec() override {
+            return cv::VideoWriter::fourcc('H', '2', '6', '4');
+        }
     };
 }  // namespace Observer

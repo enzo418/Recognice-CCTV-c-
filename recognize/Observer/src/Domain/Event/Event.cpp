@@ -40,7 +40,7 @@ namespace Observer {
     }
 
     void Event::SetCameraName(std::string pCameraName) {
-        this->cameraName = std::move(pCameraName);
+        this->cameraName = pCameraName;
     }
 
     std::string Event::GetCameraName() { return this->cameraName; }
