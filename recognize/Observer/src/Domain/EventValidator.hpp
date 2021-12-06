@@ -87,8 +87,8 @@ namespace Observer {
                            cfg->name);
 
             // validate the event
-            ValidationResult<TFrame> result;
-            this->handler->Handle(rawCameraEvent, result);
+            ValidationResult<TFrame> result =
+                this->handler->Handle(rawCameraEvent);
 
             // send the event
             if (result.IsValid()) {

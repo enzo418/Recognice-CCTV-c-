@@ -14,20 +14,19 @@ namespace Observer {
 
         explicit ValidationResult(bool pResult) : valid(pResult) {}
 
-        ValidationResult(bool pResult, std::vector<std::string>& pMessages)
-            : valid(pResult), messages(pMessages) {}
+        ValidationResult(bool pResult,
+                         const std::vector<std::string>& pMessages)
+            : valid(pResult), messages(std::move(pMessages)) {}
 
         Event& GetEvent() & { return this->event; }
 
-        void SetValid(bool pValid) { this->valid = pValid; }
-
         bool IsValid() { return this->valid; }
 
-        void AddMessage(std::string&& message) {
-            this->messages.push_back(std::move(message));
-        }
-
         std::vector<std::string>& GetMessages() & { return this->messages; }
+
+        ValidationResult(ValidationResult&& r) = delete;
+        ValidationResult(const ValidationResult& r)
+            : valid(r.valid), messages(r.messages), event(r.event) {};
 
        private:
         bool valid = false;
