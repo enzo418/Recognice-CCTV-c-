@@ -171,9 +171,7 @@ namespace Observer {
     template <typename TFrame>
     void ObserverCentral<TFrame>::StartAllCameras() {
         for (auto& configuration : this->config.camerasConfiguration) {
-            if (configuration.type != ECameraType::DISABLED) {
-                this->internalStartCamera(&configuration);
-            }
+            this->internalStartCamera(&configuration);
         }
 
         for (auto&& camThread : this->camerasThreads) {
@@ -232,6 +230,27 @@ namespace Observer {
         // 1. Check if media folder exists
         if (!std::filesystem::exists(this->config.mediaFolderPath)) {
             std::filesystem::create_directories(this->config.mediaFolderPath);
+        }
+
+        // 2. remove disabled cameras
+        auto& camsConfig = this->config.camerasConfiguration;
+        auto size = camsConfig.size();
+        for (int i = 0; i < size; i++) {
+            if (camsConfig[i].type == ECameraType::DISABLED) {
+                camsConfig.erase(camsConfig.begin() + i);
+                i--;
+                size--;
+            }
+        }
+
+        // 3. fix missing preview order
+        std::sort(camsConfig.begin(), camsConfig.end(),
+                  CompareCameraConfigurationsByPreviewOrder);
+        size = camsConfig.size();
+        for (int expected = 0; expected < size; expected++) {
+            if (camsConfig[expected].positionOnOutput != expected) {
+                camsConfig[expected].positionOnOutput = expected;
+            }
         }
     }
 }  // namespace Observer

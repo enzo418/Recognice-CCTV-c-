@@ -243,6 +243,7 @@ namespace Observer {
         if (timerFPS.GetDuration() >= 1) {
             this->averageFPS = (this->averageFPS + frameCount) / 2;
             timerFPS.GetDurationAndRestart();
+            this->frameCount = 0;
         }
     }
 }  // namespace Observer
