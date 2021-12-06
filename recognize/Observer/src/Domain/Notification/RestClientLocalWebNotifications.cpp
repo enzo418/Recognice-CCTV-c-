@@ -16,7 +16,7 @@ namespace Observer {
 
     RestClientLocalWebNotifications::RestClientLocalWebNotifications(
         std::string pRestServerUrl)
-        : LocalWebNotifications(std::move(pRestServerUrl)) {}
+        : LocalWebNotifications(pRestServerUrl) {}
 
     void RestClientLocalWebNotifications::SendText(std::string text) {
         const std::string url = this->restServerUrl + "/addTextNotification";

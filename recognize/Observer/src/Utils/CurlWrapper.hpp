@@ -2,18 +2,41 @@
 
 #include <curl/curl.h>
 
+#include <cstring>
 #include <map>
 #include <string>
 #include <string_view>
 
-namespace {
-    inline std::size_t callback(const char* in, std::size_t size,
-                                std::size_t num, std::string* out) {
-        const std::size_t totalBytes(size * num);
-        out->append(in, totalBytes);
-        return totalBytes;
+inline std::size_t write_callback(const char* in, std::size_t size,
+                                  std::size_t num, std::string* out) {
+    const std::size_t totalBytes(size * num);
+    out->append(in, totalBytes);
+    return totalBytes;
+}
+
+struct WriteThis {
+    const char* readptr;
+    size_t sizeleft;
+};
+
+inline static size_t read_callback(char* dest, size_t size, size_t nmemb,
+                                   void* userp) {
+    struct WriteThis* wt = (struct WriteThis*)userp;
+    size_t buffer_size = size * nmemb;
+
+    if (wt->sizeleft) {
+        /* copy as much as possible from the source to the destination */
+        size_t copy_this_much = wt->sizeleft;
+        if (copy_this_much > buffer_size) copy_this_much = buffer_size;
+        memcpy(dest, wt->readptr, copy_this_much);
+
+        wt->readptr += copy_this_much;
+        wt->sizeleft -= copy_this_much;
+        return copy_this_much; /* we copied this many bytes */
     }
-}  // namespace
+
+    return 0; /* no more data left to deliver */
+}
 
 struct curl_wrapper_response {
     curl_wrapper_response(int pCode, const std::string& pContent,
@@ -94,6 +117,7 @@ class CurlWrapper {
     std::string url_;
     bool ipv6_;
     std::string body_;
+    struct WriteThis wt;
 
    private:
     void build_url_with_qparams();

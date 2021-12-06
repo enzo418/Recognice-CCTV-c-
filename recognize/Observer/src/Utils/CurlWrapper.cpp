@@ -74,8 +74,23 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
         curl_easy_setopt(this->curl_, CURLOPT_HTTPPOST, post_);
 
         if (!this->body_.empty()) {
-            curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDS,
-                             this->body_.c_str());
+            // this->body_ = this->encode_url(this->body_);
+            wt.readptr = this->body_.c_str();
+            wt.sizeleft = this->body_.size();
+            /* Now specify we want to POST data */
+            curl_easy_setopt(this->curl_, CURLOPT_POST, 1L);
+
+            /* we want to use our own read function */
+            curl_easy_setopt(this->curl_, CURLOPT_READFUNCTION, read_callback);
+
+            /* pointer to pass to our read function */
+            curl_easy_setopt(this->curl_, CURLOPT_READDATA, &wt);
+
+            curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDSIZE,
+                             (long)wt.sizeleft);
+
+            // curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDS,
+            //                  this->body_.c_str());
         }
     } else {
         curl_easy_setopt(this->curl_, this->method_, 1l);
@@ -87,7 +102,7 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
 
     if (!customWrite) {
         // Hook up data handling function.
-        curl_easy_setopt(this->curl_, CURLOPT_WRITEFUNCTION, callback);
+        curl_easy_setopt(this->curl_, CURLOPT_WRITEFUNCTION, write_callback);
 
         // Hook up data container (will be passed as the last parameter to the
         // callback handling function).  Can be any pointer type, since it will
@@ -99,8 +114,7 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
     auto curl_code = curl_easy_perform(this->curl_);
     curl_easy_getinfo(this->curl_, CURLINFO_RESPONSE_CODE, &httpCode);
 
-    return curl_wrapper_response(httpCode, httpData,
-                                 curl_code != CURLE_ABORTED_BY_CALLBACK);
+    return curl_wrapper_response(httpCode, httpData, curl_code == CURLE_OK);
 }
 
 CurlWrapper& CurlWrapper::formAdd(const std::string& name, int value_content,
