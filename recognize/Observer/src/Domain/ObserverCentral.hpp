@@ -4,6 +4,7 @@
 #include "../Log/log.hpp"
 
 // use SPD logger implementation
+#include <filesystem>
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <thread>
@@ -62,6 +63,8 @@ namespace Observer {
         void internalStopCamera(CameraThread& camThread);
         void internalStartCamera(CameraConfiguration* cfg);
 
+        void ProcessConfiguration();
+
         /* Proxy allows us to give our subscribers not only the threshold,
          * but also the camera that updated the threshold.
          */
@@ -90,7 +93,9 @@ namespace Observer {
               static_cast<int>(this->config.camerasConfiguration.size()),
               &this->config.outputConfiguration),
           config(std::move(pConfig)),
-          notificationController(&this->config) {}
+          notificationController(&this->config) {
+        this->ProcessConfiguration();
+    }
 
     template <typename TFrame>
     bool ObserverCentral<TFrame>::Start() {
@@ -220,5 +225,13 @@ namespace Observer {
         ct.camera = std::make_shared<CameraObserver<TFrame>>(cfg);
         ct.thread = std::thread(&CameraObserver<TFrame>::Start, ct.camera);
         return ct;
+    }
+
+    template <typename TFrame>
+    void ObserverCentral<TFrame>::ProcessConfiguration() {
+        // 1. Check if media folder exists
+        if (!std::filesystem::exists(this->config.mediaFolderPath)) {
+            std::filesystem::create_directories(this->config.mediaFolderPath);
+        }
     }
 }  // namespace Observer
