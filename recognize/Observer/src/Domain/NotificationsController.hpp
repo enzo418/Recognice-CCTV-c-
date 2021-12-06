@@ -116,17 +116,23 @@ namespace Observer {
         this->config = cfg;
         this->groupID = 0;
 
-        auto ptrLocal = new RestClientLocalWebNotifications(
-            cfg->localWebConfiguration.webServerUrl);
-        auto ptrTelegram =
-            new TelegramNotifications(&cfg->telegramConfiguration);
+        if (cfg->localWebConfiguration.enabled) {
+            auto ptrLocal = new RestClientLocalWebNotifications(
+                cfg->localWebConfiguration.webServerUrl);
 
-        this->services = {ptrLocal, ptrTelegram};
+            this->services.push_back(ptrLocal);
 
-        this->AddServiceToDrawable(ptrLocal,
-                                   &this->config->localWebConfiguration);
-        this->AddServiceToDrawable(ptrTelegram,
-                                   &this->config->telegramConfiguration);
+            this->AddServiceToDrawable(ptrLocal,
+                                       &this->config->localWebConfiguration);
+        } else if (cfg->telegramConfiguration.enabled) {
+            auto ptrTelegram =
+                new TelegramNotifications(&cfg->telegramConfiguration);
+
+            this->services.push_back(ptrTelegram);
+
+            this->AddServiceToDrawable(ptrTelegram,
+                                       &this->config->telegramConfiguration);
+        }
 
         this->running = false;
     }
