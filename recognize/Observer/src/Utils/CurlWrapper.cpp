@@ -1,5 +1,6 @@
 #include "CurlWrapper.hpp"
 
+#include <curl/curl.h>
 #include <curl/easy.h>
 
 #include <memory>
@@ -89,6 +90,8 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
             curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDSIZE,
                              (long)wt.sizeleft);
 
+            curl_easy_setopt(this->curl_, CURLOPT_VERBOSE, 1L);
+
             // curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDS,
             //                  this->body_.c_str());
         }
@@ -113,6 +116,12 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
     // perform
     auto curl_code = curl_easy_perform(this->curl_);
     curl_easy_getinfo(this->curl_, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    if (curl_code != CURLE_OK) {
+        if (curl_code == CURLE_READ_ERROR) {
+            OBSERVER_WARN("Trying to send a image that doesn't exists.");
+        }
+    }
 
     return curl_wrapper_response(httpCode, httpData, curl_code == CURLE_OK);
 }

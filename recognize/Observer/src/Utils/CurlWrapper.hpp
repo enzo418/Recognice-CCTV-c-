@@ -7,6 +7,8 @@
 #include <string>
 #include <string_view>
 
+#include "../Log/log.hpp"
+
 inline std::size_t write_callback(const char* in, std::size_t size,
                                   std::size_t num, std::string* out) {
     const std::size_t totalBytes(size * num);

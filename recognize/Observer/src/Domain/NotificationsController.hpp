@@ -1,7 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <map>
 #include <unordered_map>
+#include <vector>
 
 #include "../IFunctionality.hpp"
 #include "../Pattern/Camera/ICameraEventSubscriber.hpp"
@@ -11,6 +13,7 @@
 #include "../SimpleBlockingQueue.hpp"
 #include "../Utils/SpecialEnums.hpp"
 #include "Configuration/Configuration.hpp"
+#include "Configuration/NotificationsServiceConfiguration.hpp"
 #include "Event/CameraEvent.hpp"
 #include "Event/Event.hpp"
 #include "Notification/IMessagingService.hpp"
@@ -90,10 +93,12 @@ namespace Observer {
        private:
         bool running;
 
-        void AddServiceToDrawable(IMessagingService* service,
-                                  NotificationsServiceConfiguration* cfg);
+        void AddService(IMessagingService* service,
+                        NotificationsServiceConfiguration* cfg);
 
         std::vector<IMessagingService*> services;
+
+        std::map<std::tuple<IMessagingService*, int>, bool> servicesType;
 
         std::unordered_map<int, std::vector<IMessagingService*>>
             drawableServices;
@@ -120,18 +125,14 @@ namespace Observer {
             auto ptrLocal = new RestClientLocalWebNotifications(
                 cfg->localWebConfiguration.webServerUrl);
 
-            this->services.push_back(ptrLocal);
+            this->AddService(ptrLocal, &this->config->localWebConfiguration);
+        }
 
-            this->AddServiceToDrawable(ptrLocal,
-                                       &this->config->localWebConfiguration);
-        } else if (cfg->telegramConfiguration.enabled) {
+        if (cfg->telegramConfiguration.enabled) {
             auto ptrTelegram =
                 new TelegramNotifications(&cfg->telegramConfiguration);
 
-            this->services.push_back(ptrTelegram);
-
-            this->AddServiceToDrawable(ptrTelegram,
-                                       &this->config->telegramConfiguration);
+            this->AddService(ptrTelegram, &this->config->telegramConfiguration);
         }
 
         this->running = false;
@@ -150,7 +151,10 @@ namespace Observer {
     void NotificationsController<TFrame>::Send(TextNotification notification) {
         // 1. For each service call Send(TextNotification)
         for (auto&& service : this->services) {
-            service->SendText(notification.GetCaption());
+            if (this->servicesType[{service,
+                                    flag_to_int(ENotificationType::TEXT)}]) {
+                service->SendText(notification.GetCaption());
+            }
         }
     }
 
@@ -262,20 +266,41 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void NotificationsController<TFrame>::AddServiceToDrawable(
+    void NotificationsController<TFrame>::AddService(
         IMessagingService* service, NotificationsServiceConfiguration* cfg) {
-        if (has_flag(cfg->drawTraceOfChangeOn, ETrazable::IMAGE)) {
-            drawableServices[flag_to_int(ETrazable::IMAGE)].push_back(service);
-        } else {
-            notDrawableServices[flag_to_int(ETrazable::IMAGE)].push_back(
-                service);
+        // TODO: iterate enums
+
+        static const ENotificationType not_types[] = {ENotificationType::TEXT,
+                                                      ENotificationType::IMAGE,
+                                                      ENotificationType::VIDEO};
+
+        static const ETrazable trazable_types[] = {ETrazable::IMAGE,
+                                                   ETrazable::VIDEO};
+
+        static const std::unordered_map<ETrazable, ENotificationType> equiv = {
+            {ETrazable::IMAGE, ENotificationType::IMAGE},
+            {ETrazable::VIDEO, ENotificationType::VIDEO}};
+
+        ENotificationType typesAccepted = cfg->noticationsToSend;
+
+        this->services.push_back(service);
+
+        for (const auto type : not_types) {
+            if (has_flag(typesAccepted, type)) {
+                this->servicesType[{service, flag_to_int(type)}] = true;
+            } else {
+                this->servicesType[{service, flag_to_int(type)}] = false;
+            }
         }
 
-        if (has_flag(cfg->drawTraceOfChangeOn, ETrazable::VIDEO)) {
-            drawableServices[flag_to_int(ETrazable::VIDEO)].push_back(service);
-        } else {
-            notDrawableServices[flag_to_int(ETrazable::VIDEO)].push_back(
-                service);
+        for (const auto type : trazable_types) {
+            if (this->servicesType[{service, flag_to_int(equiv.at(type))}]) {
+                if (has_flag(cfg->drawTraceOfChangeOn, type)) {
+                    drawableServices[flag_to_int(type)].push_back(service);
+                } else {
+                    notDrawableServices[flag_to_int(type)].push_back(service);
+                }
+            }
         }
     }
 
