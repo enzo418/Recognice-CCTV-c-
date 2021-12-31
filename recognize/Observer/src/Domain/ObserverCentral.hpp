@@ -117,16 +117,20 @@ namespace Observer {
             // std::thread
             std::thread(&EventValidator<TFrame>::Start, &this->eventValidator));
 
-        OBSERVER_TRACE("Starting notification controller");
-        this->functionalityThreads.emplace_back(
-            &this->notificationController,
-            std::thread(&NotificationsController<TFrame>::Start,
-                        &this->notificationController));
+        bool useNotifications = this->config.localWebConfiguration.enabled ||
+                                this->config.telegramConfiguration.enabled;
+        if (useNotifications) {
+            OBSERVER_TRACE("Starting notification controller");
+            this->functionalityThreads.emplace_back(
+                &this->notificationController,
+                std::thread(&NotificationsController<TFrame>::Start,
+                            &this->notificationController));
 
-        OBSERVER_TRACE("Subscribing notifications controller to events");
-        // subscribe notification controller to validated events
-        this->eventValidator.SubscribeToEventValidationDone(
-            &this->notificationController);
+            OBSERVER_TRACE("Subscribing notifications controller to events");
+            // subscribe notification controller to validated events
+            this->eventValidator.SubscribeToEventValidationDone(
+                &this->notificationController);
+        }
 
         return true;
     }
