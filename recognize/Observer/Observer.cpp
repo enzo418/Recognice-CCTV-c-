@@ -21,7 +21,7 @@
 #include "src/Utils/SpecialFunctions.hpp"
 
 void StartObserver(Observer::Configuration* cfg);
-void RecordCamera(Observer::Configuration* cfg);
+void RecordCamera(Observer::Configuration* cfg, int minutes);
 
 using FrameType = cv::Mat;
 
@@ -30,8 +30,13 @@ int main(int argc, char** argv) {
     std::string outputConfig = "./config_ouput.yml";
 
     const std::string keys =
-        "{help h       |            | show help message}"
-        "{config_path  | ./config.yml | path of the configuration file}";
+        "{help h            |              | show help message}"
+        "{config_path       | ./config.yml | path of the configuration file}"
+        "{mode              | recognizer   | Observer mode "
+        "[recording|recognizer]}"
+        "{recording_minutes | 2   | When mode=recording, it will record the "
+        "videos "
+        "for this long}";
 
     cv::CommandLineParser parser(argc, argv, keys);
 
@@ -44,6 +49,15 @@ int main(int argc, char** argv) {
         pathConfig = parser.get<std::string>("config_path");
     }
 
+    bool recognizerMode = true;
+    int recordingMinutes = 2;
+    if (parser.has("mode")) {
+        recognizerMode = parser.get<std::string>("mode") == "recognizer";
+        if (parser.has("recording_minutes")) {
+            recordingMinutes = parser.get<int>("recording_minutes");
+        }
+    }
+
     // initialize logger
     Observer::LogManager::Initialize();
     OBSERVER_INFO("Hi");
@@ -54,8 +68,11 @@ int main(int argc, char** argv) {
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
 
-    RecordCamera(&cfg);
-    // StartObserver(&cfg);
+    if (recognizerMode) {
+        StartObserver(&cfg);
+    } else {
+        RecordCamera(&cfg, recordingMinutes);
+    }
 }
 
 void StartObserver(Observer::Configuration* cfg) {
@@ -65,11 +82,16 @@ void StartObserver(Observer::Configuration* cfg) {
     std::this_thread::sleep_for(std::chrono::hours(30));
 }
 
-void RecordCamera(Observer::Configuration* cfg) {
+void RecordCamera(Observer::Configuration* cfg, int pMinutesRecording) {
     Observer::VideoSource<FrameType> source;
     Observer::VideoWriter<FrameType> writer;
 
     source.Open(cfg->camerasConfiguration[0].url);
+
+    if (!source.isOpened()) {
+        OBSERVER_ERROR("Could not open the camera.");
+        return;
+    }
 
     FrameType frame;
 
@@ -77,7 +99,7 @@ void RecordCamera(Observer::Configuration* cfg) {
 
     auto time = Observer::SpecialFunctions::GetCurrentTime();
     const std::string file = "./" + time + ".mp4";
-    writer.Open(file, 14, writer.GetDefaultCodec(),
+    writer.Open(file, source.GetFPS(), writer.GetDefaultCodec(),
                 Observer::ImageTransformation<FrameType>::GetSize(frame));
 
     Observer::Timer<std::chrono::seconds> timer;
@@ -85,7 +107,7 @@ void RecordCamera(Observer::Configuration* cfg) {
     Observer::ImageDisplay<FrameType>::CreateWindow("Image");
 
     timer.Start();
-    auto minutes = 60 * 2;
+    auto minutes = 60 * pMinutesRecording;
     while (timer.GetDuration() < minutes) {
         source.GetNextFrame(frame);
         writer.WriteFrame(frame);
