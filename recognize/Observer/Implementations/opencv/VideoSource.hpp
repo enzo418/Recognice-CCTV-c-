@@ -20,6 +20,8 @@ namespace Observer {
 
         bool isOpened() override { return this->videoCapture.isOpened(); }
 
+        int GetFPS() override { return videoCapture.get(cv::CAP_PROP_FPS); }
+
        private:
         cv::VideoCapture videoCapture;
     };

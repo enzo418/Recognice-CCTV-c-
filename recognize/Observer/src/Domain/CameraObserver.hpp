@@ -111,12 +111,6 @@ namespace Observer {
         void ChangeDetected();
 
         void NewVideoBuffer();
-
-       private:
-        void UpdateFPS();
-        double averageFPS {0};
-        int frameCount {0};
-        Timer<std::chrono::seconds> timerFPS;
     };
 
     template <typename TFrame>
@@ -148,7 +142,6 @@ namespace Observer {
         }
 
         timerFrames.Start();
-        timerFPS.Start();
 
         while (this->running) {
             if (this->source.GetNextFrame(frame)) {
@@ -158,7 +151,6 @@ namespace Observer {
                     this->framePublisher.notifySubscribers(
                         this->cfg->positionOnOutput, frame);
                     this->ProcessFrame(frame);
-                    this->UpdateFPS();
                 }
             }
         }
@@ -186,7 +178,7 @@ namespace Observer {
                 std::move(frames),
                 this->videoBufferForValidation->GetIndexMiddleFrame());
 
-            event.SetFrameRate(this->averageFPS);
+            event.SetFrameRate(this->source.GetFPS());
             event.SetFrameSize(ImageTransformation<TFrame>::GetSize(frame));
 
             OBSERVER_TRACE(
@@ -244,21 +236,5 @@ namespace Observer {
         const auto szbuffer = this->cfg->videoValidatorBufferSize / 2;
         this->videoBufferForValidation =
             std::make_unique<VideoBuffer<TFrame>>(szbuffer, szbuffer);
-    }
-
-    template <typename TFrame>
-    void CameraObserver<TFrame>::UpdateFPS() {
-        frameCount++;
-
-        if (timerFPS.GetDuration() >= 1) {
-            this->averageFPS = (this->averageFPS + frameCount) / 2;
-
-            // restart timer
-            timerFPS.Start();
-
-            this->frameCount = 0;
-
-            OBSERVER_TRACE("FPS: {}", this->averageFPS);
-        }
     }
 }  // namespace Observer

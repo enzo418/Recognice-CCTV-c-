@@ -18,5 +18,7 @@ namespace Observer {
         virtual bool GetNextFrame(TFrame&) = 0;
 
         virtual bool isOpened() = 0;
+
+        virtual int GetFPS() = 0;
     };
 }  // namespace Observer
