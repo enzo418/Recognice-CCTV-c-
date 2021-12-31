@@ -23,11 +23,12 @@ namespace Observer {
     // function for each threhold type:
     // https://docs.opencv.org/4.x/d7/d1b/group__imgproc__misc.html#ggaa9e58d2860d4afa658ef70a9b1115576a147222a96556ebc1d948b372bcd7ac59
     enum ThresholdType {
-        THRESHOLD_BINARY = 0,
-        THRESHOLD_BINARY_INV = 1,
-        THRESHOLD_TRUNC = 2,
-        THRESHOLD_TOZERO = 3,
-        THRESHOLD_TOZERO_INV = 4
+        THRESHOLD_BINARY = 1,
+        THRESHOLD_BINARY_INV = 2,
+        THRESHOLD_TRUNC = 4,
+        THRESHOLD_TOZERO = 6,
+        THRESHOLD_TOZERO_INV = 8,
+        THRESHOLD_TRIANGLE = 16
     };
 
     /**

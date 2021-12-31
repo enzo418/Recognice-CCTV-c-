@@ -4,7 +4,9 @@
 
 #include "../../src/ImageTransformation.hpp"
 #include "../../src/Log/log.hpp"
+#include "../../src/Utils/SpecialEnums.hpp"
 #include "opencv4/opencv2/opencv.hpp"
+
 namespace Observer {
     template <>
     struct ImageTransformation<cv::Mat> {
@@ -159,25 +161,33 @@ namespace Observer {
 
         static void Threshold(cv::Mat& source, cv::Mat& dst, double threshold,
                               double max, int type) {
-            switch (type) {
-                case THRESHOLD_BINARY:
-                    type = cv::THRESH_BINARY;
-                    break;
-                case THRESHOLD_BINARY_INV:
-                    type = cv::THRESH_BINARY_INV;
-                    break;
-                case THRESHOLD_TRUNC:
-                    type = cv::THRESH_TRUNC;
-                    break;
-                case THRESHOLD_TOZERO:
-                    type = cv::THRESH_TOZERO;
-                    break;
-                case THRESHOLD_TOZERO_INV:
-                    type = cv::THRESH_TOZERO_INV;
-                    break;
+            int endtype = 0;
+
+            if (has_flag(type, THRESHOLD_BINARY)) {
+                set_flag(endtype, cv::THRESH_BINARY);
             }
 
-            cv::threshold(source, dst, threshold, max, type);
+            if (has_flag(type, THRESHOLD_BINARY_INV)) {
+                set_flag(endtype, cv::THRESH_BINARY_INV);
+            }
+
+            if (has_flag(type, THRESHOLD_TRUNC)) {
+                set_flag(endtype, cv::THRESH_TRUNC);
+            }
+
+            if (has_flag(type, THRESHOLD_TOZERO)) {
+                set_flag(endtype, cv::THRESH_TOZERO);
+            }
+
+            if (has_flag(type, THRESHOLD_TOZERO_INV)) {
+                set_flag(endtype, cv::THRESH_TOZERO_INV);
+            }
+
+            if (has_flag(type, THRESHOLD_TRIANGLE)) {
+                set_flag(endtype, cv::THRESH_TRIANGLE);
+            }
+
+            cv::threshold(source, dst, threshold, max, endtype);
         }
 
         static int CountNonZero(cv::Mat& image) {
