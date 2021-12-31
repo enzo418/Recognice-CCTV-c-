@@ -8,14 +8,14 @@
 namespace Observer {
     template <>
     struct ImageTransformation<cv::Mat> {
-        static void AddPad(cv::Mat& image, uint8_t top = 0, uint8_t bottom = 0,
-                           uint8_t left = 0, uint8_t right = 0) {
+        static void AddPad(cv::Mat& image, int top = 0, int bottom = 0,
+                           int left = 0, int right = 0) {
             cv::copyMakeBorder(image, image, top, bottom, left, right,
                                cv::BORDER_CONSTANT);
         }
 
-        static cv::Mat HStackPadded(cv::Mat* images, uint8_t arraySize,
-                                    uint8_t height) {
+        static cv::Mat HStackPadded(cv::Mat* images, int arraySize,
+                                    int height) {
             int maxHeight = 0;
             cv::Mat res;
 
@@ -52,8 +52,8 @@ namespace Observer {
             return res;
         }
 
-        static cv::Mat VStackPadded(cv::Mat* images, uint8_t arraySize,
-                                    uint8_t width = 0) {
+        static cv::Mat VStackPadded(cv::Mat* images, int arraySize,
+                                    int width = 0) {
             int maxWidth = 0;
             cv::Mat res;
 
@@ -61,13 +61,13 @@ namespace Observer {
 
             if (width == 0) {
                 // calculate the ideal width (bigger)
-                for (uint8_t i = 0; i < arraySize; i++) {
+                for (int i = 0; i < arraySize; i++) {
                     if (images[i].cols > maxWidth) maxWidth = images[i].cols;
                 }
             } else
                 maxWidth = width;
 
-            for (uint8_t i = 0; i < arraySize; i++) {
+            for (int i = 0; i < arraySize; i++) {
                 if (images[i].cols != maxWidth)
                     AddPad(images[i], 0, 0, 0, (maxWidth - images[i].cols));
             }
@@ -76,10 +76,10 @@ namespace Observer {
             return res;
         }
 
-        static cv::Mat StackImages(cv::Mat* images, uint8_t arraySize,
-                                   uint8_t maxHStack = 2) {
+        static cv::Mat StackImages(cv::Mat* images, int arraySize,
+                                   int maxHStack = 2) {
             std::vector<cv::Mat> hstacked;
-            uint8_t count = 0;
+            int count = 0;
 
             assert(maxHStack <= arraySize);
 
