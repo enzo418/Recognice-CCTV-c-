@@ -115,9 +115,6 @@ namespace Observer {
         auto r1 = this->boundingRect;
         auto r2 = finding.GetBoundingRect();
 
-        auto c1 = cv::Rect(2, 2, 3, 4);
-        c1& c1;
-
         if ((r1 & r2).empty()) {
             // 1 -> They don't overlap
             // 2. Check the distance between tl and br from both
