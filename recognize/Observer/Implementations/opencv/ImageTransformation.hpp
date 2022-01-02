@@ -1,3 +1,5 @@
+#include <opencv2/core/hal/interface.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
@@ -199,7 +201,8 @@ namespace Observer {
             dst = source(cv::Rect(roi.x, roi.y, roi.width, roi.height));
         }
 
-        static inline cv::Mat BlackImage(cv::Mat* reference = nullptr) {
+        static inline cv::Mat BlackImage(cv::Mat* reference = nullptr,
+                                         int channels = 3) {
             if (reference) {
                 return cv::Mat::zeros(
                     cv::Size(reference->cols, reference->rows),
@@ -209,9 +212,34 @@ namespace Observer {
             }
         }
 
+        static inline cv::Mat BlackImage(Size& size, int channels = 3) {
+            int type;
+            switch (type) {
+                case 1:
+                    type = CV_8UC1;
+                    break;
+                case 2:
+                    type = CV_8UC2;
+                    break;
+                case 3:
+                    type = CV_8UC3;
+                    break;
+                case 4:
+                    type = CV_8UC4;
+                    break;
+            }
+
+            return cv::Mat::zeros(size.height, size.width, type);
+        }
+
         static Size GetSize(cv::Mat& image) {
             auto sz = image.size();
             return Size(sz.width, sz.height);
+        }
+
+        static inline void AddImages(cv::Mat& image1, cv::Mat& image2,
+                                     cv::Mat& dst) {
+            cv::add(image1, image2, dst);
         }
     };
 }  // namespace Observer

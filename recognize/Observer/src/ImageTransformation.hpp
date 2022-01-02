@@ -156,7 +156,16 @@ namespace Observer {
          * @param reference image to use as a reference while creating the black
          * image (e.g. it will use the same width, height and type)
          */
-        static inline cv::Mat BlackImage(T* reference = nullptr);
+        static inline T BlackImage(T* reference = nullptr);
+
+        /**
+         * @brief Creates a black image.
+         *
+         * @param size size of the resulting image
+         * @param channels number of channels
+         * @return T
+         */
+        static inline T BlackImage(Size& size, int channels = 3);
 
         /**
          * @brief Crop a image, no data is copied.
@@ -202,5 +211,14 @@ namespace Observer {
          * @return Size
          */
         static Size GetSize(T& image);
+
+        /**
+         * @brief Adds two images and leave the result on dst.
+         *
+         * @param image1
+         * @param image2
+         * @param dst
+         */
+        static inline void AddImages(T& image1, T& image2, T& dst);
     };
 }  // namespace Observer
