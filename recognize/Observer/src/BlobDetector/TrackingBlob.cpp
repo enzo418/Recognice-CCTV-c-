@@ -112,8 +112,9 @@ namespace Observer {
         // 1. Check if they overlap
         auto r1 = this->boundingRect;
         auto r2 = finding.GetBoundingRect();
+        auto inter = r1.Intersection(r2);
 
-        if ((r1 & r2).empty()) {
+        if (inter.empty()) {
             // 1 -> They don't overlap
             // 2. Check the distance between tl and br from both
             distance = std::min(std::min(r1.tl().DistanceTo(r2.tl()),
@@ -135,7 +136,7 @@ namespace Observer {
         auto area1 = this->boundingRect.area();
         auto r2 = other.GetBoundingRect();
         auto area2 = other.GetBoundingRect().area();
-        auto intersection = r1 & r2;
+        auto intersection = r1.Intersection(r2);
 
         // 1. Area - 100% area intersection -> 1
         double smallestArea = std::min(area1, area2);

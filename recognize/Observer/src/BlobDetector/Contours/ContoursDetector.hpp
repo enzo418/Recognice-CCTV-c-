@@ -95,7 +95,7 @@ namespace Observer {
             // check for intersection with ignored areas
             if (!filters.ignoredAreas.areas.empty()) {
                 for (auto&& j : filters.ignoredAreas.areas) {
-                    Rect inters = rect & j;
+                    Rect inters = rect.Intersection(j);
                     if (inters.area() >=
                         rect.area() *
                             filters.ignoredAreas.minAreaPercentageToIgnore) {

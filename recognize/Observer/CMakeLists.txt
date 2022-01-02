@@ -4,7 +4,7 @@ set(SRC_
         vendor/bitmask_operators.hpp
 
         src/Size.hpp
-        src/Rect.hpp
+        src/Rect.hpp src/Rect.cpp
         src/Point.hpp
 
         src/Timer.hpp
@@ -66,6 +66,7 @@ set(SRC_
         src/Utils/SpecialEnums.hpp
         src/Utils/SpecialFunctions.hpp src/Utils/SpecialFunctions.cpp
         src/Utils/CurlWrapper.cpp src/Utils/CurlWrapper.hpp
+        src/Utils/Math.cpp src/Utils/Math.hpp
 
         # extensions
         Extensions/opencv/extension_cv.hpp Extensions/opencv/extension_cv.cpp
