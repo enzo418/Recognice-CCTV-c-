@@ -81,6 +81,11 @@ set(SRC_
         src/Log/managers/LogManagerSPD.hpp src/Log/managers/LogManagerSPD.cpp
         src/Log/managers/log_constants.hpp
         src/Log/log.hpp
+
+        # blobs
+        src/BlobDetector/Blob.cpp
+        src/BlobDetector/Finding.cpp
+        src/BlobDetector/TrackingBlob.cpp
 )
 
 # ¿? USE PREMAKE PLS
