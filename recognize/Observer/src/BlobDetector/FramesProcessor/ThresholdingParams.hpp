@@ -11,7 +11,6 @@ namespace Observer {
         };
 
        public:
-        ThresholdingParams() = default;
         int FramesBetweenDiffFrames;
         int ContextFrames;
         int MedianBlurKernelSize;
