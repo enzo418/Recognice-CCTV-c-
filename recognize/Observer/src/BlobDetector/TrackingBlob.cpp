@@ -1,7 +1,5 @@
 #include "TrackingBlob.hpp"
 
-#include <opencv2/core/types.hpp>
-
 namespace Observer {
     TrackingBlob::TrackingBlob(Finding other, int id, int frameIndex, int life)
         : Blob(id) {
