@@ -21,6 +21,10 @@ find_package(yaml-cpp REQUIRED)
 
 #set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 include(Observer/CMakeLists.txt)
 
 # If the cmake file isn't included then use the sample program
