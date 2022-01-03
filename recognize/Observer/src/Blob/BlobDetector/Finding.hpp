@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../Point.hpp"
-#include "../Rect.hpp"
+#include "../../Point.hpp"
+#include "../../Rect.hpp"
 
 namespace Observer {
 

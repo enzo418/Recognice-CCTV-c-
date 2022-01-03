@@ -15,9 +15,9 @@ namespace Observer {
      * especialization is needed for some of its methods.
      */
     template <typename TFrame>
-    class TFrameContextualizer {
+    class FrameContextualizer {
        public:
-        TFrameContextualizer(const ThresholdingParams& params);
+        FrameContextualizer(const ThresholdingParams& params);
 
        public:
         std::vector<TFrame> GenerateDiffFrames(std::vector<TFrame>& frames);
@@ -36,13 +36,13 @@ namespace Observer {
          *
          * @param frame
          */
-        virtual void ApplyThresholding(TFrame& frame) = 0;
+        void ApplyThresholding(TFrame& frame);
 
         /**
          * @brief Initialize members like morphologyElement to optimize memory
          * usage.
          */
-        virtual void InitializePostConstructor() = 0;
+        void InitializePostConstructor();
 
        protected:
         TFrame morphologyElement;
@@ -59,10 +59,10 @@ namespace Observer {
     // Forward declaration.
     // https://google.github.io/styleguide/cppguide.html#Forward_Declarations
     template <typename T>
-    class FrameContextualizer : public TFrameContextualizer<T> {};
+    class FrameContextualizer;
 
     template <typename TFrame>
-    TFrameContextualizer<TFrame>::TFrameContextualizer(
+    FrameContextualizer<TFrame>::FrameContextualizer(
         const ThresholdingParams& pThreshParams) {
         this->contextDiffFrames.reserve(this->params.ContextFrames);
 
@@ -72,7 +72,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    std::vector<TFrame> TFrameContextualizer<TFrame>::GenerateDiffFrames(
+    std::vector<TFrame> FrameContextualizer<TFrame>::GenerateDiffFrames(
         std::vector<TFrame>& frames) {
         std::vector<TFrame> diffs(frames.size());
         std::vector<TFrame> formatedFrames(frames.size());
@@ -160,7 +160,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    TFrame TFrameContextualizer<TFrame>::GenerateDiffFrame(TFrame& frame) {
+    TFrame FrameContextualizer<TFrame>::GenerateDiffFrame(TFrame& frame) {
         TFrame grayFrame;
         TFrame diff;
         ImageTransformation<TFrame>::ToColorSpace(
@@ -200,7 +200,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void TFrameContextualizer<TFrame>::AddContextToFrame(TFrame& frame) {
+    void FrameContextualizer<TFrame>::AddContextToFrame(TFrame& frame) {
         for (int k = 0; k < this->contextDiffFrames.size(); k++) {
             if (!this->contextDiffFrames[k].empty()) {
                 ImageTransformation<TFrame>::AddImages(

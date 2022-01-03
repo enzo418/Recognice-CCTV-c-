@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../Rect.hpp"
-#include "../Vector.hpp"
+#include "../../Rect.hpp"
+#include "../../Vector.hpp"
 
 namespace Observer {
     /**

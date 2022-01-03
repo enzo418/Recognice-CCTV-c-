@@ -2,8 +2,8 @@
 
 #include <unordered_map>
 
-#include "../Utils/Math.hpp"
-#include "../Vector.hpp"
+#include "../../Utils/Math.hpp"
+#include "../../Vector.hpp"
 #include "Blob.hpp"
 #include "Finding.hpp"
 

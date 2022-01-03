@@ -2,11 +2,11 @@
 
 #include <vector>
 
-#include "../Utils/Math.hpp"
+#include "../../Utils/Math.hpp"
+#include "../Contours/ContoursDetector.hpp"
 #include "Blob.hpp"
 #include "BlobDetectorParams.hpp"
 #include "BlobFilters.hpp"
-#include "Contours/ContoursDetector.hpp"
 #include "TrackingBlob.hpp"
 
 namespace Observer {
@@ -73,6 +73,9 @@ namespace Observer {
          * @param blobs
          */
         void FilterBlobs(std::vector<Blob>& blobs);
+
+       private:
+        std::vector<Blob> TrackingBlobToBlob(std::vector<TrackingBlob>& blobs);
 
        protected:
         ContoursDetector<TFrame> contoursDetector;
@@ -309,5 +312,17 @@ namespace Observer {
         TrackBlobs(contours, frameIndex);
 
         return TrackingBlobToBlob(this->pastTrackedBlobs);
+    }
+
+    template <typename TFrame>
+    std::vector<Blob> BlobDetector<TFrame>::TrackingBlobToBlob(
+        std::vector<TrackingBlob>& trackingBlobs) {
+        std::vector<Blob> blobs;
+        blobs.reserve(trackingBlobs.size());
+        for (auto& tracked : trackingBlobs) {
+            blobs.push_back(std::move(tracked.ToBlob()));
+        }
+
+        return blobs;
     }
 }  // namespace Observer
