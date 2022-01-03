@@ -17,8 +17,7 @@ namespace Observer {
         FrameContours FindContours(TFrame& frame);
         VideoContours FindContours(std::vector<TFrame>& frames);
 
-       public:
-        long frameCounter {0};
+        int GetFrameCounter();
 
        protected:
         VideoContours FilterContours(VideoContours& videoContours);
@@ -135,5 +134,10 @@ namespace Observer {
         }
 
         return filtered;
+    }
+
+    template <typename TFrame>
+    int ContoursDetector<TFrame>::GetFrameCounter() {
+        return this->contextBuilder.frameCounter;
     }
 }  // namespace Observer
