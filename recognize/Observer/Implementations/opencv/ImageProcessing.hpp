@@ -69,8 +69,8 @@ namespace Observer {
             for (int i = 0; i < contours.size(); i++) {
                 pOutContours[i].reserve(contours[i].size());
 
-                std::copy(contours[i].begin(), contours[i].end(),
-                          pOutContours[i].begin());
+                pOutContours[i].insert(pOutContours[i].end(),
+                                       contours[i].begin(), contours[i].end());
             }
         }
     };
