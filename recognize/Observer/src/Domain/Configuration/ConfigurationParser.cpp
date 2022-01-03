@@ -1,11 +1,24 @@
 #include "ConfigurationParser.hpp"
 
+#include <yaml-cpp/exceptions.h>
+
+#include <exception>
 #include <opencv2/opencv.hpp>
 
 namespace Observer::ConfigurationParser {
     Configuration ParseYAML(const std::string& filePath) {
-        YAML::Node node = YAML::LoadFile(filePath);
+        YAML::Node node;
         Configuration cfg;
+
+        try {
+            node = YAML::LoadFile(filePath);
+        } catch (const YAML::BadFile& ex) {
+            OBSERVER_ERROR("Couldn't open the configuration file.");
+
+            // Todo throw custom ex
+
+            throw std::exception();
+        }
 
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
