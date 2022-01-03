@@ -80,6 +80,8 @@ namespace Observer {
          */
         Blob ToBlob();
 
+        Blob CopyToBlob();
+
        protected:
         /**
          * @brief Set the center of the tracking blob based on a rect.

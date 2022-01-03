@@ -164,6 +164,8 @@ namespace Observer {
         }
     }
 
+    Blob TrackingBlob::CopyToBlob() { return *this; }
+
     Blob TrackingBlob::ToBlob() { return std::move(*this); }
 
     void TrackingBlob::SetCenter(Rect& rect) {

@@ -116,7 +116,7 @@ namespace Observer {
         FrameContours& frameContours) {
         std::vector<Blob> blobs;
         blobs = this->InternalFindBlobs(
-            frameContours, this->contoursDetector.frameCounter - 1);
+            frameContours, this->contoursDetector.GetFrameCounter());
 
         this->FilterBlobs(blobs);
 
@@ -320,7 +320,7 @@ namespace Observer {
         std::vector<Blob> blobs;
         blobs.reserve(trackingBlobs.size());
         for (auto& tracked : trackingBlobs) {
-            blobs.push_back(std::move(tracked.ToBlob()));
+            blobs.push_back(tracked.ToBlob());
         }
 
         return blobs;

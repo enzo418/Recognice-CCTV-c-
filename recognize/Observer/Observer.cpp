@@ -1,6 +1,7 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <thread>
@@ -37,9 +38,6 @@ using namespace Observer;
 enum RecognizerMode { RECOGNIZER, RECORDING, BLOB, BLOB_LIVE };
 
 int main(int argc, char** argv) {
-    std::string pathConfig;
-    std::string outputConfig = "./config_ouput.yml";
-
     const std::string keys =
         "{help h            |              | show help message}"
         "{config_path       | ./config.yml | path of the configuration file}"
@@ -60,6 +58,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    std::string pathConfig;
     if (parser.has("config_path")) {
         pathConfig = parser.get<std::string>("config_path");
     }
@@ -320,7 +319,8 @@ void LiveTestBlobDetection(const std::string& file) {
         .blob_max_life = static_cast<int>(3 * fps),
     };
 
-    BlobFilters filtersBlob = {.MinimumOccurrences = (int)fps};
+    BlobFilters filtersBlob = {.MinimumOccurrences =
+                                   std::numeric_limits<int>::min()};
 
     ContoursDetector<cv::Mat> contoursDetector(param, filter);
     BlobDetector<cv::Mat> detector(detectorParams, filtersBlob,
@@ -341,17 +341,20 @@ void LiveTestBlobDetection(const std::string& file) {
             auto blobs = detector.FindBlobs(contours);
             double duration_blob = timer.GetDurationAndRestart();
 
-            OBSERVER_TRACE(
-                "Detection Took: {0} μs ({1} ms) | Blob detection took: {2} μs "
-                "({3} ms)",
-                duration_contours, duration_contours / 1000, duration_blob,
-                duration_blob / 1000);
+            BlobGraphics<cv::Mat>::DrawBlobs(frame, blobs, 0);
 
             double wait =
                 (1000.0 / fps) - (duration_contours + duration_blob) / 1000;
+            wait = wait <= 5 ? 10 : wait;
+
+            OBSERVER_TRACE(
+                "Detection Took: {0} μs ({1} ms) | Blob detection took: {2} μs "
+                "({3} ms) wait: {4}",
+                duration_contours, duration_contours / 1000, duration_blob,
+                duration_blob / 1000, wait);
 
             cv::imshow("image", frame);
-            cv::waitKey(wait <= 5 ? 5 : wait);
+            cv::waitKey(wait);
 
             iFrame++;
         }
