@@ -50,5 +50,13 @@ namespace Observer {
          * @return Rect
          */
         Rect Intersection(const Rect& other);
+
+        // We know how to convert from some rect of some library to this one
+        template <typename Rect_>
+        Rect(const Rect_&);
+
+        // We know how to convert this Rect to some Rect_
+        template <typename Rect_>
+        operator Rect_();
     };
 }  // namespace Observer

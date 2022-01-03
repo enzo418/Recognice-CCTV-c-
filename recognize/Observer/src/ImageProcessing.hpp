@@ -28,7 +28,8 @@ namespace Observer {
 
     template <typename TFrame>
     struct ImageProcessing {
-        static void FindContours(TFrame& frame, std::vector<Point>& outContours,
+        static void FindContours(TFrame& frame,
+                                 std::vector<std::vector<Point>>& outContours,
                                  int retrievalMode, int aproxMethod);
     };
 }  // namespace Observer

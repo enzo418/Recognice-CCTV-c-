@@ -77,6 +77,10 @@ set(SRC_
         Implementations/opencv/ImageDisplay.hpp
         Implementations/opencv/VideoSource.hpp
         Implementations/opencv/VideoWriter.hpp
+        Implementations/opencv/ImageProcessing.hpp
+        Implementations/opencv/BlobGraphics.hpp
+        Implementations/opencv/FrameContextualizer.cpp
+        Implementations/opencv/TypesConversions.cpp
 
         # logs
         src/Log/managers/LogManagerSPD.hpp src/Log/managers/LogManagerSPD.cpp
@@ -84,9 +88,13 @@ set(SRC_
         src/Log/log.hpp
 
         # blobs
-        src/BlobDetector/Blob.cpp
-        src/BlobDetector/Finding.cpp
-        src/BlobDetector/TrackingBlob.cpp
+        src/Blob/BlobDetector/Blob.cpp
+        src/Blob/BlobDetector/Finding.cpp
+        src/Blob/BlobDetector/TrackingBlob.cpp
+        src/Blob/FramesProcessor/FrameContextualizer.hpp
+        src/Blob/Contours/ContoursDetector.hpp
+        src/Blob/BlobDetector/BlobDetector.hpp
+        src/Blob/BlobGraphics.hpp
 )
 
 # ¿? USE PREMAKE PLS

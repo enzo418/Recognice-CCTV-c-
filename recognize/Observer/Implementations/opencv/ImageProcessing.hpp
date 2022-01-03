@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -50,13 +51,27 @@ namespace Observer {
         return aproxMethod;
     }
 
-    template <typename TFrame>
-    static void FindContours(TFrame& pFrame, std::vector<Point>& pOutContours,
-                             int pRetrievalMode, int pAproxMethod) {
-        int retrievalmode = ParseContourRetrievalMode(pRetrievalMode);
-        int aproxMethod = ParseContourAproxMode(pAproxMethod);
+    template <>
+    struct ImageProcessing<cv::Mat> {
+        static void FindContours(cv::Mat& pFrame,
+                                 std::vector<std::vector<Point>>& pOutContours,
+                                 int pRetrievalMode, int pAproxMethod) {
+            int retrievalmode = ParseContourRetrievalMode(pRetrievalMode);
+            int aproxMethod = ParseContourAproxMode(pAproxMethod);
 
-        // no explicit conversion is needed
-        cv::findContours(pFrame, pOutContours, retrievalmode, aproxMethod);
-    }
+            std::vector<std::vector<cv::Point>> contours;
+
+            cv::findContours(pFrame, contours, retrievalmode, aproxMethod);
+
+            // convert to Observer Point
+            pOutContours.resize(contours.size());
+
+            for (int i = 0; i < contours.size(); i++) {
+                pOutContours[i].reserve(contours[i].size());
+
+                std::copy(contours[i].begin(), contours[i].end(),
+                          pOutContours[i].begin());
+            }
+        }
+    };
 }  // namespace Observer
