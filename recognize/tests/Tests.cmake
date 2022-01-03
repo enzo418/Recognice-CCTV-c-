@@ -17,4 +17,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(TESTS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/ConfigurationTest.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/VideoBufferTest.cpp
-                  ${CMAKE_CURRENT_LIST_DIR}/ThresholdManagerTest.cpp)
+                  ${CMAKE_CURRENT_LIST_DIR}/ThresholdManagerTest.cpp
+                  ${CMAKE_CURRENT_LIST_DIR}/RectTest.cpp)

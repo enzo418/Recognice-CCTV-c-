@@ -9,17 +9,17 @@
 
 namespace Observer {
     struct Rect {
-        Rect() = default;
+        Rect();
 
         Rect(Point tl, Point br);
 
         Rect(int pX, int pY, int pWidth, int pHeight);
 
-        Rect(int pX, int pY, Size& size);
+        Rect(int pX, int pY, const Size& size);
 
-        Rect(Point& pPoint, Size& size);
+        Rect(const Point& pPoint, const Size& size);
 
-        Rect(Point& pPoint, int pWidth, int pHeight);
+        Rect(const Point& pPoint, int pWidth, int pHeight);
 
         bool empty();
 

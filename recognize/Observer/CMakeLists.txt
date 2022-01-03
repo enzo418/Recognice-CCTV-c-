@@ -5,7 +5,7 @@ set(SRC_
 
         src/Size.hpp
         src/Rect.hpp src/Rect.cpp
-        src/Point.hpp
+        src/Point.hpp src/Point.cpp
 
         src/Timer.hpp
         src/Pattern/Camera/ICameraEventSubscriber.hpp
