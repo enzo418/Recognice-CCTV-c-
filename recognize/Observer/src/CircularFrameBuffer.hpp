@@ -1,7 +1,8 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
 #include <vector>
+
+#include "ImageTransformation.hpp"
 
 namespace Observer {
 
@@ -37,14 +38,21 @@ namespace Observer {
          */
         std::vector<TFrame> GetFrames();
 
+        bool IsFull();
+
        private:
         std::vector<TFrame> frames;
 
+        int bufferSize;
+
         int framesPosition;
+
+        int elementCount {0};
     };
 
     template <typename TFrame>
-    CircularFrameBuffer<TFrame>::CircularFrameBuffer(int bufferSize) {
+    CircularFrameBuffer<TFrame>::CircularFrameBuffer(int pBufferSize)
+        : bufferSize(pBufferSize) {
         // reserve enough buffer size for the frames
         this->frames.resize(bufferSize);
 
@@ -53,14 +61,19 @@ namespace Observer {
 
     template <typename TFrame>
     bool CircularFrameBuffer<TFrame>::AddFrame(TFrame& frame) {
-        this->frames[this->framesPosition] = frame.clone();
+        ImageTransformation<TFrame>::CopyImage(
+            frame, this->frames[this->framesPosition]);
 
         const int next = this->framesPosition + 1;
 
         const bool isFull = next >= this->frames.capacity();
         this->framesPosition = isFull ? 0 : next;
 
-        return isFull;
+        if (elementCount <= bufferSize) {
+            elementCount++;
+        }
+
+        return this->IsFull();
     }
 
     template <typename TFrame>
@@ -107,5 +120,10 @@ namespace Observer {
         }
 
         return std::move(this->frames);
+    }
+
+    template <typename TFrame>
+    bool CircularFrameBuffer<TFrame>::IsFull() {
+        return bufferSize <= elementCount;
     }
 }  // namespace Observer

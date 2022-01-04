@@ -5,6 +5,7 @@
 #include "../CircularFrameBuffer.hpp"
 #include "../Log/log.hpp"
 #include "Event/CameraEvent.hpp"
+
 namespace Observer {
 
     enum BufferState {
@@ -66,7 +67,11 @@ namespace Observer {
 
     template <typename TFrame>
     void VideoBuffer<TFrame>::ChangeWasDetected() {
-        this->bufferState = BUFFER_WAITING_FILL_UP_BEFORE;
+        if (this->framesBefore.IsFull()) {
+            this->bufferState = BUFFER_WAITING_FILL_UP_AFTER;
+        } else {
+            this->bufferState = BUFFER_WAITING_FILL_UP_BEFORE;
+        }
     }
 
     template <typename TFrame>
