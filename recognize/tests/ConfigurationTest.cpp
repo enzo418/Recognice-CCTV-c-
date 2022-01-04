@@ -1,106 +1,135 @@
-#include "../Observer/src/Domain/Configuration/Configuration.hpp"
-#include "../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
-#include "../Observer/src/Size.hpp"
-#include "../Observer/src/Rect.hpp"
-#include "../Observer/src/Point.hpp"
+#include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <fstream>
-#include <gtest/gtest.h>
 #include <opencv4/opencv2/core/types.hpp>
+
+#include "../Observer/src/Domain/Configuration/Configuration.hpp"
+#include "../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
+#include "../Observer/src/Point.hpp"
+#include "../Observer/src/Rect.hpp"
+#include "../Observer/src/Size.hpp"
 
 using namespace Observer;
 
 class ConfigurationTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-     OutputPreviewConfiguration outputPreview = {
-      .showOutput = true,
-      .resolution = Size(205, 418),
-      .scaleFactor = 1.02,
-      .showIgnoredAreas = true,
-      .showProcessedFrames = false,
-  };
+   protected:
+    void SetUp() override {
+        OutputPreviewConfiguration outputPreview = {
+            .showOutput = true,
+            .resolution = Size(205, 418),
+            .scaleFactor = 1.02,
+            .showIgnoredAreas = true,
+            .showProcessedFrames = false,
+        };
 
-  TelegramNotificationsConfiguration telegramConfiguration = {
-      .apiKey = "test_api_key",
-      .chatID = "123456789",
-  };
+        TelegramNotificationsConfiguration telegramConfiguration = {
+            .apiKey = "test_api_key",
+            .chatID = "123456789",
+        };
 
-  telegramConfiguration.enabled = true;
-  telegramConfiguration.drawTraceOfChangeOn =
-      ETrazable::IMAGE | ETrazable::VIDEO;
-  telegramConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
-  telegramConfiguration.secondsBetweenImageNotification = 5.1;
-  telegramConfiguration.secondsBetweenTextNotification = 5.1;
-  telegramConfiguration.secondsBetweenVideoNotification = 5.1;
-  telegramConfiguration.noticationsToSend =
-      ENotificationType::VIDEO | ENotificationType::TEXT;
+        telegramConfiguration.enabled = true;
+        telegramConfiguration.drawTraceOfChangeOn =
+            ETrazable::IMAGE | ETrazable::VIDEO;
+        telegramConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
+        telegramConfiguration.secondsBetweenImageNotification = 5.1;
+        telegramConfiguration.secondsBetweenTextNotification = 5.1;
+        telegramConfiguration.secondsBetweenVideoNotification = 5.1;
+        telegramConfiguration.noticationsToSend =
+            ENotificationType::VIDEO | ENotificationType::TEXT;
 
-  LocalWebNotificationsConfiguration localWebConfiguration = {
-      .webServerUrl = "localhost:9000/test"};
+        LocalWebNotificationsConfiguration localWebConfiguration = {
+            .webServerUrl = "localhost:9000/test"};
 
-  localWebConfiguration.enabled = true;
-  localWebConfiguration.drawTraceOfChangeOn = ETrazable::NONE;
-  localWebConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
-  localWebConfiguration.secondsBetweenImageNotification = 5.1;
-  localWebConfiguration.secondsBetweenTextNotification = 5.1;
-  localWebConfiguration.secondsBetweenVideoNotification = 5.1;
-  localWebConfiguration.noticationsToSend = ENotificationType::VIDEO |
-                                            ENotificationType::TEXT |
-                                            ENotificationType::IMAGE;
+        localWebConfiguration.enabled = true;
+        localWebConfiguration.drawTraceOfChangeOn = ETrazable::NONE;
+        localWebConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
+        localWebConfiguration.secondsBetweenImageNotification = 5.1;
+        localWebConfiguration.secondsBetweenTextNotification = 5.1;
+        localWebConfiguration.secondsBetweenVideoNotification = 5.1;
+        localWebConfiguration.noticationsToSend = ENotificationType::VIDEO |
+                                                  ENotificationType::TEXT |
+                                                  ENotificationType::IMAGE;
 
-  CameraConfiguration camera1 = {
-      .name = "TestCamera1",
-      .url = "rtsp://example.com/media.mp4",
-      .fps = 42,
-      .roi = Rect(10, 10, 640, 360),
-      .positionOnOutput = 0,
-      .rotation = -5,
-      .type = ECameraType::NOTIFICATOR,
-      .noiseThreshold = 35,
-      .minimumChangeThreshold = 101,
-      .increaseThresholdFactor = 1.03,
-      .secondsBetweenTresholdUpdate = 5,
-      .saveDetectedChangeInVideo = false,
-      .ignoredAreas = {Rect(15, 15, 640, 360), Rect(5, 15, 123, 435),
-                       Rect(7, 7, 112, 444)},
-      .videoValidatorBufferSize = 60,
-      .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
-                           ERestrictionType::ALLOW}},
-      .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
-  };
+        ThresholdingParams thresholdingParams = {
+            .FramesBetweenDiffFrames = 6,
+            .ContextFrames = 6,
+            .MedianBlurKernelSize = 3,
+            .GaussianBlurKernelSize = 7,
+            .DilationSize = 2,
+            .BrightnessAboveThreshold = 4,
+            .Resize = {.size = Size(640, 360), .resize = false}};
 
-  CameraConfiguration camera2 = {
-      .name = "TestCamera2",
-      .url = "rtsp://example.com/media.mp4/streamid=1",
-      .fps = 10,
-      .roi = Rect(1, 1, 233, 233),
-      .positionOnOutput = 1,
-      .rotation = 99,
-      .type = ECameraType::OBJECT_DETECTOR,
-      .noiseThreshold = 15,
-      .minimumChangeThreshold = 12,
-      .increaseThresholdFactor = 5.002,
-      .secondsBetweenTresholdUpdate = 7,
-      .saveDetectedChangeInVideo = true,
-      .ignoredAreas = {Rect(2, 2, 622, 117)},
-      .videoValidatorBufferSize = 10,
-      .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
-                           ERestrictionType::DENY}},
-      .objectDetectionMethod = EObjectDetectionMethod::NONE,
-  };
+        ContoursFilter contoursFilters = {
+            .FilterByAverageArea = true,
+            .MinimumArea = 15,
+        };
 
-  this->config = {.mediaFolderPath = "../web/media",
-                          .notificationTextTemplate = "This is a template {N}",
-                          .telegramConfiguration = telegramConfiguration,
-                          .localWebConfiguration = localWebConfiguration,
-                          .outputConfiguration = outputPreview,
-                          .camerasConfiguration = {camera1, camera2}};
-  }
+        BlobDetectorParams detectorParams = {
+            .distance_thresh = 15 * 2,
+            .similarity_threshold = 0.5,
+            .blob_max_life = 3 * 14,
+        };
 
-  // void TearDown() override {}
-  Configuration config;
+        BlobFilters filtersBlob = {.MinimumOccurrences =
+                                       std::numeric_limits<int>::min()};
+
+        BlobDetectionConfiguration blobConfiguration = {
+            .blobDetectorParams = detectorParams,
+            .contoursFilters = contoursFilters,
+            .thresholdingParams = thresholdingParams};
+
+        CameraConfiguration camera1 = {
+            .name = "TestCamera1",
+            .url = "rtsp://example.com/media.mp4",
+            .fps = 42,
+            .roi = Rect(10, 10, 640, 360),
+            .positionOnOutput = 0,
+            .rotation = -5,
+            .type = ECameraType::NOTIFICATOR,
+            .noiseThreshold = 35,
+            .minimumChangeThreshold = 101,
+            .increaseThresholdFactor = 1.03,
+            .secondsBetweenTresholdUpdate = 5,
+            .saveDetectedChangeInVideo = false,
+            .ignoredAreas = {Rect(15, 15, 640, 360), Rect(5, 15, 123, 435),
+                             Rect(7, 7, 112, 444)},
+            .videoValidatorBufferSize = 60,
+            .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
+                                 ERestrictionType::ALLOW}},
+            .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
+            .blobDetection = blobConfiguration};
+
+        CameraConfiguration camera2 = {
+            .name = "TestCamera2",
+            .url = "rtsp://example.com/media.mp4/streamid=1",
+            .fps = 10,
+            .roi = Rect(1, 1, 233, 233),
+            .positionOnOutput = 1,
+            .rotation = 99,
+            .type = ECameraType::OBJECT_DETECTOR,
+            .noiseThreshold = 15,
+            .minimumChangeThreshold = 12,
+            .increaseThresholdFactor = 5.002,
+            .secondsBetweenTresholdUpdate = 7,
+            .saveDetectedChangeInVideo = true,
+            .ignoredAreas = {Rect(2, 2, 622, 117)},
+            .videoValidatorBufferSize = 10,
+            .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
+                                 ERestrictionType::DENY}},
+            .objectDetectionMethod = EObjectDetectionMethod::NONE,
+        };
+
+        this->config = {.mediaFolderPath = "../web/media",
+                        .notificationTextTemplate = "This is a template {N}",
+                        .telegramConfiguration = telegramConfiguration,
+                        .localWebConfiguration = localWebConfiguration,
+                        .outputConfiguration = outputPreview,
+                        .camerasConfiguration = {camera1, camera2}};
+    }
+
+    // void TearDown() override {}
+    Configuration config;
 };
 
 void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {

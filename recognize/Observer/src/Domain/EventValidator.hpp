@@ -10,7 +10,7 @@
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
 #include "Event/Event.hpp"
-#include "Validators/ValidatorBySufficientSamples.hpp"
+#include "Validators/ValidatorByBlobs.hpp"
 #include "Validators/ValidatorHandler.hpp"
 
 namespace Observer {
@@ -51,12 +51,11 @@ namespace Observer {
 
     template <typename TFrame>
     EventValidator<TFrame>::EventValidator() {
-        auto validatorBySufficientSamples =
-            new ValidatorBySufficientSamples<TFrame>();
-        //        validatorBySufficientSamples.SetNext()
-        handlers.push_back(validatorBySufficientSamples);
+        // auto validatorByBlobs = new ValidatorByBlobs<TFrame>();
+        //        validatorByBlobs.SetNext()
+        // handlers.push_back(validatorByBlobs);
 
-        this->handler = handlers[0];
+        // this->handler = handlers[0];
     }
 
     template <typename TFrame>

@@ -34,7 +34,7 @@ set(SRC_
         # validators
         src/Domain/Validators/ValidatorHandler.hpp
         src/Domain/Validators/ValidationResult.hpp
-        src/Domain/Validators/ValidatorBySufficientSamples.hpp
+        src/Domain/Validators/ValidatorByBlobs.hpp
 
         # domain
         src/Domain/Event/Event.cpp src/Domain/Event/Event.hpp

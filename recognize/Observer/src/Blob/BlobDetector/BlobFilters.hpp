@@ -1,17 +1,23 @@
 #pragma once
 
-struct BlobFilters {
-   public:
-    struct BlobVelocityFilters {
-        bool UseVelocityFilter;
+namespace Observer {
+    struct BlobFilters {
+       public:
+        struct BlobVelocityFilters {
+            bool UseVelocityFilter;
 
-        double MinVelocity;
-        double MaxVelocity;
+            double MinVelocity;
+            double MaxVelocity;
+
+            bool operator==(const BlobVelocityFilters&) const = default;
+        };
+
+       public:
+        // E.g. delete blob if it only appears in only 1 frame
+        int MinimumOccurrences;
+
+        BlobVelocityFilters VelocityFilter;
+
+        bool operator==(const BlobFilters&) const = default;
     };
-
-   public:
-    // E.g. delete blob if it only appears in only 1 frame
-    int MinimumOccurrences;
-
-    BlobVelocityFilters VelocityFilter;
-};
+}  // namespace Observer

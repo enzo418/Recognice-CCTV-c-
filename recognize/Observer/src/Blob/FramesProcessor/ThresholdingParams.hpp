@@ -8,6 +8,8 @@ namespace Observer {
         struct ResizeParam {
             Size size;
             bool resize;
+
+            bool operator==(const ResizeParam&) const = default;
         };
 
        public:
@@ -21,5 +23,7 @@ namespace Observer {
         // usefull, 5 is fine
         int BrightnessAboveThreshold;
         ResizeParam Resize;
+
+        bool operator==(const ThresholdingParams&) const = default;
     };
 }  // namespace Observer

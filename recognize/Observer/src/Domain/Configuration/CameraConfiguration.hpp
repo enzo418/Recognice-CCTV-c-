@@ -4,6 +4,10 @@
 #include <string>
 
 #include "../../../vendor/bitmask_operators.hpp"
+#include "../../Blob/BlobDetector/BlobDetectorParams.hpp"
+#include "../../Blob/BlobDetector/BlobFilters.hpp"
+#include "../../Blob/Contours/ContoursFilters.hpp"
+#include "../../Blob/FramesProcessor/ThresholdingParams.hpp"
 #include "../../Point.hpp"
 #include "../../Rect.hpp"
 
@@ -23,6 +27,15 @@ namespace Observer {
         NONE = 1,
         HOG_DESCRIPTOR = 2,
         YOLODNN_V4 = 4
+    };
+
+    struct BlobDetectionConfiguration {
+        BlobDetectorParams blobDetectorParams;
+        BlobFilters blobFilters;
+        ContoursFilter contoursFilters;
+        ThresholdingParams thresholdingParams;
+
+        bool operator==(const BlobDetectionConfiguration&) const = default;
     };
 
     struct CameraConfiguration {
@@ -70,6 +83,8 @@ namespace Observer {
 
         // Method to dected the objects
         EObjectDetectionMethod objectDetectionMethod;
+
+        BlobDetectionConfiguration blobDetection;
 
         bool operator==(const CameraConfiguration&) const = default;
     };

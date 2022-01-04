@@ -22,7 +22,7 @@ namespace Observer::ConfigurationParser {
 
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
-        } catch (const YAML::InvalidNode& ex) {
+        } catch (YAML::InvalidNode ex) {
             std::string message = "";
             if (!ex.mark.is_null()) {
                 message = "Line: " + std::to_string(ex.mark.line) +
