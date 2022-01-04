@@ -147,7 +147,9 @@ namespace Observer {
         }
 
         for (auto&& camThread : this->camerasThreads) {
-            camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+            if (this->config.outputConfiguration.showOutput) {
+                camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+            }
 
             if (useNotifications) {
                 camThread.camera->SubscribeToCameraEvents(
