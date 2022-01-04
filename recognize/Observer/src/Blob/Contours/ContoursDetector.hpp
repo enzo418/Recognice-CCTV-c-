@@ -19,14 +19,26 @@ namespace Observer {
 
         int GetFrameCounter();
 
+        /**
+         * @brief Set the size to wich all the contours will be scaled before
+         * beign filtered and returned.
+         *
+         * @param sizeToScale size to scale them
+         */
+        void SetScale(const Size& sizeToScale);
+
        protected:
         VideoContours FilterContours(VideoContours& videoContours);
         FrameContours FilterContours(FrameContours& contours);
+
+        void ScaleContours(VideoContours& videoContours);
+        void ScaleContours(FrameContours& videoContours);
 
        protected:
         ThresholdingParams params;
         ContoursFilter filters;
         FrameContextualizer<TFrame> contextBuilder;
+        Size scaleTarget;
     };
 
     template <typename TFrame>
@@ -49,6 +61,8 @@ namespace Observer {
             diffFrame, contours, ContourRetrievalMode::CONTOUR_RETR_LIST,
             ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
 
+        this->ScaleContours(contours);
+
         contours = this->FilterContours(contours);
 
         return contours;
@@ -68,6 +82,8 @@ namespace Observer {
                 ContourRetrievalMode::CONTOUR_RETR_LIST,
                 ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
         }
+
+        this->ScaleContours(contours);
 
         contours = this->FilterContours(contours);
 
@@ -137,7 +153,34 @@ namespace Observer {
     }
 
     template <typename TFrame>
+    void ContoursDetector<TFrame>::SetScale(const Size& sizeToScale) {
+        this->scaleTarget = sizeToScale;
+    }
+
+    template <typename TFrame>
     int ContoursDetector<TFrame>::GetFrameCounter() {
         return this->contextBuilder.frameCounter;
+    }
+
+    template <typename TFrame>
+    void ContoursDetector<TFrame>::ScaleContours(VideoContours& videoContours) {
+        for (auto& frameContours : videoContours) {
+            this->ScaleContours(frameContours);
+        }
+    }
+
+    template <typename TFrame>
+    void ContoursDetector<TFrame>::ScaleContours(FrameContours& frameContours) {
+        double scaleX =
+            (double)this->scaleTarget.width / this->params.Resize.size.width;
+        double scaleY =
+            (double)this->scaleTarget.height / this->params.Resize.size.height;
+
+        for (auto& contour : frameContours) {
+            for (auto& point : contour) {
+                point.x *= scaleX;
+                point.y *= scaleY;
+            }
+        }
     }
 }  // namespace Observer

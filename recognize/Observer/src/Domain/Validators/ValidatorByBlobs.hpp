@@ -6,6 +6,7 @@
 #include "../../Blob/BlobDetectionConfiguration.hpp"
 #include "../../Blob/BlobDetector/BlobDetector.hpp"
 #include "../../Blob/Contours/ContoursDetector.hpp"
+#include "../../ImageTransformation.hpp"
 #include "ValidatorHandler.hpp"
 
 namespace Observer {
@@ -30,13 +31,20 @@ namespace Observer {
     template <typename TFrame>
     ValidationResult<TFrame> ValidatorByBlobs<TFrame>::isValid(
         CameraEvent<TFrame>& request) {
-        auto contours =
-            this->contoursDetector.FindContours(request.GetFrames());
+        auto frames = request.GetFrames();
+        const Size targetSize = ImageTransformation<TFrame>::GetSize(frames[0]);
+        contoursDetector.SetScale(targetSize);
+        blobDetector.SetScale(targetSize);
+
+        auto contours = this->contoursDetector.FindContours(frames);
 
         if (contours.size() > 0) {
             auto blobs = this->blobDetector.FindBlobs(contours);
 
             if (blobs.size() > 0) {
+                OBSERVER_INFO("Valid notification, blobs size: {0}",
+                              blobs.size());
+
                 return ValidationResult<TFrame>(true, {}, std::move(blobs));
             } else {
                 return ValidationResult<TFrame>(

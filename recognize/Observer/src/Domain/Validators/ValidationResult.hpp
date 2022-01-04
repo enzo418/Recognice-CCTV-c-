@@ -20,17 +20,17 @@ namespace Observer {
             : valid(pResult), messages(std::move(pMessages)) {}
 
         ValidationResult(bool pResult,
-                         const std::vector<std::string>& pMessages, 
+                         const std::vector<std::string>& pMessages,
                          std::vector<Blob>&& blobs)
-            : valid(pResult), messages(std::move(pMessages)), foundBlobs(std::move(blobs)) {}
+            : valid(pResult),
+              messages(std::move(pMessages)),
+              event(std::move(blobs)) {}
 
         Event& GetEvent() & { return this->event; }
 
         bool IsValid() { return this->valid; }
 
         std::vector<std::string>& GetMessages() & { return this->messages; }
-
-        std::vector<Blob>& GetFoundBlobs() & { return this->foundBlobs; }
 
         ValidationResult(ValidationResult&& r) = delete;
         ValidationResult(const ValidationResult& r)
@@ -40,6 +40,5 @@ namespace Observer {
         bool valid = false;
         std::vector<std::string> messages {};
         Event event;
-        std::vector<Blob> foundBlobs;
     };
 }  // namespace Observer

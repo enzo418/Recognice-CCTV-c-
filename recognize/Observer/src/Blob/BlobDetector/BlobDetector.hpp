@@ -24,6 +24,15 @@ namespace Observer {
         std::vector<Blob> FindBlobs(FrameContours& frameContours);
         std::vector<Blob> FindBlobs(VideoContours& videoContours);
 
+       public:
+        /**
+         * @brief Set the size to wich all the blobs will be scaled before beign
+         * returned.
+         *
+         * @param sizeToScale size to scale them
+         */
+        void SetScale(const Size& sizeToScale);
+
        protected:
         /**
          * @brief Handles all the calls to track blob and conversion of blobs.
@@ -324,5 +333,10 @@ namespace Observer {
         }
 
         return blobs;
+    }
+
+    template <typename TFrame>
+    void BlobDetector<TFrame>::SetScale(const Size& sizeToScale) {
+        this->contoursDetector.SetScale(sizeToScale);
     }
 }  // namespace Observer
