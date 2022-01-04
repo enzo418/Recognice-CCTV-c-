@@ -18,7 +18,7 @@ namespace Observer {
     class EventValidator : public ICameraEventSubscriber<TFrame>,
                            public IFunctionality {
        public:
-        EventValidator();
+        EventValidator(CameraConfiguration* cfg);
 
         void Add(CameraConfiguration* cfg, CameraEvent<TFrame> ev);
 
@@ -34,6 +34,7 @@ namespace Observer {
         ~EventValidator();
 
        private:
+        CameraConfiguration* cameraCfg;
         bool running;
 
         Semaphore smpQueue;
@@ -50,12 +51,15 @@ namespace Observer {
     };
 
     template <typename TFrame>
-    EventValidator<TFrame>::EventValidator() {
-        // auto validatorByBlobs = new ValidatorByBlobs<TFrame>();
-        //        validatorByBlobs.SetNext()
-        // handlers.push_back(validatorByBlobs);
+    EventValidator<TFrame>::EventValidator(CameraConfiguration* pCameraCfg) {
+        this->cameraCfg = pCameraCfg;
 
-        // this->handler = handlers[0];
+        auto validatorByBlobs =
+            new ValidatorByBlobs<TFrame>(this->cameraCfg->blobDetection);
+        //        validatorByBlobs.SetNext()
+        handlers.push_back(validatorByBlobs);
+
+        this->handler = handlers[0];
     }
 
     template <typename TFrame>

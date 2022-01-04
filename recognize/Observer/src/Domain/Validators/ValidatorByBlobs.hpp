@@ -3,21 +3,20 @@
 #include <iostream>
 #include <vector>
 
+#include "../../Blob/BlobDetectionConfiguration.hpp"
 #include "../../Blob/BlobDetector/BlobDetector.hpp"
 #include "../../Blob/Contours/ContoursDetector.hpp"
-#include "../../Blob/Contours/ContoursTypes.hpp"
 #include "ValidatorHandler.hpp"
 
 namespace Observer {
     template <typename TFrame>
     class ValidatorByBlobs : public ValidatorHandler<TFrame> {
        public:
-        ValidatorByBlobs(const BlobDetectorParams& pDetectorParams,
-                         const BlobFilters& blobFilters,
-                         const ThresholdingParams& contoursParams,
-                         const ContoursFilter& filters)
-            : blobDetector(pDetectorParams, blobFilters),
-              contoursDetector(contoursParams, filters),
+        ValidatorByBlobs(const BlobDetectionConfiguration& pDetectorCfg)
+            : contoursDetector(pDetectorCfg.thresholdingParams,
+                               pDetectorCfg.contoursFilters),
+              blobDetector(pDetectorCfg.blobDetectorParams,
+                           pDetectorCfg.blobFilters, this->contoursDetector),
               ValidatorHandler<TFrame>() {}
 
        public:

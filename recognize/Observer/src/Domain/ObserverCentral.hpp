@@ -30,7 +30,7 @@ namespace Observer {
         void StopAllCameras();
 
         void StartCamera(std::string id);
-        void StartAllCameras();
+        void StartAllCameras(bool useNotifications);
 
         void StartPreview();
         void StopPreview();
@@ -43,6 +43,7 @@ namespace Observer {
         struct CameraThread {
             std::thread thread;
             std::shared_ptr<CameraObserver<TFrame>> camera;
+            std::shared_ptr<EventValidator<TFrame>> eventValidator;
         };
 
         Configuration config;
@@ -58,33 +59,10 @@ namespace Observer {
 
         CameraThread GetNewCameraThread(CameraConfiguration* cfg);
 
-        EventValidator<TFrame> eventValidator;
-
         void internalStopCamera(CameraThread& camThread);
         void internalStartCamera(CameraConfiguration* cfg);
 
         void ProcessConfiguration();
-
-        /* Proxy allows us to give our subscribers not only the threshold,
-         * but also the camera that updated the threshold.
-         */
-        class ProxyCameraEventPublisher
-            : public ICameraEventSubscriber<TFrame> {
-           public:
-            explicit ProxyCameraEventPublisher() {}
-
-            void subscribe(IThresholdEventSubscriber* subscriber) {
-                this->cameraEventPublisher.subscribe(subscriber);
-            }
-
-            void update(CameraConfiguration* cam,
-                        CameraEvent<TFrame> ev) override {
-                // TODO: Validate
-            }
-
-           private:
-            Publisher<CameraConfiguration*, double> cameraEventPublisher;
-        };
     };
 
     template <typename TFrame>
@@ -99,8 +77,11 @@ namespace Observer {
 
     template <typename TFrame>
     bool ObserverCentral<TFrame>::Start() {
+        bool useNotifications = this->config.localWebConfiguration.enabled ||
+                                this->config.telegramConfiguration.enabled;
+
         OBSERVER_TRACE("Starting the cameras");
-        this->StartAllCameras();
+        this->StartAllCameras(useNotifications);
 
         if (this->config.outputConfiguration.showOutput) {
             OBSERVER_TRACE("Starting the preview");
@@ -108,17 +89,7 @@ namespace Observer {
         }
 
         OBSERVER_TRACE("Starting the event validator");
-        // Start event validator
-        // TODO: If user wants notifications:
-        this->functionalityThreads.emplace_back(
-            // IFunctionality
-            &this->eventValidator,
 
-            // std::thread
-            std::thread(&EventValidator<TFrame>::Start, &this->eventValidator));
-
-        bool useNotifications = this->config.localWebConfiguration.enabled ||
-                                this->config.telegramConfiguration.enabled;
         if (useNotifications) {
             OBSERVER_TRACE("Starting notification controller");
             this->functionalityThreads.emplace_back(
@@ -127,9 +98,6 @@ namespace Observer {
                             &this->notificationController));
 
             OBSERVER_TRACE("Subscribing notifications controller to events");
-            // subscribe notification controller to validated events
-            this->eventValidator.SubscribeToEventValidationDone(
-                &this->notificationController);
         }
 
         return true;
@@ -173,14 +141,22 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void ObserverCentral<TFrame>::StartAllCameras() {
+    void ObserverCentral<TFrame>::StartAllCameras(bool useNotifications) {
         for (auto& configuration : this->config.camerasConfiguration) {
             this->internalStartCamera(&configuration);
         }
 
         for (auto&& camThread : this->camerasThreads) {
-            camThread.camera->SubscribeToCameraEvents(&eventValidator);
             camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+
+            if (useNotifications) {
+                camThread.camera->SubscribeToCameraEvents(
+                    camThread.eventValidator.get());
+
+                // subscribe notification controller to validated events
+                camThread.eventValidator->SubscribeToEventValidationDone(
+                    &this->notificationController);
+            }
         }
     }
 
@@ -226,6 +202,19 @@ namespace Observer {
         ObserverCentral<TFrame>::CameraThread ct;
         ct.camera = std::make_shared<CameraObserver<TFrame>>(cfg);
         ct.thread = std::thread(&CameraObserver<TFrame>::Start, ct.camera);
+
+        // event validator
+        ct.eventValidator = std::make_shared<EventValidator<TFrame>>(cfg);
+
+        // Start event validator
+        // TODO: If user wants notifications:
+        this->functionalityThreads.emplace_back(
+            // IFunctionality
+            ct.eventValidator.get(),
+
+            // std::thread
+            std::thread(&EventValidator<TFrame>::Start, ct.eventValidator));
+
         return ct;
     }
 
