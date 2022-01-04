@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../Blob/BlobGraphics.hpp"
 #include "../IFunctionality.hpp"
 #include "../Pattern/Camera/ICameraEventSubscriber.hpp"
 #include "../Pattern/Event/IEventSubscriber.hpp"
@@ -189,24 +190,32 @@ namespace Observer {
     void NotificationsController<TFrame>::Send(
         VideoNotification<TFrame> notification) {
         // 1. Build
-        notification.BuildNotification(this->config->mediaFolderPath);
+        const auto videoPath =
+            notification.BuildNotification(this->config->mediaFolderPath);
 
         // 2. For each service that doesn't need the trace call
         // SendVideo(videopath)
         for (auto&& service :
              this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-            service->SendVideo(notification.GetVideoPath(),
-                               notification.GetCaption());
+            service->SendVideo(videoPath, notification.GetCaption());
         }
 
         // guard: if there is at leat 1 service that need the trace
         if (!this->drawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 3. Draw trace on video
 
+            OBSERVER_INFO("Drawing blobs on notification");
+            BlobGraphics<TFrame>::DrawBlobs(notification.GetFrames(),
+                                            notification.GetEvent().GetBlobs());
+
+            const auto videoPath =
+                notification.BuildNotification(this->config->mediaFolderPath);
+
             // 4. For each service that need the trace call
             // SendVideo(video2path)
             for (auto&& service :
                  this->drawableServices[flag_to_int(ETrazable::VIDEO)]) {
+                service->SendVideo(videoPath, notification.GetCaption());
             }
         }
     }

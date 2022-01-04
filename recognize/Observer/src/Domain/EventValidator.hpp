@@ -107,7 +107,7 @@ namespace Observer {
                     std::move(event), std::move(rawCameraEvent));
             } else {
                 OBSERVER_TRACE(
-                    "Event from camera '{}' was not valid due to {}.",
+                    "Event from camera '{0}' was not valid due to {1}.",
                     cfg->name,
                     std::accumulate(result.GetMessages().begin(),
                                     result.GetMessages().end(), std::string(),

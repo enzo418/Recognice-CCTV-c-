@@ -1,28 +1,14 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "../../Blob/BlobDetector/Blob.hpp"
 #include "../../Point.hpp"
 #include "../../Rect.hpp"
 
 namespace Observer {
-    class StandarFindingEvent {
-       public:
-        StandarFindingEvent(int pFrameIndex, Point pCenter, Rect pRect);
-
-        int GetFindingIndex();
-
-        Point GetCenter();
-
-        Rect GetRect();
-
-       private:
-        int findingFrameIndex;
-        Point center;
-        Rect rect;
-    };
-
     class ClassifierFindingEvent {
        public:
         ClassifierFindingEvent(int pFrameIndex, std::vector<Point> pPoints);
@@ -40,7 +26,11 @@ namespace Observer {
        public:
         Event();
 
-        void AddStandarFinding(StandarFindingEvent&& finding);
+        Event(std::vector<Blob>&& blobs);
+
+        void SetBlobs(std::vector<Blob>&& findings);
+        std::vector<Blob>& GetBlobs();
+
         void AddClassifierFinding(ClassifierFindingEvent&& finding);
 
         void SetCameraName(std::string cameraName);
@@ -49,21 +39,12 @@ namespace Observer {
 
         int GetFirstFrameWhereFindingWasFound();
 
-        // TODO: Who draws the findings?
-        //      option 1.
-        //          Event receives a EventDrawer and then calls draw on image
-        //          for each frame that you pass with DrawOn(Frame, Drawer& ) :
-        //          Frame,
-        //       option 2.
-        //          Allow to GetFinding(frameIndex) : Frame and then with
-        //          polymorphism someone handles the draw call.
-
        private:
         // camera
         std::string cameraName;
 
         // frames/findings
-        std::vector<StandarFindingEvent> standarFindings;
+        std::vector<Blob> blobsFound;
         std::vector<ClassifierFindingEvent> classifierFindings;
     };
 

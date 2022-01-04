@@ -25,23 +25,18 @@ namespace Observer {
 
         std::string GetCaption() override;
 
-        std::string GetVideoPath();
-
         std::vector<TFrame>& GetFrames();
 
         /**
-         * @brief Build a video notification.
-         * Once built, you can get the path where it is saved with
-         * `GetVideoPath`
+         * @brief Build a video notification and return the path.
          *
          * @param mediaFolderPath destination folder of the video
          * @param frameRate frame rate
          * @param codecID opencv codec id
          * @param frameSize opencv frame size
-         * @return true if could build the video
-         * @return false
+         * @return video path
          */
-        bool BuildNotification(const std::string& mediaFolderPath);
+        std::string BuildNotification(const std::string& mediaFolderPath);
 
         void SetCodec(int codec);
         void SetFrameRate(double frameRate);
@@ -80,17 +75,12 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    std::string VideoNotification<TFrame>::GetVideoPath() {
-        return this->outputVideoPath;
-    }
-
-    template <typename TFrame>
     std::vector<TFrame>& VideoNotification<TFrame>::GetFrames() {
         return this->frames;
     }
 
     template <typename TFrame>
-    bool VideoNotification<TFrame>::BuildNotification(
+    std::string VideoNotification<TFrame>::BuildNotification(
         const std::string& mediaFolderPath) {
         OBSERVER_ASSERT(!frames.empty(),
                         "Empty frames while building a video notification");
@@ -100,10 +90,8 @@ namespace Observer {
         const std::string& path =
             fs::path(mediaFolderPath) / fs::path(fileName);
 
-        this->outputVideoPath = path;
-
         this->writer.Open(
-            this->outputVideoPath, this->frameRate,
+            path, this->frameRate,
             this->codec == -418 ? this->writer.GetDefaultCodec() : this->codec,
             this->frameSize);
 
@@ -113,7 +101,7 @@ namespace Observer {
 
         this->writer.Close();
 
-        return true;
+        return path;
     }
 
     template <typename TFrame>
