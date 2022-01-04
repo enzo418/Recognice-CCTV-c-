@@ -28,6 +28,13 @@ using TestTypes = ::testing::Types<cv::Mat>;
 // Templated suit test
 TYPED_TEST_SUITE(VideoBufferTest, TestTypes);
 
+namespace Observer {
+    template <>
+    struct ImageTransformation<int> {
+        static inline void CopyImage(int& source, int& dst) { dst = source; }
+    };
+}  // namespace Observer
+
 TYPED_TEST(VideoBufferTest, SimpleAdd) {
     std::vector<TypeParam> images(BUFFER_SIZE * 2);
 
@@ -68,4 +75,69 @@ TYPED_TEST(VideoBufferTest, OverrideAdd) {
     // expect size to be eq to BUFFER_SIZE in left + BUFFER_SIZE in right,
     // BUFFER_SIZE * 2
     ASSERT_EQ(frames.size(), BUFFER_SIZE * 2);
+}
+
+TEST(VideoBufferTest, ShouldReturnCorrectDataWithoutOverwrite) {
+    VideoBuffer<int> buffer(7, 7);
+    std::vector<int> before = {1, 2, 3, 4, 5, 6, 7};
+    std::vector<int> after = {8, 9, 10, 11, 12, 13, 14};
+
+    for (auto& frame : before) {
+        EXPECT_TRUE(buffer.AddFrame(frame) == BUFFER_IDLE);
+    }
+
+    buffer.ChangeWasDetected();
+
+    EXPECT_EQ(buffer.GetState(), BUFFER_WAITING_FILL_UP_AFTER);
+
+    for (int i = 0; i < after.size(); i++) {
+        if (i == after.size() - 1) {
+            EXPECT_TRUE(buffer.AddFrame(after[i]) == BUFFER_READY);
+        } else {
+            EXPECT_TRUE(buffer.AddFrame(after[i]) ==
+                        BUFFER_WAITING_FILL_UP_AFTER);
+        }
+    }
+
+    std::vector<int> frames = buffer.PopAllFrames();
+    for (int i = 0; i < frames.size(); i++) {
+        if (i < before.size()) {
+            EXPECT_EQ(frames[i], before[i]);
+        } else {
+            EXPECT_EQ(frames[i], after[i - before.size()]);
+        }
+    }
+}
+
+TEST(VideoBufferTest, ShouldReturnCorrectDataWithOverwrite) {
+    VideoBuffer<int> buffer(7, 7);
+    std::vector<int> before = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    std::vector<int> realBefore = {4, 5, 6, 7, 8, 9, 10};
+    std::vector<int> after = {11, 12, 13, 14, 15, 16, 17};
+
+    for (int i = 0; i < before.size(); i++) {
+        EXPECT_TRUE(buffer.AddFrame(before[i]) == BUFFER_IDLE);
+    }
+
+    buffer.ChangeWasDetected();
+
+    EXPECT_EQ(buffer.GetState(), BUFFER_WAITING_FILL_UP_AFTER);
+
+    for (int i = 0; i < after.size(); i++) {
+        if (i == after.size() - 1) {
+            EXPECT_TRUE(buffer.AddFrame(after[i]) == BUFFER_READY);
+        } else {
+            EXPECT_TRUE(buffer.AddFrame(after[i]) ==
+                        BUFFER_WAITING_FILL_UP_AFTER);
+        }
+    }
+
+    std::vector<int> frames = buffer.PopAllFrames();
+    for (int i = 0; i < frames.size(); i++) {
+        if (i < realBefore.size()) {
+            EXPECT_EQ(frames[i], realBefore[i]);
+        } else {
+            EXPECT_EQ(frames[i], after[i - realBefore.size()]);
+        }
+    }
 }
