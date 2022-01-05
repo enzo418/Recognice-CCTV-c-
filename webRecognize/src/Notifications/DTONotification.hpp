@@ -8,11 +8,6 @@
 #include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
 
 namespace Web {
-    const std::unordered_map<int, const std::string> NOTIFICATIONS_MAP = {
-        {Observer::flag_to_int(Observer::ENotificationType::TEXT), "text"},
-        {Observer::flag_to_int(Observer::ENotificationType::IMAGE), "image"},
-        {Observer::flag_to_int(Observer::ENotificationType::VIDEO), "video"}};
-
     struct DTONotification : Observer::DTONotification {
         DTONotification() = default;
 

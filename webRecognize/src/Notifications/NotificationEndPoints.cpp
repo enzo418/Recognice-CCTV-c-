@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "../../../recognize/Observer/src/Log/log.hpp"
+#include "../../../recognize/Observer/src/Utils/NotificationTypesHelpers.hpp"
 #include "Notifications.hpp"
 
 namespace Web {
@@ -36,8 +37,9 @@ namespace Web {
                     ParseGroupID(groupID, req);
 
                     Web::DTONotification notification;
-                    notification.type = NOTIFICATIONS_MAP.at(
-                        (int)Observer::ENotificationType::TEXT);
+                    notification.type =
+                        Observer::Helpers::Notifications::NOTIFICATION_TYPE_MAP
+                            .at((int)Observer::ENotificationType::TEXT);
                     notification.datetime =
                         Observer::SpecialFunctions::GetCurrentTime();
                     notification.caption = text;
@@ -55,8 +57,9 @@ namespace Web {
                      ParseGroupID(groupID, req);
 
                      Web::DTONotification notification;
-                     notification.type = NOTIFICATIONS_MAP.at(
-                         (int)Observer::ENotificationType::IMAGE);
+                     notification.type =
+                         Observer::Helpers::Notifications::NOTIFICATION_TYPE_MAP
+                             .at((int)Observer::ENotificationType::IMAGE);
                      notification.datetime =
                          Observer::SpecialFunctions::GetCurrentTime();
                      notification.caption = text;
@@ -74,8 +77,9 @@ namespace Web {
                 ParseGroupID(groupID, req);
 
                 Web::DTONotification notification;
-                notification.type = NOTIFICATIONS_MAP.at(
-                    (int)Observer::ENotificationType::VIDEO);
+                notification.type =
+                    Observer::Helpers::Notifications::NOTIFICATION_TYPE_MAP.at(
+                        (int)Observer::ENotificationType::VIDEO);
                 notification.datetime =
                     Observer::SpecialFunctions::GetCurrentTime();
                 notification.caption = text;
