@@ -6,13 +6,7 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/Implementations/opencv/BlobGraphics.hpp"
-#include "../../Observer/Implementations/opencv/ImageDisplay.hpp"
-#include "../../Observer/Implementations/opencv/ImagePersistence.hpp"
-#include "../../Observer/Implementations/opencv/ImageProcessing.hpp"
-#include "../../Observer/Implementations/opencv/ImageTransformation.hpp"
-#include "../../Observer/Implementations/opencv/VideoSource.hpp"
-#include "../../Observer/Implementations/opencv/VideoWriter.hpp"
+#include "../../Observer/Implementations/opencv/Implementation.hpp"
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
 #include "../../Observer/src/Log/log.hpp"
