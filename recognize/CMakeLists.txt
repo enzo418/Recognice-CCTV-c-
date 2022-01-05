@@ -27,20 +27,13 @@ endif()
 
 include(Observer/CMakeLists.txt)
 
-# If the cmake file isn't included then use the sample program
-if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
-        set(SOURCES ${COMMON_SOURCES} Observer/Observer.cpp)
-endif()
+set (CMAKE_CXX_STANDARD 20)
 
 # Print sources
 message(${COMMON_SOURCES})
 
 # Set cmake cxx flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-
-set (CMAKE_CXX_STANDARD 20)
-
-add_executable(recognize ${SOURCES})
 
 # clangd:
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -51,10 +44,24 @@ include_directories(${CURL_INCLUDE_DIR})
 # Include yaml
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
-set(LIBS ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
+add_library(recognize_lib)
+target_sources(recognize_lib PRIVATE ${COMMON_SOURCES})
 
-# set -l of opencv and curl
-target_link_libraries(recognize ${LIBS})
+set(LIBS recognize_lib ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
+
+# If the cmake file isn't included then use the sample program
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+  add_executable(recognize Observer/Samples/Recognizer.cpp)
+  add_executable(liveBlobDetection Observer/Samples/LiveBlobDetection.cpp)
+  add_executable(videoBlobDetection Observer/Samples/VideoBlobDetection.cpp)
+  add_executable(cameraRecording Observer/Samples/Recording.cpp)
+
+  # set -l of opencv and curl
+  target_link_libraries(recognize ${LIBS})
+  target_link_libraries(liveBlobDetection ${LIBS})
+  target_link_libraries(videoBlobDetection ${LIBS})
+  target_link_libraries(cameraRecording ${LIBS})
+endif()
 
 # =====
 # tests
@@ -66,7 +73,6 @@ enable_testing()
 add_executable(
     tests
     "${TESTS_SOURCES}"
-    "${COMMON_SOURCES}"
 )
 
 target_link_libraries(
