@@ -91,6 +91,7 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
 
     // Get the video
     Observer::VideoSource<FrameType> cap;
+    cap.Open(videouri);
 
     std::vector<FrameType> frames;
 

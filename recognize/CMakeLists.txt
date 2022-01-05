@@ -44,8 +44,7 @@ include_directories(${CURL_INCLUDE_DIR})
 # Include yaml
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
-add_library(recognize_lib)
-target_sources(recognize_lib PRIVATE ${COMMON_SOURCES})
+add_library(recognize_lib ${COMMON_SOURCES})
 
 set(LIBS recognize_lib ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
 

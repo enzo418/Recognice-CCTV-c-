@@ -55,13 +55,13 @@ int main(int argc, char** argv) {
     int end = 0;
     std::string blobDetectionFile;
 
-    if (parser.has("start")) {
-        start = parser.get<int>("start");
-    }
+    // if (parser.has("start")) {
+    //     start = parser.get<int>("start");
+    // }
 
-    if (parser.has("end")) {
-        end = parser.get<int>("end");
-    }
+    // if (parser.has("end")) {
+    //     end = parser.get<int>("end");
+    // }
 
     // initialize logger
     Observer::LogManager::Initialize();
@@ -88,6 +88,8 @@ void LiveTestBlobDetection(Observer::Configuration* cfg) {
 
     // Get the video
     Observer::VideoSource<FrameType> cap;
+
+    cap.Open(videouri);
 
     if (!cap.isOpened()) {
         OBSERVER_CRITICAL("Couldn't connect to {0}", videouri);
