@@ -12,6 +12,7 @@
 #include "../Pattern/ObserverBasics.hpp"
 #include "../Semaphore.hpp"
 #include "../SimpleBlockingQueue.hpp"
+#include "../Utils/NotificationTypesHelpers.hpp"
 #include "../Utils/SpecialEnums.hpp"
 #include "Configuration/Configuration.hpp"
 #include "Configuration/NotificationsServiceConfiguration.hpp"
@@ -179,17 +180,22 @@ namespace Observer {
             ImageTransformation<TFrame>::GetSize(notification.GetImage());
 
         if (imSize.width == 0 || imSize.height == 0) {
+            OBSERVER_ERROR("Trying to send an empty image. Caption: {}",
+                           notification.GetCaption());
             return;
         }
 
-        // 1. Build
-        const auto path =
-            notification.BuildNotification(this->config->mediaFolderPath);
+        if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
+            // 1. Build
+            const auto path =
+                notification.BuildNotification(this->config->mediaFolderPath);
 
-        for (auto&& service :
-             this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
-            service->SendImage(DTONotification(
-                notification.GetGroupID(), notification.GetCaption(), path));
+            for (auto&& service :
+                 this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
+                service->SendImage(DTONotification(notification.GetGroupID(),
+                                                   notification.GetCaption(),
+                                                   path));
+            }
         }
 
         auto& servD = this->drawableServices[flag_to_int(ETrazable::IMAGE)];
@@ -216,17 +222,19 @@ namespace Observer {
     template <typename TFrame>
     void NotificationsController<TFrame>::Send(
         VideoNotification<TFrame> notification) {
-        // 1. Build
-        const auto videoPath =
-            notification.BuildNotification(this->config->mediaFolderPath);
+        if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
+            // 1. Build
+            const auto videoPath =
+                notification.BuildNotification(this->config->mediaFolderPath);
 
-        // 2. For each service that doesn't need the trace call
-        // SendVideo(videopath)
-        for (auto&& service :
-             this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-            service->SendVideo(DTONotification(notification.GetGroupID(),
-                                               notification.GetCaption(),
-                                               videoPath));
+            // 2. For each service that doesn't need the trace call
+            // SendVideo(videopath)
+            for (auto&& service :
+                 this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
+                service->SendVideo(DTONotification(notification.GetGroupID(),
+                                                   notification.GetCaption(),
+                                                   videoPath));
+            }
         }
 
         // guard: if there is at leat 1 service that need the trace
@@ -312,10 +320,6 @@ namespace Observer {
         IMessagingService* service, NotificationsServiceConfiguration* cfg) {
         // TODO: iterate enums
 
-        static const ENotificationType not_types[] = {ENotificationType::TEXT,
-                                                      ENotificationType::IMAGE,
-                                                      ENotificationType::VIDEO};
-
         static const ETrazable trazable_types[] = {ETrazable::IMAGE,
                                                    ETrazable::VIDEO};
 
@@ -327,7 +331,7 @@ namespace Observer {
 
         this->services.push_back(service);
 
-        for (const auto type : not_types) {
+        for (const auto type : Helpers::Notifications::NOTIFICATION_TYPES) {
             if (has_flag(typesAccepted, type)) {
                 this->servicesType[{service, flag_to_int(type)}] = true;
             } else {
