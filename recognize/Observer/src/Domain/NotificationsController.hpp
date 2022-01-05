@@ -17,19 +17,12 @@
 #include "Configuration/NotificationsServiceConfiguration.hpp"
 #include "Event/CameraEvent.hpp"
 #include "Event/Event.hpp"
+#include "Notification/DTONotification.hpp"
 #include "Notification/IMessagingService.hpp"
 #include "Notification/RestClientLocalWebNotifications.hpp"
 #include "Notification/TelegramNotifications.hpp"
 
 namespace Observer {
-    struct DTONotification {
-        DTONotification() = default;
-
-        int groupID;
-        std::string caption;
-        std::string mediaPath;
-    };
-
     class INotificationEventSubscriber : public ISubscriber<DTONotification> {
         void update(DTONotification ev) override = 0;
     };
@@ -173,7 +166,8 @@ namespace Observer {
         for (auto&& service : this->services) {
             if (this->servicesType[{service,
                                     flag_to_int(ENotificationType::TEXT)}]) {
-                service->SendText(notification.GetCaption());
+                service->SendText(DTONotification(notification.GetGroupID(),
+                                                  notification.GetCaption()));
             }
         }
     }
@@ -194,7 +188,8 @@ namespace Observer {
 
         for (auto&& service :
              this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
-            service->SendImage(path, notification.GetCaption());
+            service->SendImage(DTONotification(
+                notification.GetGroupID(), notification.GetCaption(), path));
         }
 
         auto& servD = this->drawableServices[flag_to_int(ETrazable::IMAGE)];
@@ -211,7 +206,9 @@ namespace Observer {
             // 4. For each service that need the trace call
             // SendVideo(image2path)
             for (auto&& service : servD) {
-                service->SendImage(path_trace, notification.GetCaption());
+                service->SendImage(DTONotification(notification.GetGroupID(),
+                                                   notification.GetCaption(),
+                                                   path_trace));
             }
         }
     }
@@ -227,7 +224,9 @@ namespace Observer {
         // SendVideo(videopath)
         for (auto&& service :
              this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-            service->SendVideo(videoPath, notification.GetCaption());
+            service->SendVideo(DTONotification(notification.GetGroupID(),
+                                               notification.GetCaption(),
+                                               videoPath));
         }
 
         // guard: if there is at leat 1 service that need the trace
@@ -245,7 +244,9 @@ namespace Observer {
             // SendVideo(video2path)
             for (auto&& service :
                  this->drawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(videoPath, notification.GetCaption());
+                service->SendVideo(DTONotification(notification.GetGroupID(),
+                                                   notification.GetCaption(),
+                                                   videoPath));
             }
         }
     }

@@ -18,42 +18,44 @@ namespace Observer {
         std::string pRestServerUrl)
         : LocalWebNotifications(pRestServerUrl) {}
 
-    void RestClientLocalWebNotifications::SendText(std::string text) {
+    void RestClientLocalWebNotifications::SendText(
+        const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addTextNotification";
 
         auto res = CurlWrapper()
                        .url(url)
-                       .qparam("text", text)
+                       .qparam("text", notification.caption)
+                       .qparam("group_id", std::to_string(notification.groupID))
                        .method(CURLOPT_HTTPGET)
                        .perform();
 
         log_htpp_response(res);
     }
 
-    void RestClientLocalWebNotifications::SendImage(std::string path,
-                                                    std::string text) {
+    void RestClientLocalWebNotifications::SendImage(
+        const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addImageNotification";
 
         auto res = CurlWrapper()
                        .url(url)
-                       .method(CURLOPT_HTTPPOST)
-                       .header("Content-Type", "application/json")
-                       .body(SpecialFunctions::JsonStringGenerator(
-                           {{"text", text}, {"image_path", path}}))
+                       .method(CURLOPT_HTTPGET)
+                       .qparam("text", notification.caption)
+                       .qparam("image_path", notification.mediaPath)
+                       .qparam("group_id", std::to_string(notification.groupID))
                        .perform();
         log_htpp_response(res);
     }
 
-    void RestClientLocalWebNotifications::SendVideo(std::string path,
-                                                    std::string text) {
+    void RestClientLocalWebNotifications::SendVideo(
+        const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addVideoNotification";
 
         auto res = CurlWrapper()
                        .url(url)
-                       .method(CURLOPT_HTTPPOST)
-                       .header("Content-Type", "application/json")
-                       .body(SpecialFunctions::JsonStringGenerator(
-                           {{"text", text}, {"video_path", path}}))
+                       .method(CURLOPT_HTTPGET)
+                       .qparam("text", notification.caption)
+                       .qparam("video_path", notification.mediaPath)
+                       .qparam("group_id", std::to_string(notification.groupID))
                        .perform();
         log_htpp_response(res);
     }

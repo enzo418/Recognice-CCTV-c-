@@ -11,9 +11,9 @@ namespace Observer {
        public:
         explicit RestClientLocalWebNotifications(std::string restServerUrl);
 
-        void SendText(std::string text) override;
-        void SendImage(std::string path, std::string message) override;
-        void SendVideo(std::string path, std::string caption) override;
+        void SendText(const DTONotification& notification) override;
+        void SendImage(const DTONotification& notification) override;
+        void SendVideo(const DTONotification& notification) override;
 
        private:
     };

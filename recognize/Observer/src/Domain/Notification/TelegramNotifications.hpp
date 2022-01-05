@@ -9,9 +9,9 @@ namespace Observer {
        public:
         TelegramNotifications(TelegramNotificationsConfiguration* cfg);
 
-        virtual void SendText(std::string text);
-        virtual void SendImage(std::string path, std::string message);
-        virtual void SendVideo(std::string path, std::string caption);
+        void SendText(const DTONotification& notification) override;
+        void SendImage(const DTONotification& notification) override;
+        void SendVideo(const DTONotification& notification) override;
 
        private:
         TelegramNotificationsConfiguration* cfg;
