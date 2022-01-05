@@ -10,7 +10,7 @@ namespace Web {
     namespace {
         void inline ParseGroupID(int& groupID, auto* req) {
             try {
-                groupID = std::stoi((std::string)req->getHeader("group_id"));
+                groupID = std::stoi((std::string)req->getQuery("group_id"));
             } catch (const std::exception& ex) {
                 OBSERVER_ERROR("Couldn't parse group id from request.");
             }
@@ -18,16 +18,19 @@ namespace Web {
 
         void inline SendNotification(uWS::App& app, NotificationsContext& ctx,
                                      const Web::DTONotification& notification) {
-            app.publish(std::string_view(ctx.socketTopic),
-                        NotificationToJson(notification), uWS::OpCode::TEXT,
-                        true);
+            const auto content = NotificationToJson(notification);
+
+            OBSERVER_TRACE("Sending notification: {}", content);
+
+            app.publish(std::string_view(ctx.socketTopic), content,
+                        uWS::OpCode::TEXT, true);
         }
     }  // namespace
 
     void SetNotificationsEndPoints(uWS::App& app, NotificationsContext& ctx) {
         app.get(ctx.textEndpoint,
                 [&app, &ctx](auto* res, auto* req) {
-                    std::string text(req->getHeader("text"));
+                    std::string text(req->getQuery("text"));
 
                     int groupID {-1};
                     ParseGroupID(groupID, req);
@@ -40,11 +43,12 @@ namespace Web {
                     notification.groupID = groupID;
 
                     SendNotification(app, ctx, notification);
+                    res->end();
                 })
             .get(ctx.imageEndpoint,
                  [&app, &ctx](auto* res, auto* req) {
-                     std::string text(req->getHeader("text"));
-                     std::string imagePath(req->getHeader("image_path"));
+                     std::string text(req->getQuery("text"));
+                     std::string imagePath(req->getQuery("image_path"));
 
                      int groupID {-1};
                      ParseGroupID(groupID, req);
@@ -58,10 +62,11 @@ namespace Web {
                      notification.mediaPath = imagePath;
 
                      SendNotification(app, ctx, notification);
+                     res->end();
                  })
             .get(ctx.videoEndpoint, [&app, &ctx](auto* res, auto* req) {
-                std::string text(req->getHeader("text"));
-                std::string videoPath(req->getHeader("video_path"));
+                std::string text(req->getQuery("text"));
+                std::string videoPath(req->getQuery("video_path"));
 
                 int groupID {-1};
                 ParseGroupID(groupID, req);
@@ -75,6 +80,7 @@ namespace Web {
                 notification.mediaPath = videoPath;
 
                 SendNotification(app, ctx, notification);
+                res->end();
             });
     }
 }  // namespace Web
