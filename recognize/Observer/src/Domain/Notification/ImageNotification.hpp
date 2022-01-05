@@ -35,15 +35,12 @@ namespace Observer {
         TFrame& GetImage();
 
         /**
-         * @brief Build a image notification.
-         * Once built, you can get the path where it is saved with
-         * `GetImagePath`
+         * @brief Build a image notification. Return the path
          *
          * @param mediaFolderPath folder to save the image
-         * @return true if could build and save the image
-         * @return false
+         * @return path
          */
-        bool BuildNotification(const std::string& mediaFolderPath);
+        std::string BuildNotification(const std::string& mediaFolderPath);
 
        private:
         std::string text;
@@ -78,17 +75,15 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    bool ImageNotification<TFrame>::BuildNotification(
+    std::string ImageNotification<TFrame>::BuildNotification(
         const std::string& mediaFolderPath) {
         const std::string time = Observer::SpecialFunctions::GetCurrentTime();
         const std::string fileName = time + ".jpg";
         const std::string& path =
             fs::path(mediaFolderPath) / fs::path(fileName);
 
-        this->outputImagePath = path;
-
         ImagePersistence<TFrame>::SaveImage(path, this->image);
 
-        return true;
+        return path;
     }
 }  // namespace Observer

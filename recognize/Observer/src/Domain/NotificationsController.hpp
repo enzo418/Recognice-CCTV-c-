@@ -162,12 +162,16 @@ namespace Observer {
     template <typename TFrame>
     void NotificationsController<TFrame>::Send(
         ImageNotification<TFrame> notification) {
-        // 1. Build
-        notification.BuildNotification(this->config->mediaFolderPath);
+        Size imSize =
+            ImageTransformation<TFrame>::GetSize(notification.GetImage());
 
-        // 2. For each service that doesn't need the trace call
-        // SendVideo(imagepath)
-        const std::string& path = notification.GetImagePath();
+        if (imSize.width == 0 || imSize.height == 0) {
+            return;
+        }
+
+        // 1. Build
+        const auto path =
+            notification.BuildNotification(this->config->mediaFolderPath);
 
         for (auto&& service :
              this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
@@ -178,10 +182,17 @@ namespace Observer {
         // guard: if there is at leat 1 service that need the trace
         if (!servD.empty()) {
             // 3. Draw trace on image
+            BlobGraphics<TFrame>::DrawBlobs(
+                notification.GetImage(), notification.GetEvent().GetBlobs(),
+                notification.GetEvent().GetFirstFrameWhereFindingWasFound());
+
+            const auto path_trace =
+                notification.BuildNotification(this->config->mediaFolderPath);
 
             // 4. For each service that need the trace call
             // SendVideo(image2path)
             for (auto&& service : servD) {
+                service->SendImage(path_trace, notification.GetCaption());
             }
         }
     }
