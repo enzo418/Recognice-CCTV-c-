@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../recognize/Observer/src/Utils/SpecialFunctions.hpp"
 #include "../../uWebSockets/src/App.h"
 #include "DTONotification.hpp"
 

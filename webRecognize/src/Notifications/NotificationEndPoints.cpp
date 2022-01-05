@@ -38,7 +38,8 @@ namespace Web {
                     Web::DTONotification notification;
                     notification.type = NOTIFICATIONS_MAP.at(
                         (int)Observer::ENotificationType::TEXT);
-                    notification.datetime = "now";
+                    notification.datetime =
+                        Observer::SpecialFunctions::GetCurrentTime();
                     notification.caption = text;
                     notification.groupID = groupID;
 
@@ -56,7 +57,8 @@ namespace Web {
                      Web::DTONotification notification;
                      notification.type = NOTIFICATIONS_MAP.at(
                          (int)Observer::ENotificationType::IMAGE);
-                     notification.datetime = "now";
+                     notification.datetime =
+                         Observer::SpecialFunctions::GetCurrentTime();
                      notification.caption = text;
                      notification.groupID = groupID;
                      notification.mediaPath = imagePath;
@@ -74,7 +76,8 @@ namespace Web {
                 Web::DTONotification notification;
                 notification.type = NOTIFICATIONS_MAP.at(
                     (int)Observer::ENotificationType::VIDEO);
-                notification.datetime = "now";
+                notification.datetime =
+                    Observer::SpecialFunctions::GetCurrentTime();
                 notification.caption = text;
                 notification.groupID = groupID;
                 notification.mediaPath = videoPath;
