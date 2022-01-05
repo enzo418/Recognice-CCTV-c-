@@ -3,15 +3,17 @@
 #include "../../Log/log.hpp"
 #include "../../Utils/CurlWrapper.hpp"
 #include "../Configuration/NotificationsServiceConfiguration.hpp"
-#include "IMessagingService.hpp"
+#include "MessagingService.hpp"
+
 namespace Observer {
-    class TelegramNotifications : public IMessagingService {
+    class TelegramNotifications : public MessagingService {
        public:
         TelegramNotifications(TelegramNotificationsConfiguration* cfg);
 
-        void SendText(const DTONotification& notification) override;
-        void SendImage(const DTONotification& notification) override;
-        void SendVideo(const DTONotification& notification) override;
+       protected:
+        void InternalSendText(const DTONotification& notification) override;
+        void InternalSendImage(const DTONotification& notification) override;
+        void InternalSendVideo(const DTONotification& notification) override;
 
        private:
         TelegramNotificationsConfiguration* cfg;

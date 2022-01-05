@@ -5,11 +5,12 @@ namespace Observer {
 
     TelegramNotifications::TelegramNotifications(
         TelegramNotificationsConfiguration* pCfg)
-        : cfg(pCfg) {
+        : cfg(pCfg), MessagingService(*pCfg) {
         this->apiEndPoint = "https://api.telegram.org/bot" + this->cfg->apiKey;
     }
 
-    void TelegramNotifications::SendText(const DTONotification& notification) {
+    void TelegramNotifications::InternalSendText(
+        const DTONotification& notification) {
         const std::string url = this->apiEndPoint + "/sendMessage";
 
         auto res = CurlWrapper()
@@ -22,7 +23,8 @@ namespace Observer {
         log_htpp_response(res);
     }
 
-    void TelegramNotifications::SendImage(const DTONotification& notification) {
+    void TelegramNotifications::InternalSendImage(
+        const DTONotification& notification) {
         const std::string url = this->apiEndPoint + "/sendPhoto";
 
         auto res =
@@ -37,7 +39,8 @@ namespace Observer {
         log_htpp_response(res);
     }
 
-    void TelegramNotifications::SendVideo(const DTONotification& notification) {
+    void TelegramNotifications::InternalSendVideo(
+        const DTONotification& notification) {
         const std::string url = this->apiEndPoint + "/sendAnimation";
 
         auto res =

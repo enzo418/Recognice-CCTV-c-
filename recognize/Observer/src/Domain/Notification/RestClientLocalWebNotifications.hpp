@@ -1,20 +1,23 @@
 #pragma once
 
 #include "../../Utils/SpecialFunctions.hpp"
-#include "LocalWebNotifications.hpp"
+#include "MessagingService.hpp"
 //#include <restclient-cpp/restclient.h>
 #include "../../Log/log.hpp"
 #include "../../Utils/CurlWrapper.hpp"
 
 namespace Observer {
-    class RestClientLocalWebNotifications : public LocalWebNotifications {
+    class RestClientLocalWebNotifications : public MessagingService {
        public:
-        explicit RestClientLocalWebNotifications(std::string restServerUrl);
+        explicit RestClientLocalWebNotifications(
+            const LocalWebNotificationsConfiguration& cfg);
 
-        void SendText(const DTONotification& notification) override;
-        void SendImage(const DTONotification& notification) override;
-        void SendVideo(const DTONotification& notification) override;
+       protected:
+        void InternalSendText(const DTONotification& notification) override;
+        void InternalSendImage(const DTONotification& notification) override;
+        void InternalSendVideo(const DTONotification& notification) override;
 
        private:
+        std::string restServerUrl;
     };
 };  // namespace Observer

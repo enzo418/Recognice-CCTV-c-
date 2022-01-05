@@ -15,10 +15,12 @@ namespace Observer {
     }
 
     RestClientLocalWebNotifications::RestClientLocalWebNotifications(
-        std::string pRestServerUrl)
-        : LocalWebNotifications(pRestServerUrl) {}
+        const LocalWebNotificationsConfiguration& cfg)
+        : MessagingService(cfg) {
+        this->restServerUrl = cfg.webServerUrl;
+    }
 
-    void RestClientLocalWebNotifications::SendText(
+    void RestClientLocalWebNotifications::InternalSendText(
         const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addTextNotification";
 
@@ -32,7 +34,7 @@ namespace Observer {
         log_htpp_response(res);
     }
 
-    void RestClientLocalWebNotifications::SendImage(
+    void RestClientLocalWebNotifications::InternalSendImage(
         const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addImageNotification";
 
@@ -46,7 +48,7 @@ namespace Observer {
         log_htpp_response(res);
     }
 
-    void RestClientLocalWebNotifications::SendVideo(
+    void RestClientLocalWebNotifications::InternalSendVideo(
         const DTONotification& notification) {
         const std::string url = this->restServerUrl + "/addVideoNotification";
 

@@ -136,8 +136,8 @@ namespace Observer {
         this->groupID = 0;
 
         if (cfg->localWebConfiguration.enabled) {
-            auto ptrLocal = new RestClientLocalWebNotifications(
-                cfg->localWebConfiguration.webServerUrl);
+            auto ptrLocal =
+                new RestClientLocalWebNotifications(cfg->localWebConfiguration);
 
             this->AddService(ptrLocal, &this->config->localWebConfiguration);
         }

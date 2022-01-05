@@ -13,7 +13,6 @@
 #include "../../Log/log.hpp"
 #include "../../Utils/SpecialEnums.hpp"
 #include "../../Utils/SpecialStrings.hpp"
-#include "../Notification/LocalWebNotifications.hpp"
 #include "Configuration.hpp"
 #include "NotificationsServiceConfiguration.hpp"
 

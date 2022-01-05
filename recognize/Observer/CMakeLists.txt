@@ -58,7 +58,7 @@ set(SRC_
         src/Domain/Notification/TextNotification.cpp src/Domain/Notification/TextNotification.hpp
         src/Domain/Notification/VideoNotification.hpp
         src/Domain/Notification/ImageNotification.hpp
-        src/Domain/Notification/LocalWebNotifications.cpp src/Domain/Notification/LocalWebNotifications.hpp
+        src/Domain/Notification/MessagingService.cpp src/Domain/Notification/MessagingService.hpp
         src/Domain/Notification/RestClientLocalWebNotifications.cpp src/Domain/Notification/RestClientLocalWebNotifications.hpp
 
         # special function
