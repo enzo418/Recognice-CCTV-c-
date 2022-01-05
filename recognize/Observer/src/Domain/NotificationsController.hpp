@@ -22,6 +22,20 @@
 #include "Notification/TelegramNotifications.hpp"
 
 namespace Observer {
+    struct DTONotification {
+        DTONotification() = default;
+
+        int groupID;
+        std::string caption;
+        std::string mediaPath;
+    };
+
+    class INotificationEventSubscriber : public ISubscriber<DTONotification> {
+        void update(DTONotification ev) override = 0;
+    };
+}  // namespace Observer
+
+namespace Observer {
     /**
      * @brief Send notifications asynchronously.
      * To push a notification use AddNotification, do not use
@@ -62,6 +76,9 @@ namespace Observer {
         void AddNotification(VideoNotification<TFrame> videoNotf);
 
         void update(Event event, CameraEvent<TFrame> rawCameraEvent) override;
+
+        void SubscribeToNewNotifications(
+            INotificationEventSubscriber* subscriber);
 
         void Start() override;
 
@@ -114,6 +131,8 @@ namespace Observer {
         SimpleBlockingQueue<ImageNotification<TFrame>> imageQueue;
         SimpleBlockingQueue<VideoNotification<TFrame>> videoQueue;
         int groupID;
+
+        Publisher<DTONotification> notificationsPublisher;
     };
 
     template <typename TFrame>
@@ -362,5 +381,11 @@ namespace Observer {
 
         // 5. increment group id
         this->groupID++;
+    }
+
+    template <typename TFrame>
+    void NotificationsController<TFrame>::SubscribeToNewNotifications(
+        INotificationEventSubscriber* subscriber) {
+        this->notificationsPublisher.subscribe(subscriber);
     }
 }  // namespace Observer
