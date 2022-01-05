@@ -18,14 +18,9 @@ else()
 	MESSAGE(STATUS "NO CUDA")
 endif()
 
-# Opencv package
-find_package(OpenCV REQUIRED)
-
 find_package(fmt)
 
-# Curl package
-set(CURL_LIBRARY "-lcurl") 
-find_package(CURL REQUIRED) 
+include(../recognize/CMakeLists.txt)
 
 set(source_dir "${PROJECT_SOURCE_DIR}")
 
@@ -33,26 +28,22 @@ file(GLOB COMMON_SRC "${source_dir}/src/*.cpp")
 
 file(GLOB STREAM_CONTENT_SRC "${source_dir}/src/stream_content/*.cpp")
 
-file(GLOB RECOG_SRC "${source_dir}/../recognize/src/*.cpp")
+file(GLOB NOTIFICATIONS_SR "${source_dir}/src/Notifications/*.cpp")
 
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC} ${STREAM_CONTENT_SRC})
+set(SOURCES ${COMMON_SRC} ${NOTIFICATIONS_SR} ${STREAM_CONTENT_SRC})
 
 # Print sources
-message(${SOURCES})
-message(${RECOG_SRC})
-message(${STREAM_CONTENT_SRC})
-
-# Include curl
-include_directories(${CURL_INCLUDE_DIR})
+# message(${SOURCES})
+# message(${STREAM_CONTENT_SRC})
 
 # Set cmake cxx flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -lX11")
 
-add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
+add_executable(webRecognize ${SOURCES})
 
 # set -l of opencv and curl 
 # add -lssl if use ssl with uwebsocket
 # -lz is zlib
-target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp fmt::fmt "-l:uSockets.a" "-lz")
+target_link_libraries(webRecognize ${RECOGNIZER_LIBS} fmt::fmt "-l:uSockets.a" "-lz")

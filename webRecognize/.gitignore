@@ -18,6 +18,7 @@
 # server
 !src/stream_content
 !uWebSockets/
+!Notifications
 
 # web
 !src/

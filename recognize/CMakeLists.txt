@@ -25,12 +25,18 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-include(Observer/CMakeLists.txt)
+# message(CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+# message(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+# message(CMAKE_CURRENT_LIST_FILE ${CMAKE_CURRENT_LIST_FILE})
+# message(CMAKE_CURRENT_LIST_DIR ${CMAKE_CURRENT_LIST_DIR})
+# message(CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+
+include(${CMAKE_CURRENT_LIST_DIR}/Observer/CMakeLists.txt)
 
 set (CMAKE_CXX_STANDARD 20)
 
 # Print sources
-message(${COMMON_SOURCES})
+# message(${COMMON_SOURCES})
 
 # Set cmake cxx flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -46,26 +52,26 @@ include_directories(${YAML_CPP_INCLUDE_DIR})
 
 add_library(recognize_lib ${COMMON_SOURCES})
 
-set(LIBS recognize_lib ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
+set(RECOGNIZER_LIBS recognize_lib ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-cpp spdlog)
 
 # If the cmake file isn't included then use the sample program
-if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
-  add_executable(recognize Observer/Samples/Recognizer.cpp)
-  add_executable(liveBlobDetection Observer/Samples/LiveBlobDetection.cpp)
-  add_executable(videoBlobDetection Observer/Samples/VideoBlobDetection.cpp)
-  add_executable(cameraRecording Observer/Samples/Recording.cpp)
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR )
+  add_executable(recognize ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recognizer.cpp)
+  add_executable(liveBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/LiveBlobDetection.cpp)
+  add_executable(videoBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/VideoBlobDetection.cpp)
+  add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
 
   # set -l of opencv and curl
-  target_link_libraries(recognize ${LIBS})
-  target_link_libraries(liveBlobDetection ${LIBS})
-  target_link_libraries(videoBlobDetection ${LIBS})
-  target_link_libraries(cameraRecording ${LIBS})
+  target_link_libraries(recognize ${RECOGNIZER_LIBS})
+  target_link_libraries(liveBlobDetection ${RECOGNIZER_LIBS})
+  target_link_libraries(videoBlobDetection ${RECOGNIZER_LIBS})
+  target_link_libraries(cameraRecording ${RECOGNIZER_LIBS})
 endif()
 
 # =====
 # tests
 # =====
-include(tests/Tests.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/tests/Tests.cmake)
 
 enable_testing()
 
@@ -77,7 +83,7 @@ add_executable(
 target_link_libraries(
     tests
     gtest_main
-    ${LIBS}
+    ${RECOGNIZER_LIBS}
 )
 
 include(GoogleTest)

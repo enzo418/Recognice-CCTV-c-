@@ -99,5 +99,5 @@ set(SRC_
 
 # ¿? USE PREMAKE PLS
 foreach(source_ IN LISTS SRC_)
-    LIST(APPEND COMMON_SOURCES "Observer/${source_}")
+    LIST(APPEND COMMON_SOURCES "${CMAKE_CURRENT_LIST_DIR}/${source_}")
 endforeach()
