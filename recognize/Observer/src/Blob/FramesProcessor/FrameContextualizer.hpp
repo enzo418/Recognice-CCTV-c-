@@ -64,9 +64,9 @@ namespace Observer {
     template <typename TFrame>
     FrameContextualizer<TFrame>::FrameContextualizer(
         const ThresholdingParams& pThreshParams) {
-        this->contextDiffFrames.reserve(this->params.ContextFrames);
-
         this->params = pThreshParams;
+
+        this->contextDiffFrames.reserve(this->params.ContextFrames);
 
         this->InitializePostConstructor();
     }
