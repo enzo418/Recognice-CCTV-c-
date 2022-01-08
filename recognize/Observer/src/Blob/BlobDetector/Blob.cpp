@@ -39,4 +39,5 @@ namespace Observer {
         }
     }
 
+    std::vector<int>& Blob::GetAppearances() { return this->appearsOnFrames; }
 }  // namespace Observer

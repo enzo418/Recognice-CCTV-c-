@@ -65,6 +65,13 @@ namespace Observer {
          */
         Rect GetBoundingRect(int frameIndex);
 
+        /**
+         * @brief Get the appearances.
+         *
+         * @return std::vector<int>
+         */
+        std::vector<int>& GetAppearances();
+
        protected:
         int id;
 

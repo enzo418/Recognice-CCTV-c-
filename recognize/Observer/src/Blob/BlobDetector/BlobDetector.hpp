@@ -295,7 +295,11 @@ namespace Observer {
         std::vector<Blob> filtered;
         for (int i = 0; i < blobs.size(); i++) {
             auto& blob = blobs[i];
-            if (blob.GetLastAppearance() - blob.GetFirstAppearance() >=
+
+            // to check the number of appearances just check the size of it,
+            // since though we do interpolation, only the real frames where it
+            // appears are saved
+            if (blob.GetAppearances().size() >=
                 this->blobFilters.MinimumOccurrences) {
                 filtered.push_back(std::move(blob));
             }
