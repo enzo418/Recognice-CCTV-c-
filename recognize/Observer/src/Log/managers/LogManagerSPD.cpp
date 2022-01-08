@@ -1,5 +1,7 @@
 #include "LogManagerSPD.hpp"
 
+#include <spdlog/common.h>
+
 namespace Observer {
     std::shared_ptr<spdlog::logger> LogManager::logger;
 
@@ -16,7 +18,7 @@ namespace Observer {
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
             "logs/observer_log.txt", true);
 
-        file_sink->set_level(spdlog::level::warn);
+        file_sink->set_level(spdlog::level::info);
 
         // create logger
         std::vector<spdlog::sink_ptr> sinks {console_sink, file_sink};
