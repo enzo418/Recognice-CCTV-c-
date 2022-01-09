@@ -21,11 +21,11 @@
 
 namespace Observer {
     template <typename TFrame>
-    class ObserverCentral {
+    class ObserverCentral : public IFunctionality {
        public:
         explicit ObserverCentral(Configuration pConfig);
 
-        bool Start();
+        void Start() override;
 
         void StopCamera(std::string id);
         void StopAllCameras();
@@ -36,7 +36,7 @@ namespace Observer {
         void StartPreview();
         void StopPreview();
 
-        void Stop();
+        void Stop() override;
 
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
@@ -81,7 +81,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    bool ObserverCentral<TFrame>::Start() {
+    void ObserverCentral<TFrame>::Start() {
         bool useNotifications = this->config.localWebConfiguration.enabled ||
                                 this->config.telegramConfiguration.enabled;
 
@@ -110,8 +110,6 @@ namespace Observer {
 
             OBSERVER_TRACE("Subscribing notifications controller to events");
         }
-
-        return true;
     }
 
     template <typename TFrame>
