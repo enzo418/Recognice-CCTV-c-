@@ -1,5 +1,6 @@
 
 #include "../../recognize/Observer/Implementations/opencv/Implementation.hpp"
+#include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../recognize/Observer/src/Domain/ObserverCentral.hpp"
 #include "../uWebSockets/src/App.h"
 #include "../uWebSockets/src/HttpContextData.h"
@@ -8,6 +9,7 @@
 #include "stream_content/FileExtension.hpp"
 #include "stream_content/FileReader.hpp"
 #include "stream_content/FileStreamer.hpp"
+#include "stream_content/LiveVideo.hpp"
 
 // Selects a Region of interes from a camera fram
 #include <cstring>
@@ -18,6 +20,7 @@
 #include "Server/ServerContext.hpp"
 #include "base64.hpp"
 
+const bool SSL = false;
 namespace fs = std::filesystem;
 namespace rc = Observer;
 typedef cv::Mat TFrame;
@@ -28,6 +31,8 @@ int main(int argc, char** argv) {
 
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral<TFrame>> recognizer;
+
+    std::vector<std::pair<IFunctionality*, std::thread>> threads;
 
     bool recognizerRunning = false;
 
@@ -47,14 +52,58 @@ int main(int argc, char** argv) {
         .port = 3001,
     };
 
-    app.listen(
-           serverCtx.port,
-           [&serverCtx](auto* token) {
-               if (token) {
-                   OBSERVER_INFO(
-                       "Serving folder {0} over HTTP at http://localhost:{1}",
-                       serverCtx.rootFolder, serverCtx.port);
-               }
-           })
+    FileStreamer fileStreamer(serverCtx.rootFolder);
+
+    auto cfg = Observer::ConfigurationParser::ParseYAML("./config.yml");
+
+    Observer::CameraObserver<TFrame> camera(&cfg.camerasConfiguration[0]);
+
+    Observer::VideoSource<TFrame> cap;
+    cap.Open(cfg.camerasConfiguration[0].url);
+    double fps = cap.GetFPS();
+    cap.Close();
+
+    Web::LiveVideo<TFrame, SSL> liveVideo(0, fps, 90);
+
+    threads.push_back(
+        {&liveVideo,
+         std::thread(&Web::LiveVideo<TFrame, SSL>::Start, &liveVideo)});
+
+    threads.push_back(
+        {&camera,
+         std::thread(&Observer::CameraObserver<TFrame>::Start, &camera)});
+
+    camera.SubscribeToFramesUpdate(&liveVideo);
+
+    app.listen(serverCtx.port,
+               [&serverCtx](auto* token) {
+                   if (token) {
+                       OBSERVER_INFO(
+                           "Serving folder {0} over HTTP at "
+                           "http://localhost:{1}",
+                           serverCtx.rootFolder, serverCtx.port);
+                   }
+               })
+        .get("/",
+             [&fileStreamer](auto* res, auto* req) {
+                 std::cout << "Index!" << std::endl;
+
+                 std::string rangeHeader(req->getHeader("range"));
+
+                 fileStreamer.streamFile(res, "/index.html", rangeHeader);
+             })
+        .get("/stream/1",
+             [&liveVideo](auto* res, auto* req) {
+                 res->onAborted([]() { std::cout << "ABORTED!" << std::endl; });
+                 liveVideo.AddClient(res);
+             })
         .run();
+
+    for (auto& funcThread : threads) {
+        std::get<0>(funcThread)->Stop();
+        auto& thread = std::get<1>(funcThread);
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
 }

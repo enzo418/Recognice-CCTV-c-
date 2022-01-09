@@ -22,6 +22,9 @@ find_package(fmt)
 
 include(../recognize/CMakeLists.txt)
 
+# clangd:
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(source_dir "${PROJECT_SOURCE_DIR}")
 
 file(GLOB COMMON_SRC "${source_dir}/src/*.cpp")
