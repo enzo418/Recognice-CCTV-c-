@@ -12,6 +12,7 @@
 
 #include "../IFunctionality.hpp"
 #include "CameraObserver.hpp"
+#include "CamerasFramesBlender.hpp"
 #include "Configuration/Configuration.hpp"
 #include "EventValidator.hpp"
 #include "FrameDisplay.hpp"
@@ -39,6 +40,8 @@ namespace Observer {
 
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
+        void SubscribeToFrames(ISubscriber<TFrame>* sub);
+
        private:
         struct CameraThread {
             std::thread thread;
@@ -57,6 +60,8 @@ namespace Observer {
 
         FrameDisplay<TFrame> frameDisplay;
 
+        CamerasFramesBlender<TFrame> framesBlender;
+
         CameraThread GetNewCameraThread(CameraConfiguration* cfg);
 
         void internalStopCamera(CameraThread& camThread);
@@ -67,11 +72,11 @@ namespace Observer {
 
     template <typename TFrame>
     ObserverCentral<TFrame>::ObserverCentral(Configuration pConfig)
-        : frameDisplay(&this->config.outputConfiguration),
-          config(std::move(pConfig)),
-          notificationController(&this->config) {
+        : config(std::move(pConfig)),
+          notificationController(&this->config),
+          framesBlender(&this->config.outputConfiguration) {
         this->ProcessConfiguration();
-        this->frameDisplay.SetNumberCameras(
+        this->framesBlender.SetNumberCameras(
             static_cast<int>(this->config.camerasConfiguration.size()));
     }
 
@@ -82,6 +87,12 @@ namespace Observer {
 
         OBSERVER_TRACE("Starting the cameras");
         this->StartAllCameras(useNotifications);
+
+        OBSERVER_TRACE("Starting frames blender");
+        this->functionalityThreads.emplace_back(
+            &this->framesBlender,
+            std::thread(&CamerasFramesBlender<TFrame>::Start,
+                        &this->framesBlender));
 
         if (this->config.outputConfiguration.showOutput) {
             OBSERVER_TRACE("Starting the preview");
@@ -148,7 +159,7 @@ namespace Observer {
 
         for (auto&& camThread : this->camerasThreads) {
             if (this->config.outputConfiguration.showOutput) {
-                camThread.camera->SubscribeToFramesUpdate(&frameDisplay);
+                camThread.camera->SubscribeToFramesUpdate(&framesBlender);
             }
 
             if (useNotifications) {
@@ -167,6 +178,8 @@ namespace Observer {
         this->functionalityThreads.emplace_back(
             &this->frameDisplay,
             std::thread(&FrameDisplay<TFrame>::Start, &this->frameDisplay));
+
+        this->framesBlender.SubscribeToFramesUpdate(&this->frameDisplay);
     }
 
     template <typename TFrame>
@@ -247,5 +260,10 @@ namespace Observer {
                 camsConfig[expected].positionOnOutput = expected;
             }
         }
+    }
+
+    template <typename TFrame>
+    void ObserverCentral<TFrame>::SubscribeToFrames(ISubscriber<TFrame>* sub) {
+        this->framesBlender.SubscribeToFramesUpdate(sub);
     }
 }  // namespace Observer

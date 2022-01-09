@@ -7,6 +7,7 @@
 #include "../IFunctionality.hpp"
 #include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
+#include "../Log/log.hpp"
 #include "../Pattern/Camera/IFrameSubscriber.hpp"
 #include "../Pattern/ObserverBasics.hpp"
 #include "../Semaphore.hpp"
@@ -19,13 +20,12 @@ namespace Observer {
      * @todo write docs
      */
     template <typename TFrame>
-    class FrameDisplay : public IFrameSubscriber<TFrame>,
-                         public IFunctionality {
+    class FrameDisplay : public ISubscriber<TFrame>, public IFunctionality {
        public:
         /**
          * @param total Number of frames to display at the same time
          */
-        explicit FrameDisplay(OutputPreviewConfiguration* cfg);
+        explicit FrameDisplay();
 
         void SetNumberCameras(int total);
 
@@ -33,80 +33,31 @@ namespace Observer {
 
         void Stop() override;
 
-        /**
-         * @brief add a new frame to the available frames
-         *
-         * @param framePosition 0 = top left, 1 = top right, ...
-         */
-        void update(int framePosition, TFrame frame) override;
+        void update(TFrame frame) override;
 
        private:
-        std::vector<std::queue<TFrame>> frames;
-        std::mutex mtxFrames;
-
-        OutputPreviewConfiguration* cfg;
-
-        int maxFrames;
+        TFrame frame;
+        std::mutex mutexFrame;
 
         bool running;
     };
 
     template <typename TFrame>
-    FrameDisplay<TFrame>::FrameDisplay(OutputPreviewConfiguration* pCfg)
-        : cfg(pCfg) {
+    FrameDisplay<TFrame>::FrameDisplay() {
         this->running = false;
-        this->maxFrames = -1;
+        this->frame = ImageTransformation<TFrame>::BlackImage();
     }
 
     template <typename TFrame>
     void FrameDisplay<TFrame>::Start() {
-        OBSERVER_ASSERT(
-            this->maxFrames != -1,
-            "SetNumberCameras should be called before calling start");
-
         this->running = true;
 
         ImageDisplay<TFrame>::CreateWindow("images");
 
-        TFrame frame;
-
-        std::vector<TFrame> framesToShow(maxFrames);
-        std::vector<bool> cameraFirstFrameReaded(maxFrames);
-
-        const auto maxHStack = this->maxFrames == 1 ? 1 : 2;
-
-        TFrame* referenceFrameForBlankImage = nullptr;
-
         while (this->running) {
-            this->mtxFrames.lock();
-
-            for (int i = 0; i < this->maxFrames; i++) {
-                if (!frames[i].empty()) {
-                    cameraFirstFrameReaded[i] = true;
-                    framesToShow[i] = this->frames[i].front();
-                    referenceFrameForBlankImage = &framesToShow[i];
-                    this->frames[i].pop();
-                } else if (!cameraFirstFrameReaded[i]) {
-                    framesToShow[i] = ImageTransformation<TFrame>::BlackImage(
-                        referenceFrameForBlankImage);
-                }
-            }
-
-            this->mtxFrames.unlock();
-
-            frame = ImageTransformation<TFrame>::StackImages(
-                &framesToShow[0], this->maxFrames, maxHStack);
-
-            if (!this->cfg->resolution.empty()) {
-                ImageTransformation<TFrame>::Resize(frame, frame,
-                                                    this->cfg->resolution);
-            } else {
-                ImageTransformation<TFrame>::Resize(frame, frame,
-                                                    this->cfg->scaleFactor,
-                                                    this->cfg->scaleFactor);
-            }
-
-            ImageDisplay<TFrame>::ShowImage("images", frame);
+            mutexFrame.lock();
+            ImageDisplay<TFrame>::ShowImage("images", this->frame);
+            mutexFrame.unlock();
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
@@ -120,15 +71,9 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void FrameDisplay<TFrame>::update(int cameraPos, TFrame frame) {
-        this->mtxFrames.lock();
-        this->frames[cameraPos].push(frame);
-        this->mtxFrames.unlock();
-    }
+    void FrameDisplay<TFrame>::update(TFrame pFrame) {
+        std::lock_guard<std::mutex> lck(mutexFrame);
 
-    template <typename TFrame>
-    void FrameDisplay<TFrame>::SetNumberCameras(int total) {
-        this->frames.resize(total);
-        this->maxFrames = total;
+        ImageTransformation<TFrame>::CopyImage(pFrame, this->frame);
     }
 }  // namespace Observer

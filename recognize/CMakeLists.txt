@@ -15,6 +15,8 @@ find_package(yaml-cpp REQUIRED)
 # Json package
 # find_package(JSON REQUIRED)
 
+SET(BUILD_OPTIONAL_BINARIES 0 CACHE STRING "Build optional binaries like blob detection. Default is 0.")
+
 # =========
 #  Sources 
 # =========
@@ -57,15 +59,18 @@ set(RECOGNIZER_LIBS recognize_lib ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp yaml-
 # If the cmake file isn't included then use the sample program
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR )
   add_executable(recognize ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recognizer.cpp)
-  add_executable(liveBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/LiveBlobDetection.cpp)
-  add_executable(videoBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/VideoBlobDetection.cpp)
-  add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
-
   # set -l of opencv and curl
   target_link_libraries(recognize ${RECOGNIZER_LIBS})
-  target_link_libraries(liveBlobDetection ${RECOGNIZER_LIBS})
-  target_link_libraries(videoBlobDetection ${RECOGNIZER_LIBS})
-  target_link_libraries(cameraRecording ${RECOGNIZER_LIBS})
+
+  if(BUILD_OPTIONAL_BINARIES)
+    add_executable(liveBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/LiveBlobDetection.cpp)
+    add_executable(videoBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/VideoBlobDetection.cpp)
+    add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
+
+    target_link_libraries(liveBlobDetection ${RECOGNIZER_LIBS})
+    target_link_libraries(videoBlobDetection ${RECOGNIZER_LIBS})
+    target_link_libraries(cameraRecording ${RECOGNIZER_LIBS})
+  endif()
 endif()
 
 # =====

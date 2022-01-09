@@ -41,6 +41,7 @@ set(SRC_
         src/Domain/Event/CameraEvent.hpp
         src/Domain/EventValidator.hpp
         src/Domain/FrameDisplay.hpp
+        src/Domain/CamerasFramesBlender.hpp
         src/Domain/FrameProcessor.hpp
         src/Domain/VideoBuffer.hpp
         src/Domain/VideoSource.hpp
