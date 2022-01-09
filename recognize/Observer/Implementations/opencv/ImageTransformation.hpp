@@ -3,6 +3,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv4/opencv2/imgcodecs.hpp>
 
 #include "../../src/ImageTransformation.hpp"
 #include "../../src/Log/log.hpp"
@@ -240,6 +241,13 @@ namespace Observer {
         static inline void AddImages(cv::Mat& image1, cv::Mat& image2,
                                      cv::Mat& dst) {
             cv::add(image1, image2, dst);
+        }
+
+        static inline void EncodeImage(const std::string& ext, cv::Mat& image,
+                                       int quality,
+                                       std::vector<uchar>& buffer) {
+            std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, quality};
+            cv::imencode(ext, image, buffer, params);
         }
     };
 }  // namespace Observer

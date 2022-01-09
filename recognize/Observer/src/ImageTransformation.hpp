@@ -220,5 +220,17 @@ namespace Observer {
          * @param dst
          */
         static inline void AddImages(T& image1, T& image2, T& dst);
+
+        /**
+         * @brief Encodes an image.
+         *
+         * @param ext File extension that defines the output format
+         * @param image1 Image to be encoded.
+         * @param quality Quality of the resulting image, 0-100, 100 is best
+         * quality.
+         * @param buffer Output buffer.
+         */
+        static inline void EncodeImage(const std::string& ext, T& image,
+                                       int quality, std::vector<uchar>& buffer);
     };
 }  // namespace Observer
