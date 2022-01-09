@@ -74,8 +74,6 @@ namespace Observer {
 
         this->running = true;
 
-        TFrame frame;
-
         std::vector<TFrame> framesToShow(maxFrames);
         std::vector<bool> cameraFirstFrameReaded(maxFrames);
 
@@ -101,7 +99,7 @@ namespace Observer {
 
             this->mtxFrames.unlock();
 
-            frame = ImageTransformation<TFrame>::StackImages(
+            TFrame frame = ImageTransformation<TFrame>::StackImages(
                 &framesToShow[0], this->maxFrames, maxHStack);
 
             if (!this->cfg->resolution.empty()) {
