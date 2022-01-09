@@ -29,6 +29,13 @@ int main(int argc, char** argv) {
     // initialize logger
     Observer::LogManager::Initialize();
 
+    if (argc <= 1) {
+        OBSERVER_ERROR(
+            "Missing configuration file argument.\n"
+            "Usage: ./webRecognize ./config_test.yml");
+        return 1;
+    }
+
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral<TFrame>> recognizer;
 
@@ -54,9 +61,9 @@ int main(int argc, char** argv) {
 
     FileStreamer fileStreamer(serverCtx.rootFolder);
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML("./config.yml");
+    auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
 
-    Observer::CameraObserver<TFrame> camera(&cfg.camerasConfiguration[0]);
+    Observer::ObserverCentral<TFrame> observer(cfg);
 
     Observer::VideoSource<TFrame> cap;
     cap.Open(cfg.camerasConfiguration[0].url);
@@ -70,10 +77,10 @@ int main(int argc, char** argv) {
          std::thread(&Web::LiveVideo<TFrame, SSL>::Start, &liveVideo)});
 
     threads.push_back(
-        {&camera,
-         std::thread(&Observer::CameraObserver<TFrame>::Start, &camera)});
+        {&observer,
+         std::thread(&Observer::ObserverCentral<TFrame>::Start, &observer)});
 
-    camera.SubscribeToFramesUpdate(&liveVideo);
+    observer.SubscribeToFrames(&liveVideo);
 
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {

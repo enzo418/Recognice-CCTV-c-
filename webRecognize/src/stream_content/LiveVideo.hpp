@@ -12,8 +12,7 @@
 
 namespace Web {
     template <typename TFrame, bool SSL>
-    class LiveVideo : public IFunctionality,
-                      public Observer::IFrameSubscriber<TFrame> {
+    class LiveVideo : public IFunctionality, public ISubscriber<TFrame> {
        public:
         LiveVideo(int id, int fps, int quality);
 
@@ -31,7 +30,7 @@ namespace Web {
 
         void AddClient(uWS::HttpResponse<SSL>* res);
 
-        void update(int camerapos, TFrame frame) override;
+        void update(TFrame frame) override;
 
        public:
         int GetID();
@@ -116,19 +115,19 @@ namespace Web {
 
         std::lock_guard<std::mutex> guard_c(this->mtxClients);
         this->clients.push_back(res);
-        OBSERVER_TRACE("New Client!");
+        OBSERVER_INFO("New Client on live view!");
         // }
     }
 
     template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::update(int camerapos, TFrame frame) {
+    void LiveVideo<TFrame, SSL>::update(TFrame frame) {
         this->UpdateFrame(frame);
     }
 
     template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::UpdateFrame(TFrame& pFrame) {
         std::lock_guard<std::mutex> guard_f(this->mtxFrame);
-        OBSERVER_TRACE("Updating image");
+        // OBSERVER_TRACE("Updating image");
 
         Observer::Size size =
             Observer::ImageTransformation<TFrame>::GetSize(pFrame);
@@ -150,7 +149,7 @@ namespace Web {
             if (!this->clients.empty()) {
                 this->mtxFrame.lock();
                 if (!this->encoded && this->imageReady) {
-                    OBSERVER_TRACE("Encoding image");
+                    // OBSERVER_TRACE("Encoding image");
                     Observer::ImageTransformation<TFrame>::EncodeImage(
                         ".jpg", this->frame, this->quality, buffer);
                     this->encoded = true;
@@ -182,14 +181,14 @@ namespace Web {
 
             if (!sucessBoundary ||
                 !this->clients[i]->writeRaw(std::string_view(data, size))) {
-                OBSERVER_INFO("Client deleted");
+                OBSERVER_INFO("Client deleted from live feed");
                 // client disconnected
                 this->clients.erase(this->clients.begin() + i);
                 i--;
                 clientsCount--;
             } else {
-                OBSERVER_TRACE("Sended image to client, total: {}",
-                               clientsCount);
+                // OBSERVER_TRACE("Sended image to client, total: {}",
+                //                clientsCount);
             }
         }
     }
