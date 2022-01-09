@@ -31,6 +31,7 @@
 #include "WebSocketContextData.h"
 
 #include "MoveOnlyFunction.h"
+#include <string_view>
 
 /* todo: tryWrite is missing currently, only send smaller segments with write */
 
@@ -384,14 +385,27 @@ public:
         return {internalEnd(data, totalSize, true), hasResponded()};
     }
 
-    /* Try and end the response. Returns [true, true] on success.
+    /* MOD: Dont write Content-Length header.
+     * Try and end the response. Returns [true, true] on success.
      * Starts a timeout in some cases. Returns [ok, hasResponded] */
     std::pair<bool, bool> tryEndRaw(std::string_view data, uintmax_t totalSize = 0) {
-        // THIS FUNCTION WAS MODIFIED FROM THE ORIGINAL FILE
-        // JUST TO TEST SENDING DATA WITHOUT INSERTING CONTENT-LENGHT HEADER AUTOMATICALLY!!!
         return {internalEnd(data, totalSize, true, false), hasResponded()};
     }
 
+    /* MOD: Don't write 200 status.
+     * writes response. Return true if sucess. */
+    bool writeRaw(std::string_view data) {
+        /* Do not allow sending 0 chunks, they mark end of response */
+        if (!data.length()) {
+            /* If you called us, then according to you it was fine to call us so it's fine to still call us */
+            return true;
+        }
+
+        auto [written, failed] = Super::write(data.data(), (int) data.length(), false, 0, /*MOD: Don't fake sucess */false);
+
+        return !failed;
+    }
+    
     /* Write parts of the response in chunking fashion. Starts timeout if failed. */
     bool write(std::string_view data) {
         writeStatus(HTTP_200_OK);
