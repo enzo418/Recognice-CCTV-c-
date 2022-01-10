@@ -15,7 +15,7 @@
     <script>
         const img = document.getElementById("stream_1");
 
-        const socket = new WebSocket("ws://localhost:3001/recognize");
+        const socket = new WebSocket(`ws://${window.location.host}/recognize`);
 
         // set socket as binary
         socket.binaryType = "blob";
