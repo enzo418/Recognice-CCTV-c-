@@ -10,9 +10,16 @@
 #include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
 #include "../../uWebSockets/src/App.h"
 
+struct PerSocketData {
+    int id;
+};
+
 namespace Web {
     template <typename TFrame, bool SSL>
     class LiveVideo : public IFunctionality, public ISubscriber<TFrame> {
+       public:
+        typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
+
        public:
         LiveVideo(int id, int fps, int quality);
 
@@ -28,7 +35,9 @@ namespace Web {
          */
         void Stop() override;
 
-        void AddClient(uWS::HttpResponse<SSL>* res);
+        void AddClient(WebSocketClient* res);
+
+        void RemoveClient(WebSocketClient* res);
 
         void update(TFrame frame) override;
 
@@ -47,8 +56,9 @@ namespace Web {
         int id;
 
        private:
-        std::vector<uWS::HttpResponse<SSL>*> clients;
+        std::vector<WebSocketClient*> clients;
         std::mutex mtxClients;
+        int lastClientId {0};
 
        private:
         TFrame frame;
@@ -78,45 +88,12 @@ namespace Web {
     }
 
     template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::AddClient(uWS::HttpResponse<SSL>* res) {
-        const std::string status = "HTTP/1.0 206 Partial Content\r\n";
-
-        const std::string header =
-            "Accept-Range: bytes\r\n"
-            "Connection: close\r\n"
-            "Max-Age: 0\r\n"
-            "Expires: 0\r\n"
-            "Cache-Control: no-cache, private\r\n"
-            "Pragma: no-cache\r\n"
-            "Content-Type: multipart/x-mixed-replace; "
-            "boundary=frame\r\n"
-            "\r\n";
-
-        // this commented code should be the way this should be done as far as
-        // the library tell us, but it  doens't seems to be working for some
-        // reason. Even with tryEnd, end, or write(null). For that reason the
-        // solution i found was to write the header and status directly on the
-        // stream.
-
-        /*
-        res->writeStatus("206 Partial Content")
-        ->writeHeader("Connection", "close")
-        ->writeHeader("Accept-Ranges", "bytes")
-        ->writeHeader("Max-Age", "0")
-        ->writeHeader("Expires", "0")
-        ->writeHeader("Pragma", "no-cache")
-        ->writeHeader("Cache-Control", "no-cache, private")
-        ->writeHeader("Content-Type",
-                        "multipart/x-mixed-replace; "
-                        "boundary=frame");*/
-
-        res->writeRaw(std::string_view(status.c_str(), status.size()));
-        res->writeRaw(std::string_view(header.c_str(), header.size()));
-
+    void LiveVideo<TFrame, SSL>::AddClient(WebSocketClient* ws) {
         std::lock_guard<std::mutex> guard_c(this->mtxClients);
-        this->clients.push_back(res);
+        ws->getUserData()->id = ++lastClientId;
+
+        this->clients.push_back(ws);
         OBSERVER_INFO("New Client on live view!");
-        // }
     }
 
     template <typename TFrame, bool SSL>
@@ -146,18 +123,16 @@ namespace Web {
         std::vector<uchar> buffer;
 
         while (this->running) {
-            if (!this->clients.empty()) {
-                this->mtxFrame.lock();
-                if (!this->encoded && this->imageReady) {
-                    // OBSERVER_TRACE("Encoding image");
-                    Observer::ImageTransformation<TFrame>::EncodeImage(
-                        ".jpg", this->frame, this->quality, buffer);
-                    this->encoded = true;
-                }
-                this->mtxFrame.unlock();
-
-                this->SendToClients((char*)buffer.data(), buffer.size());
+            this->mtxFrame.lock();
+            if (!this->encoded && this->imageReady) {
+                // OBSERVER_TRACE("Encoding image");
+                Observer::ImageTransformation<TFrame>::EncodeImage(
+                    ".jpg", this->frame, this->quality, buffer);
+                this->encoded = true;
             }
+            this->mtxFrame.unlock();
+
+            this->SendToClients((char*)buffer.data(), buffer.size());
 
             std::this_thread::sleep_for(std::chrono::milliseconds((int)waitMs));
         }
@@ -165,31 +140,26 @@ namespace Web {
 
     template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::SendToClients(char* data, int size) {
-        // TODO: This lock is not even necessary since we know the size since
-        // then
         std::lock_guard<std::mutex> guard_c(this->mtxClients);
-
-        static const std::string boundary =
-            "--frame\r\nContent-Type: image/jpeg\r\n\r\n";
-
-        std::string buf = boundary + std::string(data, size);
 
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
-            const bool sucessBoundary = this->clients[i]->writeRaw(
-                std::string_view(boundary.c_str(), boundary.size()));
+            // ¿shoud execute this on a separate thread?
+            clients[i]->send(std::string_view(data, size), uWS::OpCode::BINARY,
+                             true);
+        }
+    }
 
-            if (!sucessBoundary ||
-                !this->clients[i]->writeRaw(std::string_view(data, size))) {
-                OBSERVER_INFO("Client deleted from live feed");
-                // client disconnected
-                this->clients.erase(this->clients.begin() + i);
-                i--;
-                clientsCount--;
-            } else {
-                // OBSERVER_TRACE("Sended image to client, total: {}",
-                //                clientsCount);
+    template <typename TFrame, bool SSL>
+    void LiveVideo<TFrame, SSL>::RemoveClient(WebSocketClient* ws) {
+        std::lock_guard<std::mutex> guard_c(this->mtxClients);
+        const auto end = clients.end();
+        for (auto it = clients.begin(); it != end; ++it) {
+            if ((*it)->getUserData()->id == ws->getUserData()->id) {
+                clients.erase(it);
+                break;
             }
         }
     }
+
 }  // namespace Web

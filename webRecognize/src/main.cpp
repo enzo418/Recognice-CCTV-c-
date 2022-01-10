@@ -102,8 +102,38 @@ int main(int argc, char** argv) {
         .get("/stream/1",
              [&liveVideo](auto* res, auto* req) {
                  res->onAborted([]() { std::cout << "ABORTED!" << std::endl; });
-                 liveVideo.AddClient(res);
+                 //  liveVideo.AddClient(res);
              })
+        .ws<PerSocketData>("/recognize",
+                           {/* Settings */
+                            .compression = uWS::SHARED_COMPRESSOR,
+                            .maxPayloadLength = 16 * 1024 * 1024,
+                            .idleTimeout = 16,
+                            .maxBackpressure = 1 * 1024 * 1024,
+                            .closeOnBackpressureLimit = false,
+                            .resetIdleTimeoutOnSend = false,
+                            .sendPingsAutomatically = true,
+                            /* Handlers */
+                            .upgrade = nullptr,
+                            .open =
+                                [&liveVideo](auto* ws) {
+                                    /* Open event here, you may access
+                                     * ws->getUserData() which points to a
+                                     * PerSocketData struct */
+
+                                    // add to connected clients
+                                    liveVideo.AddClient(ws);
+
+                                    std::cout << "Client connected!\n";
+                                },
+                            .close =
+                                [&liveVideo](auto* ws, int /*code*/,
+                                             std::string_view /*message*/) {
+                                    /* You may access ws->getUserData() here */
+                                    liveVideo.RemoveClient(ws);
+                                    std::cout << "Client disconnected!\n";
+                                }})
+
         .run();
 
     for (auto& funcThread : threads) {
