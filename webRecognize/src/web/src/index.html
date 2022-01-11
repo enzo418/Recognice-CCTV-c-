@@ -25,7 +25,6 @@
             // Blob: https://developer.mozilla.org/en-US/docs/Web/API/Blob#creating_a_url_representing_the_contents_of_a_typed_array
             // Blob to file: https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications#example_using_object_urls_to_display_images
 
-            console.log(event.data);
             const blob = new Blob([event.data], { type: 'image/jpeg' });
 
             img.src = URL.createObjectURL(blob);
