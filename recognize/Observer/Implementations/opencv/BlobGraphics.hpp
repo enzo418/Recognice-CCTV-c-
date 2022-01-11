@@ -15,8 +15,13 @@ namespace Observer {
 
     template <>
     struct BlobGraphics<cv::Mat> {
-        static void DrawBlob(cv::Mat& frame, Blob& blob, int frameNumber) {
+        static void DrawBlob(cv::Mat& frame, Blob& blob, int frameNumber,
+                             double scaleX = 1, double scaleY = 1) {
             auto rect = blob.GetBoundingRect(frameNumber);
+            rect.width *= scaleX;
+            rect.height *= scaleY;
+            rect.x *= scaleX;
+            rect.y *= scaleY;
 
             const auto color = GetPseudoRandomColor(blob.GetId());
 
@@ -29,21 +34,23 @@ namespace Observer {
         }
 
         static void DrawBlobs(std::vector<cv::Mat>& frames,
-                              std::vector<Blob>& blobs) {
+                              std::vector<Blob>& blobs, double scaleX = 1,
+                              double scaleY = 1) {
             for (int fi = 0; fi < frames.size(); fi++) {
                 for (auto& blob : blobs) {
                     if (fi >= blob.GetFirstAppearance() &&
                         fi <= blob.GetLastAppearance()) {
-                        DrawBlob(frames[fi], blob, fi);
+                        DrawBlob(frames[fi], blob, fi, scaleX, scaleY);
                     }
                 }
             }
         }
 
         static void DrawBlobs(cv::Mat& frame, std::vector<Blob>& blobs,
-                              int positionIndex) {
+                              int positionIndex, double scaleX = 1,
+                              double scaleY = 1) {
             for (auto& blob : blobs) {
-                DrawBlob(frame, blob, positionIndex);
+                DrawBlob(frame, blob, positionIndex, scaleX, scaleY);
             }
         }
     };

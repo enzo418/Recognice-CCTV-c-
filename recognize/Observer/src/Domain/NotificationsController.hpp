@@ -185,17 +185,9 @@ namespace Observer {
             return;
         }
 
-        // resize image
-        if (config->resizeNotifications.image >= 1) {
-            const double factor =
-                ((double)config->resizeNotifications.image / 100.0);
-
-            const Size size = imSize * factor;
-
-            auto& frame = notification.GetImage();
-
-            ImageTransformation<TFrame>::Resize(frame, frame, size);
-        }
+        const double factor =
+            ((double)config->resizeNotifications.image / 100.0);
+        notification.Resize(factor, factor);
 
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
@@ -216,7 +208,8 @@ namespace Observer {
             // 3. Draw trace on image
             BlobGraphics<TFrame>::DrawBlobs(
                 notification.GetImage(), notification.GetEvent().GetBlobs(),
-                notification.GetEvent().GetFirstFrameWhereFindingWasFound());
+                notification.GetEvent().GetFirstFrameWhereFindingWasFound(),
+                factor, factor);
 
             const auto path_trace =
                 notification.BuildNotification(this->config->mediaFolderPath);
@@ -236,21 +229,19 @@ namespace Observer {
         VideoNotification<TFrame> notification) {
         auto& frames = notification.GetFrames();
 
-        OBSERVER_ASSERT(!frames.empty(),
-                        "Empty frames while building a video notification");
-
-        // resize notification
-        if (config->resizeNotifications.video >= 1) {
-            const double factor =
-                ((double)config->resizeNotifications.video / 100.0);
-
-            const Size size =
-                ImageTransformation<TFrame>::GetSize(frames[0]) * factor;
-
-            for (auto& frame : frames) {
-                ImageTransformation<TFrame>::Resize(frame, frame, size);
-            }
+        if (frames.empty()) {
+            OBSERVER_CRITICAL(
+                "Empty frames while sendind a video notification. Video error "
+                "data: GID={0}, CAM_NAME={1}, N_BLOBS={2}",
+                notification.GetGroupID(),
+                notification.GetEvent().GetCameraName(),
+                notification.GetEvent().GetBlobs().size());
+            return;
         }
+
+        const double factor =
+            ((double)config->resizeNotifications.video / 100.0);
+        notification.Resize(factor, factor);
 
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
@@ -273,7 +264,8 @@ namespace Observer {
 
             OBSERVER_INFO("Drawing blobs on notification");
             BlobGraphics<TFrame>::DrawBlobs(notification.GetFrames(),
-                                            notification.GetEvent().GetBlobs());
+                                            notification.GetEvent().GetBlobs(),
+                                            factor, factor);
 
             const auto videoPath =
                 notification.BuildNotification(this->config->mediaFolderPath);
@@ -417,13 +409,19 @@ namespace Observer {
         // 5. increment group id
         this->groupID++;
 
-        OBSERVER_TRACE("Blobs data:");
+        Size size = rawCameraEvent.GetFramesSize();
+        double maxDiagonalDist =
+            sqrt(size.width * size.width + size.height * size.height) * 0.01;
+        OBSERVER_TRACE("Blobs data: Max={0}", maxDiagonalDist);
         /// TODO: Remove - Debug
+
         for (auto& blob : event.GetBlobs()) {
             OBSERVER_TRACE(
-                "\t- ID: {0}\n\t\tAppearances: {1}\n\t\tAverage Vel: {2}",
+                "\t- ID: {0}\n\t\tAppearances: {1}\n\t\tAverage Vel: "
+                "{2}\n\t\tDistance Traveled: {3} units",
                 blob.GetId(), blob.GetAppearances().size(),
-                blob.GetAverageMagnitude());
+                blob.GetAverageMagnitude() / maxDiagonalDist,
+                blob.GetDistanceTraveled() / maxDiagonalDist);
         }
     }
 

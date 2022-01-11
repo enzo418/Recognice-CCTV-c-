@@ -42,6 +42,9 @@ namespace Observer {
          */
         std::string BuildNotification(const std::string& mediaFolderPath);
 
+        void Resize(const Size& target);
+        void Resize(double fx, double fy);
+
        private:
         std::string text;
 
@@ -85,5 +88,19 @@ namespace Observer {
         ImagePersistence<TFrame>::SaveImage(path, this->image);
 
         return path;
+    }
+
+    template <typename TFrame>
+    void ImageNotification<TFrame>::Resize(const Size& target) {
+        ImageTransformation<TFrame>::Resize(image, image, target);
+    }
+
+    template <typename TFrame>
+    void ImageNotification<TFrame>::Resize(double fx, double fy) {
+        Size size = ImageTransformation<TFrame>::GetSize(image);
+        size.width *= fx;
+        size.height *= fy;
+
+        this->Resize(size);
     }
 }  // namespace Observer

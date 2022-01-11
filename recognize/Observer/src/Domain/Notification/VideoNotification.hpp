@@ -42,6 +42,9 @@ namespace Observer {
         void SetFrameRate(double frameRate);
         void SetFrameSize(Size frameSize);
 
+        void Resize(const Size& target);
+        void Resize(double fx, double fy);
+
        private:
         std::string text;
 
@@ -114,5 +117,23 @@ namespace Observer {
     template <typename TFrame>
     void VideoNotification<TFrame>::SetFrameSize(Size pFrameSize) {
         this->frameSize = pFrameSize;
+    }
+
+    template <typename TFrame>
+    void VideoNotification<TFrame>::Resize(const Size& target) {
+        this->SetFrameSize(target);
+
+        for (auto& frame : frames) {
+            ImageTransformation<TFrame>::Resize(frame, frame, target);
+        }
+    }
+
+    template <typename TFrame>
+    void VideoNotification<TFrame>::Resize(double fx, double fy) {
+        Size size = ImageTransformation<TFrame>::GetSize(frames[0]);
+        size.width *= fx;
+        size.height *= fy;
+
+        this->Resize(size);
     }
 }  // namespace Observer
