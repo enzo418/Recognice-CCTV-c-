@@ -16,6 +16,9 @@ namespace Observer {
         // E.g. delete blob if it only appears in only 1 frame
         int MinimumOccurrences;
 
+        // unit = 1% of the diagonal
+        int MinimumUnitsTraveled;
+
         BlobVelocityFilters VelocityFilter;
 
         bool operator==(const BlobFilters&) const = default;

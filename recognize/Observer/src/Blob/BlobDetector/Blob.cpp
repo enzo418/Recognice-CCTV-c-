@@ -52,4 +52,18 @@ namespace Observer {
 
         return total / velocities.size();
     }
+
+    double Blob::GetDistanceTraveled() {
+        if (appearsOnFrames.size() < 2) return 0;
+
+        double distance = 0;
+        Point lastPoint = centers[appearsOnFrames[0]];
+        for (int i = 1; i < appearsOnFrames.size(); i++) {
+            Point center = centers[appearsOnFrames[i]];
+            distance += lastPoint.DistanceTo(center);
+            lastPoint = center;
+        }
+
+        return distance / appearsOnFrames.size();
+    }
 }  // namespace Observer

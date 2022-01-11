@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "../../Log/log.hpp"
 #include "../../Utils/Math.hpp"
 #include "../Contours/ContoursDetector.hpp"
 #include "Blob.hpp"
@@ -93,6 +94,9 @@ namespace Observer {
        protected:
         BlobDetectorParams detectorParams;
         BlobFilters blobFilters;
+
+        // obtained from the current frame size, used to filter blobs
+        double unitLength;
     };
 
     template <typename TFrame>
@@ -296,11 +300,19 @@ namespace Observer {
         for (int i = 0; i < blobs.size(); i++) {
             auto& blob = blobs[i];
 
+            bool passAppearancesTest = blob.GetAppearances().size() >=
+                                       this->blobFilters.MinimumOccurrences;
+
+            bool passDiagonalTest =
+                passAppearancesTest && blob.GetDistanceTraveled() / unitLength >
+                                           blobFilters.MinimumUnitsTraveled;
+
+            bool didPassAll = passDiagonalTest;
+
             // to check the number of appearances just check the size of it,
             // since though we do interpolation, only the real frames where it
             // appears are saved
-            if (blob.GetAppearances().size() >=
-                this->blobFilters.MinimumOccurrences) {
+            if (didPassAll) {
                 filtered.push_back(std::move(blob));
             }
         }
@@ -342,5 +354,8 @@ namespace Observer {
     template <typename TFrame>
     void BlobDetector<TFrame>::SetScale(const Size& sizeToScale) {
         this->contoursDetector.SetScale(sizeToScale);
+        unitLength = sqrt(sizeToScale.width * sizeToScale.width +
+                          sizeToScale.height * sizeToScale.height) *
+                     0.01;
     }
 }  // namespace Observer

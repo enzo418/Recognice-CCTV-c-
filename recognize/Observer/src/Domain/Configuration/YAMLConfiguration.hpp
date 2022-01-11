@@ -651,11 +651,13 @@ namespace YAML {
 
             node["BlobVelocityFilter"] = rhs.VelocityFilter;
             node["MinimumOccurrences"] = rhs.MinimumOccurrences;
+            node["MinimumUnitsTraveled"] = rhs.MinimumUnitsTraveled;
             return node;
         }
 
         static bool decode(const Node& node, RType& rhs) {
             rhs.MinimumOccurrences = node["MinimumOccurrences"].as<int>();
+            rhs.MinimumUnitsTraveled = node["MinimumUnitsTraveled"].as<int>();
             rhs.VelocityFilter =
                 node["BlobVelocityFilter"].as<RType::BlobVelocityFilters>();
 

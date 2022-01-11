@@ -79,6 +79,8 @@ namespace Observer {
          */
         double GetAverageMagnitude();
 
+        double GetDistanceTraveled();
+
        protected:
         int id;
 
