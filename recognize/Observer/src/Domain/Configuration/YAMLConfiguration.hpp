@@ -22,6 +22,25 @@
 
 namespace YAML {
     template <>
+    struct convert<Observer::Configuration::ResizeNotification> {
+        static Node encode(
+            const Observer::Configuration::ResizeNotification& rhs) {
+            Node node;
+
+            node["image"] = rhs.image;
+            node["video"] = rhs.video;
+            return node;
+        }
+
+        static bool decode(const Node& node,
+                           Observer::Configuration::ResizeNotification& rhs) {
+            rhs.image = node["image"].as<int>();
+            rhs.video = node["video"].as<int>();
+            return true;
+        }
+    };
+
+    template <>
     struct convert<Observer::Configuration> {
         static Node encode(const Observer::Configuration& rhs) {
             Node node;
@@ -34,6 +53,7 @@ namespace YAML {
                 rhs.localWebConfiguration;
             node["outputPreviewConfiguration"] = rhs.outputConfiguration;
             node["cameraConfiguration"] = rhs.camerasConfiguration;
+            node["resizeNotifications"] = rhs.resizeNotifications;
             return node;
         }
 
@@ -54,6 +74,9 @@ namespace YAML {
             rhs.camerasConfiguration =
                 node["cameraConfiguration"]
                     .as<std::vector<Observer::CameraConfiguration>>();
+            rhs.resizeNotifications =
+                node["resizeNotifications"]
+                    .as<Observer::Configuration::ResizeNotification>();
             return true;
         }
     };

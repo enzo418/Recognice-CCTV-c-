@@ -82,9 +82,6 @@ namespace Observer {
     template <typename TFrame>
     std::string VideoNotification<TFrame>::BuildNotification(
         const std::string& mediaFolderPath) {
-        OBSERVER_ASSERT(!frames.empty(),
-                        "Empty frames while building a video notification");
-
         const std::string time = Observer::SpecialFunctions::GetCurrentTime();
         const std::string fileName = time + ".mp4";
         const std::string& path =

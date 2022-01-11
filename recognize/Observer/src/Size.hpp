@@ -17,4 +17,8 @@ namespace Observer {
 
         bool empty() { return width == 0 || height == 0; }
     };
+
+    static Size operator*(const Size& sz, const double factor) {
+        return Size(sz.width * factor, sz.height * factor);
+    }
 }  // namespace Observer

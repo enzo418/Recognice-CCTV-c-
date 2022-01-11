@@ -185,6 +185,18 @@ namespace Observer {
             return;
         }
 
+        // resize image
+        if (config->resizeNotifications.image >= 1) {
+            const double factor =
+                ((double)config->resizeNotifications.image / 100.0);
+
+            const Size size = imSize * factor;
+
+            auto& frame = notification.GetImage();
+
+            ImageTransformation<TFrame>::Resize(frame, frame, size);
+        }
+
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
             const auto path =
@@ -222,6 +234,24 @@ namespace Observer {
     template <typename TFrame>
     void NotificationsController<TFrame>::Send(
         VideoNotification<TFrame> notification) {
+        auto& frames = notification.GetFrames();
+
+        OBSERVER_ASSERT(!frames.empty(),
+                        "Empty frames while building a video notification");
+
+        // resize notification
+        if (config->resizeNotifications.video >= 1) {
+            const double factor =
+                ((double)config->resizeNotifications.video / 100.0);
+
+            const Size size =
+                ImageTransformation<TFrame>::GetSize(frames[0]) * factor;
+
+            for (auto& frame : frames) {
+                ImageTransformation<TFrame>::Resize(frame, frame, size);
+            }
+        }
+
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
             const auto videoPath =
