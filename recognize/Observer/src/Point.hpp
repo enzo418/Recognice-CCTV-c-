@@ -31,11 +31,11 @@ namespace Observer {
         operator Point_();
     };
 
-    static Point operator+(const Point& a, const Point& b);
+    Point operator+(const Point& a, const Point& b);
 
-    static Point operator/(const Point& a, int b);
+    Point operator/(const Point& a, int b);
 
-    static Point operator*(const Point& a, int b);
+    Point operator*(const Point& a, int b);
 
-    static double DistanceTo(const Point& a, const Point& b);
+    double DistanceTo(const Point& a, const Point& b);
 }  // namespace Observer

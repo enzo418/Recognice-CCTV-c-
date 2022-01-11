@@ -386,6 +386,15 @@ namespace Observer {
 
         // 5. increment group id
         this->groupID++;
+
+        OBSERVER_TRACE("Blobs data:");
+        /// TODO: Remove - Debug
+        for (auto& blob : event.GetBlobs()) {
+            OBSERVER_TRACE(
+                "\t- ID: {0}\n\t\tAppearances: {1}\n\t\tAverage Vel: {2}",
+                blob.GetId(), blob.GetAppearances().size(),
+                blob.GetAverageMagnitude());
+        }
     }
 
     template <typename TFrame>

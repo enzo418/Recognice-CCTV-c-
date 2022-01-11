@@ -72,6 +72,13 @@ namespace Observer {
          */
         std::vector<int>& GetAppearances();
 
+        /**
+         * @brief Get the Average velocity magnitude
+         *
+         * @return double
+         */
+        double GetAverageMagnitude();
+
        protected:
         int id;
 

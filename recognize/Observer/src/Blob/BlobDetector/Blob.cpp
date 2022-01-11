@@ -40,4 +40,16 @@ namespace Observer {
     }
 
     std::vector<int>& Blob::GetAppearances() { return this->appearsOnFrames; }
+
+    double Blob::GetAverageMagnitude() {
+        if (velocities.empty()) return 0;
+
+        double total = 0;
+
+        for (auto& vel : velocities) {
+            total += vel.second.magnitude();
+        }
+
+        return total / velocities.size();
+    }
 }  // namespace Observer

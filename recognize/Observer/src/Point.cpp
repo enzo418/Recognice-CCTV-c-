@@ -30,19 +30,15 @@ namespace Observer {
         return sqrt(x * x + y * y);
     }
 
-    static Point operator+(const Point& a, const Point& b) {
+    Point operator+(const Point& a, const Point& b) {
         return Point(a.x + b.x, a.y + b.y);
     }
 
-    static Point operator/(const Point& a, int b) {
-        return Point(a.x / b, a.y / b);
-    }
+    Point operator/(const Point& a, int b) { return Point(a.x / b, a.y / b); }
 
-    static Point operator*(const Point& a, int b) {
-        return Point(a.x * b, a.y * b);
-    }
+    Point operator*(const Point& a, int b) { return Point(a.x * b, a.y * b); }
 
-    static double DistanceTo(const Point& a, const Point& b) {
+    double DistanceTo(const Point& a, const Point& b) {
         const int x = b.x - a.x;
         const int y = b.y - a.y;
 
