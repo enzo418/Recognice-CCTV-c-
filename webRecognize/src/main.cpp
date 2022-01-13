@@ -202,12 +202,6 @@ int main(int argc, char** argv) {
 
                          serverCtx.observerLiveView->AddClient(ws);
                      } else if (path.starts_with(prefixPathCameraLiveView)) {
-                         for (auto& [key, value] :
-                              serverCtx.liveCamerasContext->camerasLiveView) {
-                             OBSERVER_TRACE("Key={} Path={} Equal? {}", key,
-                                            path, (key == path ? "s" : "n"));
-                         }
-
                          // user requested camera live view
                          if (!serverCtx.liveCamerasContext->camerasLiveView
                                   .contains(path)) {
