@@ -245,6 +245,8 @@ public:
         /* Alloate this handler */
         handlers.emplace_back(std::move(handler));
     }
+
+    std::string_view getPath(int pos) {return urlSegmentVector[pos];}
 };
 
 }

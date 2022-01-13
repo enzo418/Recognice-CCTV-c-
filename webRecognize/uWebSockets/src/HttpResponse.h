@@ -308,7 +308,7 @@ public:
 
         /* Emit open event and start the timeout */
         if (webSocketContextData->openHandler) {
-            webSocketContextData->openHandler(webSocket);
+            webSocketContextData->openHandler(webSocket, httpContextData->router.getPath(0));
         }
     }
 

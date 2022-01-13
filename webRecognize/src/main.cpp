@@ -14,6 +14,7 @@
 // Selects a Region of interes from a camera fram
 #include <cstring>
 #include <filesystem>
+#include <string_view>
 
 // #include "AreaSelector.hpp"
 #include "Notifications/NotificationEndPoints.hpp"
@@ -54,16 +55,17 @@ int main(int argc, char** argv) {
 
     SetNotificationsEndPoints(app, notificationsCtx);
 
-    Web::ServerContext serverCtx = {
+    Web::ServerContext<TFrame> serverCtx = {
         .rootFolder = fs::current_path() / "web",
         .port = 3001,
-    };
+        .recognizeContext = {false, nullptr}};
 
     FileStreamer fileStreamer(serverCtx.rootFolder);
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
 
     Observer::ObserverCentral<TFrame> observer(cfg);
+    serverCtx.recognizeContext.observer = &observer;
 
     Observer::VideoSource<TFrame> cap;
     cap.Open(cfg.camerasConfiguration[0].url);
@@ -99,40 +101,60 @@ int main(int argc, char** argv) {
 
                  fileStreamer.streamFile(res, "/index.html", rangeHeader);
              })
-        .get("/stream/1",
-             [&liveVideo](auto* res, auto* req) {
-                 res->onAborted([]() { std::cout << "ABORTED!" << std::endl; });
-                 //  liveVideo.AddClient(res);
+        .get("/api/requestVideoStream",
+             [&liveVideo, &serverCtx](auto* res, auto* req) {
+                 // 1. get type: single camera | observer
+                 const auto type = req->getQuery("type");
+                 if (type == "single_camera") {
+                     // feedExists = servercontext.lives.feedExists(url)
+                     // if feedExists
+                     //     feedId = servercontext.lives.get(url)
+                     // else:
+                     //     feedId = servercontext.lives.create(url)
+                     //
+                     // res->send({feed_id: feedId})
+                 } else if (type == "observer") {
+                     if (!serverCtx.recognizeContext.running) {
+                         // res->send(Error("Recognize is not running"))
+                     } else {
+                         // exists = servercontext.lives.feedExists("observer")
+                         // if exists
+                         //     servercontext.lives.get("observer")
+                         // else:
+                         //     servercontext.lives.create("observer")
+                         // res->send({feed_id: "observer_feed"})
+                     }
+                 }
              })
-        .ws<PerSocketData>("/recognize",
-                           {/* Settings */
-                            .compression = uWS::SHARED_COMPRESSOR,
-                            .maxPayloadLength = 16 * 1024 * 1024,
-                            .idleTimeout = 16,
-                            .maxBackpressure = 1 * 1024 * 1024,
-                            .closeOnBackpressureLimit = false,
-                            .resetIdleTimeoutOnSend = false,
-                            .sendPingsAutomatically = true,
-                            /* Handlers */
-                            .upgrade = nullptr,
-                            .open =
-                                [&liveVideo](auto* ws) {
-                                    /* Open event here, you may access
-                                     * ws->getUserData() which points to a
-                                     * PerSocketData struct */
+        .ws<PerSocketData>(
+            "/*", {/* Settings */
+                   .compression = uWS::SHARED_COMPRESSOR,
+                   .maxPayloadLength = 16 * 1024 * 1024,
+                   .idleTimeout = 16,
+                   .maxBackpressure = 1 * 1024 * 1024,
+                   .closeOnBackpressureLimit = false,
+                   .resetIdleTimeoutOnSend = false,
+                   .sendPingsAutomatically = true,
+                   /* Handlers */
+                   .upgrade = nullptr,
+                   .open =
+                       [&liveVideo](auto* ws, std::string_view path) {
+                           /* Open event here, you may access
+                            * ws->getUserData() which points to a
+                            * PerSocketData struct */
 
-                                    // add to connected clients
-                                    liveVideo.AddClient(ws);
+                           // add to connected clients
+                           liveVideo.AddClient(ws);
 
-                                    std::cout << "Client connected!\n";
-                                },
-                            .close =
-                                [&liveVideo](auto* ws, int /*code*/,
-                                             std::string_view /*message*/) {
-                                    /* You may access ws->getUserData() here */
-                                    liveVideo.RemoveClient(ws);
-                                    std::cout << "Client disconnected!\n";
-                                }})
+                           OBSERVER_INFO("Client connected to {0}", path);
+                       },
+                   .close =
+                       [&liveVideo](auto* ws, int /*code*/,
+                                    std::string_view /*message*/) {
+                           /* You may access ws->getUserData() here */
+                           liveVideo.RemoveClient(ws);
+                           std::cout << "Client disconnected!\n";
+                       }})
 
         .run();
 
