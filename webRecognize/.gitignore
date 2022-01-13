@@ -17,6 +17,7 @@
 
 # server
 !src/stream_content
+!src/stream_content/LiveVideo
 !uWebSockets/
 !Notifications
 !Server
