@@ -180,9 +180,16 @@ int main(int argc, char** argv) {
              /* Handlers */
              .upgrade = nullptr,
              .open =
-                 [&serverCtx](auto* ws, std::string_view pPath) {
-                     std::string path(pPath);
+                 [&serverCtx](auto* ws,
+                              const std::list<std::string_view>& paths) {
+                     for (auto it = paths.begin(); it != paths.end(); it++)
+                         std::cout << *it << ' ';
+                     std::cout << '\n';
+
+                     std::string path(paths.front());
                      ws->getUserData()->pathSubscribed = std::string(path);
+
+                     OBSERVER_INFO("Client connected to {0}", path);
 
                      if (path == pathObserverLiveView) {
                          // user requested observer live view
@@ -222,8 +229,6 @@ int main(int argc, char** argv) {
 
                          camera->AddClient(ws);
                      }
-
-                     OBSERVER_INFO("Client connected to {0}", path);
                  },
              .close =
                  [&serverCtx, &notificationsCtx](auto* ws, int /*code*/,

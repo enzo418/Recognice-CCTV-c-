@@ -52,7 +52,7 @@ public:
     std::vector<WebSocketContextData<SSL, int> *> adjacentWebSocketContextDatas;
 
     /* The callbacks for this context */
-    MoveOnlyFunction<void(WebSocket<SSL, true, USERDATA> *, std::string_view)> openHandler = nullptr;
+    MoveOnlyFunction<void(WebSocket<SSL, true, USERDATA> *, const std::list<std::string_view>&)> openHandler = nullptr;
     MoveOnlyFunction<void(WebSocket<SSL, true, USERDATA> *, std::string_view, OpCode)> messageHandler = nullptr;
     MoveOnlyFunction<void(WebSocket<SSL, true, USERDATA> *)> drainHandler = nullptr;
     MoveOnlyFunction<void(WebSocket<SSL, true, USERDATA> *, int, std::string_view)> closeHandler = nullptr;

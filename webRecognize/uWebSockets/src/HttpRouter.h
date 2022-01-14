@@ -66,7 +66,7 @@ private:
     } root = {"rootNode"};
 
     /* Advance from parent to child, adding child if necessary */
-    Node *getNode(Node *parent, std::string child, bool isHighPriority) {
+    Node *getNode(Node *parent, const std::string& child, bool isHighPriority) {
         for (std::unique_ptr<Node> &node : parent->children) {
             if (node->name == child && node->isHighPriority == isHighPriority) {
                 return node.get();
@@ -122,7 +122,7 @@ private:
     inline std::pair<std::string_view, bool> getUrlSegment(int urlSegment) {
         if (urlSegment > urlSegmentTop) {
             /* Signal as STOP when we have no more URL or stack space */
-            if (!currentUrl.length() || urlSegment > 99) {
+            if (!currentUrl.length() || urlSegment >= MAX_URL_SEGMENTS) {
                 return {{}, true};
             }
 
@@ -229,8 +229,8 @@ public:
     }
 
     /* Adds the corresponding entires in matching tree and handler list */
-    void add(std::vector<std::string> methods, std::string pattern, MoveOnlyFunction<bool(HttpRouter *)> &&handler, uint32_t priority = MEDIUM_PRIORITY) {
-        for (std::string method : methods) {
+    void add(const std::vector<std::string>& methods, std::string pattern, MoveOnlyFunction<bool(HttpRouter *)> &&handler, uint32_t priority = MEDIUM_PRIORITY) {
+        for (const std::string& method : methods) {
             /* Lookup method */
             Node *node = getNode(&root, method, false);
             /* Iterate over all segments */
@@ -246,7 +246,26 @@ public:
         handlers.emplace_back(std::move(handler));
     }
 
-    std::string_view getPath(int pos) {return urlSegmentVector[pos];}
+    std::string_view getPath(int pos) { return urlSegmentVector[pos]; }
+
+    void forceReadAllSegments() {
+        for (int i = urlSegmentTop; i < MAX_URL_SEGMENTS; i++){
+            // stop at true
+            if (this->getUrlSegment(i).second) {
+                return;
+            }
+        }
+    }
+    
+    /**
+     * @brief Returns all the path segments with the number of segments.
+     * 
+     * @return std::pair<std::string_view, int> 
+     */
+    std::pair<std::string_view *, int> getCompletePath() {
+        forceReadAllSegments();
+        return {urlSegmentVector, 1 + urlSegmentTop};
+    }
 };
 
 }
