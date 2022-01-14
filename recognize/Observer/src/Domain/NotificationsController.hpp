@@ -20,14 +20,8 @@
 #include "Event/Event.hpp"
 #include "Notification/DTONotification.hpp"
 #include "Notification/IMessagingService.hpp"
-#include "Notification/RestClientLocalWebNotifications.hpp"
+#include "Notification/LocalNotifications.hpp"
 #include "Notification/TelegramNotifications.hpp"
-
-namespace Observer {
-    class INotificationEventSubscriber : public ISubscriber<DTONotification> {
-        void update(DTONotification ev) override = 0;
-    };
-}  // namespace Observer
 
 namespace Observer {
     /**
@@ -124,9 +118,11 @@ namespace Observer {
         SimpleBlockingQueue<TextNotification> textQueue;
         SimpleBlockingQueue<ImageNotification<TFrame>> imageQueue;
         SimpleBlockingQueue<VideoNotification<TFrame>> videoQueue;
-        int groupID;
 
-        Publisher<DTONotification> notificationsPublisher;
+        // non-owning ptr
+        LocalNotifications* localNotifications {nullptr};
+
+        int groupID;
     };
 
     template <typename TFrame>
@@ -136,8 +132,9 @@ namespace Observer {
         this->groupID = 0;
 
         if (cfg->localWebConfiguration.enabled) {
-            auto ptrLocal =
-                new RestClientLocalWebNotifications(cfg->localWebConfiguration);
+            auto ptrLocal = new LocalNotifications(cfg->localWebConfiguration);
+
+            this->localNotifications = ptrLocal;
 
             this->AddService(ptrLocal, &this->config->localWebConfiguration);
         }
@@ -168,7 +165,8 @@ namespace Observer {
             if (this->servicesType[{service,
                                     flag_to_int(ENotificationType::TEXT)}]) {
                 service->SendText(DTONotification(notification.GetGroupID(),
-                                                  notification.GetCaption()));
+                                                  notification.GetCaption(),
+                                                  ENotificationType::TEXT));
             }
         }
     }
@@ -196,9 +194,9 @@ namespace Observer {
 
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
-                service->SendImage(DTONotification(notification.GetGroupID(),
-                                                   notification.GetCaption(),
-                                                   path));
+                service->SendImage(DTONotification(
+                    notification.GetGroupID(), notification.GetCaption(),
+                    ENotificationType::IMAGE, path));
             }
         }
 
@@ -217,9 +215,9 @@ namespace Observer {
             // 4. For each service that need the trace call
             // SendVideo(image2path)
             for (auto&& service : servD) {
-                service->SendImage(DTONotification(notification.GetGroupID(),
-                                                   notification.GetCaption(),
-                                                   path_trace));
+                service->SendImage(DTONotification(
+                    notification.GetGroupID(), notification.GetCaption(),
+                    ENotificationType::IMAGE, path_trace));
             }
         }
     }
@@ -252,9 +250,9 @@ namespace Observer {
             // SendVideo(videopath)
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(notification.GetGroupID(),
-                                                   notification.GetCaption(),
-                                                   videoPath));
+                service->SendVideo(DTONotification(
+                    notification.GetGroupID(), notification.GetCaption(),
+                    ENotificationType::VIDEO, videoPath));
             }
         }
 
@@ -274,9 +272,9 @@ namespace Observer {
             // SendVideo(video2path)
             for (auto&& service :
                  this->drawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(notification.GetGroupID(),
-                                                   notification.GetCaption(),
-                                                   videoPath));
+                service->SendVideo(DTONotification(
+                    notification.GetGroupID(), notification.GetCaption(),
+                    ENotificationType::VIDEO, videoPath));
             }
         }
     }
@@ -428,6 +426,8 @@ namespace Observer {
     template <typename TFrame>
     void NotificationsController<TFrame>::SubscribeToNewNotifications(
         INotificationEventSubscriber* subscriber) {
-        this->notificationsPublisher.subscribe(subscriber);
+        if (localNotifications != nullptr) {
+            localNotifications->SubscribeToNewNotifications(subscriber);
+        }
     }
 }  // namespace Observer

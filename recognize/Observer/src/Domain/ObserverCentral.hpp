@@ -42,6 +42,9 @@ namespace Observer {
 
         void SubscribeToFrames(ISubscriber<TFrame>* sub);
 
+        void SubscribeToNewNotifications(
+            INotificationEventSubscriber* subscriber);
+
        private:
         struct CameraThread {
             std::thread thread;
@@ -263,5 +266,11 @@ namespace Observer {
     template <typename TFrame>
     void ObserverCentral<TFrame>::SubscribeToFrames(ISubscriber<TFrame>* sub) {
         this->framesBlender.SubscribeToFramesUpdate(sub);
+    }
+
+    template <typename TFrame>
+    void ObserverCentral<TFrame>::SubscribeToNewNotifications(
+        INotificationEventSubscriber* subscriber) {
+        this->notificationController.SubscribeToNewNotifications(subscriber);
     }
 }  // namespace Observer

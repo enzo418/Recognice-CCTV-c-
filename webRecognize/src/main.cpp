@@ -24,7 +24,6 @@
 #include <string_view>
 
 // #include "AreaSelector.hpp"
-#include "Notifications/NotificationEndPoints.hpp"
 #include "Server/ServerContext.hpp"
 #include "SocketData.hpp"
 #include "base64.hpp"
@@ -57,22 +56,19 @@ int main(int argc, char** argv) {
 
     auto app = uWS::App();
 
-    Web::NotificationsContext notificationsCtx = {
-        .socketTopic = "notifications",
-        .textEndpoint = "/addTextNotification",
-        .imageEndpoint = "/addImageNotification",
-        .videoEndpoint = "/addVideoNotification",
-    };
-
-    SetNotificationsEndPoints(app, notificationsCtx);
-
     Web::ServerContext<TFrame, SSL> serverCtx = {
         .rootFolder = fs::current_path() / "web",
         .port = 3001,
         .recognizeContext = {true, nullptr},
+
+        // this should not be like this, allocating on heap. This should be on a
+        // class that manages all of this, like App or Server. But for now it
+        // will stay like this until more features are added and become stable.
+
         .liveViewsManager =
             std::make_unique<Web::LiveViewsManager<TFrame, SSL>>(
-                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
+                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext),
+        .notificatorWS = std::make_unique<Web::WebsocketNotificator<SSL>>()};
 
     FileStreamer fileStreamer(serverCtx.rootFolder);
 
@@ -81,13 +77,19 @@ int main(int argc, char** argv) {
     Observer::ObserverCentral<TFrame> observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
+    observer.SubscribeToNewNotifications(
+        (Observer::INotificationEventSubscriber*)serverCtx.notificatorWS.get());
+
     Observer::VideoSource<TFrame> cap;
     cap.Open(cfg.camerasConfiguration[0].url);
     double fps = cap.GetFPS();
     cap.Close();
+
     threads.push_back(
         {&observer,
          std::thread(&Observer::ObserverCentral<TFrame>::Start, &observer)});
+
+    serverCtx.notificatorWS->Start();
 
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
@@ -158,6 +160,19 @@ int main(int argc, char** argv) {
                  }
              })
         .ws<PerSocketData>(
+            "/notifications",
+            {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,
+             .open =
+                 [&serverCtx](auto* ws,
+                              const std::list<std::string_view>& paths) {
+                     serverCtx.notificatorWS->AddClient(ws);
+                 },
+             .close =
+                 [&serverCtx](auto* ws, int /*code*/,
+                              std::string_view /*message*/) {
+                     serverCtx.notificatorWS->RemoveClient(ws);
+                 }})
+        .ws<PerSocketData>(
             liveViewWsRoute,
             {.compression = uWS::DISABLED,
              .maxPayloadLength = 16 * 1024 * 1024,
@@ -193,8 +208,8 @@ int main(int argc, char** argv) {
                      }
                  },
              .close =
-                 [&serverCtx, &notificationsCtx](auto* ws, int /*code*/,
-                                                 std::string_view /*message*/) {
+                 [&serverCtx](auto* ws, int /*code*/,
+                              std::string_view /*message*/) {
                      OBSERVER_TRACE("Client disconnected from '{0}' !",
                                     ws->getUserData()->pathSubscribed);
 

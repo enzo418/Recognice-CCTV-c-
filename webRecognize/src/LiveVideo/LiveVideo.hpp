@@ -10,8 +10,8 @@
 #include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
 #include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
 #include "../../../recognize/Observer/vendor/bitmask_operators.hpp"
-#include "../../uWebSockets/src/App.h"
 #include "../SocketData.hpp"
+#include "../WebsocketService.hpp"
 
 namespace Web {
     enum class LiveViewStatus {
@@ -32,10 +32,8 @@ struct enable_bitmask_operators<Web::LiveViewStatus> {
 
 namespace Web {
     template <typename TFrame, bool SSL>
-    class LiveVideo : public IFunctionality {
-       public:
-        typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
-
+    class LiveVideo : public IFunctionality,
+                      public WebsocketService<SSL, PerSocketData> {
        public:
         LiveVideo(int fps, int quality);
         ~LiveVideo();
@@ -52,18 +50,10 @@ namespace Web {
          */
         void Stop() override;
 
-        void AddClient(WebSocketClient* res);
-
-        void RemoveClient(WebSocketClient* res);
-
         LiveViewStatus GetStatus();
-
-       public:
-        int GetTotalClients();
 
        private:
         void InternalStart();
-        void SendToClients(char* data, int size);
 
        protected:
         void NewValidFrameReceived();
@@ -96,11 +86,6 @@ namespace Web {
         int id;
 
        private:
-        std::vector<WebSocketClient*> clients;
-        std::mutex mtxClients;
-        int lastClientId {0};
-
-       private:
         std::thread thread;
     };
 
@@ -118,7 +103,7 @@ namespace Web {
 
     template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::Start() {
-        OBSERVER_ASSERT(!running, "Live view alredy runnin!");
+        OBSERVER_ASSERT(!running, "Live view alredy running!");
 
         this->running = true;
 
@@ -134,15 +119,6 @@ namespace Web {
         }
 
         this->PostStop();
-    }
-
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::AddClient(WebSocketClient* ws) {
-        std::lock_guard<std::mutex> guard_c(this->mtxClients);
-        ws->getUserData()->id = ++lastClientId;
-
-        this->clients.push_back(ws);
-        OBSERVER_INFO("New Client on live view!");
     }
 
     template <typename TFrame, bool SSL>
@@ -183,30 +159,6 @@ namespace Web {
     }
 
     template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::SendToClients(char* data, int size) {
-        std::lock_guard<std::mutex> guard_c(this->mtxClients);
-
-        int clientsCount = this->clients.size();
-        for (int i = 0; i < clientsCount; i++) {
-            // ¿shoud execute this on a separate thread?
-            clients[i]->send(std::string_view(data, size), uWS::OpCode::BINARY,
-                             true);
-        }
-    }
-
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::RemoveClient(WebSocketClient* ws) {
-        std::lock_guard<std::mutex> guard_c(this->mtxClients);
-        const auto end = clients.end();
-        for (auto it = clients.begin(); it != end; ++it) {
-            if ((*it)->getUserData()->id == ws->getUserData()->id) {
-                clients.erase(it);
-                break;
-            }
-        }
-    }
-
-    template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::SetFPS(double fps) {
         this->waitMs = 1000.0 / fps;
     }
@@ -214,13 +166,6 @@ namespace Web {
     template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::SetQuality(int pQuality) {
         this->quality = pQuality;
-    }
-
-    template <typename TFrame, bool SSL>
-    int LiveVideo<TFrame, SSL>::GetTotalClients() {
-        std::lock_guard<std::mutex> g_clients(mtxClients);
-
-        return clients.size();
     }
 
     template <typename TFrame, bool SSL>

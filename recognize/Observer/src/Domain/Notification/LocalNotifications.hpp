@@ -4,13 +4,24 @@
 #include "MessagingService.hpp"
 //#include <restclient-cpp/restclient.h>
 #include "../../Log/log.hpp"
+#include "../../Pattern/Event/IEventSubscriber.hpp"
 #include "../../Utils/CurlWrapper.hpp"
 
 namespace Observer {
-    class RestClientLocalWebNotifications : public MessagingService {
+    class INotificationEventSubscriber : public ISubscriber<DTONotification> {
+        void update(DTONotification ev) override = 0;
+    };
+}  // namespace Observer
+
+namespace Observer {
+    class LocalNotifications : public MessagingService {
        public:
-        explicit RestClientLocalWebNotifications(
+        explicit LocalNotifications(
             const LocalWebNotificationsConfiguration& cfg);
+
+       public:
+        void SubscribeToNewNotifications(
+            INotificationEventSubscriber* subscriber);
 
        protected:
         void InternalSendText(const DTONotification& notification) override;
@@ -19,5 +30,7 @@ namespace Observer {
 
        private:
         std::string restServerUrl;
+
+        Publisher<DTONotification> notificationsPublisher;
     };
 };  // namespace Observer
