@@ -3,14 +3,16 @@
 #include <mutex>
 #include <string_view>
 
-#include "../../../../recognize/Observer/src/Domain/VideoSource.hpp"
+#include "../../../recognize/Observer/src/Domain/VideoSource.hpp"
 #include "LiveVideo.hpp"
+#include "LiveViewExceptions.hpp"
 
 namespace Web {
     template <typename TFrame, bool SSL>
     class CameraLiveVideo : public LiveVideo<TFrame, SSL> {
        public:
-        CameraLiveVideo(int id, const std::string& pCameraUri, int quality);
+        CameraLiveVideo(const std::string& pCameraUri, int quality);
+        virtual ~CameraLiveVideo() {}
 
        public:
         std::string_view GetURI();
@@ -40,10 +42,9 @@ namespace Web {
     };
 
     template <typename TFrame, bool SSL>
-    CameraLiveVideo<TFrame, SSL>::CameraLiveVideo(int pId,
-                                                  const std::string& pCameraUri,
+    CameraLiveVideo<TFrame, SSL>::CameraLiveVideo(const std::string& pCameraUri,
                                                   int pQuality)
-        : LiveVideo<TFrame, SSL>(pId, 100, pQuality), cameraUri(pCameraUri) {
+        : LiveVideo<TFrame, SSL>(100, pQuality), cameraUri(pCameraUri) {
         this->OpenCamera();
 
         if (Observer::has_flag(this->status, Status::OPEN)) {
@@ -107,6 +108,8 @@ namespace Web {
             Observer::set_flag(this->status, Status::OPEN);
         } else {
             Observer::set_flag(this->status, Status::ERROR);
+            throw InvalidCameraUriException(
+                fmt::format("Couldn't open the camera with uri {}", cameraUri));
         }
     }
 }  // namespace Web

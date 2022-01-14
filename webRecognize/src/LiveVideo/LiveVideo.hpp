@@ -4,14 +4,14 @@
 #include <mutex>
 #include <thread>
 
-#include "../../../../recognize/Observer/src/IFunctionality.hpp"
-#include "../../../../recognize/Observer/src/ImageTransformation.hpp"
-#include "../../../../recognize/Observer/src/Log/log.hpp"
-#include "../../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
-#include "../../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
-#include "../../../../recognize/Observer/vendor/bitmask_operators.hpp"
-#include "../../../uWebSockets/src/App.h"
-#include "../../SocketData.hpp"
+#include "../../../recognize/Observer/src/IFunctionality.hpp"
+#include "../../../recognize/Observer/src/ImageTransformation.hpp"
+#include "../../../recognize/Observer/src/Log/log.hpp"
+#include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
+#include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
+#include "../../../recognize/Observer/vendor/bitmask_operators.hpp"
+#include "../../uWebSockets/src/App.h"
+#include "../SocketData.hpp"
 
 namespace Web {
     enum class LiveViewStatus {
@@ -37,7 +37,7 @@ namespace Web {
         typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
 
        public:
-        LiveVideo(int id, int fps, int quality);
+        LiveVideo(int fps, int quality);
         ~LiveVideo();
 
         /**
@@ -59,8 +59,6 @@ namespace Web {
         LiveViewStatus GetStatus();
 
        public:
-        int GetID();
-
         int GetTotalClients();
 
        private:
@@ -107,8 +105,8 @@ namespace Web {
     };
 
     template <typename TFrame, bool SSL>
-    LiveVideo<TFrame, SSL>::LiveVideo(int pId, int pFps, int pQuality)
-        : id(pId), waitMs(1000.0 / (double)pFps), quality(pQuality) {
+    LiveVideo<TFrame, SSL>::LiveVideo(int pFps, int pQuality)
+        : waitMs(1000.0 / (double)pFps), quality(pQuality) {
         Observer::set_flag(status, LiveViewStatus::CLOSED);
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
@@ -116,11 +114,6 @@ namespace Web {
     template <typename TFrame, bool SSL>
     LiveVideo<TFrame, SSL>::~LiveVideo() {
         this->Stop();
-    }
-
-    template <typename TFrame, bool SSL>
-    int LiveVideo<TFrame, SSL>::GetID() {
-        return this->id;
     }
 
     template <typename TFrame, bool SSL>

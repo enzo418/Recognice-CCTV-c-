@@ -10,7 +10,9 @@ namespace Web {
         typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
 
        public:
-        ObserverLiveVideo(int id, int fps, int quality);
+        ObserverLiveVideo(int fps, int quality);
+
+        virtual ~ObserverLiveVideo() {};
 
         void update(TFrame frame) override;
 
@@ -19,9 +21,8 @@ namespace Web {
     };
 
     template <typename TFrame, bool SSL>
-    ObserverLiveVideo<TFrame, SSL>::ObserverLiveVideo(int pId, int pFps,
-                                                      int pQuality)
-        : LiveVideo<TFrame, SSL>(pId, pFps, pQuality) {}
+    ObserverLiveVideo<TFrame, SSL>::ObserverLiveVideo(int pFps, int pQuality)
+        : LiveVideo<TFrame, SSL>(pFps, pQuality) {}
 
     template <typename TFrame, bool SSL>
     void ObserverLiveVideo<TFrame, SSL>::update(TFrame pFrame) {

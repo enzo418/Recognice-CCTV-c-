@@ -23,12 +23,45 @@ std::string GetJsonString(const std::string& key, const std::string& value);
  * => {"key1": "val1", "key2": "val2", ...]
  *
  */
-std::string GetJsonString(
-    const std::vector<std::pair<std::string_view, std::string_view>>& v);
 
 std::string GetJsonString(
-    const std::vector<std::pair<std::string_view, std::string_view>>& v,
-    bool whitoutQuote);
+    const std::vector<std::tuple<std::string_view, std::string_view, bool>>& v);
+/*
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const std::string& value);
+
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const char* value);
+
+void GetJsonKeyValue(std::ostringstream& ss, const char* key, bool value);
+
+template <typename T>
+void GetJsonKeyValue(std::ostringstream& ss, const char* key, T value) {
+    ss << "\"" << key << "\": " << value;
+}
+/*
+template <typename S>
+std::string JsonString(std::ostringstream& ss, S kv) {
+    GetJsonKeyValue(ss, kv.first, kv.second);
+
+    ss << "}";
+
+    return ss.str();
+}
+template <typename S, typename... Tail>
+std::string JsonString(std::ostringstream& ss,
+                       typename std::pair<std::string, S>& kv,
+                       const Tail&... args) {
+    ss << GetJsonKeyValue(kv.first, kv.second) << ",";
+    return JsonString(ss, args...);
+}
+
+template <typename... Tail>
+std::string JsonString(const Tail&... args) {
+    std::ostringstream stream;
+    stream << "{";
+    return JsonString(stream, args...);
+}*/
 
 /**
  * @brief Formats a alert message

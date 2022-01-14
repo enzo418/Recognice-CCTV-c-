@@ -1,4 +1,5 @@
 
+#include <jsoncpp/json/writer.h>
 #include <spdlog/fmt/bundled/format.h>
 
 #include "../../recognize/Observer/Implementations/opencv/Implementation.hpp"
@@ -7,14 +8,14 @@
 #include "../uWebSockets/src/App.h"
 #include "../uWebSockets/src/HttpContextData.h"
 #include "../uWebSockets/src/Multipart.h"
+#include "LiveVideo/CameraLiveVideo.hpp"
+#include "LiveVideo/LiveVideo.hpp"
+#include "LiveVideo/ObserverLiveVideo.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileExtension.hpp"
 #include "stream_content/FileReader.hpp"
 #include "stream_content/FileStreamer.hpp"
-#include "stream_content/LiveVideo/CameraLiveVideo.hpp"
-#include "stream_content/LiveVideo/LiveVideo.hpp"
-#include "stream_content/LiveVideo/ObserverLiveVideo.hpp"
 
 // Selects a Region of interes from a camera fram
 #include <cstring>
@@ -33,8 +34,10 @@ namespace fs = std::filesystem;
 namespace rc = Observer;
 typedef cv::Mat TFrame;
 
-constexpr std::string_view pathObserverLiveView = "feed_observer";
-constexpr std::string_view prefixPathCameraLiveView = "feed_";
+static const std::string liveViewPrefix = "/live/";
+static const std::string liveViewWsRoute = liveViewPrefix + "*";
+
+constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
 int main(int argc, char** argv) {
     // initialize logger
@@ -67,8 +70,9 @@ int main(int argc, char** argv) {
         .rootFolder = fs::current_path() / "web",
         .port = 3001,
         .recognizeContext = {true, nullptr},
-        .liveCamerasContext =
-            std::make_unique<Web::LiveCamerasContext<TFrame, SSL>>()};
+        .liveViewsManager =
+            std::make_unique<Web::LiveViewsManager<TFrame, SSL>>(
+                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
 
     FileStreamer fileStreamer(serverCtx.rootFolder);
 
@@ -102,82 +106,66 @@ int main(int argc, char** argv) {
 
                  fileStreamer.streamFile(res, "/index.html", rangeHeader);
              })
+        /**
+         * @brief Request a live view of the camera. If successfully
+         * generated the live view it returns a json with the ws_feed_path, to
+         * wich the client can request a WebSocket connection and we will
+         * provide the images through it
+         */
         .get(
             "/api/requestCameraStream",
             [&serverCtx](auto* res, auto* req) {
                 res->writeHeader("Content-Type", "application/json");
                 std::string uri(req->getQuery("uri"));
 
-                std::string feed_id;
+                try {
+                    std::string feed_id(
+                        serverCtx.liveViewsManager->GetFeedId(uri));
 
-                if (serverCtx.liveCamerasContext->mapUriToFeed.contains(uri)) {
-                    feed_id = serverCtx.liveCamerasContext->mapUriToFeed[uri];
-                } else {
-                    int id =
-                        serverCtx.liveCamerasContext->camerasLiveView.size();
+                    res->end(GetSuccessAlertReponse(GetJsonString(
+                        {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
 
-                    feed_id =
-                        fmt::format("{0}{1}", prefixPathCameraLiveView, id);
-                    auto cam =
-                        std::make_unique<Web::CameraLiveVideo<TFrame, SSL>>(
-                            id, uri, 90);
-
-                    if (Observer::has_flag(cam->GetStatus(),
-                                           Web::LiveViewStatus::ERROR)) {
-                        res->end(GetErrorAlertReponse(
-                            GetJsonString({{"error",
-                                            "Couldn't open a connection with "
-                                            "the camera."}})));
-                        OBSERVER_ERROR(
-                            "Couldn't open live camera view, uri: '{0}'", uri);
-                    } else {
-                        serverCtx.liveCamerasContext->camerasLiveView[feed_id] =
-                            std::move(cam);
-
-                        serverCtx.liveCamerasContext->mapUriToFeed[uri] =
-                            feed_id;
-
-                        OBSERVER_TRACE(
-                            "Opened camera connection in live view '{0}' as "
-                            "'{1}'",
-                            uri, feed_id);
-                    }
+                    OBSERVER_TRACE(
+                        "Opened camera connection in live view '{0}' as '{1}' ",
+                        uri, feed_id);
+                } catch (const Web::InvalidCameraUriException& ex) {
+                    res->end(GetErrorAlertReponse(
+                        GetJsonString({{"error",
+                                        "Couldn't open a connection with "
+                                        "the camera.",
+                                        true}})));
+                    OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'",
+                                   uri);
                 }
-
-                res->end(GetSuccessAlertReponse(
-                    GetJsonString({{"ws_feed_path", feed_id}})));
             })
+        /**
+         * @brief does the same thing as requestCameraStream but provinding a
+         * path to the observer live view.
+         */
         .get("/api/requestObserverStream",
              [&serverCtx, &observer](auto* res, auto* req) {
                  res->writeHeader("Content-Type", "application/json");
 
-                 if (!serverCtx.recognizeContext.running) {
-                     res->end(GetErrorAlertReponse(GetJsonString(
-                         {{"error", "recognize is not running"}})));
-                 } else {
-                     if (!serverCtx.observerLiveView) {
-                         serverCtx.observerLiveView = std::make_unique<
-                             Web::ObserverLiveVideo<TFrame, SSL>>(0, 5, 90);
-                     }
-
-                     observer.SubscribeToFrames(
-                         serverCtx.observerLiveView.get());
+                 if (serverCtx.recognizeContext.running) {
+                     std::string feed_id(serverCtx.liveViewsManager->GetFeedId(
+                         Web::LiveViewsManager<TFrame, SSL>::observerUri));
 
                      res->end(GetSuccessAlertReponse(GetJsonString(
-                         {{"ws_feed_path", pathObserverLiveView}})));
+                         {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
+                 } else {
+                     res->end(GetErrorAlertReponse(GetJsonString(
+                         {{"error", "recognize is not  running", true}})));
                  }
              })
         .ws<PerSocketData>(
-            "/*",
-            {/* Settings */
-             .compression = uWS::SHARED_COMPRESSOR,
+            liveViewWsRoute,
+            {.compression = uWS::DISABLED,
              .maxPayloadLength = 16 * 1024 * 1024,
              .idleTimeout = 16,
              .maxBackpressure = 1 * 1024 * 1024,
              .closeOnBackpressureLimit = false,
              .resetIdleTimeoutOnSend = false,
              .sendPingsAutomatically = true,
-             /* Handlers */
              .upgrade = nullptr,
              .open =
                  [&serverCtx](auto* ws,
@@ -185,90 +173,32 @@ int main(int argc, char** argv) {
                      for (auto it = paths.begin(); it != paths.end(); it++)
                          std::cout << *it << ' ';
                      std::cout << '\n';
+                     // 1° is live, 2° is *
+                     std::string feedID(*std::next(paths.begin()));
+                     ws->getUserData()->pathSubscribed = feedID;
 
-                     std::string path(paths.front());
-                     ws->getUserData()->pathSubscribed = std::string(path);
+                     OBSERVER_INFO("Client connected to live '{0}'", feedID);
 
-                     OBSERVER_INFO("Client connected to {0}", path);
+                     if (serverCtx.liveViewsManager->Exists(feedID)) {
+                         serverCtx.liveViewsManager->AddClient(ws);
+                     } else {
+                         OBSERVER_ERROR(
+                             "Live feed wasn't initialized yet! path: {0}",
+                             feedID);
 
-                     if (path == pathObserverLiveView) {
-                         // user requested observer live view
-                         if (!serverCtx.observerLiveView) {
-                             OBSERVER_ERROR(
-                                 "Observer live view wasn't initialized yet! "
-                                 "path: {0}",
-                                 path);
-                             return;
-                         }
-
-                         if (Observer::has_flag(
-                                 serverCtx.observerLiveView->GetStatus(),
-                                 Web::LiveViewStatus::STOPPED)) {
-                             serverCtx.observerLiveView->Start();
-                         }
-
-                         serverCtx.observerLiveView->AddClient(ws);
-                     } else if (path.starts_with(prefixPathCameraLiveView)) {
-                         // user requested camera live view
-                         if (!serverCtx.liveCamerasContext->camerasLiveView
-                                  .contains(path)) {
-                             OBSERVER_ERROR(
-                                 "Camera wasn't initialized yet! path: {0}",
-                                 path);
-                             return;
-                         }
-
-                         auto camera =
-                             serverCtx.liveCamerasContext->camerasLiveView[path]
-                                 .get();
-
-                         if (Observer::has_flag(camera->GetStatus(),
-                                                Web::LiveViewStatus::STOPPED)) {
-                             camera->Start();
-                         }
-
-                         camera->AddClient(ws);
+                         ws->send(
+                             "Wrong feed id, this one doesn't exists! Closing "
+                             "connection.");
+                         ws->end();
                      }
                  },
              .close =
                  [&serverCtx, &notificationsCtx](auto* ws, int /*code*/,
                                                  std::string_view /*message*/) {
-                     std::string path(ws->getUserData()->pathSubscribed);
-                     ws->subscribe(notificationsCtx.socketTopic);
+                     OBSERVER_TRACE("Client disconnected from '{0}' !",
+                                    ws->getUserData()->pathSubscribed);
 
-                     OBSERVER_TRACE("Client disconnected from '{0}'!", path);
-
-                     Web::LiveVideo<TFrame, SSL>* liveView;
-
-                     if (path == pathObserverLiveView) {
-                         if (!serverCtx.observerLiveView) {
-                             OBSERVER_ERROR(
-                                 "Observer live veiw is not "
-                                 "initialized on disconnect!!");
-                         }
-
-                         serverCtx.observerLiveView->RemoveClient(ws);
-
-                         liveView = serverCtx.observerLiveView.get();
-                     } else if (path.starts_with(prefixPathCameraLiveView)) {
-                         if (!serverCtx.liveCamerasContext->camerasLiveView
-                                  .contains(path)) {
-                             OBSERVER_ERROR(
-                                 "Camera is no initialized on disconnect!");
-                         }
-
-                         liveView =
-                             serverCtx.liveCamerasContext->camerasLiveView[path]
-                                 .get();
-
-                         liveView->RemoveClient(ws);
-                     }
-
-                     if (liveView->GetTotalClients() == 0) {
-                         liveView->Stop();
-                         OBSERVER_TRACE(
-                             "Stopping live view since there are 0 clients");
-                     }
+                     serverCtx.liveViewsManager->RemoveClient(ws);
                  }})
 
         .run();

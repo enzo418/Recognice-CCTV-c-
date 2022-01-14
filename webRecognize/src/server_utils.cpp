@@ -1,5 +1,7 @@
 #include "server_utils.hpp"
 
+#include <sstream>
+
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
@@ -9,30 +11,36 @@ std::string GetJsonString(const std::string& key, const std::string& value) {
     return fmt::format("{{\"{0}\": {1}}}", key, value);
 }
 
-/** Transform
- * { {"key1", "val1"}, {"key2", "val2"}, ...} =>
- * => {"key1": "val1", "key2": "val2", ...]
- *
- */
-std::string GetJsonString(
-    const std::vector<std::pair<std::string_view, std::string_view>>& v) {
-    std::string res = "{";
-    for (auto&& i : v) {
-        res += fmt::format("\"{}\": \"{}\",", i.first, i.second);
-    }
+/*
+void inline GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                            const std::string& value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
+}*/
 
-    res.pop_back();  // pop last ,
-    res += "}";
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const std::string& value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
+}
 
-    return res;
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const char* value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
+}
+
+void GetJsonKeyValue(std::ostringstream& ss, const char* key, bool value) {
+    ss << "\"" << key << "\": " << (value ? "true" : "false");
 }
 
 std::string GetJsonString(
-    const std::vector<std::pair<std::string_view, std::string_view>>& v,
-    bool whitoutQuote) {
+    const std::vector<std::tuple<std::string_view, std::string_view, bool>>&
+        v) {
     std::string res = "{";
-    for (auto&& i : v) {
-        res += fmt::format("\"{}\": {},", i.first, i.second);
+    for (auto& [key, value, quote] : v) {
+        if (quote) {
+            res += fmt::format("\"{}\": \"{}\",", key, value);
+        } else {
+            res += fmt::format("\"{}\": {},", key, value);
+        }
     }
 
     res.pop_back();  // pop last ,
@@ -52,14 +60,18 @@ std::string GetErrorAlertReponse(const std::string& message,
                                  const std::string& extra) {
     static const std::string st = "error";
 
-    return GetJsonString({{"status", st}, {"data", message}, {"extra", extra}});
+    return GetJsonString({{"status", st, true},
+                          {"data", message, false},
+                          {"extra", extra, true}});
 }
 
 std::string GetSuccessAlertReponse(const std::string& message,
                                    const std::string& extra) {
     static const std::string st = "ok";
 
-    return GetJsonString({{"status", st}, {"data", message}, {"extra", extra}});
+    return GetJsonString({{"status", st, true},
+                          {"data", message, false},
+                          {"extra", extra, true}});
 }
 
 // datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss
