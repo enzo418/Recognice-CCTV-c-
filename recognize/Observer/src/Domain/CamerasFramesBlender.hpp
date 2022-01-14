@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <mutex>
 #include <thread>
@@ -55,7 +56,7 @@ namespace Observer {
 
        private:
         Publisher<TFrame> framePublisher;
-        int frameSubscriberCount;
+        std::atomic<int> frameSubscriberCount;
     };
 
     template <typename TFrame>
