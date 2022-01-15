@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
                 res->writeHeader("Content-Type", "application/json");
                 std::string uri(req->getQuery("uri"));
 
-                try {
+                if (serverCtx.liveViewsManager->CreateCameraView(uri)) {
                     std::string feed_id(
                         serverCtx.liveViewsManager->GetFeedId(uri));
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
                     OBSERVER_TRACE(
                         "Opened camera connection in live view '{0}' as '{1}' ",
                         uri, feed_id);
-                } catch (const Web::InvalidCameraUriException& ex) {
+                } else {
                     res->end(GetErrorAlertReponse(
                         GetJsonString({{"error",
                                         "Couldn't open a connection with "
@@ -148,9 +148,11 @@ int main(int argc, char** argv) {
              [&serverCtx, &observer](auto* res, auto* req) {
                  res->writeHeader("Content-Type", "application/json");
 
-                 if (serverCtx.recognizeContext.running) {
-                     std::string feed_id(serverCtx.liveViewsManager->GetFeedId(
-                         Web::LiveViewsManager<TFrame, SSL>::observerUri));
+                 auto uri = Web::LiveViewsManager<TFrame, SSL>::observerUri;
+
+                 if (serverCtx.liveViewsManager->CreateObserverView(uri)) {
+                     std::string feed_id(
+                         serverCtx.liveViewsManager->GetFeedId(uri));
 
                      res->end(GetSuccessAlertReponse(GetJsonString(
                          {{"ws_feed_path", liveViewPrefix + feed_id, true}})));

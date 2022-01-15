@@ -53,7 +53,28 @@ namespace Web {
          */
         std::string_view GetFeedId(const std::string& uri);
 
+        /**
+         * @brief Create a camera view. Returns true if success.
+         *
+         * @param uri
+         * @return true
+         * @return false
+         */
+        bool CreateCameraView(const std::string& uri);
+
+        /**
+         * @brief Create a observer View object. Returns true if success.
+         *
+         * @param uri some random string, rembember it to ask for the live view
+         * later.
+         * @return true
+         * @return false
+         */
+        bool CreateObserverView(const std::string& uri);
+
         LiveVideo<TFrame, SSL>* GetLiveView(const std::string& feed_id);
+
+        LiveViewStatus GetStatus(const std::string& feed_id);
 
        private:
         /**
@@ -119,11 +140,11 @@ namespace Web {
     template <typename TFrame, bool SSL>
     std::string_view LiveViewsManager<TFrame, SSL>::GetFeedId(
         const std::string& uri) {
-        if (uri == observerUri && !recognizeCtx->running) {
-            throw ObserverNotRunningException();
+        if (!mapUriToFeed.contains(uri)) {
+            return {"", 0};
         }
 
-        return this->CreateOrReturnFeed(uri);
+        return std::string_view(mapUriToFeed[uri]);
     }
 
     template <typename TFrame, bool SSL>
@@ -139,32 +160,48 @@ namespace Web {
     }
 
     template <typename TFrame, bool SSL>
-    std::string_view LiveViewsManager<TFrame, SSL>::CreateOrReturnFeed(
+    bool LiveViewsManager<TFrame, SSL>::CreateCameraView(
         const std::string& uri) {
-        if (!mapUriToFeed.contains(uri)) {
-            if (uri == observerUri) {
-                camerasLiveView[observerFeedId] =
-                    new ObserverLiveVideo<TFrame, SSL>(
-                        observerFPS, this->compressionQuality);
+        std::string feedId = std::to_string(camerasLiveView.size());
 
-                recognizeCtx->observer->SubscribeToFrames(
-                    (ObserverLiveVideo<TFrame, SSL>*)
-                        camerasLiveView[observerFeedId]);
+        auto camera =
+            new CameraLiveVideo<TFrame, SSL>(uri, this->compressionQuality);
 
-                mapUriToFeed[uri] = observerFeedId;
-            } else {
-                std::string feedId = std::to_string(camerasLiveView.size());
+        bool cameraDidOpen =
+            !Observer::has_flag(camera->GetStatus(), LiveViewStatus::ERROR);
 
-                // calling the constructor will throw an
-                // InvalidCameraUriException if the camera uri is invalid,
-                // do not catch it
-                camerasLiveView[feedId] = new CameraLiveVideo<TFrame, SSL>(
-                    uri, this->compressionQuality);
+        if (cameraDidOpen) {
+            camerasLiveView[feedId] = camera;
 
-                mapUriToFeed[uri] = std::move(feedId);
-            }
+            mapUriToFeed[uri] = std::move(feedId);
+        } else {
+            delete camera;
         }
 
-        return std::string_view(mapUriToFeed[uri]);
+        return cameraDidOpen;
+    }
+
+    template <typename TFrame, bool SSL>
+    bool LiveViewsManager<TFrame, SSL>::CreateObserverView(
+        const std::string& uri) {
+        if (!recognizeCtx->observer) {
+            return false;
+        }
+
+        camerasLiveView[observerFeedId] = new ObserverLiveVideo<TFrame, SSL>(
+            observerFPS, this->compressionQuality);
+
+        recognizeCtx->observer->SubscribeToFrames(
+            (ObserverLiveVideo<TFrame, SSL>*)camerasLiveView[observerFeedId]);
+
+        mapUriToFeed[uri] = observerFeedId;
+
+        return true;
+    }
+
+    template <typename TFrame, bool SSL>
+    LiveViewStatus LiveViewsManager<TFrame, SSL>::GetStatus(
+        const std::string& feed_id) {
+        return camerasLiveView[feed_id]->GetStatus();
     }
 }  // namespace Web

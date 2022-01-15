@@ -71,12 +71,6 @@ namespace Web {
     template <typename TFrame, bool SSL>
     void CameraLiveVideo<TFrame, SSL>::PostStop() {
         source.Close();
-
-        if (Observer::has_flag(this->status, Status::OPEN)) {
-            Observer::clear_flag(this->status, Status::OPEN);
-        }
-
-        Observer::set_flag(this->status, Status::CLOSED);
     }
 
     template <typename TFrame, bool SSL>
@@ -86,30 +80,15 @@ namespace Web {
 
     template <typename TFrame, bool SSL>
     void CameraLiveVideo<TFrame, SSL>::OpenCamera() {
-        if (Observer::has_flag(this->status, Status::OPEN)) {
-            OBSERVER_WARN("Calling start in an open camera");
-        }
-
-        try {
-            source.Open(cameraUri);
-        } catch (...) {
-            OBSERVER_ERROR("caught uknown exception on live view");
-        }
+        source.Open(cameraUri);
 
         if (source.isOpened()) {
-            if (Observer::has_flag(this->status, Status::CLOSED)) {
-                Observer::clear_flag(this->status, Status::CLOSED);
-            }
-
-            if (Observer::has_flag(this->status, Status::ERROR)) {
-                Observer::clear_flag(this->status, Status::ERROR);
-            }
+            Observer::clear_flag(this->status, Status::CLOSED);
+            Observer::clear_flag(this->status, Status::ERROR);
 
             Observer::set_flag(this->status, Status::OPEN);
         } else {
             Observer::set_flag(this->status, Status::ERROR);
-            throw InvalidCameraUriException(
-                fmt::format("Couldn't open the camera with uri {}", cameraUri));
         }
     }
 }  // namespace Web

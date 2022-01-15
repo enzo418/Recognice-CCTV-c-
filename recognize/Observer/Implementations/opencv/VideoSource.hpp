@@ -9,7 +9,12 @@ namespace Observer {
         VideoSource() = default;
 
         void Open(const std::string& url) override {
-            this->videoCapture.open(url);
+            try {
+                this->videoCapture.open(url);
+            } catch (...) {
+                // ffmpeg if cannot open it terminates the program, so we need
+                // to catch it. To know if the source is ok check for isOpened
+            }
         }
 
         void Close() override { this->videoCapture.release(); }
