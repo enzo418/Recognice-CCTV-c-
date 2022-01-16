@@ -699,6 +699,7 @@ namespace YAML {
 
             node["MinAreaPercentageToIgnore"] = rhs.minAreaPercentageToIgnore;
             node["Areas"] = rhs.areas;
+            node["Reference"] = rhs.reference;
             return node;
         }
 
@@ -706,6 +707,29 @@ namespace YAML {
             rhs.minAreaPercentageToIgnore =
                 node["MinAreaPercentageToIgnore"].as<double>();
             rhs.areas = node["Areas"].as<std::vector<Observer::Rect>>();
+            rhs.reference = node["Reference"].as<Observer::Size>();
+            return true;
+        }
+    };
+
+    template <>
+    struct convert<Observer::ContoursFilter::IgnoredSets> {
+       private:
+        using RType = Observer::ContoursFilter::IgnoredSets;
+
+       public:
+        static Node encode(const RType& rhs) {
+            Node node;
+
+            node["Sets"] = rhs.sets;
+            node["Reference"] = rhs.reference;
+            return node;
+        }
+
+        static bool decode(const Node& node, RType& rhs) {
+            rhs.sets =
+                node["Sets"].as<std::vector<std::vector<Observer::Point>>>();
+            rhs.reference = node["Reference"].as<Observer::Size>();
             return true;
         }
     };
@@ -722,6 +746,7 @@ namespace YAML {
             node["FilterByAverageArea"] = rhs.FilterByAverageArea;
             node["MinimumArea"] = rhs.MinimumArea;
             node["IgnoredAreas"] = rhs.ignoredAreas;
+            node["IgnoredSets"] = rhs.ignoredSets;
             return node;
         }
 
@@ -729,6 +754,7 @@ namespace YAML {
             rhs.FilterByAverageArea = node["FilterByAverageArea"].as<bool>();
             rhs.MinimumArea = node["MinimumArea"].as<int>();
             rhs.ignoredAreas = node["IgnoredAreas"].as<RType::IgnoredAreas>();
+            rhs.ignoredSets = node["IgnoredSets"].as<RType::IgnoredSets>();
             return true;
         }
     };

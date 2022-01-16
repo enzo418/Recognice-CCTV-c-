@@ -66,10 +66,12 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR )
     add_executable(liveBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/LiveBlobDetection.cpp)
     add_executable(videoBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/VideoBlobDetection.cpp)
     add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
+    add_executable(contoursShow ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Contours.cpp)
 
     target_link_libraries(liveBlobDetection ${RECOGNIZER_LIBS})
     target_link_libraries(videoBlobDetection ${RECOGNIZER_LIBS})
     target_link_libraries(cameraRecording ${RECOGNIZER_LIBS})
+    target_link_libraries(contoursShow ${RECOGNIZER_LIBS})
   endif()
 endif()
 

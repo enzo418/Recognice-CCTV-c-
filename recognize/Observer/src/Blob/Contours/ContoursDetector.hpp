@@ -38,17 +38,30 @@ namespace Observer {
          * @param videoContours
          * @param contoursSpace
          */
-        void ScaleContours(VideoContours& videoContours,
-                           const Size& contoursSpace);
+        void ScaleContours(VideoContours& videoContours);
 
-        void ScaleContours(FrameContours& videoContours,
-                           const Size& contoursSpace);
+        void ScaleContours(FrameContours& videoContours);
 
-       protected:
+        /**
+         * @brief It converts all the points given by the user to the space of
+         * the detected contours, so they are filtered as the user wanted no
+         * matter in which space he gave them to us.
+         */
+        void ProcessFilters();
+
+        bool ContourIsInsideIgnoredSet(std::vector<Point>& contour);
+
+       private:
         ThresholdingParams params;
         ContoursFilter filters;
         FrameContextualizer<TFrame> contextBuilder;
         Size scaleTarget;
+
+        // space in which contours will be detected (diff.size)
+        Size contoursSpace {0, 0};
+
+        // filters are processed one time.
+        bool filtersProcessed {false};
     };
 
     template <typename TFrame>
@@ -71,10 +84,13 @@ namespace Observer {
             diffFrame, contours, ContourRetrievalMode::CONTOUR_RETR_LIST,
             ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
 
-        this->ScaleContours(contours,
-                            ImageTransformation<TFrame>::GetSize(diffFrame));
+        if (contoursSpace.width == 0) {
+            contoursSpace = ImageTransformation<TFrame>::GetSize(diffFrame);
+        }
 
         contours = this->FilterContours(contours);
+
+        this->ScaleContours(contours);
 
         return contours;
     }
@@ -94,10 +110,13 @@ namespace Observer {
                 ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
         }
 
-        this->ScaleContours(
-            contours, ImageTransformation<TFrame>::GetSize(diffFrames[0]));
+        if (contoursSpace.width == 0) {
+            contoursSpace = ImageTransformation<TFrame>::GetSize(diffFrames[0]);
+        }
 
         contours = this->FilterContours(contours);
+
+        this->ScaleContours(contours);
 
         return contours;
     }
@@ -105,6 +124,8 @@ namespace Observer {
     template <typename TFrame>
     FrameContours ContoursDetector<TFrame>::FilterContours(
         FrameContours& contours) {
+        this->ProcessFilters();
+
         FrameContours filtered;
 
         double avrgArea = 0;
@@ -146,7 +167,10 @@ namespace Observer {
             const bool didPassFilter = areaFilter && overlapFilter;
 
             if (didPassFilter) {
-                filtered.push_back(contours[i]);
+                // if seems valid do the expensive checking
+                if (!this->ContourIsInsideIgnoredSet(contours[i])) {
+                    filtered.push_back(contours[i]);
+                }
             }
         }
         return filtered;
@@ -175,16 +199,14 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void ContoursDetector<TFrame>::ScaleContours(VideoContours& videoContours,
-                                                 const Size& contoursSpace) {
+    void ContoursDetector<TFrame>::ScaleContours(VideoContours& videoContours) {
         for (auto& frameContours : videoContours) {
-            this->ScaleContours(frameContours, contoursSpace);
+            this->ScaleContours(frameContours);
         }
     }
 
     template <typename TFrame>
-    void ContoursDetector<TFrame>::ScaleContours(FrameContours& frameContours,
-                                                 const Size& contoursSpace) {
+    void ContoursDetector<TFrame>::ScaleContours(FrameContours& frameContours) {
         if (scaleTarget == contoursSpace) return;
 
         double scaleX = (double)this->scaleTarget.width / contoursSpace.width;
@@ -196,5 +218,58 @@ namespace Observer {
                 point.y *= scaleY;
             }
         }
+    }
+
+    template <typename TFrame>
+    void ContoursDetector<TFrame>::ProcessFilters() {
+        if (!filtersProcessed) {
+            // scale ignored areas
+            auto ref = filters.ignoredAreas.reference;
+            double scaleX = (double)contoursSpace.width / ref.width;
+            double scaleY = (double)contoursSpace.height / ref.height;
+
+            for (auto& rect : filters.ignoredAreas.areas) {
+                rect.x *= scaleX;
+                rect.y *= scaleY;
+                rect.width *= scaleX;
+                rect.height *= scaleY;
+            }
+
+            // scale ignored sets
+            ref = filters.ignoredSets.reference;
+            scaleX = (double)contoursSpace.width / ref.width;
+            scaleY = (double)contoursSpace.height / ref.height;
+
+            for (auto& set : filters.ignoredSets.sets) {
+                for (auto& point : set) {
+                    point.x *= scaleX;
+                    point.y *= scaleY;
+                }
+            }
+
+            filtersProcessed = true;
+        }
+    }
+
+    template <typename TFrame>
+    bool ContoursDetector<TFrame>::ContourIsInsideIgnoredSet(
+        std::vector<Point>& contour) {
+        // if for some set the contour has all of its point inside it, then
+        // return true, else keep searching. Hopefully is the first one.
+
+        for (auto& set : filters.ignoredSets.sets) {
+            int contourSize = contour.size();
+            int total = 0;
+
+            for (auto& point : contour) {
+                total += PointPolygonTest(set, point) > 0;
+            }
+
+            if (total >= contourSize) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }  // namespace Observer
