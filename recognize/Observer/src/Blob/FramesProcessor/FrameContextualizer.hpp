@@ -112,10 +112,10 @@ namespace Observer {
         // 2. Get the diff frames
         TFrame lastFrame = formatedFrames[0];
 
+        Size size = ImageTransformation<TFrame>::GetSize(lastFrame);
         // fill the firsts diff frames that we are going to skip...
         for (int w = 0; w < params.FramesBetweenDiffFrames; w++) {
-            diffs[w] =
-                ImageTransformation<TFrame>::BlackImage(params.Resize.size, 1);
+            diffs[w] = ImageTransformation<TFrame>::BlackImage(size, 1);
         }
 
         int diffSize = diffs.size();
