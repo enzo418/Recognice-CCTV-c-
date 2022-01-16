@@ -44,4 +44,9 @@ namespace Observer {
 
         return sqrt(x * x + y * y);
     }
+
+    std::ostream& operator<<(std::ostream& os, const Point& pt) {
+        os << "[" << pt.x << ", " << pt.y << "]";
+        return os;
+    }
 }  // namespace Observer

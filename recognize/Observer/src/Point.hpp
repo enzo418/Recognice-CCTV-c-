@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <ostream>
 #include <tuple>
 
 namespace Observer {
@@ -30,6 +31,8 @@ namespace Observer {
         template <typename Point_>
         operator Point_();
     };
+
+    std::ostream& operator<<(std::ostream& os, const Point& pt);
 
     Point operator+(const Point& a, const Point& b);
 
