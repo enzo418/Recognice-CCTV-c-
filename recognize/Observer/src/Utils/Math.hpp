@@ -44,4 +44,13 @@ namespace Observer {
      */
     Rect BoundingRect(const std::vector<Point>& points);
 
+    /**
+     * @brief if point is inside the polygon it returns > 0, if outside < 0 else
+     * 0 if lies on an edge (or coincides with a vertex)
+     *
+     * @param points
+     * @param point
+     * @return double
+     */
+    double PointPolygonTest(std::vector<Point>& points, Point& point);
 }  // namespace Observer

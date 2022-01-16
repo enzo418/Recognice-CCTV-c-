@@ -41,4 +41,40 @@ namespace Observer {
 
         return Rect(tl, br);
     }
+
+    double PointPolygonTest(std::vector<Point>& points, Point& ip) {
+        double result = 0;
+        int total = points.size();
+        int counter = 0;
+
+        if (total == 0) return -1;
+
+        Point v0, v = points[total - 1];
+
+        for (int i = 0; i < total; i++) {
+            v0 = v;
+            v = points[i];
+
+            if ((v0.y <= ip.y && v.y <= ip.y) || (v0.y > ip.y && v.y > ip.y) ||
+                (v0.x < ip.x && v.x < ip.x)) {
+                if (ip.y == v.y &&
+                    (ip.x == v.x ||
+                     (ip.y == v0.y && ((v0.x <= ip.x && ip.x <= v.x) ||
+                                       (v.x <= ip.x && ip.x <= v0.x)))))
+                    return 0;
+                continue;
+            }
+
+            double dist = round((ip.y - v0.y) * (v.x - v0.x)) -
+                          round((ip.x - v0.x) * (v.y - v0.y));
+
+            if (dist == 0) return 0;
+            if (v.y < v0.y) dist = -dist;
+
+            counter += dist > 0;
+        }
+
+        result = counter % 2 == 0 ? -1 : 1;
+        return result;
+    }
 }  // namespace Observer
