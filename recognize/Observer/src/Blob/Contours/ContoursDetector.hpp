@@ -257,6 +257,7 @@ namespace Observer {
         // if for some set the contour has all of its point inside it, then
         // return true, else keep searching. Hopefully is the first one.
 
+        const double perc = filters.ignoredSets.minPercentageToIgnore / 100.0;
         for (auto& set : filters.ignoredSets.sets) {
             int contourSize = contour.size();
             int total = 0;
@@ -265,7 +266,7 @@ namespace Observer {
                 total += PointPolygonTest(set, point) > 0;
             }
 
-            if (total >= contourSize) {
+            if (total >= contourSize * perc) {
                 return true;
             }
         }

@@ -723,6 +723,9 @@ namespace YAML {
 
             node["Sets"] = rhs.sets;
             node["Reference"] = rhs.reference;
+            node["Reference"] = rhs.reference;
+            node["MinPercentageToIgnore"] = rhs.minPercentageToIgnore;
+
             return node;
         }
 
@@ -730,6 +733,9 @@ namespace YAML {
             rhs.sets =
                 node["Sets"].as<std::vector<std::vector<Observer::Point>>>();
             rhs.reference = node["Reference"].as<Observer::Size>();
+            rhs.minPercentageToIgnore =
+                node["MinPercentageToIgnore"].as<double>();
+
             return true;
         }
     };

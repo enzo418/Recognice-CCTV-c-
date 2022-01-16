@@ -22,6 +22,10 @@ namespace Observer {
             // since the areas are points in some space, tell me its w/h.
             Size reference;
 
+            // [0-100] percentage of the number of vertices needed inside a set
+            // to ignore a contour
+            double minPercentageToIgnore;
+
             bool operator==(const IgnoredSets&) const = default;
         };
 
