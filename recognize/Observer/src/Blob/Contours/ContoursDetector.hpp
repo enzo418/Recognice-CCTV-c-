@@ -31,8 +31,18 @@ namespace Observer {
         VideoContours FilterContours(VideoContours& videoContours);
         FrameContours FilterContours(FrameContours& contours);
 
-        void ScaleContours(VideoContours& videoContours);
-        void ScaleContours(FrameContours& videoContours);
+        /**
+         * @brief Scales each contour from the contoursSpace, the space where
+         * they were found, to the target size.
+         *
+         * @param videoContours
+         * @param contoursSpace
+         */
+        void ScaleContours(VideoContours& videoContours,
+                           const Size& contoursSpace);
+
+        void ScaleContours(FrameContours& videoContours,
+                           const Size& contoursSpace);
 
        protected:
         ThresholdingParams params;
@@ -61,7 +71,8 @@ namespace Observer {
             diffFrame, contours, ContourRetrievalMode::CONTOUR_RETR_LIST,
             ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
 
-        this->ScaleContours(contours);
+        this->ScaleContours(contours,
+                            ImageTransformation<TFrame>::GetSize(diffFrame));
 
         contours = this->FilterContours(contours);
 
@@ -83,7 +94,8 @@ namespace Observer {
                 ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
         }
 
-        this->ScaleContours(contours);
+        this->ScaleContours(
+            contours, ImageTransformation<TFrame>::GetSize(diffFrames[0]));
 
         contours = this->FilterContours(contours);
 
@@ -163,18 +175,20 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void ContoursDetector<TFrame>::ScaleContours(VideoContours& videoContours) {
+    void ContoursDetector<TFrame>::ScaleContours(VideoContours& videoContours,
+                                                 const Size& contoursSpace) {
         for (auto& frameContours : videoContours) {
-            this->ScaleContours(frameContours);
+            this->ScaleContours(frameContours, contoursSpace);
         }
     }
 
     template <typename TFrame>
-    void ContoursDetector<TFrame>::ScaleContours(FrameContours& frameContours) {
-        double scaleX =
-            (double)this->scaleTarget.width / this->params.Resize.size.width;
-        double scaleY =
-            (double)this->scaleTarget.height / this->params.Resize.size.height;
+    void ContoursDetector<TFrame>::ScaleContours(FrameContours& frameContours,
+                                                 const Size& contoursSpace) {
+        if (scaleTarget == contoursSpace) return;
+
+        double scaleX = (double)this->scaleTarget.width / contoursSpace.width;
+        double scaleY = (double)this->scaleTarget.height / contoursSpace.height;
 
         for (auto& contour : frameContours) {
             for (auto& point : contour) {
