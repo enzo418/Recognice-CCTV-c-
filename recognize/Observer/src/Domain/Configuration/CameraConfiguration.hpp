@@ -18,7 +18,12 @@ namespace Observer {
         bool operator==(const RestrictedArea&) const = default;
     };
 
-    enum ECameraType { DISABLED = 1, NOTIFICATOR = 2, OBJECT_DETECTOR = 4 };
+    enum ECameraType {
+        DISABLED = 1,
+        NOTIFICATOR = 2,
+        OBJECT_DETECTOR = 4,
+        VIEW  // only show images
+    };
 
     enum EObjectDetectionMethod {
         NONE = 1,

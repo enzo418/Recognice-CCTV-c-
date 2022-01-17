@@ -528,6 +528,9 @@ namespace YAML {
                 case RType::OBJECT_DETECTOR:
                     node = "Object Detector";
                     break;
+                case RType::VIEW:
+                    node = "View";
+                    break;
             }
 
             return node;
@@ -550,6 +553,8 @@ namespace YAML {
                 rhs = RType::NOTIFICATOR;
             } else if (val == "object detector") {
                 rhs = RType::OBJECT_DETECTOR;
+            } else if (val == "view") {
+                rhs = RType::VIEW;
             }
 
             return true;

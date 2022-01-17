@@ -145,6 +145,8 @@ namespace Observer {
 
         timerFrames.Start();
 
+        const bool processFrames = cfg->type != ECameraType::VIEW;
+
         while (this->running) {
             if (this->source.GetNextFrame(frame)) {
                 auto duration = timerFrames.GetDurationAndRestart();
@@ -152,7 +154,10 @@ namespace Observer {
                 if (duration >= minTimeBetweenFrames) {
                     this->framePublisher.notifySubscribers(
                         this->cfg->positionOnOutput, frame);
-                    this->ProcessFrame(frame);
+
+                    if (processFrames) {
+                        this->ProcessFrame(frame);
+                    }
                 }
             }
         }
