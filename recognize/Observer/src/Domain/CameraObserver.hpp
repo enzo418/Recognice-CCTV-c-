@@ -169,6 +169,8 @@ namespace Observer {
 
     template <typename TFrame>
     void CameraObserver<TFrame>::ProcessFrame(TFrame& frame) {
+        ImageTransformation<TFrame>::Resize(frame, frame, cfg->resizeTo);
+
         // buffer ready means that both sub-buffer have been filled
         if (this->videoBufferForValidation->AddFrame(frame) ==
             BufferState::BUFFER_READY) {

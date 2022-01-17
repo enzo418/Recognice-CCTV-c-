@@ -82,6 +82,7 @@ class ConfigurationTest : public ::testing::Test {
         CameraConfiguration camera1 = {
             .name = "TestCamera1",
             .url = "rtsp://example.com/media.mp4",
+            .resizeTo = Size(1920, 1080),
             .fps = 42,
             .positionOnOutput = 0,
             .rotation = -5,
@@ -104,6 +105,7 @@ class ConfigurationTest : public ::testing::Test {
         CameraConfiguration camera2 = {
             .name = "TestCamera2",
             .url = "rtsp://example.com/media.mp4/streamid=1",
+            .resizeTo = Size(640, 360),
             .fps = 10,
             .positionOnOutput = 1,
             .rotation = 99,

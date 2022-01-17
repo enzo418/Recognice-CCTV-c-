@@ -242,6 +242,7 @@ namespace YAML {
             node["objectDetectionMethod"] = rhs.objectDetectionMethod;
             node["BlobDetection"] = rhs.blobDetection;
             node["Processing"] = rhs.processingConfiguration;
+            node["ResizeTo"] = rhs.resizeTo;
 
             return node;
         }
@@ -276,6 +277,7 @@ namespace YAML {
                                     .as<Observer::BlobDetectionConfiguration>();
             rhs.processingConfiguration =
                 node["Processing"].as<Observer::ProcessingConfiguration>();
+            rhs.resizeTo = node["ResizeTo"].as<Observer::Size>();
             return true;
         }
     };

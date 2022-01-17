@@ -46,6 +46,11 @@ namespace Observer {
 
         std::string url;
 
+        // resize each frame received to this size.
+        // If the camera send 1280x760 you can resize it to 640x360 or
+        // 1920x1080.
+        Size resizeTo;
+
         // camera max fps to use. Lower fps lowers the CPU usage
         double fps;
 
