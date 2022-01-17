@@ -19,7 +19,7 @@
 #include "../src/Timer.hpp"
 #include "../src/Utils/SpecialFunctions.hpp"
 
-void LiveTestBlobDetection(Observer::Configuration* cfg);
+void LiveTestBlobDetection(Observer::Configuration* cfg, int cameraNumber);
 
 using FrameType = cv::Mat;
 
@@ -30,8 +30,8 @@ enum RecognizerMode { RECOGNIZER, RECORDING, BLOB, BLOB_LIVE };
 int main(int argc, char** argv) {
     const std::string keys =
         "{help h            |              | show help message}"
-        "{config_path       | ./config.yml | path of the configuration file, "
-        "the configuration of the first camera will be used}";
+        "{config_path       | ./config.yml | path of the configuration file}"
+        "{camera_number       | 0 | camera configuration to use}";
 
     cv::CommandLineParser parser(argc, argv, keys);
 
@@ -45,9 +45,14 @@ int main(int argc, char** argv) {
         pathConfig = parser.get<std::string>("config_path");
     }
 
+    int camera_number = 0;
     int start = 0;
     int end = 0;
     std::string blobDetectionFile;
+
+    if (parser.has("camera_number")) {
+        camera_number = parser.get<int>("camera_number");
+    }
 
     // if (parser.has("start")) {
     //     start = parser.get<int>("start");
@@ -67,16 +72,19 @@ int main(int argc, char** argv) {
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
 
-    LiveTestBlobDetection(&cfg);
+    LiveTestBlobDetection(&cfg, camera_number);
 }
 
-void LiveTestBlobDetection(Observer::Configuration* cfg) {
+void LiveTestBlobDetection(Observer::Configuration* cfg, int camera_number) {
     ImageDisplay<FrameType>::CreateWindow("image");
 
     OBSERVER_ASSERT(!cfg->camerasConfiguration.empty(),
                     "There should be at least 1 camera.");
 
-    auto camera = cfg->camerasConfiguration[0];
+    OBSERVER_ASSERT(camera_number < cfg->camerasConfiguration.size(),
+                    "No camera at given position. The position starts from 0.");
+
+    auto camera = cfg->camerasConfiguration[camera_number];
 
     auto videouri = camera.url;
 
