@@ -59,4 +59,6 @@ namespace Observer {
         template <typename Rect_>
         operator Rect_();
     };
+
+    std::ostream& operator<<(std::ostream& os, const Rect& pt);
 }  // namespace Observer

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 set(SRC_
         vendor/bitmask_operators.hpp
 
-        src/Size.hpp
+        src/Size.hpp src/Size.cpp
         src/Rect.hpp src/Rect.cpp
         src/Point.hpp src/Point.cpp
         src/Vector.hpp src/Vector.cpp

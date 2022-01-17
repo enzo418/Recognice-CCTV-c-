@@ -1,24 +1,24 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <tuple>
 namespace Observer {
     struct Size {
         Size() = default;
-        Size(int pWidth, int pHeight) : width(pWidth), height(pHeight) {};
+        Size(int pWidth, int pHeight);
 
         int width;
         int height;
 
-        bool operator==(const Size& other) const {
-            return std::tie(other.height, other.width) ==
-                   std::tie(height, width);
-        };
+        bool operator==(const Size& other) const;
 
-        bool empty() { return width == 0 || height == 0; }
+        bool empty();
     };
 
     static Size operator*(const Size& sz, const double factor) {
         return Size(sz.width * factor, sz.height * factor);
     }
+
+    std::ostream& operator<<(std::ostream& os, const Size& rt);
 }  // namespace Observer

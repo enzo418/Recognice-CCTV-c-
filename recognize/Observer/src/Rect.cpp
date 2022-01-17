@@ -49,4 +49,11 @@ namespace Observer {
     Point Rect::tl() { return Point(x, y); }
 
     Point Rect::br() { return Point(x + width, y + height); }
+
+    std::ostream& operator<<(std::ostream& os, const Rect& rt) {
+        os << "[P=(" << rt.x << ", " << rt.y << ") Size=(" << rt.width << " x "
+           << rt.height << ")]";
+
+        return os;
+    }
 }  // namespace Observer
