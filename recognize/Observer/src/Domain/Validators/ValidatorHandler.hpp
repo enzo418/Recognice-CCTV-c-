@@ -10,17 +10,22 @@ namespace Observer {
     class ValidatorHandler : public AbstractHandler<ValidationResult<TFrame>,
                                                     CameraEvent<TFrame>&> {
        public:
-        ValidationResult<TFrame> Handle(CameraEvent<TFrame>& request) override {
+        typedef ValidationResult<TFrame> Result;
+
+        Result Handle(CameraEvent<TFrame>& request) override {
             auto res = this->isValid(request);
             if (res.IsValid()) {
                 return res;
             } else {
-                return AbstractHandler<ValidationResult<TFrame>,
-                                       CameraEvent<TFrame>&>::Handle(request);
+                if (this->nextHandler) {
+                    return AbstractHandler<
+                        Result, CameraEvent<TFrame>&>::Handle(request);
+                } else {
+                    return res;
+                }
             }
         }
 
-        virtual ValidationResult<TFrame> isValid(
-            CameraEvent<TFrame>& request) = 0;
+        virtual Result isValid(CameraEvent<TFrame>& request) = 0;
     };
 }  // namespace Observer

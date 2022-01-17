@@ -35,7 +35,7 @@ class Handler {
  */
 template <typename T, typename R>
 class AbstractHandler : public Handler<T, R> {
-   private:
+   protected:
     Handler<T, R>* nextHandler;
 
    public:
