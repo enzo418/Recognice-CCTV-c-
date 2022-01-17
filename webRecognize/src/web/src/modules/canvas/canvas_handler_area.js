@@ -62,11 +62,9 @@ class CanvasAreasHandler extends CanvasHandler {
     onImageLoaded(e) {
         console.log(e);
 
-        if (this.firstImage) {
+        if (this.canvas.current.width - this.canvas.current.height !== e.target.width - e.target.height) {
             this.canvas.current.width = e.target.width;
             this.canvas.current.height = e.target.height;
-            this.firstImage = false;
-
             this.updateCanvasPosition();
         }
 

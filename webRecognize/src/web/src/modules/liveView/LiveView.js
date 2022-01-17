@@ -44,13 +44,14 @@ class LiveView extends React.Component {
     }
 
     render() {
-        return <img ref={this.image_video} onLoad={this.onImageLoaded.bind(this)}></img>;
+        return <img ref={this.image_video} onLoad={this.onImageLoaded.bind(this)} style={ this.props.style }></img>;
     }
 }
 
 LiveView.propTypes = {
     feed_id: PropTypes.string.isRequired,
     onLoad: PropTypes.func.isRequired,
+    style: PropTypes.object
 };
 
 export default LiveView;
