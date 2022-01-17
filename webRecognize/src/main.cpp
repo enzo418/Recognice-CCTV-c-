@@ -161,6 +161,27 @@ int main(int argc, char** argv) {
                          {{"error", "recognize is not  running", true}})));
                  }
              })
+        .get("/*.*",
+             [&fileStreamer](auto* res, auto* req) {
+                 std::string url(req->getUrl());
+                 std::string rangeHeader(req->getHeader("range"));
+
+                 if (!hasExtension(url)) {
+                     req->setYield(true);  // mark as not handled
+                 } else if (fileStreamer.streamFile(res, url, rangeHeader)) {
+                     // std::cout << "Succesfull sended file" << std::endl;
+                 } else {
+                     res->end();
+                 }
+             })
+
+        .get("/*",
+             [](auto* res, auto* req) {
+                 res->writeStatus(HTTP_301_MOVED_PERMANENTLY)
+                     ->writeHeader("Location", "/")
+                     ->writeHeader("Content-Type", "text/html")
+                     ->end();
+             })
         .ws<PerSocketData>(
             "/notifications",
             {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,

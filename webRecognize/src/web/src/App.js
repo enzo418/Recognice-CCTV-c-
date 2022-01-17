@@ -1,70 +1,19 @@
 import React from "react";
-import ConfigurationPage from "./components/ConfigurationPage";
-import NotificationPage from "./components/NotificationPage";
-import HomeNavBar from "./components/HomeNavBar";
-import {Switch, Route} from "react-router-dom";
-import ModalSelectConfiguration from "./components/ModalSelectConfiguration";
-import PropTypes from "prop-types";
-
-import configuration_parser from "./modules/configuration_parser";
-import Elements from "./elements.json";
-import utils from "./utils/utils";
-const elements = utils.elementsGroupsToLowerCase(Elements);
 
 import i18n from "./i18n";
-import PopupAlert from "./components/PopupAlert";
-import ModalSelectFileName from "./components/ModalSelectFileName";
 import CanvasRoiHandler from "./modules/canvas/canvas_handler_roi";
 import CanvasAreasHandler from "./modules/canvas/canvas_handler_area";
+import LiveView from "./modules/liveView/LiveView";
 import CanvasExclusivityAreasHandler from "./modules/canvas/canvas_handler_exclAreas";
 // import {w3cwebsocket as W3CWebSocket} from "websocket";
-import ModalConnectionLost from "./components/ModalConnectionLost";
 import { WrapperWebSocket } from "./modules/websocket_wrapper";
-
-const pages = {
-    configurations: {
-        path: "/configurations",
-        name: "configurations",
-    },
-    notifications: {
-        path: "/notifications",
-        name: "notifications",
-    },
-};
-
-const ERRORS = {
-    CONNECTION_LOST: "connection_lost",
-};
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            recognize: {
-                running: false,
-                configuration: {
-                    file: "",
-                    headers: [],
-                },
-                toggle: () => this.toggleRecognize(),
-                start: () => this.toggleRecognize("start"),
-                stop: () => this.toggleRecognize("stop"),
-            },
-            // App config
-            configuration: Object.assign(
-                {
-                    set: (key, value) => this.changeConfiguration({key, value}),
-                    toggle: (key) => this.changeConfiguration({key: key}, true),
-                },
-                JSON.parse(window.localStorage.getItem("configuration")) || {
-                    sendPushOnNotification: false,
-                    playSoundOnNotification: true,
-                }
-            ),
-            configurationFilesAvailables: [],
-            error: null,
-            alerts: [],
-            fileNameToCopy: "", // this is used to know when the user wants to copy a cfg file
+            liveViewScreen: true,
+            uri_video: "Enter the uri",
             modalCanvas: {
                 references: {
                     roi: React.createRef(),
@@ -91,17 +40,9 @@ class App extends React.Component {
 
         this.socket = new WrapperWebSocket(`ws://${window.location.host}/recognize`);
 
-        this.toggleRecognize = this.toggleRecognize.bind(this);
-        this.changeConfiguration = this.changeConfiguration.bind(this);
-        this.changeConfigurationFile = this.changeConfigurationFile.bind(this);
-        this.addAlert = this.addAlert.bind(this);
-        this.onWantsToCopyConfigurationFile = this.onWantsToCopyConfigurationFile.bind(this);
-        this.callbackEnterFileName = this.callbackEnterFileName.bind(this);
-        this.setLifeAlert = this.setLifeAlert.bind(this);
         this.openModalCanvas = this.openModalCanvas.bind(this);
         this.onAcceptModalCanvas = this.onAcceptModalCanvas.bind(this);
         this.hideCanvasModal = this.hideCanvasModal.bind(this);
-        this.clearErrors = this.clearErrors.bind(this);
     }
 
     componentDidMount() {
@@ -118,6 +59,7 @@ class App extends React.Component {
                 );
             });
 
+
         let lang = window.localStorage.getItem("lang") || "en";
         i18n.changeLanguage(lang);
 
@@ -128,23 +70,6 @@ class App extends React.Component {
                 }
             }
         });
-
-        this.socket.on("recognize_state", (recognize_state) => {
-            if (typeof recognize_state.running !== "undefined") {
-                this.setState((prev) => {
-                    prev.recognize.running = recognize_state.running;
-                    return prev;
-                });
-            }
-        });
-
-        this.socket.on("close", () => {
-            this.setError(ERRORS.CONNECTION_LOST);
-
-            if (this.state.configuration["playSoundOnNotification"]) {
-                this.playAudioAlert();
-            }
-        });
     }
 
     hideCanvasModal() {
@@ -152,155 +77,6 @@ class App extends React.Component {
             prev.modalCanvas.activeHandlerId = "";
             return prev;
         });
-    }
-
-    /**
-     * Request the server to set the state of the recognizer
-     * @param {string} to start|stop|toggle
-     */
-    toggleRecognize(to = "toggle") {
-        if (["start", "stop", "toggle"].indexOf(to) === -1) {
-            throw "Invalid recognizer state requested '" + to + "'";
-        }
-        to = to === "toggle" ? (this.state.recognize.running ? "stop" : "start") : to;
-        let url = "/api/" + to + "_recognizer" + "?file_name=" + this.state.recognize.configuration.file;
-        fetch(url)
-            .then((res) => res.json())
-            .then((res) => this.addAlert(res.status))
-            .catch((error) => {
-                this.addAlert({status: "error", message: "could not connect to the server", extra: error.message});
-                // this.setError(ERRORS.CONNECTION_LOST);
-            });
-    }
-
-    parseAndLoadNewConfigurationFile(filename, configurationFile) {
-        this.setState((prev) => {
-            prev.fileNameToCopy = "";
-            prev.recognize.configuration.file = filename;
-
-            let configs = configuration_parser.parseConfiguration(configurationFile, elements);
-            configs.cameras.forEach((cam, i) => {
-                cam.id = i;
-            });
-
-            prev.recognize.configuration.headers = configs;
-
-            this.props.history.push(pages.configurations.path);
-
-            return prev;
-        });
-    }
-
-    /**
-     * Loads all the configuration from the file
-     * @param {string} filename
-     */
-    changeConfigurationFile(filename) {
-        fetch(`/api/configuration_file?file=${filename}`)
-            .then((res) => res.json())
-            .then(({configuration_file}) => this.parseAndLoadNewConfigurationFile(filename, configuration_file));
-    }
-
-    saveConfigurationOnLocalStorage() {
-        let notFunc = Object.keys(this.state.configuration).filter(
-            (key) => typeof this.state.configuration[key] !== "function"
-        );
-
-        let values = Object.fromEntries(
-            Object.entries(this.state.configuration).filter(([key]) => notFunc.includes(key))
-        );
-
-        window.localStorage.setItem("configuration", JSON.stringify(values));
-    }
-
-    /**
-     * Changes the configuration of the app
-     * @param {{string, number}} param0 obj value - key
-     * @param {boolean} toggle optional, if should toggle the previous
-     *                         value (only for boolean a key)
-     */
-    changeConfiguration({key, value}, toggle = null) {
-        this.setState((prev) => {
-            if (toggle) {
-                if (typeof prev.configuration[key] !== "boolean") {
-                    throw "ERROR: Cannot toggle a variable of type '" + typeof prev.configuration[key] + "'";
-                }
-
-                prev.configuration[key] = !prev.configuration[key];
-
-                return prev;
-            } else {
-                return {key: value};
-            }
-        }, this.saveConfigurationOnLocalStorage);
-    }
-
-    callbackRemoveAlert(id) {
-        this.setState((prev2) => {
-            prev2.alerts.splice(id, 1);
-            return prev2;
-        });
-    }
-
-    addAlert(alert) {
-        this.setState((prev) => {
-            let id = prev.alerts.length;
-
-            // remove alert after 3.5s
-            let c = setTimeout(() => this.callbackRemoveAlert(id), 3500);
-
-            // add alert to alerts
-            prev.alerts.push({id, alert, timeout: c});
-
-            return prev;
-        });
-    }
-
-    setLifeAlert(id, extend) {
-        if (extend) {
-            this.setState((prev) => {
-                let a = prev.alerts.find((a) => a.id === id);
-                if (a) {
-                    clearTimeout(a.timeout);
-                }
-
-                return prev;
-            });
-        } else {
-            this.setState((prev) => {
-                let a = prev.alerts.find((a) => a.id === id);
-                if (a) {
-                    a.tomeout = setTimeout(() => this.callbackRemoveAlert(id), 3500);
-                }
-
-                return prev;
-            });
-        }
-    }
-
-    onWantsToCopyConfigurationFile(filename) {
-        this.setState(() => ({
-            fileNameToCopy: filename,
-        }));
-    }
-
-    callbackEnterFileName({cancelled, value}) {
-        if (!cancelled) {
-            let filename = value.indexOf(".ini") >= 0 ? value : value + ".ini";
-            fetch(`/api/copy_file?file=${this.state.fileNameToCopy}&copy_path=${filename}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-                body: "",
-            })
-                .then((res) => res.json())
-                .then(({configuration_file}) => this.parseAndLoadNewConfigurationFile(filename, configuration_file));
-        } else {
-            this.setState(() => ({
-                fileNameToCopy: "",
-            }));
-        }
     }
 
     /**
@@ -330,45 +106,44 @@ class App extends React.Component {
         this.hideCanvasModal();
     }
 
-    playAudioAlert() {
-        try {
-            var audio = new Audio("https://github.com/zhukov/webogram/blob/master/app/img/sound_a.mp3?raw=true");
-            audio.volume = 0.5;
-            audio.play();
-        } catch (e) {}
+    onToggleLiveView() {
+        this.setState(prevState => ({
+            liveViewScreen: !prevState.liveViewScreen
+        }));
     }
 
-    setError(errorType) {
-        this.setState(() => ({error: {type: errorType}}));
+    handleInputChange(ev) {
+        this.setState({ uri_video: ev.target.value });
     }
 
-    clearErrors() {
-        this.setState(() => ({error: null}));
+    onOpenConnection() {
+        let camera = this.state.uri_video;
+        let url;
+        if (camera !== "observer") {
+            url = `/api/requestCameraStream?uri=${encodeURIComponent(camera)}`;
+        } else {
+            url = "/api/requestObserverStream";
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "error") {
+                    this.setState(
+                        () => {
+                            return { feed_id: data["data"]["ws_feed_path"] };
+                        },
+                        (error) => {
+                            this.setState(() => ({ error }));
+                        }
+                    );
+                }
+            });
     }
 
     render() {
         return (
             <div>
-                <HomeNavBar pages={pages} recognize={this.state.recognize} toggleRecognize={this.toggleRecognize} />
-
-                {this.state.error && this.state.error.type === ERRORS.CONNECTION_LOST && (
-                    <ModalConnectionLost closeModal={this.clearErrors}></ModalConnectionLost>
-                )}
-
-                {this.state.recognize.configuration.file === "" &&
-                    this.props.location.pathname !== pages.notifications.path &&
-                    this.state.fileNameToCopy === "" && (
-                    <ModalSelectConfiguration
-                        configurationFilesAvailables={this.state.configurationFilesAvailables}
-                        changeConfigurationFile={this.changeConfigurationFile}
-                        onWantsToCopyConfigurationFile={this.onWantsToCopyConfigurationFile}
-                    />
-                )}
-
-                {this.state.fileNameToCopy !== "" && this.props.location.pathname !== pages.notifications.path && (
-                    <ModalSelectFileName filename={this.state.fileNameToCopy} callback={this.callbackEnterFileName} />
-                )}
-
                 {this.state.modalCanvas.activeHandlerId === "roi" && (
                     <CanvasRoiHandler
                         ref={this.state.modalCanvas.references.roi}
@@ -378,15 +153,27 @@ class App extends React.Component {
                         onCancel={this.hideCanvasModal}></CanvasRoiHandler>
                 )}
 
-                {this.state.modalCanvas.activeHandlerId === "ignoredAreas" && (
-                    <CanvasAreasHandler
-                        ref={this.state.modalCanvas.references.ignoredAreas}
-                        image={this.state.modalCanvas.currentImage}
-                        initialValue={this.state.modalCanvas.initialValue}
-                        onAccept={this.onAcceptModalCanvas}
-                        onCancel={this.hideCanvasModal}
-                    />
-                )}
+                <div>
+                    <button onClick={this.onToggleLiveView.bind(this)}>Toggle Live View/Area selector</button>
+                    <button onClick={this.onOpenConnection.bind(this)}>Open connection</button>
+                    <input
+                        type="text"
+                        value={this.state.uri_video}
+                        onChange={this.handleInputChange.bind(this)}
+                        placeholder="Camera uri, or observer if use observer" />
+
+                    {this.state.liveViewScreen && this.state.feed_id &&
+                        <LiveView feed_id={this.state.feed_id} onLoad={() => { }} ></LiveView>
+                    }
+
+                    {!this.state.liveViewScreen && this.state.feed_id && (
+                        <CanvasAreasHandler
+                            ref={this.state.modalCanvas.references.ignoredAreas}
+                            feed_id={this.state.feed_id}
+                            onAccept={this.onAcceptModalCanvas}
+                            onCancel={this.hideCanvasModal}
+                        />)}
+                </div>
 
                 {this.state.modalCanvas.activeHandlerId === "exclusivityAreas" && (
                     <CanvasExclusivityAreasHandler
@@ -397,38 +184,12 @@ class App extends React.Component {
                         onCancel={this.hideCanvasModal}
                     />
                 )}
-
-                <Switch>
-                    {this.state.recognize.configuration.file !== "" && (
-                        <Route path={pages.configurations.path}>
-                            <ConfigurationPage
-                                elements={elements}
-                                configurations={this.state.recognize.configuration}
-                                addAlert={this.addAlert}
-                                openModalCanvas={this.openModalCanvas}></ConfigurationPage>
-                        </Route>
-                    )}
-
-                    <Route path={pages.notifications.path}>
-                        <NotificationPage
-                            configuration={this.state.configuration}
-                            socket={this.socket}></NotificationPage>
-                    </Route>
-                </Switch>
-
-                <div id="alerts">
-                    {this.state.alerts.map((el) => (
-                        <PopupAlert key={el.id} id={el.id} setLifeAlert={this.setLifeAlert} alert={el.alert} />
-                    ))}
-                </div>
             </div>
         );
     }
 }
 
 App.propTypes = {
-    location: PropTypes.object,
-    history: PropTypes.any.isRequired,
 };
 
 export default App;

@@ -9,36 +9,7 @@
 </head>
 
 <body>
-    <!-- display stream in this image -->
-    <img id="stream_1"></img>
-
-    <script>
-        const img = document.getElementById("stream_1");
-
-        const socket = new WebSocket(`ws://${window.location.host}/recognize`);
-
-        // set socket as binary
-        socket.binaryType = "blob";
-
-        // Listen for frames
-        socket.addEventListener("message", function (event) {
-            // Blob: https://developer.mozilla.org/en-US/docs/Web/API/Blob#creating_a_url_representing_the_contents_of_a_typed_array
-            // Blob to file: https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications#example_using_object_urls_to_display_images
-
-            const blob = new Blob([event.data], { type: 'image/jpeg' });
-
-            img.src = URL.createObjectURL(blob);
-
-            img.onload = function () {
-                // Moz.org: Browsers will release object URLs automatically
-                // when the document is unloaded; however, for optimal
-                // performance and memory usage, if there are safe times
-                // when you can explicitly unload them, you should do so.
-                URL.revokeObjectURL(this.src);
-            }
-        });
-
-    </script>
+    <div id="app"></div>
 </body>
 
 </html>

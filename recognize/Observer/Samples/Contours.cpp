@@ -129,20 +129,6 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
 
     // VideoContours filtered = contoursDetector.FilterContours(cts);
 
-    // asumiendo que resize.resize = true
-    // ya tenemos los contornos, pero estos estan en el espacio resize.size.
-    // Ahora para filtrarlos hay que convertirlos al espacio de refencia que nos
-    // dieron en la configuracion, ContoursFilters.IgnoredAreas.reference. Una
-    // ves que los transformamos aplicamos los filtros sobre estos. Luego, ya
-    // filtrados nuestra tarea termino y debemos devolverlos, pero primero lo
-    // escalamos al tamañano que nos pidieron
-    // (en realidad deberiamos tomar target=input.size, space=diff.size, aunque
-    // en realidad si despues necesitamos resizear de nuevo para la enviar la
-    // notificacion y gastar menos datos seria mas facil decirlo
-    // target=notification.size, pero como notification.image.size puede ser
-    // diferente al de video, esto es una mala idea. Mejor dejar los contornos
-    // en el espacio que nos pidieron).
-
     // contoursDetector.ScaleContours(cts, displaySize);
 
     // std::vector<Rect> realAreas;
@@ -166,11 +152,11 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
         //     cv::rectangle(frame, rect, cv::Scalar(255, 0, 255));
         // }
 
-        // for (auto& rect : contoursDetector.filters.ignoredAreas.areas) {
-        //     cv::rectangle(frame, rect, cv::Scalar(20, 255, 255));
-        // }
+        for (auto& rect : contoursDetector.filters.ignoredAreas.areas) {
+            cv::rectangle(frame, rect, cv::Scalar(20, 255, 255));
+        }
 
-        for (auto& set : contoursDetector.filters.ignoredSets.sets) {
+        /*for (auto& set : contoursDetector.filters.ignoredSets.sets) {
             Point first = set[0];
             Point last = set[0];
 
@@ -181,7 +167,7 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
             }
 
             cv::line(frame, last, first, cv::Scalar(20, 255, 255));
-        }
+        }*/
 
         for (int i = 0; i < cts[j].size(); i++) {
             auto rect = BoundingRect(cts[j][i]);

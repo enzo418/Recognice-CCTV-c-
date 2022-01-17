@@ -3,6 +3,7 @@ import CanvasHandler from "./canvas_handler";
 import {getRandom, getRectangleDimensions} from "./canvas_utils";
 import PropTypes from "prop-types";
 import ModalCanvas from "../../components/ModalCanvas";
+import LiveView from "../liveView/LiveView";
 
 class CanvasAreasHandler extends CanvasHandler {
     constructor(props) {
@@ -50,15 +51,32 @@ class CanvasAreasHandler extends CanvasHandler {
                 </button>
             </div>
         );
+
+        this.firstImage = true;
     }
 
     getValue() {
         return this.areasString;
     }
 
+    onImageLoaded(e) {
+        console.log(e);
+
+        if (this.firstImage) {
+            this.canvas.current.width = e.target.width;
+            this.canvas.current.height = e.target.height;
+            this.firstImage = false;
+
+            this.updateCanvasPosition();
+        }
+
+        this.ctx.drawImage(e.target, 0, 0, e.target.width, e.target.height);
+        this.drawCurrentAreas();
+    }
+
     componentDidMount() {
         super.componentDidMount();
-        this.onReady(this.props.image, this.props.initialValue);
+        this.onReady(this.props.initialValue);
     }
 
     componentDidUpdate() {
@@ -68,11 +86,13 @@ class CanvasAreasHandler extends CanvasHandler {
     removeAll() {
         this.areas = [];
         this.areasString = "";
+    }
 
-        var image = new Image();
-        image.onload = () => this.ctx.drawImage(image, 0, 0);
-
-        image.src = "data:image/jpg;base64," + this.lastImage;
+    drawCurrentAreas() {
+        this.areas.forEach((area) => {
+            this.ctx.strokeStyle = area.color;
+            this.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
+        });
     }
 
     // Mouse or touch moved
@@ -80,34 +100,24 @@ class CanvasAreasHandler extends CanvasHandler {
         e.preventDefault();
         e = (e.touches || [])[0] || e;
         if (this.clickPressed) {
-            var image = new Image();
-            image.onload = () => {
-                // check again... there is alot of this calls at the same time and causes problems
-                if (this.clickPressed) {
-                    this.ctx.drawImage(image, 0, 0);
+            // check again... there is alot of this calls at the same time and causes problems
+            if (this.clickPressed) {
+                // this.drawCurrentAreas();
 
-                    this.areas.forEach((area) => {
-                        this.ctx.strokeStyle = area.color;
-                        this.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
-                    });
+                const x1 = e.clientX - this.x;
+                const y1 = e.clientY - this.y;
 
-                    const x1 = e.clientX - this.x;
-                    const y1 = e.clientY - this.y;
+                this.current.p2 = {x: x1, y: y1};
 
-                    this.current.p2 = {x: x1, y: y1};
+                const x0 = this.current.p1.x;
+                const y0 = this.current.p1.y;
+                const width = x1 - x0;
+                const heigth = y1 - y0;
 
-                    const x0 = this.current.p1.x;
-                    const y0 = this.current.p1.y;
-                    const width = x1 - x0;
-                    const heigth = y1 - y0;
+                this.ctx.strokeStyle = this.current.color;
 
-                    this.ctx.strokeStyle = this.current.color;
-
-                    this.ctx.strokeRect(x0, y0, width, heigth);
-                }
-            };
-
-            image.src = "data:image/jpg;base64," + this.lastImage;
+                this.ctx.strokeRect(x0, y0, width, heigth);
+            }
         }
     }
 
@@ -147,24 +157,13 @@ class CanvasAreasHandler extends CanvasHandler {
                 }
             });
 
-            // draw areas
-            var image = new Image();
-            image.onload = () => {
-                this.ctx.drawImage(image, 0, 0);
-
-                this.areas.forEach((area) => {
-                    this.ctx.strokeStyle = area.color;
-                    this.ctx.strokeRect(area.lt.x, area.lt.y, area.width, area.heigth);
-                });
-            };
-
-            image.src = "data:image/jpg;base64," + this.lastImage;
+            // this.drawCurrentAreas();
         } else {
             this.areas.push({lt, width, heigth, color: this.current.color});
 
             this.areasString = "";
             this.areas.forEach((area) => {
-                this.areasString += `[${area.lt.x},${area.lt.y}],[${area.width}, ${area.heigth}],`;
+                this.areasString += `- x: ${area.lt.x}\ny: ${area.lt.y}\nwidth: ${area.width}\nheight: ${area.heigth}`;
             });
 
             this.areasString = this.areasString.substring(0, this.areasString.length - 1);
@@ -172,18 +171,22 @@ class CanvasAreasHandler extends CanvasHandler {
             this.current.p1 = {x: 0, y: 0};
             this.current.p2 = {x: 0, y: 0};
         }
+        console.log("-------------");
+        console.log(this.areasString);
+
         e.preventDefault();
     }
 
     /**
      * Callback to update the image displayed in the canvas
-     * @param {string} frame base64 encoded image
      * @param {string} initialValue initial value
      */
-    onReady(frame, initialValue) {
+    onReady(initialValue) {
         console.log({initialValue});
         this.areasString = initialValue || "";
         this.areas = [];
+
+        this.first = false;
 
         let image = new Image();
         image.onload = () => {
@@ -213,14 +216,12 @@ class CanvasAreasHandler extends CanvasHandler {
             console.log("areas loaded: ", this.areas.length);
             this.updateCanvasPosition();
         };
-        image.src = "data:image/jpg;base64," + frame;
-
-        this.lastImage = frame;
     }
 
     render() {
         return (
             <ModalCanvas header={this.header} onAccept={this.props.onAccept} onCancel={this.props.onCancel}>
+                <LiveView feed_id={this.props.feed_id} onLoad={this.onImageLoaded.bind(this)} style={{ visibility: "hidden", position: "absolute"}} ></LiveView>
                 <canvas ref={this.canvas} {...this.handlers} width="640" height="360" />
             </ModalCanvas>
         );
@@ -228,7 +229,7 @@ class CanvasAreasHandler extends CanvasHandler {
 }
 
 CanvasAreasHandler.propTypes = {
-    image: PropTypes.string.isRequired,
+    feed_id: PropTypes.string.isRequired,
     initialValue: PropTypes.string,
     callbackOnMounted: PropTypes.func,
     onCancel: PropTypes.func.isRequired,

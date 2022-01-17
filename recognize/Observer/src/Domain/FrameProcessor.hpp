@@ -2,6 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
 #include "../Log/log.hpp"
 #include "../Rect.hpp"
@@ -81,6 +82,7 @@ namespace Observer {
 
         // set lastFrame to a valid frame so we can operate over it
         if (firstCall) {
+            // ImageDisplay<T>::CreateWindow("ee");
             firstCall = false;
             ImageTransformation<T>::CopyImage(frame, this->lastFrame);
         }
@@ -88,6 +90,8 @@ namespace Observer {
         // get the difference between the current and last frame
         ImageTransformation<T>::AbsoluteDifference(this->lastFrame, frame,
                                                    this->diffFrame);
+
+        // ImageDisplay<T>::ShowImage("ee", this->diffFrame);
 
         // make the changes bigger
         ImageTransformation<T>::GaussianBlur(this->diffFrame, this->diffFrame,

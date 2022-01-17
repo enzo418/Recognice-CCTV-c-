@@ -11,10 +11,6 @@ import "@fortawesome/fontawesome-free/js/all.js";
 const AppWithRouter = withRouter(App);
 
 ReactDOM.render(
-    <I18nextProvider i18n={i18n}>
-        <Router>
-            <AppWithRouter />
-        </Router>
-    </I18nextProvider>,
+    <React.StrictMode><App></App></React.StrictMode>,
     document.getElementById("app")
 );

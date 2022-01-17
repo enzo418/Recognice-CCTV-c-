@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../ImageDisplay.hpp"
 #include "../../ImageProcessing.hpp"
 #include "../../Utils/Math.hpp"
 #include "../FramesProcessor/FrameContextualizer.hpp"
@@ -51,7 +52,7 @@ namespace Observer {
 
         bool ContourIsInsideIgnoredSet(std::vector<Point>& contour);
 
-       private:
+       public:
         ThresholdingParams params;
         ContoursFilter filters;
         FrameContextualizer<TFrame> contextBuilder;
@@ -100,10 +101,15 @@ namespace Observer {
         std::vector<TFrame>& frames) {
         VideoContours contours(frames.size());
 
+        // ImageDisplay<TFrame>::CreateWindow("diffimg");
+
         std::vector<TFrame> diffFrames =
             this->contextBuilder.GenerateDiffFrames(frames);
 
         for (int i = 0; i < diffFrames.size(); i++) {
+            // ImageDisplay<TFrame>::ShowImage("diffimg", diffFrames[i]);
+            // cv::waitKey(0);
+
             ImageProcessing<TFrame>::FindContours(
                 diffFrames[i], contours[i],
                 ContourRetrievalMode::CONTOUR_RETR_LIST,
@@ -117,6 +123,8 @@ namespace Observer {
         contours = this->FilterContours(contours);
 
         this->ScaleContours(contours);
+
+        // ImageDisplay<TFrame>::DestroyWindow("diffimg");
 
         return contours;
     }

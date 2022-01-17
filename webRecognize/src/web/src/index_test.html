@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recognize</title>
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script>
+        function GetAndSetLiveView(img, feed) {
+            const socket = new WebSocket(`ws://${window.location.host}${feed}`);
+
+            // set socket as binary
+            socket.binaryType = "blob";
+
+            // Listen for frames
+            socket.addEventListener("message", function (event) {
+                // Blob: https://developer.mozilla.org/en-US/docs/Web/API/Blob#creating_a_url_representing_the_contents_of_a_typed_array
+                // Blob to file: https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications#example_using_object_urls_to_display_images
+
+                // console.log(event.data);
+                const blob = new Blob([event.data], { type: 'image/jpeg' });
+
+                img.src = URL.createObjectURL(blob);
+
+                img.onload = function () {
+                    // Moz.org: Browsers will release object URLs automatically
+                    // when the document is unloaded; however, for optimal
+                    // performance and memory usage, if there are safe times
+                    // when you can explicitly unload them, you should do so.
+                    URL.revokeObjectURL(this.src);
+                }
+            });
+
+            return socket;
+        }
+    </script>
+</head>
+
+<body>
+    <div id="app"></div>
+    <!-- display stream in this image -->
+    <img id="stream_1" style="visibility: hidden;"></img>
+    <canvas id="canvas" width="640" height="360" style="position: absolute; top: 0; left: 0;"></canvas>
+
+    <script>
+        const img1 = document.getElementById("stream_1");
+
+        let sockets = [];
+
+        fetch("/api/requestObserverStream")
+            .then(response => response.json())
+            .then(data => sockets.push(GetAndSetLiveView(img1, data["data"]["ws_feed_path"])));
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let first = true;
+        img1.addEventListener('load', e => {
+            if (first) {
+                canvas.width = img1.width;
+                canvas.height = img1.height;
+                first = false;
+            }
+
+            ctx.drawImage(img1, 0, 0, img1.width, img1.height);
+        });
+
+        let cameras = ["rtsp://192.168.1.18:554/user=admin&password=d12&channel=3&stream=0.sdp"];
+
+        /*
+        cameras.forEach((camera, i) => {
+            let img = document.createElement("img");
+            img.id = "" + i;
+
+            fetch(`/api/requestCameraStream?uri=${encodeURIComponent(camera)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status != "error") {
+                        sockets.push(GetAndSetLiveView(img, data["data"]["ws_feed_path"]))
+                    }
+                });
+
+            document.body.appendChild(img);
+        });*/
+
+        const notSocket = new WebSocket(`ws://${window.location.host}/notifications`);
+
+        // Listen for frames
+        notSocket.addEventListener("message", async function (event) {
+            // binary frame
+            const text = await event.data.text();
+            console.log("new notification!", text);
+        });
+
+    </script>
+</body>
+
+</html>

@@ -3,13 +3,10 @@ import PropTypes from "prop-types";
 
 function Modal(props) {
     return (
-        <div className={"modal is-active is-dark " + props.className}>
-            <div className="modal-background"></div>
-            <div className="modal-card">
-                <header className="modal-card-head">{props.header}</header>
-                <section className="modal-card-body">{props.body}</section>
-                <footer className="modal-card-foot">{props.footer}</footer>
-            </div>
+        <div className={" " + props.className}>
+            {props.header}
+            {props.body}
+            {props.footer}
         </div>
     );
 }
