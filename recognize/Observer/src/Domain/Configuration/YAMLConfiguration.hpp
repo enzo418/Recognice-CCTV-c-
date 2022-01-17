@@ -200,6 +200,27 @@ namespace YAML {
     };
 
     template <>
+    struct convert<Observer::ProcessingConfiguration> {
+        static Node encode(const Observer::ProcessingConfiguration& rhs) {
+            Node node;
+
+            node["roi"] = rhs.roi;
+            node["noiseThreshold"] = rhs.noiseThreshold;
+            node["resize"] = rhs.resize;
+            return node;
+        }
+
+        static bool decode(const Node& node,
+                           Observer::ProcessingConfiguration& rhs) {
+            rhs.noiseThreshold = node["noiseThreshold"].as<double>();
+            rhs.roi = node["roi"].as<Observer::Rect>();
+            rhs.resize = node["resize"].as<Observer::Size>();
+
+            return true;
+        }
+    };
+
+    template <>
     struct convert<Observer::CameraConfiguration> {
         static Node encode(const Observer::CameraConfiguration& rhs) {
             Node node;
@@ -207,11 +228,9 @@ namespace YAML {
             node["name"] = rhs.name;
             node["url"] = rhs.url;
             node["fps"] = rhs.fps;
-            node["roi"] = rhs.roi;
             node["positionOnOutput"] = rhs.positionOnOutput;
             node["rotation"] = rhs.rotation;
             node["type"] = rhs.type;
-            node["noiseThreshold"] = rhs.noiseThreshold;
             node["minimumChangeThreshold"] = rhs.minimumChangeThreshold;
             node["increaseThresholdFactor"] = rhs.increaseThresholdFactor;
             node["secondsBetweenTresholdUpdate"] =
@@ -222,6 +241,8 @@ namespace YAML {
             node["restrictedAreas"] = rhs.restrictedAreas;
             node["objectDetectionMethod"] = rhs.objectDetectionMethod;
             node["BlobDetection"] = rhs.blobDetection;
+            node["Processing"] = rhs.processingConfiguration;
+
             return node;
         }
 
@@ -230,11 +251,9 @@ namespace YAML {
             rhs.name = node["name"].as<std::string>();
             rhs.url = node["url"].as<std::string>();
             rhs.fps = node["fps"].as<double>();
-            rhs.roi = node["roi"].as<Observer::Rect>();
             rhs.positionOnOutput = node["positionOnOutput"].as<int>();
             rhs.rotation = node["rotation"].as<double>();
             rhs.type = node["type"].as<Observer::ECameraType>();
-            rhs.noiseThreshold = node["noiseThreshold"].as<double>();
             rhs.minimumChangeThreshold =
                 node["minimumChangeThreshold"].as<int>();
             rhs.increaseThresholdFactor =
@@ -255,7 +274,8 @@ namespace YAML {
                     .as<Observer::EObjectDetectionMethod>();
             rhs.blobDetection = node["BlobDetection"]
                                     .as<Observer::BlobDetectionConfiguration>();
-
+            rhs.processingConfiguration =
+                node["Processing"].as<Observer::ProcessingConfiguration>();
             return true;
         }
     };

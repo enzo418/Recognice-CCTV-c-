@@ -3,13 +3,14 @@
 #include <opencv2/opencv.hpp>
 
 #include "../ImageTransformation.hpp"
+#include "../Log/log.hpp"
 #include "../Rect.hpp"
 
 namespace Observer {
     template <typename T>
     class FrameProcessor {
        private:
-        const Size resolutionSize = Size(640, 360);
+        // const Size resolutionSize = Size(640, 360);
 
         // last frame readed
         T lastFrame;
@@ -28,6 +29,8 @@ namespace Observer {
 
         bool firstCall;
 
+        Size resizeSize;
+
        public:
         /**
          * @brief Construct a new Frame Processor object
@@ -36,7 +39,8 @@ namespace Observer {
          * @param noiseThreshold
          * @param rotation angle to rotate the image in degrees
          */
-        FrameProcessor(Rect roi, double noiseThreshold, double rotation);
+        FrameProcessor(Size resizeSize, Rect roi, double noiseThreshold,
+                       double rotation);
 
         FrameProcessor& NormalizeFrame(T& frame) &;
 
@@ -44,18 +48,25 @@ namespace Observer {
     };
 
     template <typename T>
-    FrameProcessor<T>::FrameProcessor(Rect pRoi, double pNoiseThreshold,
+    FrameProcessor<T>::FrameProcessor(Size pResizeSize, Rect pRoi,
+                                      double pNoiseThreshold,
                                       double pRotation) {
         this->roi = pRoi;
         this->noiseThreshold = pNoiseThreshold;
         this->rotation = pRotation;
         this->lastFrame = ImageTransformation<T>::BlackImage();
         this->firstCall = true;
+        this->resizeSize = pResizeSize;
+
+        OBSERVER_ASSERT(pRoi.x + pRoi.width <= resizeSize.width &&
+                            pRoi.y + pRoi.height <= resizeSize.height,
+                        "The roi is taken from the resized image so it should "
+                        "be inside it.");
     }
 
     template <typename T>
     FrameProcessor<T>& FrameProcessor<T>::NormalizeFrame(T& frame) & {
-        ImageTransformation<T>::Resize(frame, frame, this->resolutionSize);
+        ImageTransformation<T>::Resize(frame, frame, this->resizeSize);
 
         ImageTransformation<T>::RotateImage(frame, this->rotation);
 

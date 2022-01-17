@@ -83,11 +83,9 @@ class ConfigurationTest : public ::testing::Test {
             .name = "TestCamera1",
             .url = "rtsp://example.com/media.mp4",
             .fps = 42,
-            .roi = Rect(10, 10, 640, 360),
             .positionOnOutput = 0,
             .rotation = -5,
             .type = ECameraType::NOTIFICATOR,
-            .noiseThreshold = 35,
             .minimumChangeThreshold = 101,
             .increaseThresholdFactor = 1.03,
             .secondsBetweenTresholdUpdate = 5,
@@ -98,17 +96,18 @@ class ConfigurationTest : public ::testing::Test {
             .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
                                  ERestrictionType::ALLOW}},
             .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
-            .blobDetection = blobConfiguration};
+            .blobDetection = blobConfiguration,
+            .processingConfiguration = {Size(640, 360), 35,
+                                        Rect(10, 10, 640, 360)},
+        };
 
         CameraConfiguration camera2 = {
             .name = "TestCamera2",
             .url = "rtsp://example.com/media.mp4/streamid=1",
             .fps = 10,
-            .roi = Rect(1, 1, 233, 233),
             .positionOnOutput = 1,
             .rotation = 99,
             .type = ECameraType::OBJECT_DETECTOR,
-            .noiseThreshold = 15,
             .minimumChangeThreshold = 12,
             .increaseThresholdFactor = 5.002,
             .secondsBetweenTresholdUpdate = 7,
@@ -118,7 +117,8 @@ class ConfigurationTest : public ::testing::Test {
             .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
                                  ERestrictionType::DENY}},
             .objectDetectionMethod = EObjectDetectionMethod::NONE,
-        };
+            .processingConfiguration = {Size(640, 360), 15,
+                                        Rect(1, 1, 233, 233)}};
 
         this->config = {.mediaFolderPath = "../web/media",
                         .notificationTextTemplate = "This is a template {N}",

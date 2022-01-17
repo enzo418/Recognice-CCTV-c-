@@ -26,6 +26,21 @@ namespace Observer {
         YOLODNN_V4 = 4
     };
 
+    struct ProcessingConfiguration {
+        // resize all the frames before processing to save cpu/memory
+        Size resize;
+
+        // value used to remove noise in the image
+        double noiseThreshold = 45;
+
+        // region of interest, taken from resize. That means that the relation
+        // is roi.x + roi.width <= resize.width &
+        // roi.y + roi.height <= resize.height
+        Rect roi;
+
+        bool operator==(const ProcessingConfiguration&) const = default;
+    };
+
     struct CameraConfiguration {
         std::string name;
 
@@ -34,9 +49,6 @@ namespace Observer {
         // camera max fps to use. Lower fps lowers the CPU usage
         double fps;
 
-        // region of interest
-        Rect roi;
-
         // position of the camera in the preview. 0 = top left
         int positionOnOutput;
 
@@ -44,9 +56,6 @@ namespace Observer {
         double rotation;
 
         ECameraType type;
-
-        // value used to remove noise in the image
-        double noiseThreshold = 45;
 
         // minimum ammount of pixel that changed to trigger a validator
         int minimumChangeThreshold = 5;
@@ -73,6 +82,8 @@ namespace Observer {
         EObjectDetectionMethod objectDetectionMethod;
 
         BlobDetectionConfiguration blobDetection;
+
+        ProcessingConfiguration processingConfiguration;
 
         bool operator==(const CameraConfiguration&) const = default;
     };

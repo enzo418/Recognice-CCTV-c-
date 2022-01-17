@@ -116,7 +116,9 @@ namespace Observer {
     template <typename TFrame>
     CameraObserver<TFrame>::CameraObserver(CameraConfiguration* pCfg)
         : cfg(pCfg),
-          frameProcessor(this->cfg->roi, this->cfg->noiseThreshold,
+          frameProcessor(this->cfg->processingConfiguration.resize,
+                         this->cfg->processingConfiguration.roi,
+                         this->cfg->processingConfiguration.noiseThreshold,
                          this->cfg->rotation),
           thresholdManager(this->cfg->minimumChangeThreshold,
                            this->cfg->increaseThresholdFactor,
