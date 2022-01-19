@@ -112,7 +112,7 @@ namespace Observer {
         static void RotateImage(cv::Mat& image, double angle) {
             cv::Point2f pc(image.cols / 2., image.rows / 2.);
             cv::Mat r = cv::getRotationMatrix2D(pc, angle, 1.0);
-            cv::warpAffine(image, image, r, image.size());
+            cv::warpAffine(image, image, r, image.size(), cv::INTER_NEAREST);
         }
 
         static void AbsoluteDifference(cv::Mat& source1, cv::Mat& source2,
