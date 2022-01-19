@@ -15,6 +15,8 @@ namespace Observer {
 
         void Stop();
 
+        void Restart();
+
         double GetDuration();
 
         double GetDurationAndRestart();
@@ -45,6 +47,11 @@ namespace Observer {
     double Timer<Unit>::GetDuration() {
         const auto end = std::chrono::high_resolution_clock::now();
         return (end - this->start) / Unit(1);
+    }
+
+    template <class Unit>
+    void Timer<Unit>::Restart() {
+        this->Start();
     }
 
     template <class Unit>

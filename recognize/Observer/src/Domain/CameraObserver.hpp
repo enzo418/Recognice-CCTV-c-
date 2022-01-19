@@ -28,6 +28,7 @@
 
 // std::unique_ptr
 #include <memory>
+#include <thread>
 
 namespace Observer {
     /**
@@ -68,9 +69,6 @@ namespace Observer {
         VideoWriter<TFrame> writer;
 
         std::unique_ptr<VideoBuffer<TFrame>> videoBufferForValidation;
-
-        // timer to get a new frame every x ms
-        Timer<std::chrono::milliseconds> timerFrames;
 
         FrameProcessor<TFrame> frameProcessor;
 
@@ -131,34 +129,78 @@ namespace Observer {
 
     template <typename TFrame>
     void CameraObserver<TFrame>::Start() {
+        OBSERVER_ASSERT(cfg->fps != 0, "FPS cannot be 0.");
+
         this->running = true;
+
+        const bool processFrames = cfg->type != ECameraType::VIEW;
 
         TFrame frame;
 
-        const auto minTimeBetweenFrames = 1000 / this->cfg->fps;
-
+        // Try to open the camera
         this->source.Open(this->cfg->url);
 
         if (!this->source.isOpened()) {
             OBSERVER_WARN("Couldn't connect to camera {}", this->cfg->url);
         }
 
-        timerFrames.Start();
+        // real camera fps, if cannot get it then just use fps from cfg
+        int fps = source.GetFPS();
 
-        const bool processFrames = cfg->type != ECameraType::VIEW;
+        if (fps == 0) {
+            fps = this->cfg->fps;
+        }
+
+        // this is the milliseconds expected by the user betweem two frames
+        const auto minTimeBetweenFrames = 1000.0 / this->cfg->fps;
+
+        // number of ms that the cameras waits to send a new frame
+        const double realTimeBetweenFrames = 1000.0 / fps;
+
+        // Timer to not waste cpu time
+        Timer<std::chrono::milliseconds> timerRealFPS(true);
+
+        // Timer to only process frames between some time
+        Timer<std::chrono::milliseconds> timerFakeFPS(true);
+
+        // wait accumulative stores the duration of each frame sent and
+        // processed, if it's < 0 we are ahead so we need to sleep the thread to
+        // save cpu work, else we took to much time processing the frames so no
+        // sleep is required.
+        int waitAccumulative = 0;
 
         while (this->running) {
             if (this->source.GetNextFrame(frame)) {
-                auto duration = timerFrames.GetDurationAndRestart();
+                this->framePublisher.notifySubscribers(
+                    this->cfg->positionOnOutput, frame);
 
-                if (duration >= minTimeBetweenFrames) {
-                    this->framePublisher.notifySubscribers(
-                        this->cfg->positionOnOutput, frame);
+                if (processFrames &&
+                    timerFakeFPS.GetDuration() > minTimeBetweenFrames) {
+                    this->ProcessFrame(frame);
 
-                    if (processFrames) {
-                        this->ProcessFrame(frame);
-                    }
+                    timerFakeFPS.Restart();
                 }
+
+                auto duration = timerRealFPS.GetDuration();
+
+                // add how much ms are we behind the desired
+                waitAccumulative += duration - realTimeBetweenFrames;
+
+                // we are ahead the desired time between frames, sleep until
+                // then
+                if (waitAccumulative < 0) {
+                    // if we are ahead 200 ms but the camera sends every 100 ms,
+                    // sleep 100
+                    int sleepExactly = std::min((int)waitAccumulative * -1,
+                                                (int)realTimeBetweenFrames);
+
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(sleepExactly));
+
+                    waitAccumulative = 0;
+                }
+
+                timerRealFPS.Restart();
             }
         }
 
