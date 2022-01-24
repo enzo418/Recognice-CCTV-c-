@@ -24,6 +24,7 @@ set(SRC_
         src/ImageTransformation.hpp
 
         src/CircularFrameBuffer.hpp
+        src/Functionality.hpp src/Functionality.cpp
         src/IFunctionality.hpp
 
         # configuration

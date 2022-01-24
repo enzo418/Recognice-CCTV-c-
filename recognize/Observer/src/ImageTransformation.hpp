@@ -151,6 +151,13 @@ namespace Observer {
         static inline void CopyImage(T& source, T& dst);
 
         /**
+         * @brief Clone an image.
+         *
+         * @param source img to be copied
+         */
+        static inline T CloneImage(T& source);
+
+        /**
          * @brief Creates a black image.
          *
          * @param reference image to use as a reference while creating the black

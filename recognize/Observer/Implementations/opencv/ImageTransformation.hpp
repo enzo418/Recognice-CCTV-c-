@@ -151,6 +151,10 @@ namespace Observer {
             source.copyTo(dst);
         }
 
+        static inline cv::Mat CloneImage(cv::Mat& source) {
+            return source.clone();
+        }
+
         static void Resize(cv::Mat& source, cv::Mat& dst, const Size& size) {
             cv::Size sz(size.width, size.height);
             cv::resize(source, dst, sz);
