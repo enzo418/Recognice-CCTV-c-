@@ -69,7 +69,10 @@ namespace Observer {
     FrameProcessor<T>& FrameProcessor<T>::NormalizeFrame(T& frame) & {
         ImageTransformation<T>::Resize(frame, frame, this->resizeSize);
 
-        ImageTransformation<T>::RotateImage(frame, this->rotation);
+        // rotation is an expensive operation, try to avoid it
+        if (this->rotation != 0) {
+            ImageTransformation<T>::RotateImage(frame, this->rotation);
+        }
 
         // crop the frame
         if (!this->roi.empty()) {
