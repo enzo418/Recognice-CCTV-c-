@@ -143,11 +143,20 @@ namespace Observer {
             return;
         }
 
+        const int fps = source.GetFPS();
+        OBSERVER_INFO("FPS: {}", fps);
+
+        // number of ms that the cameras waits to send a new frame
+        const double realTimeBetweenFrames = 1000.0 / fps;
+
         // this is the milliseconds expected by the user betweem two frames
         const auto minTimeBetweenFrames = 1000.0 / this->cfg->fps;
 
         // Timer to only process frames between some time
         Timer<std::chrono::milliseconds> timerFakeFPS(true);
+
+        // Timer to not waste cpu time
+        Timer<std::chrono::milliseconds> timerRealFPS(true);
 
         // wait accumulative stores the duration of each frame sent and
         // processed, if it's < 0 we are ahead so we need to sleep the thread to
@@ -155,20 +164,36 @@ namespace Observer {
         // sleep is required.
         int waitAccumulative = 0;
 
-        while (this->running) {
-            if (source.IsOk() && source.IsFrameAvailable()) {
-                TFrame frame = source.GetFrame();
+        TFrame frame;
+        while (this->running && source.IsOk()) {
+            if (source.IsFrameAvailable()) {
+                frame = source.GetFrame();
+                if (ImageTransformation<TFrame>::GetSize(frame).width != 0) {
+                    this->framePublisher.notifySubscribers(
+                        this->cfg->positionOnOutput, frame);
 
-                this->framePublisher.notifySubscribers(
-                    this->cfg->positionOnOutput, frame);
+                    if (processFrames &&
+                        timerFakeFPS.GetDuration() > minTimeBetweenFrames) {
+                        this->ProcessFrame(frame);
 
-                if (processFrames &&
-                    timerFakeFPS.GetDuration() > minTimeBetweenFrames) {
-                    this->ProcessFrame(frame);
-
-                    timerFakeFPS.Restart();
+                        timerFakeFPS.Restart();
+                    }
                 }
             }
+
+            auto duration = timerRealFPS.GetDuration();
+
+            int sleepExactly = realTimeBetweenFrames - duration;
+
+            int buffered = source.BufferedAmmount();
+            if (sleepExactly > 0 && buffered == 0) {
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(sleepExactly));
+            }
+
+            OBSERVER_TRACE("BUFFER at cam {}: {}", this->cfg->name, buffered);
+
+            timerRealFPS.Restart();
         }
 
         OBSERVER_TRACE("Camera '{}' closed", this->cfg->name);
