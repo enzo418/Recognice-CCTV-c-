@@ -56,6 +56,8 @@ namespace Observer {
 
         double GetFPS();
 
+        int BufferedAmmount();
+
        private:
         bool TryOpenConnection(const std::string& sourceUri);
 
@@ -123,7 +125,7 @@ namespace Observer {
                 if (!ImageTransformation<TFrame>::GetSize(frame).empty()) {
                     queue.push(ImageTransformation<TFrame>::CloneImage(frame));
                 }
-            } else {
+            } else if (!source.isOpened()) {
                 // something went wrong.
                 OBSERVER_WARN("Connection to source was lost. URI: {}",
                               sourceUri);
@@ -159,6 +161,11 @@ namespace Observer {
     template <typename TFrame>
     bool BufferedSource<TFrame>::IsOk() {
         return running && source.isOpened();
+    }
+
+    template <typename TFrame>
+    int BufferedSource<TFrame>::BufferedAmmount() {
+        return queue.size();
     }
 
 }  // namespace Observer
