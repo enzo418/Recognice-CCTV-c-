@@ -43,6 +43,13 @@ namespace Web {
                                                           int size) {
         std::lock_guard<std::mutex> guard_c(this->mtxClients);
 
+        if (size == 0) {
+            OBSERVER_WARN(
+                "Trying to send a 0 size packet. This would cause a TCP "
+                "error!!");
+            return;
+        }
+
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
             // ¿shoud execute this on a separate thread?
