@@ -112,11 +112,6 @@ namespace Observer {
             return;
         }
 
-        // double fps = source.GetFPS();
-        // if (fps == 0) {
-        // }
-
-        // double expectedMsBetweenFrames = source.GetFPS();
         TFrame frame;
 
         while (running) {
@@ -150,7 +145,7 @@ namespace Observer {
     template <typename TFrame>
     TFrame BufferedSource<TFrame>::GetFrame() {
         // Don't worry it's (supposedly) a Single consumer buffer
-        return queue.pop();
+        return std::move(queue.pop());
     }
 
     template <typename TFrame>

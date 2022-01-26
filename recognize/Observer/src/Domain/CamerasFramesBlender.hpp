@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -8,6 +9,7 @@
 #include "../IFunctionality.hpp"
 #include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
+#include "../Log/log.hpp"
 #include "../Pattern/Camera/IFrameSubscriber.hpp"
 #include "../Pattern/ObserverBasics.hpp"
 #include "../Semaphore.hpp"
@@ -44,6 +46,9 @@ namespace Observer {
 
         void SubscribeToFramesUpdate(ISubscriber<TFrame>* sub);
 
+       protected:
+        void CalculateSleepTime(int totalNow);
+
        private:
         std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
@@ -53,6 +58,9 @@ namespace Observer {
         int maxFrames;
 
         bool running;
+
+       private:
+        int sleepForMs;
 
        private:
         Publisher<TFrame> framePublisher;
@@ -65,6 +73,7 @@ namespace Observer {
         : cfg(pCfg) {
         this->running = false;
         this->maxFrames = -1;
+        this->sleepForMs = 50;
     }
 
     template <typename TFrame>
@@ -85,7 +94,10 @@ namespace Observer {
         while (this->running) {
             this->mtxFrames.lock();
 
+            int totalNumberFrames = 0;
             for (int i = 0; i < this->maxFrames; i++) {
+                totalNumberFrames += frames[i].size();
+
                 /// TODO: .empty is an opencv function...
                 if (!frames[i].empty()) {
                     cameraFirstFrameReaded[i] = true;
@@ -114,7 +126,9 @@ namespace Observer {
 
             framePublisher.notifySubscribers(std::move(frame));
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            this->CalculateSleepTime(totalNumberFrames);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepForMs));
         }
     }
 
@@ -143,5 +157,35 @@ namespace Observer {
         ISubscriber<TFrame>* sub) {
         framePublisher.subscribe(sub);
         frameSubscriberCount++;
+    }
+
+    template <typename TFrame>
+    void CamerasFramesBlender<TFrame>::CalculateSleepTime(int totalFrames) {
+        /**
+         * if we have 4 cameras and totalFrames is 4, all the
+         * cameras have at least 1 frame, so we are ok with the sleep timing
+         * sleep maintains the same.
+         *
+         * if we have 4 cameras and totalFrames is 0, not even one cameras has a
+         * frame available, we are much ahead of time. rest is < 0, sleep time
+         * is increased.
+         *
+         * if we have 4 cameras and totalFrames is 8, we are behind. 8 - 4 = 4
+         * rest > 0, sleep is decreased.
+         */
+
+        // increase/decrease by 5 ms
+        constexpr int maxStep = 50;
+
+        // max sleep time = 1 second
+        constexpr int maxSleepTime = 1 * 1000;
+
+        int rest =
+            std::min(std::max(totalFrames - maxFrames, -maxStep), maxStep);
+
+        sleepForMs -= rest;
+
+        // can't be < 0 & > max
+        sleepForMs = std::min(std::max(sleepForMs, 0), maxSleepTime);
     }
 }  // namespace Observer

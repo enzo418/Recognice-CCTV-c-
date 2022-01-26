@@ -191,8 +191,6 @@ namespace Observer {
                     std::chrono::milliseconds(sleepExactly));
             }
 
-            OBSERVER_TRACE("BUFFER at cam {}: {}", this->cfg->name, buffered);
-
             timerRealFPS.Restart();
         }
 
