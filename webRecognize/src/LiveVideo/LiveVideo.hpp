@@ -94,6 +94,8 @@ namespace Web {
         : waitMs(1000.0 / (double)pFps), quality(pQuality) {
         Observer::set_flag(status, LiveViewStatus::CLOSED);
         Observer::set_flag(status, LiveViewStatus::STOPPED);
+
+        frame = Observer::ImageTransformation<TFrame>::BlackImage();
     }
 
     template <typename TFrame, bool SSL>
