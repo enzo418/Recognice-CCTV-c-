@@ -19,7 +19,63 @@ namespace Observer {
         THRESHOLD_TRIANGLE = 16
     };
 
-    class IFrame {
+    enum ColorSpaceConversion {
+        // RGB - Gray
+        COLOR_RGB2GRAY = 0,
+        COLOR_GRAY2RGB = 1,
+
+        // RGB - HLS
+        COLOR_HLS2RGB = 2,
+        COLOR_RGB2HLS = 3
+    };
+
+    class IFrame;
+
+    class IFrameFilters {
+       public:
+        /**
+         * @brief Blurs an image using a Gaussian filter into another image.
+         *
+         * @param dst destination image
+         * @param radius
+         */
+        virtual void GaussianBlur(int radius) = 0;
+
+        /**
+         * @brief Blurs an image using a Gaussian filter into another image.
+         * This is an overload of the method above.
+         *
+         * @param dst destination image
+         * @param radius
+         */
+        virtual void GaussianBlur(IFrame& dst, int radius) = 0;
+
+        /**
+         * @brief Converts this image from one color space to another.
+         *
+         * @param dst destination image
+         * @param conversionType space conversion (ColorSpaceConversion)
+         */
+        virtual void ToColorSpace(
+            int conversionType = ColorSpaceConversion::COLOR_RGB2GRAY) = 0;
+
+        /**
+         * @brief Converts this image from one color space to another, into
+         * another image.
+         * This is an overload of the method above.
+         *
+         * @param dst destination image
+         * @param conversionType space conversion (ColorSpaceConversion)
+         */
+        virtual void ToColorSpace(
+            IFrame& dst,
+            int conversionType = ColorSpaceConversion::COLOR_RGB2GRAY) = 0;
+
+       protected:
+        IFrame* frame;
+    };
+
+    class IFrame : public IFrameFilters {
        public:
         /**
          * @brief Clone an image
