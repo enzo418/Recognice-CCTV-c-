@@ -4,7 +4,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../../../recognize/Observer/src/IFunctionality.hpp"
+#include "../../../recognize/Observer/src/Functionality.hpp"
 #include "../../../recognize/Observer/src/ImageTransformation.hpp"
 #include "../../../recognize/Observer/src/Log/log.hpp"
 #include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
@@ -32,23 +32,10 @@ struct enable_bitmask_operators<Web::LiveViewStatus> {
 
 namespace Web {
     template <typename TFrame, bool SSL>
-    class LiveVideo : public IFunctionality,
+    class LiveVideo : public Functionality,
                       public WebsocketService<SSL, PerSocketData> {
        public:
         LiveVideo(int fps, int quality);
-        ~LiveVideo();
-
-        /**
-         * @brief Doesn't lock.
-         *
-         */
-        void Start() override;
-
-        /**
-         * @brief Doesn't lock.
-         *
-         */
-        void Stop() override;
 
         LiveViewStatus GetStatus();
 
@@ -63,7 +50,16 @@ namespace Web {
          */
         virtual void GetNextFrame() = 0;
 
+        /**
+         * @brief Called after Stop is called.
+         *
+         */
         virtual void PostStop();
+
+        /**
+         * @brief Called once Start is called.
+         *
+         */
         virtual void PreStart();
 
         void SetFPS(double fps);
@@ -80,13 +76,9 @@ namespace Web {
         bool imageReady {false};
 
        private:
-        bool running;
         double waitMs;
         int quality;
         int id;
-
-       private:
-        std::thread thread;
     };
 
     template <typename TFrame, bool SSL>
@@ -96,31 +88,6 @@ namespace Web {
         Observer::set_flag(status, LiveViewStatus::STOPPED);
 
         frame = Observer::ImageTransformation<TFrame>::BlackImage();
-    }
-
-    template <typename TFrame, bool SSL>
-    LiveVideo<TFrame, SSL>::~LiveVideo() {
-        this->Stop();
-    }
-
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::Start() {
-        OBSERVER_ASSERT(!running, "Live view alredy running!");
-
-        this->running = true;
-
-        thread = std::thread(&LiveVideo<TFrame, SSL>::InternalStart, this);
-    }
-
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::Stop() {
-        this->running = false;
-
-        if (thread.joinable()) {
-            thread.join();
-        }
-
-        this->PostStop();
     }
 
     template <typename TFrame, bool SSL>

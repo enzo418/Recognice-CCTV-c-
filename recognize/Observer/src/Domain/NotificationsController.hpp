@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../Blob/BlobGraphics.hpp"
-#include "../IFunctionality.hpp"
+#include "../Functionality.hpp"
 #include "../Pattern/Camera/ICameraEventSubscriber.hpp"
 #include "../Pattern/Event/IEventSubscriber.hpp"
 #include "../Pattern/ObserverBasics.hpp"
@@ -31,13 +31,7 @@ namespace Observer {
      */
     template <typename TFrame>
     class NotificationsController : public IEventSubscriber<TFrame>,
-                                    public IFunctionality {
-        /**
-         * @brief Todo: Make a specializations of this class as opencv,
-         * NotificationsConntrollerOPV,
-         * ImageNotificationOPV or OC or OpenCv,
-         * VideoNotOV...
-         */
+                                    public Functionality {
        public:
         explicit NotificationsController(Configuration* cfg);
         ~NotificationsController();
@@ -68,9 +62,7 @@ namespace Observer {
         void SubscribeToNewNotifications(
             INotificationEventSubscriber* subscriber);
 
-        void Start() override;
-
-        void Stop() override;
+        void InternalStart() override;
 
        protected:
         /**
@@ -97,8 +89,6 @@ namespace Observer {
         void Send(VideoNotification<TFrame> notification);
 
        private:
-        bool running;
-
         void AddService(IMessagingService* service,
                         NotificationsServiceConfiguration* cfg);
 
@@ -325,14 +315,8 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void NotificationsController<TFrame>::Start() {
-        this->running = true;
+    void NotificationsController<TFrame>::InternalStart() {
         this->ConsumeNotifications();
-    }
-
-    template <typename TFrame>
-    void NotificationsController<TFrame>::Stop() {
-        this->running = false;
     }
 
     template <typename TFrame>

@@ -2,7 +2,7 @@
 
 #include <numeric>
 
-#include "../IFunctionality.hpp"
+#include "../Functionality.hpp"
 #include "../Log/log.hpp"
 #include "../Pattern/Camera/ICameraEventSubscriber.hpp"
 #include "../Pattern/Event/IEventSubscriber.hpp"
@@ -16,15 +16,11 @@
 namespace Observer {
     template <typename TFrame>
     class EventValidator : public ICameraEventSubscriber<TFrame>,
-                           public IFunctionality {
+                           public Functionality {
        public:
         EventValidator(CameraConfiguration* cfg);
 
         void Add(CameraConfiguration* cfg, CameraEvent<TFrame> ev);
-
-        void Start() override;
-
-        void Stop() override;
 
         void SubscribeToEventValidationDone(
             IEventSubscriber<TFrame>* subscriber);
@@ -33,9 +29,11 @@ namespace Observer {
 
         ~EventValidator();
 
+       protected:
+        void InternalStart() override;
+
        private:
         CameraConfiguration* cameraCfg;
-        bool running;
 
         Semaphore smpQueue;
 
@@ -72,8 +70,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void EventValidator<TFrame>::Start() {
-        this->running = true;
+    void EventValidator<TFrame>::InternalStart() {
         while (this->running) {
             // wait until there is at least 1 item in the pool
             this->smpQueue.acquire();
@@ -133,11 +130,6 @@ namespace Observer {
     void EventValidator<TFrame>::update(CameraConfiguration* cam,
                                         CameraEvent<TFrame> ev) {
         this->Add(cam, std::move(ev));
-    }
-
-    template <typename TFrame>
-    void EventValidator<TFrame>::Stop() {
-        this->running = false;
     }
 
     template <typename TFrame>

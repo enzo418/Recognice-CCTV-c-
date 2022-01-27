@@ -4,7 +4,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../IFunctionality.hpp"
+#include "../Functionality.hpp"
 #include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
 #include "../Log/log.hpp"
@@ -20,7 +20,7 @@ namespace Observer {
      * @todo write docs
      */
     template <typename TFrame>
-    class FrameDisplay : public ISubscriber<TFrame>, public IFunctionality {
+    class FrameDisplay : public ISubscriber<TFrame>, public Functionality {
        public:
         /**
          * @param total Number of frames to display at the same time
@@ -29,17 +29,14 @@ namespace Observer {
 
         void SetNumberCameras(int total);
 
-        void Start() override;
-
-        void Stop() override;
-
         void update(TFrame frame) override;
+
+       protected:
+        void InternalStart() override;
 
        private:
         TFrame frame;
         std::mutex mutexFrame;
-
-        bool running;
     };
 
     template <typename TFrame>
@@ -49,9 +46,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void FrameDisplay<TFrame>::Start() {
-        this->running = true;
-
+    void FrameDisplay<TFrame>::InternalStart() {
         ImageDisplay<TFrame>::CreateWindow("images");
 
         while (this->running) {
@@ -63,11 +58,6 @@ namespace Observer {
         }
 
         ImageDisplay<TFrame>::DestroyWindow("images");
-    }
-
-    template <typename TFrame>
-    void FrameDisplay<TFrame>::Stop() {
-        this->running = false;
     }
 
     template <typename TFrame>

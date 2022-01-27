@@ -13,7 +13,7 @@
 #include "VideoWriter.hpp"
 
 // CameraEventSubscriber
-#include "../IFunctionality.hpp"
+#include "../Functionality.hpp"
 #include "FrameDisplay.hpp"
 #include "NotificationsController.hpp"
 #include "VideoSource.hpp"
@@ -37,28 +37,30 @@ namespace Observer {
      * when movement is detected
      */
     template <typename TFrame>
-    class CameraObserver : public IFunctionality {
+    class CameraObserver : public Functionality {
        public:
         /* TODO: The configuration should be passed on Start not on create if
          * we allow to use the same camera instance to use after Stop
          **/
         explicit CameraObserver(CameraConfiguration* configuration);
 
-        void Start() override;
-
-        void Stop() override;
-
         void SubscribeToCameraEvents(
             ICameraEventSubscriber<TFrame>* subscriber);
         void SubscribeToFramesUpdate(IFrameSubscriber<TFrame>* subscriber);
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
+       protected:
+        void ProcessFrame(TFrame& frame);
+
+        void ChangeDetected();
+
+        void NewVideoBuffer();
+
+        void InternalStart() override final;
+
        private:
         // camera configuration
         CameraConfiguration* cfg;
-
-        // is the camera running
-        bool running;
 
         // current change threshold
         double changeThreshold;
@@ -103,13 +105,6 @@ namespace Observer {
 
         // threshold publisher
         ThresholdEventPublisher thresholdPublisher;
-
-       protected:
-        void ProcessFrame(TFrame& frame);
-
-        void ChangeDetected();
-
-        void NewVideoBuffer();
     };
 
     template <typename TFrame>
@@ -129,7 +124,7 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void CameraObserver<TFrame>::Start() {
+    void CameraObserver<TFrame>::InternalStart() {
         OBSERVER_ASSERT(cfg->fps != 0, "FPS cannot be 0.");
 
         this->running = true;
@@ -197,11 +192,6 @@ namespace Observer {
         OBSERVER_TRACE("Camera '{}' closed", this->cfg->name);
 
         this->source.Close();
-    }
-
-    template <typename TFrame>
-    void CameraObserver<TFrame>::Stop() {
-        this->running = false;
     }
 
     template <typename TFrame>

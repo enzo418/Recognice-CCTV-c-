@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral<TFrame>> recognizer;
 
-    std::vector<std::pair<IFunctionality*, std::thread>> threads;
+    std::vector<IFunctionality*> threads;
 
     auto app = uWS::App();
 
@@ -85,9 +85,7 @@ int main(int argc, char** argv) {
     double fps = cap.GetFPS();
     cap.Close();
 
-    threads.push_back(
-        {&observer,
-         std::thread(&Observer::ObserverCentral<TFrame>::Start, &observer)});
+    threads.push_back(&observer);
 
     serverCtx.notificatorWS->Start();
 
@@ -150,15 +148,16 @@ int main(int argc, char** argv) {
 
                  auto uri = Web::LiveViewsManager<TFrame, SSL>::observerUri;
 
+                 if (!observer.IsRunning()) {
+                     observer.Start();
+                 }
+
                  if (serverCtx.liveViewsManager->CreateObserverView(uri)) {
                      std::string feed_id(
                          serverCtx.liveViewsManager->GetFeedId(uri));
 
                      res->end(GetSuccessAlertReponse(GetJsonString(
                          {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
-                 } else {
-                     res->end(GetErrorAlertReponse(GetJsonString(
-                         {{"error", "recognize is not  running", true}})));
                  }
              })
         .get("/*.*",
@@ -242,10 +241,6 @@ int main(int argc, char** argv) {
         .run();
 
     for (auto& funcThread : threads) {
-        std::get<0>(funcThread)->Stop();
-        auto& thread = std::get<1>(funcThread);
-        if (thread.joinable()) {
-            thread.join();
-        }
+        funcThread->Stop();
     }
 }

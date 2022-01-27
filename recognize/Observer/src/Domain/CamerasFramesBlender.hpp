@@ -6,7 +6,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../IFunctionality.hpp"
+#include "../Functionality.hpp"
 #include "../ImageDisplay.hpp"
 #include "../ImageTransformation.hpp"
 #include "../Log/log.hpp"
@@ -24,7 +24,7 @@ namespace Observer {
      */
     template <typename TFrame>
     class CamerasFramesBlender : public IFrameSubscriber<TFrame>,
-                                 public IFunctionality {
+                                 public Functionality {
        public:
         /**
          * @param total Number of frames to display at the same time
@@ -32,10 +32,6 @@ namespace Observer {
         explicit CamerasFramesBlender(OutputPreviewConfiguration* cfg);
 
         void SetNumberCameras(int total);
-
-        void Start() override;
-
-        void Stop() override;
 
         /**
          * @brief add a new frame to the available frames
@@ -49,6 +45,8 @@ namespace Observer {
        protected:
         void CalculateSleepTime(int totalNow);
 
+        void InternalStart() override;
+
        private:
         std::vector<std::queue<TFrame>> frames;
         std::mutex mtxFrames;
@@ -56,8 +54,6 @@ namespace Observer {
         OutputPreviewConfiguration* cfg;
 
         int maxFrames;
-
-        bool running;
 
        private:
         int sleepForMs;
@@ -77,12 +73,10 @@ namespace Observer {
     }
 
     template <typename TFrame>
-    void CamerasFramesBlender<TFrame>::Start() {
+    void CamerasFramesBlender<TFrame>::InternalStart() {
         OBSERVER_ASSERT(
             this->maxFrames != -1,
             "SetNumberCameras should be called before calling start");
-
-        this->running = true;
 
         std::vector<TFrame> framesToShow(maxFrames);
         std::vector<bool> cameraFirstFrameReaded(maxFrames);
@@ -130,11 +124,6 @@ namespace Observer {
 
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepForMs));
         }
-    }
-
-    template <typename TFrame>
-    void CamerasFramesBlender<TFrame>::Stop() {
-        this->running = false;
     }
 
     template <typename TFrame>
