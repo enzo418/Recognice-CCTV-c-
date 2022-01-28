@@ -2,11 +2,11 @@
 
 #include <vector>
 
+#include "IFrame.hpp"
 #include "Point.hpp"
 
 namespace Observer {
     // Forward declaration of the struct
-    template <typename T>
     struct ImageProcessing;
 
     // https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga819779b9857cc2f8601e6526a3a5bc71
@@ -26,10 +26,10 @@ namespace Observer {
         CONTOUR_CHAIN_APPROX_TC89_KCOS
     };
 
-    template <typename TFrame>
-    struct ImageProcessing {
-        static void FindContours(TFrame& frame,
-                                 std::vector<std::vector<Point>>& outContours,
-                                 int retrievalMode, int aproxMethod);
+    class IImageProcessing {
+       public:
+        virtual void FindContours(Frame& frame,
+                                  std::vector<std::vector<Point>>& outContours,
+                                  int retrievalMode, int aproxMethod) = 0;
     };
 }  // namespace Observer

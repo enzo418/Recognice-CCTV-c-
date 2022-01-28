@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BlobGraphics.hpp"
+#include "Frame.hpp"
 #include "ImageDisplay.hpp"
-#include "ImagePersistence.hpp"
+#include "ImageDrawBlob.hpp"
+#include "ImageIO.hpp"
 #include "ImageProcessing.hpp"
-#include "ImageTransformation.hpp"
 #include "VideoSource.hpp"
 #include "VideoWriter.hpp"

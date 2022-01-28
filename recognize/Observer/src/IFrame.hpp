@@ -1,12 +1,23 @@
 #pragma once
 
-#include <cuchar>
 #include <memory>
 #include <vector>
 
+#include "Rect.hpp"
 #include "Size.hpp"
 
 namespace Observer {
+    class Frame;
+
+    enum ColorSpaceConversion {
+        // RGB - Gray
+        COLOR_RGB2GRAY = 0,
+        COLOR_GRAY2RGB = 1,
+
+        // RGB - HLS
+        COLOR_HLS2RGB = 2,
+        COLOR_RGB2HLS = 3
+    };
 
     // function for each threhold type:
     // https://docs.opencv.org/4.x/d7/d1b/group__imgproc__misc.html#ggaa9e58d2860d4afa658ef70a9b1115576a147222a96556ebc1d948b372bcd7ac59
@@ -19,110 +30,86 @@ namespace Observer {
         THRESHOLD_TRIANGLE = 16
     };
 
-    enum ColorSpaceConversion {
-        // RGB - Gray
-        COLOR_RGB2GRAY = 0,
-        COLOR_GRAY2RGB = 1,
-
-        // RGB - HLS
-        COLOR_HLS2RGB = 2,
-        COLOR_RGB2HLS = 3
-    };
-
-    class IFrame;
-
-    class IFrameFilters {
+    /**
+     * @brief This interface defines basics operations that a frame can handle.
+     * The constructor of a frame would need at lest 3 different ones:
+     *      1. Frame(): Creates an empty frame
+     *      2. Frame(size, channels): Creates a frame with a size and number of
+     *         channels.
+     */
+    class IFrame {
        public:
         /**
-         * @brief Blurs an image using a Gaussian filter into another image.
+         * @brief Clone this frame
          *
-         * @param dst destination image
+         * @return Frame
+         */
+        virtual Frame Clone() = 0;
+
+        /**
+         * @brief Copy this frame into another one
+         *
+         * @param dst
+         */
+        virtual void CopyTo(Frame& dst) = 0;
+
+        /**
+         * @brief Creates a black image with the same size and type of
+         * this one.
+         *
+         * @return Frame
+         */
+        virtual Frame GetBlackImage() = 0;
+
+        /**
+         * @brief Rotates a image
+         *
+         * @param angle angle, on degrees
+         */
+        virtual void RotateImage(double angle) = 0;
+
+        /**
+         * @brief Resize a image
+         *
+         * @param size size
+         */
+        virtual void Resize(const Size& size) = 0;
+
+        /**
+         * @brief Scales a image.
+         *
+         * @param scaleFactor scale factor
+         */
+        virtual void Resize(const double scaleFactorX,
+                            const double scaleFactorY) = 0;
+
+        virtual Frame AbsoluteDifference(Frame& source2) = 0;
+
+        /**
+         * @brief Crop a image, no data is copied.
+         * The destionation image pointer will be pointing to the the sub-array
+         * associated with the specified roi.
+         *
+         * @param roi region of interest
+         */
+        virtual void CropImage(const Rect& roi) = 0;
+
+        /**
+         * @brief Blurs an image using a Gaussian filter
+         *
          * @param radius
          */
         virtual void GaussianBlur(int radius) = 0;
 
         /**
-         * @brief Blurs an image using a Gaussian filter into another image.
-         * This is an overload of the method above.
+         * @brief Converts an image from one color space to another
          *
-         * @param dst destination image
-         * @param radius
-         */
-        virtual void GaussianBlur(IFrame& dst, int radius) = 0;
-
-        /**
-         * @brief Converts this image from one color space to another.
-         *
+         * @param source source image
          * @param dst destination image
          * @param conversionType space conversion (ColorSpaceConversion)
          */
         virtual void ToColorSpace(
             int conversionType = ColorSpaceConversion::COLOR_RGB2GRAY) = 0;
-
-        /**
-         * @brief Converts this image from one color space to another, into
-         * another image.
-         * This is an overload of the method above.
-         *
-         * @param dst destination image
-         * @param conversionType space conversion (ColorSpaceConversion)
-         */
-        virtual void ToColorSpace(
-            IFrame& dst,
-            int conversionType = ColorSpaceConversion::COLOR_RGB2GRAY) = 0;
-
-       protected:
-        IFrame* frame;
-    };
-
-    class IFrame : public IFrameFilters {
-       public:
-        /**
-         * @brief Clone an image
-         *
-         * @return IFrame
-         */
-        virtual std::unique_ptr<IFrame> Clone() = 0;
-
-        /**
-         * @brief Copy this image.
-         *
-         * @param dst destination of the copy
-         */
-        virtual void CopyTop(IFrame& dst) = 0;
-
-        /**
-         * @brief Rotate this image.
-         *
-         * @param degrees
-         */
-        virtual void Rotate(double degrees) = 0;
-
-        /**
-         * @brief Calculates the absolute differente with frame2.
-         *
-         * @param frame2 frame to calculate the difference with frame.
-         * @param dst frame where the difference is stored
-         */
-        virtual void AbsoluteDifference(IFrame& frame2, IFrame& dst) = 0;
-
-        // virtual static void BlackImage();
-
-        /**
-         * @brief Resize the frame
-         *
-         * @param size target size
-         */
-        virtual void Resize(Size& size);
-
-        /**
-         * @brief Resize the frame
-         * If factorx = 2, makes the image twice the witdh.
-         *
-         * @param factorX target factor x
-         * @param factorY target factor y
-         */
-        virtual void Resize(double factorX, double factorY);
 
         /**
          * @brief This function applies fixed-level thresholding to a image.
@@ -135,17 +122,17 @@ namespace Observer {
          * @param threshold
          * @param max value to use when applying THRESHOLD_BINARY
          * or THRESHOLD_BINARY_INV
-         * @param type See ThresholdType
+         * @param type threshold type (ThresholdType)
          */
-        virtual void Threshold(double threshold, double max, int type);
+        virtual void Threshold(double threshold, double max, int type) = 0;
 
         /**
-         * @brief Count the number of non-zero elements in the image.
-         * This frame need to be SINGLE-CHANNEL.
+         * @brief Count the number of non-zero elements in the image
+         * (SINGLE-CHANNEL).
          *
          * @return int count
          */
-        virtual int CountNonZero();
+        virtual int CountNonZero() = 0;
 
         /**
          * @brief Get the Size object
@@ -153,33 +140,27 @@ namespace Observer {
          * @param image
          * @return Size
          */
-        virtual Size GetSize();
+        virtual Size GetSize() = 0;
 
         /**
-         * @brief Adds a image and this one into this one.
+         * @brief Adds one image to this one. They need to be the same number
+         * of channels.
          *
-         * @param image2
+         * @param dst
          */
-        virtual void AddImages(IFrame& image2);
+        virtual void Add(Frame& imageToAdd) = 0;
 
         /**
-         * @brief Adds a image to this one into another image.
-         * This method is an overload of the one above.
-         *
-         * @param image2
-         * @param dst destination.
-         */
-        virtual void AddImages(IFrame& image2, IFrame& dst);
-
-        /**
-         * @brief Encode this image.
+         * @brief Encodes the image.
          *
          * @param ext File extension that defines the output format
          * @param quality Quality of the resulting image, 0-100, 100 is best
          * quality.
          * @param buffer Output buffer.
          */
-        static inline void EncodeImage(const std::string& ext, int quality,
-                                       std::vector<unsigned char>& buffer);
+        virtual void EncodeImage(const std::string& ext, int quality,
+                                 std::vector<unsigned char>& buffer) = 0;
+
+        virtual bool IsEmpty() = 0;
     };
 }  // namespace Observer

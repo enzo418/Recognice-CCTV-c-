@@ -2,19 +2,23 @@
 
 #include <iostream>
 
-namespace Observer {
-    template <typename T>
-    struct ImagePersistence;
+#include "IFrame.hpp"
 
-    template <typename T>
-    struct ImagePersistence {
+namespace Observer {
+
+    /**
+     * @brief Handles Image input/output.
+     *
+     */
+    class IImageIO {
+       public:
         /**
          * @brief Writes an image to disk
          *
          * @param path path with the filename
          * @param image
          */
-        static void SaveImage(const std::string& path, T& image);
+        virtual void SaveImage(const std::string& path, Frame& image) = 0;
 
         /**
          * @brief Read an image from disk
@@ -22,6 +26,6 @@ namespace Observer {
          * @param path path to read the image from
          * @param imageOut
          */
-        static void ReadImage(const std::string& path, T& imageOut);
+        virtual void ReadImage(const std::string& path, Frame& imageOut) = 0;
     };
 }  // namespace Observer

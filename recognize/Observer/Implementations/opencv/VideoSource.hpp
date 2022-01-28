@@ -1,31 +1,22 @@
 #pragma once
 
-#include "../../src/Domain/VideoSource.hpp"
+#include "../../src/Domain/IVideoSource.hpp"
+#include "Frame.hpp"
 
 namespace Observer {
-    template <>
-    class VideoSource<cv::Mat> : public IVideoSource<cv::Mat> {
+    class VideoSource : public IVideoSource<Frame> {
        public:
         VideoSource() = default;
 
-        void Open(const std::string& url) override {
-            try {
-                this->videoCapture.open(url);
-            } catch (...) {
-                // ffmpeg if cannot open it terminates the program, so we need
-                // to catch it. To know if the source is ok check for isOpened
-            }
-        }
+        void Open(const std::string& url) override;
 
-        void Close() override { this->videoCapture.release(); }
+        void Close() override;
 
-        bool GetNextFrame(cv::Mat& frame) override {
-            return this->videoCapture.read(frame);
-        }
+        bool GetNextFrame(Frame& frame) override;
 
-        bool isOpened() override { return this->videoCapture.isOpened(); }
+        bool isOpened() override;
 
-        int GetFPS() override { return videoCapture.get(cv::CAP_PROP_FPS); }
+        int GetFPS() override;
 
        private:
         cv::VideoCapture videoCapture;

@@ -2,38 +2,35 @@
 
 #include "../../src/Blob/FramesProcessor/FrameContextualizer.hpp"
 
-#include <vector>
-
 namespace Observer {
-    template <>
-    void FrameContextualizer<cv::Mat>::InitializePostConstructor() {
+    void FrameContextualizer::InitializePostConstructor() {
         morphologyElement = getStructuringElement(
             cv::MORPH_RECT,
             cv::Size(2 * params.DilationSize + 1, 2 * params.DilationSize + 1),
             cv::Point(params.DilationSize, params.DilationSize));
     }
 
-    template <>
-    void FrameContextualizer<cv::Mat>::ApplyThresholding(cv::Mat& diffFrame) {
+    void FrameContextualizer::ApplyThresholding(Frame& diffFrame) {
+        auto& frame = diffFrame.GetInternalFrame();
+
         // Normalizing noise
-        cv::medianBlur(diffFrame, diffFrame, params.MedianBlurKernelSize);
+        cv::medianBlur(frame, frame, params.MedianBlurKernelSize);
 
         // Normalizing noise 2
-        cv::GaussianBlur(diffFrame, diffFrame,
+        cv::GaussianBlur(frame, frame,
                          cv::Size(params.GaussianBlurKernelSize,
                                   params.GaussianBlurKernelSize),
                          10);
 
         // Normalizing noise 3
-        cv::morphologyEx(diffFrame, diffFrame, cv::MORPH_OPEN,
-                         morphologyElement);
+        cv::morphologyEx(frame, frame, cv::MORPH_OPEN, morphologyElement);
 
         double mediumBrigthness = 10;
-        auto nonzero = cv::countNonZero(diffFrame);
+        auto nonzero = cv::countNonZero(frame);
         if (nonzero != 0) {
-            mediumBrigthness = (double)cv::sum(diffFrame)[0] / nonzero;
+            mediumBrigthness = (double)cv::sum(frame)[0] / nonzero;
         }
-        cv::threshold(diffFrame, diffFrame,
+        cv::threshold(frame, frame,
                       mediumBrigthness * params.BrightnessAboveThreshold, 255,
                       cv::THRESH_BINARY);
     }

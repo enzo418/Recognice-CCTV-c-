@@ -5,7 +5,6 @@
 
 namespace Observer {
     // all the implementations (VideoSource) will provide a type
-    template <typename T>
     class VideoSource;
 
     template <typename TFrame>
