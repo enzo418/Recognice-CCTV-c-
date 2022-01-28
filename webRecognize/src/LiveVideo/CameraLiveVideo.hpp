@@ -3,7 +3,7 @@
 #include <mutex>
 #include <string_view>
 
-#include "../../../recognize/Observer/src/Domain/VideoSource.hpp"
+#include "../../../recognize/Observer/src/Implementation.hpp"
 #include "LiveVideo.hpp"
 #include "LiveViewExceptions.hpp"
 
@@ -34,7 +34,7 @@ namespace Web {
         void OpenCamera();
 
        private:
-        Observer::VideoSource<TFrame> source;
+        Observer::VideoSource source;
         std::string cameraUri;
 
        private:

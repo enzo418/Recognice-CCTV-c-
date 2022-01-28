@@ -5,7 +5,6 @@
 #include <thread>
 
 #include "../../../recognize/Observer/src/Functionality.hpp"
-#include "../../../recognize/Observer/src/ImageTransformation.hpp"
 #include "../../../recognize/Observer/src/Log/log.hpp"
 #include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
 #include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
@@ -83,11 +82,11 @@ namespace Web {
 
     template <typename TFrame, bool SSL>
     LiveVideo<TFrame, SSL>::LiveVideo(int pFps, int pQuality)
-        : waitMs(1000.0 / (double)pFps), quality(pQuality) {
+        : waitMs(1000.0 / (double)pFps),
+          quality(pQuality),
+          frame(Observer::Size(640, 360), 3) {
         Observer::set_flag(status, LiveViewStatus::CLOSED);
         Observer::set_flag(status, LiveViewStatus::STOPPED);
-
-        frame = Observer::ImageTransformation<TFrame>::BlackImage();
     }
 
     template <typename TFrame, bool SSL>
@@ -98,7 +97,7 @@ namespace Web {
 
     template <typename TFrame, bool SSL>
     void LiveVideo<TFrame, SSL>::InternalStart() {
-        std::vector<uchar> buffer;
+        std::vector<unsigned char> buffer;
         this->PreStart();
 
         if (Observer::has_flag(status, LiveViewStatus::STOPPED)) {
@@ -112,8 +111,7 @@ namespace Web {
 
             this->mtxFrame.lock();
             if (!this->encoded && this->imageReady) {
-                Observer::ImageTransformation<TFrame>::EncodeImage(
-                    ".jpg", this->frame, this->quality, buffer);
+                this->frame.EncodeImage(".jpg", this->quality, buffer);
                 this->encoded = true;
             }
             this->mtxFrame.unlock();

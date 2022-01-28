@@ -2,7 +2,6 @@
 #include <jsoncpp/json/writer.h>
 #include <spdlog/fmt/bundled/format.h>
 
-#include "../../recognize/Observer/Implementations/opencv/Implementation.hpp"
 #include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../recognize/Observer/src/Domain/ObserverCentral.hpp"
 #include "../uWebSockets/src/App.h"
@@ -50,7 +49,7 @@ int main(int argc, char** argv) {
     }
 
     // recognizer instance
-    std::shared_ptr<rc::ObserverCentral<TFrame>> recognizer;
+    std::shared_ptr<rc::ObserverCentral> recognizer;
 
     std::vector<IFunctionality*> threads;
 
@@ -74,13 +73,13 @@ int main(int argc, char** argv) {
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
 
-    Observer::ObserverCentral<TFrame> observer(cfg);
+    Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
     observer.SubscribeToNewNotifications(
         (Observer::INotificationEventSubscriber*)serverCtx.notificatorWS.get());
 
-    Observer::VideoSource<TFrame> cap;
+    Observer::VideoSource cap;
     cap.Open(cfg.camerasConfiguration[0].url);
     double fps = cap.GetFPS();
     cap.Close();

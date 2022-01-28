@@ -29,8 +29,7 @@ namespace Web {
         std::lock_guard<std::mutex> guard_f(this->mtxFrame);
         // OBSERVER_TRACE("Updating image");
 
-        Observer::Size size =
-            Observer::ImageTransformation<TFrame>::GetSize(pFrame);
+        Observer::Size size = pFrame.GetSize();
 
         if (!size.empty()) {
             this->frame = pFrame;

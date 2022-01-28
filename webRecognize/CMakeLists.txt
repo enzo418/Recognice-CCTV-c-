@@ -33,7 +33,7 @@ file(GLOB STREAM_CONTENT_SRC "${source_dir}/src/stream_content/*.cpp")
 
 file(GLOB NOTIFICATIONS_SR "${source_dir}/src/Notifications/*.cpp")
 
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
+# set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
 set(SOURCES ${COMMON_SRC} ${NOTIFICATIONS_SR} ${STREAM_CONTENT_SRC})
 
