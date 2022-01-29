@@ -13,6 +13,7 @@
 !*.html
 !favicon.svg
 !.prettierrc
+!.clang-format
 !LICENSE
 
 # server
