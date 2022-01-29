@@ -8,8 +8,8 @@
 #include "LiveViewExceptions.hpp"
 
 namespace Web {
-    template <typename TFrame, bool SSL>
-    class CameraLiveVideo : public LiveVideo<TFrame, SSL> {
+    template <bool SSL>
+    class CameraLiveVideo : public LiveVideo<SSL> {
        public:
         CameraLiveVideo(const std::string& pCameraUri, int quality);
         virtual ~CameraLiveVideo() {}
@@ -41,19 +41,19 @@ namespace Web {
         typedef LiveViewStatus Status;
     };
 
-    template <typename TFrame, bool SSL>
-    CameraLiveVideo<TFrame, SSL>::CameraLiveVideo(const std::string& pCameraUri,
-                                                  int pQuality)
-        : LiveVideo<TFrame, SSL>(100, pQuality), cameraUri(pCameraUri) {
+    template <bool SSL>
+    CameraLiveVideo<SSL>::CameraLiveVideo(const std::string& pCameraUri,
+                                          int pQuality)
+        : LiveVideo<SSL>(100, pQuality), cameraUri(pCameraUri) {
         this->OpenCamera();
 
         if (Observer::has_flag(this->status, Status::OPEN)) {
-            LiveVideo<TFrame, SSL>::SetFPS(source.GetFPS());
+            LiveVideo<SSL>::SetFPS(source.GetFPS());
         }
     }
 
-    template <typename TFrame, bool SSL>
-    void CameraLiveVideo<TFrame, SSL>::GetNextFrame() {
+    template <bool SSL>
+    void CameraLiveVideo<SSL>::GetNextFrame() {
         /**
          * There is no need to lock the frame mutex since it's the only
          * way to get the frames and its called from the main loop.
@@ -63,23 +63,23 @@ namespace Web {
         this->NewValidFrameReceived();
     }
 
-    template <typename TFrame, bool SSL>
-    std::string_view CameraLiveVideo<TFrame, SSL>::GetURI() {
+    template <bool SSL>
+    std::string_view CameraLiveVideo<SSL>::GetURI() {
         return this->cameraUri;
     }
 
-    template <typename TFrame, bool SSL>
-    void CameraLiveVideo<TFrame, SSL>::PostStop() {
+    template <bool SSL>
+    void CameraLiveVideo<SSL>::PostStop() {
         source.Close();
     }
 
-    template <typename TFrame, bool SSL>
-    void CameraLiveVideo<TFrame, SSL>::PreStart() {
+    template <bool SSL>
+    void CameraLiveVideo<SSL>::PreStart() {
         this->OpenCamera();
     }
 
-    template <typename TFrame, bool SSL>
-    void CameraLiveVideo<TFrame, SSL>::OpenCamera() {
+    template <bool SSL>
+    void CameraLiveVideo<SSL>::OpenCamera() {
         source.Open(cameraUri);
 
         if (source.isOpened()) {

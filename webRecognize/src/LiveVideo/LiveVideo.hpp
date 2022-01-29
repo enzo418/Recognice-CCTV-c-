@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "../../../recognize/Observer/src/Functionality.hpp"
+#include "../../../recognize/Observer/src/Implementation.hpp"
 #include "../../../recognize/Observer/src/Log/log.hpp"
 #include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
 #include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
@@ -30,7 +31,7 @@ struct enable_bitmask_operators<Web::LiveViewStatus> {
 };
 
 namespace Web {
-    template <typename TFrame, bool SSL>
+    template <bool SSL>
     class LiveVideo : public Functionality,
                       public WebsocketService<SSL, PerSocketData> {
        public:
@@ -66,7 +67,7 @@ namespace Web {
         void SetQuality(int quality);
 
        protected:
-        TFrame frame;
+        Observer::Frame frame;
         std::mutex mtxFrame;
         LiveViewStatus status;
 
@@ -80,8 +81,8 @@ namespace Web {
         int id;
     };
 
-    template <typename TFrame, bool SSL>
-    LiveVideo<TFrame, SSL>::LiveVideo(int pFps, int pQuality)
+    template <bool SSL>
+    LiveVideo<SSL>::LiveVideo(int pFps, int pQuality)
         : waitMs(1000.0 / (double)pFps),
           quality(pQuality),
           frame(Observer::Size(640, 360), 3) {
@@ -89,14 +90,14 @@ namespace Web {
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::NewValidFrameReceived() {
+    template <bool SSL>
+    void LiveVideo<SSL>::NewValidFrameReceived() {
         this->imageReady = true;
         this->encoded = false;
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::InternalStart() {
+    template <bool SSL>
+    void LiveVideo<SSL>::InternalStart() {
         std::vector<unsigned char> buffer;
         this->PreStart();
 
@@ -125,24 +126,24 @@ namespace Web {
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::SetFPS(double fps) {
+    template <bool SSL>
+    void LiveVideo<SSL>::SetFPS(double fps) {
         this->waitMs = 1000.0 / fps;
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::SetQuality(int pQuality) {
+    template <bool SSL>
+    void LiveVideo<SSL>::SetQuality(int pQuality) {
         this->quality = pQuality;
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::PostStop() {}
+    template <bool SSL>
+    void LiveVideo<SSL>::PostStop() {}
 
-    template <typename TFrame, bool SSL>
-    void LiveVideo<TFrame, SSL>::PreStart() {}
+    template <bool SSL>
+    void LiveVideo<SSL>::PreStart() {}
 
-    template <typename TFrame, bool SSL>
-    LiveViewStatus LiveVideo<TFrame, SSL>::GetStatus() {
+    template <bool SSL>
+    LiveViewStatus LiveVideo<SSL>::GetStatus() {
         return status;
     }
 }  // namespace Web
