@@ -11,21 +11,20 @@
 #include "ObserverLiveVideo.hpp"
 
 namespace Web {
-    template <typename TFrame, bool SSL>
+    template <bool SSL>
     class LiveViewsManager {
        public:
         constexpr static const char* observerUri = "observer";
         constexpr static const char* observerFeedId = "feed_observer";
 
        public:
-        LiveViewsManager(int observerFPS,
-                         RecognizeContext<TFrame>* recognizeCtx,
+        LiveViewsManager(int observerFPS, RecognizeContext* recognizeCtx,
                          int compressionQuality = 90);
 
         ~LiveViewsManager();
 
        private:
-        typedef typename LiveVideo<TFrame, SSL>::WebSocketClient Client;
+        typedef typename LiveVideo<SSL>::WebSocketClient Client;
 
        public:
         void AddClient(Client* client);
@@ -72,7 +71,7 @@ namespace Web {
          */
         bool CreateObserverView(const std::string& uri);
 
-        LiveVideo<TFrame, SSL>* GetLiveView(const std::string& feed_id);
+        LiveVideo<SSL>* GetLiveView(const std::string& feed_id);
 
         LiveViewStatus GetStatus(const std::string& feed_id);
 
@@ -88,31 +87,31 @@ namespace Web {
 
        private:
         std::map<std::string, std::string> mapUriToFeed;
-        std::map<std::string, LiveVideo<TFrame, SSL>*> camerasLiveView;
+        std::map<std::string, LiveVideo<SSL>*> camerasLiveView;
 
        private:
-        RecognizeContext<TFrame>* recognizeCtx;
+        RecognizeContext* recognizeCtx;
         int compressionQuality;
         int observerFPS;
     };
 
-    template <typename TFrame, bool SSL>
-    LiveViewsManager<TFrame, SSL>::LiveViewsManager(
-        int pObserverFPS, RecognizeContext<TFrame>* pRecognizeCtx,
-        int pCompressionQuality)
+    template <bool SSL>
+    LiveViewsManager<SSL>::LiveViewsManager(int pObserverFPS,
+                                            RecognizeContext* pRecognizeCtx,
+                                            int pCompressionQuality)
         : observerFPS(pObserverFPS),
           recognizeCtx(pRecognizeCtx),
           compressionQuality(pCompressionQuality) {}
 
-    template <typename TFrame, bool SSL>
-    LiveViewsManager<TFrame, SSL>::~LiveViewsManager() {
+    template <bool SSL>
+    LiveViewsManager<SSL>::~LiveViewsManager() {
         for (auto& [k, v] : camerasLiveView) {
             delete v;
         }
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveViewsManager<TFrame, SSL>::AddClient(Client* client) {
+    template <bool SSL>
+    void LiveViewsManager<SSL>::AddClient(Client* client) {
         std::string feedId(client->getUserData()->pathSubscribed);
         auto feed = camerasLiveView[feedId];
         feed->AddClient(client);
@@ -124,8 +123,8 @@ namespace Web {
         }
     }
 
-    template <typename TFrame, bool SSL>
-    void LiveViewsManager<TFrame, SSL>::RemoveClient(Client* client) {
+    template <bool SSL>
+    void LiveViewsManager<SSL>::RemoveClient(Client* client) {
         std::string feedId(client->getUserData()->pathSubscribed);
         auto feed = camerasLiveView[feedId];
 
@@ -137,9 +136,8 @@ namespace Web {
         }
     }
 
-    template <typename TFrame, bool SSL>
-    std::string_view LiveViewsManager<TFrame, SSL>::GetFeedId(
-        const std::string& uri) {
+    template <bool SSL>
+    std::string_view LiveViewsManager<SSL>::GetFeedId(const std::string& uri) {
         if (!mapUriToFeed.contains(uri)) {
             return {"", 0};
         }
@@ -147,25 +145,23 @@ namespace Web {
         return std::string_view(mapUriToFeed[uri]);
     }
 
-    template <typename TFrame, bool SSL>
-    LiveVideo<TFrame, SSL>* LiveViewsManager<TFrame, SSL>::GetLiveView(
+    template <bool SSL>
+    LiveVideo<SSL>* LiveViewsManager<SSL>::GetLiveView(
         const std::string& feedId) {
         return camerasLiveView[feedId];
     }
 
-    template <typename TFrame, bool SSL>
-    bool LiveViewsManager<TFrame, SSL>::Exists(const std::string& feedID) {
+    template <bool SSL>
+    bool LiveViewsManager<SSL>::Exists(const std::string& feedID) {
         // map has that key and unique pointer is not empty
         return camerasLiveView.contains(feedID);
     }
 
-    template <typename TFrame, bool SSL>
-    bool LiveViewsManager<TFrame, SSL>::CreateCameraView(
-        const std::string& uri) {
+    template <bool SSL>
+    bool LiveViewsManager<SSL>::CreateCameraView(const std::string& uri) {
         std::string feedId = std::to_string(camerasLiveView.size());
 
-        auto camera =
-            new CameraLiveVideo<TFrame, SSL>(uri, this->compressionQuality);
+        auto camera = new CameraLiveVideo<SSL>(uri, this->compressionQuality);
 
         bool cameraDidOpen =
             !Observer::has_flag(camera->GetStatus(), LiveViewStatus::ERROR);
@@ -181,26 +177,25 @@ namespace Web {
         return cameraDidOpen;
     }
 
-    template <typename TFrame, bool SSL>
-    bool LiveViewsManager<TFrame, SSL>::CreateObserverView(
-        const std::string& uri) {
+    template <bool SSL>
+    bool LiveViewsManager<SSL>::CreateObserverView(const std::string& uri) {
         if (!recognizeCtx->observer) {
             return false;
         }
 
-        camerasLiveView[observerFeedId] = new ObserverLiveVideo<TFrame, SSL>(
-            observerFPS, this->compressionQuality);
+        camerasLiveView[observerFeedId] =
+            new ObserverLiveVideo<SSL>(observerFPS, this->compressionQuality);
 
         recognizeCtx->observer->SubscribeToFrames(
-            (ObserverLiveVideo<TFrame, SSL>*)camerasLiveView[observerFeedId]);
+            (ObserverLiveVideo<SSL>*)camerasLiveView[observerFeedId]);
 
         mapUriToFeed[uri] = observerFeedId;
 
         return true;
     }
 
-    template <typename TFrame, bool SSL>
-    LiveViewStatus LiveViewsManager<TFrame, SSL>::GetStatus(
+    template <bool SSL>
+    LiveViewStatus LiveViewsManager<SSL>::GetStatus(
         const std::string& feed_id) {
         return camerasLiveView[feed_id]->GetStatus();
     }

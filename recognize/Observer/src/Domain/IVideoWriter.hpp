@@ -7,7 +7,6 @@
 
 namespace Observer {  // all the implementations (VideoWriter) will provide a
                       // type
-    template <typename T>
     class VideoWriter;
 
     template <typename TFrame>

@@ -6,22 +6,10 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/Implementations/opencv/Implementation.hpp"
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
-#include "../../Observer/src/Log/log.hpp"
-#include "../src/Blob/BlobDetector/BlobDetector.hpp"
-#include "../src/Domain/Configuration/Configuration.hpp"
-#include "../src/Domain/VideoSource.hpp"
-#include "../src/Domain/VideoWriter.hpp"
-#include "../src/ImageDisplay.hpp"
-#include "../src/ImageTransformation.hpp"
-#include "../src/Timer.hpp"
-#include "../src/Utils/SpecialFunctions.hpp"
 
 void TestBlobDetection(Observer::Configuration* cfg, int start, int end);
-
-using FrameType = cv::Mat;
 
 using namespace Observer;
 
@@ -74,7 +62,7 @@ int main(int argc, char** argv) {
 
 void TestBlobDetection(Observer::Configuration* cfg, int videostart,
                        int videoend) {
-    ImageDisplay<FrameType>::CreateWindow("image");
+    ImageDisplay::Get().CreateWindow("image");
 
     OBSERVER_ASSERT(!cfg->camerasConfiguration.empty(),
                     "There should be at least 1 camera.");
@@ -84,10 +72,10 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
     auto videouri = camera.url;
 
     // Get the video
-    Observer::VideoSource<FrameType> cap;
+    Observer::VideoSource cap;
     cap.Open(videouri);
 
-    std::vector<FrameType> frames;
+    std::vector<Frame> frames;
 
     auto fps = cap.GetFPS();
 
@@ -109,24 +97,23 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
 
     BlobFilters filtersBlob = camera.blobDetection.blobFilters;
 
-    ContoursDetector<FrameType> contoursDetector(param, filter);
-    BlobDetector<FrameType> detector(detectorParams, filtersBlob,
-                                     contoursDetector);
+    ContoursDetector contoursDetector(param, filter);
+    BlobDetector detector(detectorParams, filtersBlob, contoursDetector);
 
     Size resizeSize = param.Resize.size;
 
     int iFrame = 0;
     int max = std::numeric_limits<int>::max();
-    FrameType frame;
+    Frame frame;
 
     Timer<std::chrono::seconds> bufferStartTime(true);
 
     while (bufferStartTime.GetDuration() < max) {
         if (bufferStartTime.GetDuration() >= videostart &&
             cap.GetNextFrame(frame)) {
-            ImageTransformation<FrameType>::Resize(frame, frame, resizeSize);
+            frame.Resize(resizeSize);
 
-            frames.push_back(frame.clone());
+            frames.push_back(frame.Clone());
 
             iFrame++;
         }
@@ -152,13 +139,13 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
     OBSERVER_TRACE("Detection Took: {0} μs ({1} ms)", took_detection,
                    took_detection / 1000);
 
-    BlobGraphics<FrameType>::DrawBlobs(frames, blobs);
+    ImageDrawBlob::Get().DrawBlobs(frames, blobs);
 
     int i = 0;
     while (i < frames.size()) {
         frame = frames[i];
 
-        ImageDisplay<FrameType>::ShowImage("image", frame);
+        ImageDisplay::Get().ShowImage("image", frame);
 
         double wait = (1000.0 / fps) - (took_contours + took_detection) / 1000;
         wait = wait <= 5 ? 10 : wait;
@@ -169,5 +156,5 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
     }
     std::cout << "blobs: " << blobs.size() << std::endl;
 
-    ImageDisplay<FrameType>::DestroyWindow("image");
+    ImageDisplay::Get().DestroyWindow("image");
 }

@@ -1,23 +1,20 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-
-#include "../ImageDisplay.hpp"
-#include "../ImageTransformation.hpp"
+#include "../Implementation.hpp"
 #include "../Log/log.hpp"
 #include "../Rect.hpp"
 
 namespace Observer {
-    template <typename T>
+
     class FrameProcessor {
        private:
         // const Size resolutionSize = Size(640, 360);
 
         // last frame readed
-        T lastFrame;
+        Frame lastFrame;
 
         // holder for the diff frame
-        T diffFrame;
+        Frame diffFrame;
 
         //
         double accumulatorThresholds;
@@ -43,76 +40,9 @@ namespace Observer {
         FrameProcessor(Size resizeSize, Rect roi, double noiseThreshold,
                        double rotation);
 
-        FrameProcessor& NormalizeFrame(T& frame) &;
+        FrameProcessor& NormalizeFrame(Frame& frame) &;
 
         double DetectChanges();
     };
-
-    template <typename T>
-    FrameProcessor<T>::FrameProcessor(Size pResizeSize, Rect pRoi,
-                                      double pNoiseThreshold,
-                                      double pRotation) {
-        this->roi = pRoi;
-        this->noiseThreshold = pNoiseThreshold;
-        this->rotation = pRotation;
-        this->lastFrame = ImageTransformation<T>::BlackImage();
-        this->firstCall = true;
-        this->resizeSize = pResizeSize;
-
-        OBSERVER_ASSERT(pRoi.x + pRoi.width <= resizeSize.width &&
-                            pRoi.y + pRoi.height <= resizeSize.height,
-                        "The roi is taken from the resized image so it should "
-                        "be inside it.");
-    }
-
-    template <typename T>
-    FrameProcessor<T>& FrameProcessor<T>::NormalizeFrame(T& frame) & {
-        ImageTransformation<T>::Resize(frame, frame, this->resizeSize);
-
-        // rotation is an expensive operation, try to avoid it
-        if (this->rotation != 0) {
-            ImageTransformation<T>::RotateImage(frame, this->rotation);
-        }
-
-        // crop the frame
-        if (!this->roi.empty()) {
-            ImageTransformation<T>::CropImage(frame, frame, this->roi);
-        }
-
-        // to black and white
-        ImageTransformation<T>::ToColorSpace(
-            frame, frame, ColorSpaceConversion::COLOR_RGB2GRAY);
-
-        // set lastFrame to a valid frame so we can operate over it
-        if (firstCall) {
-            // ImageDisplay<T>::CreateWindow("ee");
-            firstCall = false;
-            ImageTransformation<T>::CopyImage(frame, this->lastFrame);
-        }
-
-        // get the difference between the current and last frame
-        ImageTransformation<T>::AbsoluteDifference(this->lastFrame, frame,
-                                                   this->diffFrame);
-
-        // ImageDisplay<T>::ShowImage("ee", this->diffFrame);
-
-        // make the changes bigger
-        ImageTransformation<T>::GaussianBlur(this->diffFrame, this->diffFrame,
-                                             3);
-
-        // remove small changes/noise
-        ImageTransformation<T>::Threshold(this->diffFrame, this->diffFrame,
-                                          this->noiseThreshold, 255,
-                                          THRESHOLD_BINARY);
-
-        ImageTransformation<T>::CopyImage(frame, lastFrame);
-
-        return *this;
-    }
-
-    template <typename T>
-    double FrameProcessor<T>::DetectChanges() {
-        return ImageTransformation<T>::CountNonZero(this->diffFrame);
-    }
 
 }  // namespace Observer

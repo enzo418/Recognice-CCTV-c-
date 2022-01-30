@@ -2,7 +2,6 @@
 #include <jsoncpp/json/writer.h>
 #include <spdlog/fmt/bundled/format.h>
 
-#include "../../recognize/Observer/Implementations/opencv/Implementation.hpp"
 #include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../recognize/Observer/src/Domain/ObserverCentral.hpp"
 #include "../uWebSockets/src/App.h"
@@ -50,13 +49,13 @@ int main(int argc, char** argv) {
     }
 
     // recognizer instance
-    std::shared_ptr<rc::ObserverCentral<TFrame>> recognizer;
+    std::shared_ptr<rc::ObserverCentral> recognizer;
 
     std::vector<IFunctionality*> threads;
 
     auto app = uWS::App();
 
-    Web::ServerContext<TFrame, SSL> serverCtx = {
+    Web::ServerContext<SSL> serverCtx = {
         .rootFolder = fs::current_path() / "web",
         .port = 3001,
         .recognizeContext = {true, nullptr},
@@ -65,22 +64,21 @@ int main(int argc, char** argv) {
         // class that manages all of this, like App or Server. But for now it
         // will stay like this until more features are added and become stable.
 
-        .liveViewsManager =
-            std::make_unique<Web::LiveViewsManager<TFrame, SSL>>(
-                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext),
+        .liveViewsManager = std::make_unique<Web::LiveViewsManager<SSL>>(
+            OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext),
         .notificatorWS = std::make_unique<Web::WebsocketNotificator<SSL>>()};
 
     FileStreamer fileStreamer(serverCtx.rootFolder);
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
 
-    Observer::ObserverCentral<TFrame> observer(cfg);
+    Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
     observer.SubscribeToNewNotifications(
         (Observer::INotificationEventSubscriber*)serverCtx.notificatorWS.get());
 
-    Observer::VideoSource<TFrame> cap;
+    Observer::VideoSource cap;
     cap.Open(cfg.camerasConfiguration[0].url);
     double fps = cap.GetFPS();
     cap.Close();
@@ -146,7 +144,7 @@ int main(int argc, char** argv) {
              [&serverCtx, &observer](auto* res, auto* req) {
                  res->writeHeader("Content-Type", "application/json");
 
-                 auto uri = Web::LiveViewsManager<TFrame, SSL>::observerUri;
+                 auto uri = Web::LiveViewsManager<SSL>::observerUri;
 
                  if (!observer.IsRunning()) {
                      observer.Start();

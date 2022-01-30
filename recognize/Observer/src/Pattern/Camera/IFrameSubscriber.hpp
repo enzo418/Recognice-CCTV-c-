@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../../IFrame.hpp"
 #include "../ObserverBasics.hpp"
 
 namespace Observer {
-    template <typename TFrame>
-    class IFrameSubscriber : public ISubscriber<int, TFrame> {
-        virtual void update(int camerapos, TFrame frame) = 0;
+    class IFrameSubscriber : public ISubscriber<int, Frame> {
+        virtual void update(int camerapos, Frame frame) = 0;
     };
 }  // namespace Observer

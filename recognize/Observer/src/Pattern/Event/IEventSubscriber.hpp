@@ -5,9 +5,7 @@
 #include "../ObserverBasics.hpp"
 
 namespace Observer {
-    template <typename TFrame>
-    class IEventSubscriber : public ISubscriber<Event, CameraEvent<TFrame>> {
-        virtual void update(Event event,
-                            CameraEvent<TFrame> rawCameraEvent) = 0;
+    class IEventSubscriber : public ISubscriber<Event, CameraEvent> {
+        virtual void update(Event event, CameraEvent rawCameraEvent) = 0;
     };
 }  // namespace Observer

@@ -11,14 +11,14 @@
 
 namespace Web {
 
-    template <typename TFrame, bool SSL>
+    template <bool SSL>
     struct ServerContext {
         std::string rootFolder;
         int port;
 
-        RecognizeContext<TFrame> recognizeContext;
+        RecognizeContext recognizeContext;
 
-        std::unique_ptr<LiveViewsManager<TFrame, SSL>> liveViewsManager;
+        std::unique_ptr<LiveViewsManager<SSL>> liveViewsManager;
         std::unique_ptr<WebsocketNotificator<SSL>> notificatorWS;
     };
 }  // namespace Web
