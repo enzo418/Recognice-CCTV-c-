@@ -8,7 +8,7 @@ SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeCpp11BracedList: true
-SpaceBeforeCaseColon: false
+# SpaceBeforeCaseColon: false
 SpaceBeforeAssignmentOperators: true
 NamespaceIndentation: All
 IndentWidth: 4

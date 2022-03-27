@@ -6,18 +6,8 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/Implementations/opencv/Implementation.hpp"
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
-#include "../../Observer/src/Log/log.hpp"
-#include "../src/Blob/BlobDetector/BlobDetector.hpp"
-#include "../src/Domain/Configuration/Configuration.hpp"
-#include "../src/Domain/VideoSource.hpp"
-#include "../src/Domain/VideoWriter.hpp"
-#include "../src/ImageDisplay.hpp"
-#include "../src/ImageTransformation.hpp"
-#include "../src/Timer.hpp"
-#include "../src/Utils/SpecialFunctions.hpp"
 
 void RecordCamera(Observer::Configuration* cfg, int minutes);
 
@@ -67,8 +57,8 @@ int main(int argc, char** argv) {
 }
 
 void RecordCamera(Observer::Configuration* cfg, int pMinutesRecording) {
-    Observer::VideoSource<FrameType> source;
-    Observer::VideoWriter<FrameType> writer;
+    Observer::VideoSource source;
+    Observer::VideoWriter writer;
 
     source.Open(cfg->camerasConfiguration[0].url);
 
@@ -77,29 +67,29 @@ void RecordCamera(Observer::Configuration* cfg, int pMinutesRecording) {
         return;
     }
 
-    FrameType frame;
+    Frame frame;
 
     source.GetNextFrame(frame);
 
     auto time = Observer::SpecialFunctions::GetCurrentTime();
     const std::string file = "./" + time + ".mp4";
     writer.Open(file, source.GetFPS(), writer.GetDefaultCodec(),
-                Observer::ImageTransformation<FrameType>::GetSize(frame));
+                frame.GetSize());
 
     Observer::Timer<std::chrono::seconds> timer;
 
-    Observer::ImageDisplay<FrameType>::CreateWindow("Image");
+    Observer::ImageDisplay::Get().CreateWindow("Image");
 
     timer.Start();
     auto minutes = 60 * pMinutesRecording;
     while (timer.GetDuration() < minutes) {
         source.GetNextFrame(frame);
         writer.WriteFrame(frame);
-        Observer::ImageDisplay<FrameType>::ShowImage("Image", frame);
+        Observer::ImageDisplay::Get().ShowImage("Image", frame);
         OBSERVER_TRACE("Left: {} seconds", minutes - timer.GetDuration());
     }
 
-    Observer::ImageDisplay<FrameType>::DestroyWindow("Image");
+    Observer::ImageDisplay::Get().DestroyWindow("Image");
     writer.Close();
     source.Close();
 

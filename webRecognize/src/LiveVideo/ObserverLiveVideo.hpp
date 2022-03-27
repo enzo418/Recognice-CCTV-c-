@@ -3,9 +3,9 @@
 #include "LiveVideo.hpp"
 
 namespace Web {
-    template <typename TFrame, bool SSL>
-    class ObserverLiveVideo : public LiveVideo<TFrame, SSL>,
-                              public ISubscriber<TFrame> {
+    template <bool SSL>
+    class ObserverLiveVideo : public LiveVideo<SSL>,
+                              public ISubscriber<Observer::Frame> {
        public:
         typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
 
@@ -14,23 +14,22 @@ namespace Web {
 
         virtual ~ObserverLiveVideo() {};
 
-        void update(TFrame frame) override;
+        void update(Observer::Frame frame) override;
 
        private:
         void GetNextFrame() override;
     };
 
-    template <typename TFrame, bool SSL>
-    ObserverLiveVideo<TFrame, SSL>::ObserverLiveVideo(int pFps, int pQuality)
-        : LiveVideo<TFrame, SSL>(pFps, pQuality) {}
+    template <bool SSL>
+    ObserverLiveVideo<SSL>::ObserverLiveVideo(int pFps, int pQuality)
+        : LiveVideo<SSL>(pFps, pQuality) {}
 
-    template <typename TFrame, bool SSL>
-    void ObserverLiveVideo<TFrame, SSL>::update(TFrame pFrame) {
+    template <bool SSL>
+    void ObserverLiveVideo<SSL>::update(Observer::Frame pFrame) {
         std::lock_guard<std::mutex> guard_f(this->mtxFrame);
         // OBSERVER_TRACE("Updating image");
 
-        Observer::Size size =
-            Observer::ImageTransformation<TFrame>::GetSize(pFrame);
+        Observer::Size size = pFrame.GetSize();
 
         if (!size.empty()) {
             this->frame = pFrame;
@@ -41,8 +40,8 @@ namespace Web {
         }
     }
 
-    template <typename TFrame, bool SSL>
-    void ObserverLiveVideo<TFrame, SSL>::GetNextFrame() {
+    template <bool SSL>
+    void ObserverLiveVideo<SSL>::GetNextFrame() {
         // Do nothing, all frames are received from update calls
     }
 }  // namespace Web

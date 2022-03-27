@@ -8,22 +8,10 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/Implementations/opencv/Implementation.hpp"
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
-#include "../../Observer/src/Log/log.hpp"
-#include "../src/Blob/BlobDetector/BlobDetector.hpp"
-#include "../src/Domain/Configuration/Configuration.hpp"
-#include "../src/Domain/VideoSource.hpp"
-#include "../src/Domain/VideoWriter.hpp"
-#include "../src/ImageDisplay.hpp"
-#include "../src/ImageTransformation.hpp"
-#include "../src/Timer.hpp"
-#include "../src/Utils/SpecialFunctions.hpp"
 
 void RecordCamera(Observer::Configuration* cfg, int minutes);
-
-using FrameType = cv::Mat;
 
 using namespace Observer;
 
@@ -69,7 +57,7 @@ int main(int argc, char** argv) {
 
 void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     auto camcfg = &cfg->camerasConfiguration[0];
-    Observer::VideoSource<FrameType> source;
+    Observer::VideoSource source;
 
     source.Open(cfg->camerasConfiguration[0].url);
 
@@ -78,14 +66,14 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
         return;
     }
 
-    std::vector<FrameType> frames;
+    std::vector<Frame> frames;
     frames.reserve(source.GetFPS() * pSeconds);
 
     Observer::Timer<std::chrono::seconds> timer;
 
-    Observer::ImageDisplay<FrameType>::CreateWindow("Image");
+    Observer::ImageDisplay::Get().CreateWindow("Image");
 
-    FrameType frame;
+    Frame frame;
     int delay = source.GetFPS() * 27;
     while (delay--) {
         source.GetNextFrame(frame);
@@ -97,11 +85,11 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     while (i < source.GetFPS() * pSeconds) {
         source.GetNextFrame(frame);
 
-        ImageTransformation<FrameType>::Resize(frame, frame, Size(640, 360));
+        frame.Resize(Size(640, 360));
 
-        frames.push_back(frame.clone());
+        frames.push_back(frame.Clone());
 
-        Observer::ImageDisplay<FrameType>::ShowImage("Image", frame);
+        Observer::ImageDisplay::Get().ShowImage("Image", frame);
 
         OBSERVER_TRACE("Left: {} seconds", pSeconds - timer.GetDuration());
         i++;
@@ -112,16 +100,15 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     // Observer::ImageDisplay<FrameType>::DestroyWindow("Image");
     source.Close();
 
-    ContoursDetector<FrameType> contoursDetector(
-        camcfg->blobDetection.thresholdingParams,
-        camcfg->blobDetection.contoursFilters);
+    ContoursDetector contoursDetector(camcfg->blobDetection.thresholdingParams,
+                                      camcfg->blobDetection.contoursFilters);
 
     // const double factor = ((double)config->resizeNotifications.video /
     // 100.0);
     Size displaySize =
         camcfg->blobDetection.thresholdingParams.Resize.resize
             ? camcfg->blobDetection.thresholdingParams.Resize.size
-            : ImageTransformation<FrameType>::GetSize(frames[0]);
+            : frames[0].GetSize();
 
     contoursDetector.SetScale(displaySize);
 
@@ -143,9 +130,9 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     // }
 
     for (int j = 0; j < frames.size(); j++) {
-        auto frame = frames[j].clone();
+        auto frame = frames[j].Clone();
 
-        ImageTransformation<FrameType>::Resize(frame, frame, displaySize);
+        frame.Resize(displaySize);
 
         // for (auto& rect :
         //      camcfg->blobDetection.contoursFilters.ignoredAreas.areas) {
@@ -153,7 +140,8 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
         // }
 
         for (auto& rect : contoursDetector.filters.ignoredAreas.areas) {
-            cv::rectangle(frame, rect, cv::Scalar(20, 255, 255));
+            cv::rectangle(frame.GetInternalFrame(), rect,
+                          cv::Scalar(20, 255, 255));
         }
 
         /*for (auto& set : contoursDetector.filters.ignoredSets.sets) {
@@ -171,7 +159,8 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
 
         for (int i = 0; i < cts[j].size(); i++) {
             auto rect = BoundingRect(cts[j][i]);
-            cv::rectangle(frame, rect, cv::Scalar(0, 150, 255));
+            cv::rectangle(frame.GetInternalFrame(), rect,
+                          cv::Scalar(0, 150, 255));
         }
 
         // for (int i = 0; i < filtered[j].size(); i++) {
@@ -179,7 +168,7 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
         //     cv::rectangle(frame, rect, cv::Scalar(0, 0, 255));
         // }
 
-        Observer::ImageDisplay<FrameType>::ShowImage("Image", frame);
+        Observer::ImageDisplay::Get().ShowImage("Image", frame);
         cv::waitKey(1000.0 / source.GetFPS());
     }
 }

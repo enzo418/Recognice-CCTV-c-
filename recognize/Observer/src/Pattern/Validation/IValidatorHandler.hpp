@@ -5,7 +5,5 @@
 #include "../ChainOfResponsibilityBasics.hpp"
 
 namespace Observer {
-    template <typename TFrame>
-    using IValidatorHandler =
-        Handler<ValidationResult<TFrame>, CameraEvent<TFrame>&>;
+    using IValidatorHandler = Handler<ValidationResult, CameraEvent&>;
 }

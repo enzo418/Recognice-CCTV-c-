@@ -16,6 +16,7 @@ find_package(yaml-cpp REQUIRED)
 # find_package(JSON REQUIRED)
 
 SET(BUILD_OPTIONAL_BINARIES 0 CACHE STRING "Build optional binaries like blob detection. Default is 0.")
+SET(USE_OPENCV 1 CACHE STRING "Use opencv as the computer vision and processing library.")
 
 # =========
 #  Sources 
@@ -25,6 +26,12 @@ SET(BUILD_OPTIONAL_BINARIES 0 CACHE STRING "Build optional binaries like blob de
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+if(USE_OPENCV)
+  add_compile_definitions(USE_OPENCV)
+  add_definitions(-DUSE_OPENCV)
+  set(USE_OPENCV true)
 endif()
 
 # message(CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
@@ -67,11 +74,13 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR )
     add_executable(videoBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/VideoBlobDetection.cpp)
     add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
     add_executable(contoursShow ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Contours.cpp)
+    add_executable(camerasTest ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Cameras.cpp)
 
     target_link_libraries(liveBlobDetection ${RECOGNIZER_LIBS})
     target_link_libraries(videoBlobDetection ${RECOGNIZER_LIBS})
     target_link_libraries(cameraRecording ${RECOGNIZER_LIBS})
     target_link_libraries(contoursShow ${RECOGNIZER_LIBS})
+    target_link_libraries(camerasTest ${RECOGNIZER_LIBS})
   endif()
 endif()
 

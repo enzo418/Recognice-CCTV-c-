@@ -6,26 +6,23 @@
 #include <utility>
 #include <vector>
 
-#include "../../ImageTransformation.hpp"
+#include "../../Implementation.hpp"
 #include "../../Log/log.hpp"
 #include "../../Size.hpp"
 #include "../../Utils/SpecialFunctions.hpp"
-#include "../VideoWriter.hpp"
+#include "../IVideoWriter.hpp"
 #include "Notification.hpp"
 
 namespace Observer {
 
-    namespace fs = std::filesystem;
-
-    template <typename TFrame>
     class VideoNotification : public Notification {
        public:
         VideoNotification(int groupID, Event ev, std::string text,
-                          std::vector<TFrame>&& frames);
+                          std::vector<Frame>&& frames);
 
         std::string GetCaption() override;
 
-        std::vector<TFrame>& GetFrames();
+        std::vector<Frame>& GetFrames();
 
         /**
          * @brief Build a video notification and return the path.
@@ -51,10 +48,10 @@ namespace Observer {
         // absolute path
         std::string outputVideoPath;
 
-        std::vector<TFrame> frames;
+        std::vector<Frame> frames;
 
         // video writer
-        VideoWriter<TFrame> writer;
+        VideoWriter writer;
 
         int codec;
 
@@ -62,78 +59,4 @@ namespace Observer {
 
         Size frameSize;
     };
-
-    template <typename TFrame>
-    VideoNotification<TFrame>::VideoNotification(int pGroupID, Event pEvent,
-                                                 std::string pText,
-                                                 std::vector<TFrame>&& pFrames)
-        : text(std::move(pText)),
-          frames(std::move(pFrames)),
-          Notification(pGroupID, std::move(pEvent)),
-          codec(-418) {}
-
-    template <typename TFrame>
-    std::string VideoNotification<TFrame>::GetCaption() {
-        return this->text;
-    }
-
-    template <typename TFrame>
-    std::vector<TFrame>& VideoNotification<TFrame>::GetFrames() {
-        return this->frames;
-    }
-
-    template <typename TFrame>
-    std::string VideoNotification<TFrame>::BuildNotification(
-        const std::string& mediaFolderPath) {
-        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
-        const std::string fileName = time + ".mp4";
-        const std::string& path =
-            fs::path(mediaFolderPath) / fs::path(fileName);
-
-        this->writer.Open(
-            path, this->frameRate,
-            this->codec == -418 ? this->writer.GetDefaultCodec() : this->codec,
-            this->frameSize);
-
-        for (auto&& frame : this->frames) {
-            this->writer.WriteFrame(frame);
-        }
-
-        this->writer.Close();
-
-        return path;
-    }
-
-    template <typename TFrame>
-    void VideoNotification<TFrame>::SetCodec(int pCodec) {
-        this->codec = pCodec;
-    }
-
-    template <typename TFrame>
-    void VideoNotification<TFrame>::SetFrameRate(double pFrameRate) {
-        this->frameRate = pFrameRate;
-    }
-
-    template <typename TFrame>
-    void VideoNotification<TFrame>::SetFrameSize(Size pFrameSize) {
-        this->frameSize = pFrameSize;
-    }
-
-    template <typename TFrame>
-    void VideoNotification<TFrame>::Resize(const Size& target) {
-        this->SetFrameSize(target);
-
-        for (auto& frame : frames) {
-            ImageTransformation<TFrame>::Resize(frame, frame, target);
-        }
-    }
-
-    template <typename TFrame>
-    void VideoNotification<TFrame>::Resize(double fx, double fy) {
-        Size size = ImageTransformation<TFrame>::GetSize(frames[0]);
-        size.width *= fx;
-        size.height *= fy;
-
-        this->Resize(size);
-    }
 }  // namespace Observer

@@ -6,22 +6,10 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/Implementations/opencv/Implementation.hpp"
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
-#include "../../Observer/src/Log/log.hpp"
-#include "../src/Blob/BlobDetector/BlobDetector.hpp"
-#include "../src/Domain/Configuration/Configuration.hpp"
-#include "../src/Domain/VideoSource.hpp"
-#include "../src/Domain/VideoWriter.hpp"
-#include "../src/ImageDisplay.hpp"
-#include "../src/ImageTransformation.hpp"
-#include "../src/Timer.hpp"
-#include "../src/Utils/SpecialFunctions.hpp"
 
 void StartObserver(Observer::Configuration* cfg);
-
-using FrameType = cv::Mat;
 
 using namespace Observer;
 
@@ -58,7 +46,7 @@ int main(int argc, char** argv) {
 }
 
 void StartObserver(Observer::Configuration* cfg) {
-    Observer::ObserverCentral<FrameType> observer(*cfg);
+    Observer::ObserverCentral observer(*cfg);
     observer.Start();
 
     std::this_thread::sleep_for(std::chrono::hours(30));
