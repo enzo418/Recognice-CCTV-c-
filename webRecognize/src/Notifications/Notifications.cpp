@@ -1,14 +1,16 @@
 #include "Notifications.hpp"
 
 namespace Web {
+    int worst_id = 0;
 
     std::string NotificationToJson(const DTONotification& dtoNotification) {
+        worst_id++;
         return fmt::format(
-            "{{\"type\":\"{0}\", \"content\":\"{1}\", \"group_id\":\"{2}\", "
-            "\"datetime\":\"{3}\", \"directory\":\"{4}\"}}",
+            "{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", "
+            "\"date\":\"{3}\", \"directory\":\"{4}\", \"id\": {5}}}",
             dtoNotification.type, dtoNotification.caption,
             dtoNotification.groupID, dtoNotification.datetime,
-            dtoNotification.mediaPath);
+            dtoNotification.mediaPath, worst_id);
     }
 
     DTONotification ObserverDTONotToWebDTONot(
