@@ -2,7 +2,7 @@
 
 namespace Observer::SpecialFunctions {
     // output: 29_01_1900_23_41_13
-    std::string GetCurrentTime() {
+    std::string GetCurrentTime(const std::string& format) {
         std::chrono::time_point<std::chrono::system_clock> timepoint =
             std::chrono::system_clock::now();
         std::time_t time_now_t =
@@ -10,7 +10,7 @@ namespace Observer::SpecialFunctions {
         std::tm* now_tm = localtime(&time_now_t);
 
         std::ostringstream ss;
-        ss << std::put_time(now_tm, "%d_%m_%Y_%H_%M_%S");
+        ss << std::put_time(now_tm, format.c_str());
         return ss.str();
     }
 
