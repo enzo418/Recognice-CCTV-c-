@@ -5,7 +5,5 @@
 namespace Observer {
     TextNotification::TextNotification(int pGroupID, Event pEvent,
                                        std::string pText)
-        : text(std::move(pText)), Notification(pGroupID, std::move(pEvent)) {}
-
-    std::string TextNotification::GetCaption() { return this->text; }
+        : Notification(pGroupID, std::move(pEvent), std::move(pText)) {}
 }  // namespace Observer

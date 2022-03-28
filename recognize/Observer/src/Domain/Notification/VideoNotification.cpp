@@ -5,26 +5,19 @@ namespace Observer {
     namespace fs = std::filesystem;
 
     VideoNotification::VideoNotification(int pGroupID, Event pEvent,
-                                         std::string pText,
-                                         std::vector<Frame>&& pFrames)
-        : text(std::move(pText)),
-          frames(std::move(pFrames)),
-          Notification(pGroupID, std::move(pEvent)),
+                                         std::vector<Frame>&& pFrames,
+                                         std::string pOutputFolder)
+        : frames(std::move(pFrames)),
+          Notification(pGroupID, std::move(pEvent),
+                       VideoNotification::CreatePath(pOutputFolder)),
           codec(-418) {}
-
-    std::string VideoNotification::GetCaption() { return this->text; }
 
     std::vector<Frame>& VideoNotification::GetFrames() { return this->frames; }
 
-    std::string VideoNotification::BuildNotification(
-        const std::string& mediaFolderPath) {
-        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
-        const std::string fileName = time + ".mp4";
-        const std::string& path =
-            fs::path(mediaFolderPath) / fs::path(fileName);
-
+    void VideoNotification::BuildNotification() {
+        // GetContent in this context is the path to the video
         this->writer.Open(
-            path, this->frameRate,
+            this->GetContent(), this->frameRate,
             this->codec == -418 ? this->writer.GetDefaultCodec() : this->codec,
             this->frameSize);
 
@@ -33,8 +26,6 @@ namespace Observer {
         }
 
         this->writer.Close();
-
-        return path;
     }
 
     void VideoNotification::SetCodec(int pCodec) { this->codec = pCodec; }
@@ -61,5 +52,13 @@ namespace Observer {
         size.height *= fy;
 
         this->Resize(size);
+    }
+
+    std::string VideoNotification::CreatePath(
+        const std::string& pOutputFolder) {
+        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
+        const std::string fileName = time + ".mp4";
+        const std::string& path = fs::path(pOutputFolder) / fs::path(fileName);
+        return path;
     }
 }  // namespace Observer

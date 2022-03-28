@@ -7,16 +7,12 @@
 namespace Observer {
     struct DTONotification {
         DTONotification() = default;
-        DTONotification(int pGroupID, std::string pCaption,
-                        ENotificationType pType, std::string pMediaPath = "")
-            : groupID(pGroupID),
-              caption(pCaption),
-              type(pType),
-              mediaPath(pMediaPath) {}
+        DTONotification(int pGroupID, std::string pContent,
+                        ENotificationType pType)
+            : groupID(pGroupID), content(pContent), type(pType) {}
 
         int groupID {-1};
-        std::string caption {};
-        std::string mediaPath {};
+        std::string content {};
         ENotificationType type;
     };
 

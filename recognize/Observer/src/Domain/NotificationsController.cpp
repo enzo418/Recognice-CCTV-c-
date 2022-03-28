@@ -38,7 +38,7 @@ namespace Observer {
             if (this->servicesType[{service,
                                     flag_to_int(ENotificationType::TEXT)}]) {
                 service->SendText(DTONotification(notification.GetGroupID(),
-                                                  notification.GetCaption(),
+                                                  notification.GetContent(),
                                                   ENotificationType::TEXT));
             }
         }
@@ -48,8 +48,8 @@ namespace Observer {
         Size imSize = notification.GetImage().GetSize();
 
         if (imSize.width == 0 || imSize.height == 0) {
-            OBSERVER_ERROR("Trying to send an empty image. Caption: {}",
-                           notification.GetCaption());
+            OBSERVER_ERROR("Trying to send an empty image. Content: {}",
+                           notification.GetContent());
             return;
         }
 
@@ -59,14 +59,13 @@ namespace Observer {
 
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
-            const auto path =
-                notification.BuildNotification(this->config->mediaFolderPath);
+            notification.BuildNotification();
 
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
-                service->SendImage(DTONotification(
-                    notification.GetGroupID(), notification.GetCaption(),
-                    ENotificationType::IMAGE, path));
+                service->SendImage(DTONotification(notification.GetGroupID(),
+                                                   notification.GetContent(),
+                                                   ENotificationType::IMAGE));
             }
         }
 
@@ -79,15 +78,14 @@ namespace Observer {
                 notification.GetEvent().GetFirstFrameWhereFindingWasFound(),
                 factor, factor);
 
-            const auto path_trace =
-                notification.BuildNotification(this->config->mediaFolderPath);
+            notification.BuildNotification();
 
             // 4. For each service that need the trace call
             // SendVideo(image2path)
             for (auto&& service : servD) {
-                service->SendImage(DTONotification(
-                    notification.GetGroupID(), notification.GetCaption(),
-                    ENotificationType::IMAGE, path_trace));
+                service->SendImage(DTONotification(notification.GetGroupID(),
+                                                   notification.GetContent(),
+                                                   ENotificationType::IMAGE));
             }
         }
     }
@@ -111,16 +109,15 @@ namespace Observer {
 
         if (!this->notDrawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 1. Build
-            const auto videoPath =
-                notification.BuildNotification(this->config->mediaFolderPath);
+            notification.BuildNotification();
 
             // 2. For each service that doesn't need the trace call
             // SendVideo(videopath)
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(
-                    notification.GetGroupID(), notification.GetCaption(),
-                    ENotificationType::VIDEO, videoPath));
+                service->SendVideo(DTONotification(notification.GetGroupID(),
+                                                   notification.GetContent(),
+                                                   ENotificationType::VIDEO));
             }
         }
 
@@ -133,16 +130,15 @@ namespace Observer {
                                            notification.GetEvent().GetBlobs(),
                                            factor, factor);
 
-            const auto videoPath =
-                notification.BuildNotification(this->config->mediaFolderPath);
+            notification.BuildNotification();
 
             // 4. For each service that need the trace call
             // SendVideo(video2path)
             for (auto&& service :
                  this->drawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(
-                    notification.GetGroupID(), notification.GetCaption(),
-                    ENotificationType::VIDEO, videoPath));
+                service->SendVideo(DTONotification(notification.GetGroupID(),
+                                                   notification.GetContent(),
+                                                   ENotificationType::VIDEO));
             }
         }
     }
@@ -240,13 +236,13 @@ namespace Observer {
         // happen
         int indexFirst = event.GetFirstFrameWhereFindingWasFound();
         ImageNotification imageNotification(
-            this->groupID, event, cameraName,
-            rawCameraEvent.GetFrameAt(indexFirst));
+            this->groupID, event, rawCameraEvent.GetFrameAt(indexFirst),
+            this->config->mediaFolderPath);
 
         // 3. Create a video notification using the frames
         VideoNotification videoNotification(
-            this->groupID, event, cameraName,
-            std::move(rawCameraEvent.PopFrames()));
+            this->groupID, event, std::move(rawCameraEvent.PopFrames()),
+            this->config->mediaFolderPath);
 
         videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
         videoNotification.SetFrameSize(rawCameraEvent.GetFramesSize());

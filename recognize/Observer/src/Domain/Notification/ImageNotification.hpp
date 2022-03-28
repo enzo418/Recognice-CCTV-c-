@@ -21,12 +21,8 @@ namespace Observer {
          * @param text caption
          * @param frame frame, as reference but copied on ctor.
          */
-        ImageNotification(int groupID, Event ev, std::string text,
-                          Frame& frame);
-
-        std::string GetCaption() override;
-
-        std::string GetImagePath();
+        ImageNotification(int groupID, Event ev, Frame& frame,
+                          std::string pOutputFolder);
 
         Frame& GetImage();
 
@@ -34,19 +30,16 @@ namespace Observer {
          * @brief Build a image notification. Return the path
          *
          * @param mediaFolderPath folder to save the image
-         * @return path
          */
-        std::string BuildNotification(const std::string& mediaFolderPath);
+        void BuildNotification();
 
         void Resize(const Size& target);
         void Resize(double fx, double fy);
 
        private:
-        std::string text;
-
-        // absolute path
-        std::string outputImagePath;
-
         Frame image;
+
+       protected:
+        static std::string CreatePath(const std::string& outputFolder);
     };
 }  // namespace Observer

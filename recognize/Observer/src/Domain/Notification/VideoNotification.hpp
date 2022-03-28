@@ -15,25 +15,22 @@
 
 namespace Observer {
 
+    /**
+     * @brief A notification that is able to create a video
+     * from frames
+     */
     class VideoNotification : public Notification {
        public:
-        VideoNotification(int groupID, Event ev, std::string text,
-                          std::vector<Frame>&& frames);
-
-        std::string GetCaption() override;
+        VideoNotification(int groupID, Event ev, std::vector<Frame>&& frames,
+                          std::string outputFolder);
 
         std::vector<Frame>& GetFrames();
 
         /**
          * @brief Build a video notification and return the path.
          *
-         * @param mediaFolderPath destination folder of the video
-         * @param frameRate frame rate
-         * @param codecID opencv codec id
-         * @param frameSize opencv frame size
-         * @return video path
          */
-        std::string BuildNotification(const std::string& mediaFolderPath);
+        void BuildNotification();
 
         void SetCodec(int codec);
         void SetFrameRate(double frameRate);
@@ -43,11 +40,6 @@ namespace Observer {
         void Resize(double fx, double fy);
 
        private:
-        std::string text;
-
-        // absolute path
-        std::string outputVideoPath;
-
         std::vector<Frame> frames;
 
         // video writer
@@ -58,5 +50,14 @@ namespace Observer {
         double frameRate;
 
         Size frameSize;
+
+       protected:
+        /**
+         * @brief Creates a unique path for a .mp4 video file
+         *
+         * @param outputFolder
+         * @return std::string
+         */
+        static std::string CreatePath(const std::string& outputFolder);
     };
 }  // namespace Observer

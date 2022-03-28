@@ -16,7 +16,7 @@ namespace Observer {
         auto res = CurlWrapper()
                        .url(url)
                        .qparam("chat_id", this->cfg->chatID)
-                       .qparam("text", notification.caption)
+                       .qparam("text", notification.content)
                        .method(CURLOPT_HTTPGET)
                        .perform();
 
@@ -31,8 +31,7 @@ namespace Observer {
             CurlWrapper()
                 .url(url)
                 .method(CURLOPT_HTTPPOST)
-                .formAdd("photo", CURLFORM_FILE, notification.mediaPath)
-                .formAdd("caption", CURLFORM_COPYCONTENTS, notification.caption)
+                .formAdd("photo", CURLFORM_FILE, notification.content)
                 .formAdd("chat_id", CURLFORM_COPYCONTENTS, this->cfg->chatID)
                 .perform();
 
@@ -47,8 +46,7 @@ namespace Observer {
             CurlWrapper()
                 .url(url)
                 .method(CURLOPT_HTTPPOST)
-                .formAdd("animation", CURLFORM_FILE, notification.mediaPath)
-                .formAdd("caption", CURLFORM_COPYCONTENTS, notification.caption)
+                .formAdd("animation", CURLFORM_FILE, notification.content)
                 .formAdd("chat_id", CURLFORM_COPYCONTENTS, this->cfg->chatID)
                 .perform();
 

@@ -5,29 +5,19 @@ namespace Observer {
     namespace fs = std::filesystem;
 
     ImageNotification::ImageNotification(int pGroupID, Event pEvent,
-                                         std::string pText, Frame& frame)
-        : text(std::move(pText)), Notification(pGroupID, std::move(pEvent)) {
+                                         Frame& frame,
+                                         std::string pOutputFolder)
+        : Notification(
+              pGroupID, std::move(pEvent),
+              std::move(ImageNotification::CreatePath(pOutputFolder))) {
         frame.CopyTo(image);
-    }
-
-    std::string ImageNotification::GetCaption() { return this->text; }
-
-    std::string ImageNotification::GetImagePath() {
-        return this->outputImagePath;
     }
 
     Frame& ImageNotification::GetImage() { return this->image; }
 
-    std::string ImageNotification::BuildNotification(
-        const std::string& mediaFolderPath) {
-        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
-        const std::string fileName = time + ".jpg";
-        const std::string& path =
-            fs::path(mediaFolderPath) / fs::path(fileName);
-
-        ImageIO::Get().SaveImage(path, this->image);
-
-        return path;
+    void ImageNotification::BuildNotification() {
+        // GetContent is the path to the image
+        ImageIO::Get().SaveImage(this->GetContent(), this->image);
     }
 
     void ImageNotification::Resize(const Size& target) { image.Resize(target); }
@@ -38,5 +28,13 @@ namespace Observer {
         size.height *= fy;
 
         this->Resize(size);
+    }
+
+    std::string ImageNotification::CreatePath(
+        const std::string& pOutputFolder) {
+        const std::string time = Observer::SpecialFunctions::GetCurrentTime();
+        const std::string fileName = time + ".jpg";
+        const std::string& path = fs::path(pOutputFolder) / fs::path(fileName);
+        return path;
     }
 }  // namespace Observer
