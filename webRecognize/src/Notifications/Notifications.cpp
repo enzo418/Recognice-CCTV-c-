@@ -7,11 +7,9 @@ namespace Web {
         worst_id++;
         return fmt::format(
             "{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", "
-            "\"date\":\"{3}\", \"directory\":\"{4}\", \"id\": {5}, "
-            "\"cameraID\": \"{6}\"}}",
-            dtoNotification.type, dtoNotification.caption,
-            dtoNotification.groupID, dtoNotification.datetime,
-            dtoNotification.mediaPath, worst_id, "123");
+            "\"date\":\"{3}\", \"id\": {4}, \"cameraID\": \"{5}\"}}",
+            dtoNotification.type, dtoNotification.content,
+            dtoNotification.groupID, dtoNotification.datetime, worst_id, "123");
     }
 
     DTONotification ObserverDTONotToWebDTONot(
@@ -24,9 +22,8 @@ namespace Web {
         notification.datetime =
             Observer::SpecialFunctions::GetCurrentTime("%d/%m/%Y %H:%M:%S");
 
-        notification.caption = notf.caption;
+        notification.content = notf.content;
         notification.groupID = notf.groupID;
-        notification.mediaPath = notf.mediaPath;
 
         return notification;
     }
