@@ -7,6 +7,7 @@
 #include "../uWebSockets/src/App.h"
 #include "../uWebSockets/src/HttpContextData.h"
 #include "../uWebSockets/src/Multipart.h"
+#include "Controller/NotificationController.hpp"
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
@@ -26,6 +27,12 @@
 #include "Server/ServerContext.hpp"
 #include "SocketData.hpp"
 #include "base64.hpp"
+
+// DAL
+#include "DAL/InMemory/NotificationRepository.hpp"
+
+// CL
+#include "CL/NotificationCL.hpp"
 
 const bool SSL = false;
 namespace fs = std::filesystem;
@@ -65,18 +72,25 @@ int main(int argc, char** argv) {
         // will stay like this until more features are added and become stable.
 
         .liveViewsManager = std::make_unique<Web::LiveViewsManager<SSL>>(
-            OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext),
-        .notificatorWS = std::make_unique<Web::WebsocketNotificator<SSL>>()};
+            OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
 
-    FileStreamer fileStreamer(serverCtx.rootFolder);
+    FileStreamer::Init<SSL>(serverCtx.rootFolder);
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
 
     Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
+    Web::DAL::NotificationRepositoryMemory notificationRepository;
+    Web::CL::NotificationCL notificationCache(&notificationRepository);
+    Web::Controller::NotificationController<SSL> notificationController(
+        &app, &notificationRepository, &notificationCache);
+
     observer.SubscribeToNewNotifications(
-        (Observer::INotificationEventSubscriber*)serverCtx.notificatorWS.get());
+        (Observer::INotificationEventSubscriber*)&notificationController);
+
+    // SubscribeToNewNotifications ->
+    //      serverctx.notificationRepo.add(notification)
 
     Observer::VideoSource cap;
     cap.Open(cfg.camerasConfiguration[0].url);
@@ -84,8 +98,6 @@ int main(int argc, char** argv) {
     cap.Close();
 
     threads.push_back(&observer);
-
-    serverCtx.notificatorWS->Start();
 
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
@@ -97,12 +109,13 @@ int main(int argc, char** argv) {
                    }
                })
         .get("/",
-             [&fileStreamer](auto* res, auto* req) {
+             [](auto* res, auto* req) {
                  std::cout << "Index!" << std::endl;
 
                  std::string rangeHeader(req->getHeader("range"));
 
-                 fileStreamer.streamFile(res, "/index.html", rangeHeader);
+                 FileStreamer::GetInstance().streamFile(res, "/index.html",
+                                                        rangeHeader);
              })
         /**
          * @brief Request a live view of the camera. If successfully
@@ -158,14 +171,34 @@ int main(int argc, char** argv) {
                          {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
                  }
              })
+        // .get("/stream/notification/:id",
+        //      [](auto* res, auto* req) {
+        //          std::string filename("prender_sin_boton2.mp4");
+        //          std::string id(req->getParameter(0));
+        //          std::string rangeHeader(req->getHeader("range"));
+
+        //          // f = notificationService.getFilename(id)
+        //          //     if cache.isCached(id):
+        //          //         return cache.at(id)
+        //          //     else
+        //          //         db.notification.select.where id = id
+        //          //
+        //          // fileStreamer.streamFile(res, f, rangeHeader)
+
+        //          std::cout << "id: " << id << std::endl;
+
+        //          FileStreamer::GetInstance().streamFile(res, filename,
+        //                                                 rangeHeader);
+        //      })
         .get("/*.*",
-             [&fileStreamer](auto* res, auto* req) {
+             [](auto* res, auto* req) {
                  std::string url(req->getUrl());
                  std::string rangeHeader(req->getHeader("range"));
 
                  if (!hasExtension(url)) {
                      req->setYield(true);  // mark as not handled
-                 } else if (fileStreamer.streamFile(res, url, rangeHeader)) {
+                 } else if (FileStreamer::GetInstance().streamFile(
+                                res, url, rangeHeader)) {
                      // std::cout << "Succesfull sended file" << std::endl;
                  } else {
                      res->end();
@@ -179,19 +212,19 @@ int main(int argc, char** argv) {
                      ->writeHeader("Content-Type", "text/html")
                      ->end();
              })
-        .ws<PerSocketData>(
-            "/notifications",
-            {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,
-             .open =
-                 [&serverCtx](auto* ws,
-                              const std::list<std::string_view>& paths) {
-                     serverCtx.notificatorWS->AddClient(ws);
-                 },
-             .close =
-                 [&serverCtx](auto* ws, int /*code*/,
-                              std::string_view /*message*/) {
-                     serverCtx.notificatorWS->RemoveClient(ws);
-                 }})
+        // .ws<PerSocketData>(
+        //     "/notifications",
+        //     {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,
+        //      .open =
+        //          [&serverCtx](auto* ws,
+        //                       const std::list<std::string_view>& paths) {
+        //              serverCtx.notificatorWS->AddClient(ws);
+        //          },
+        //      .close =
+        //          [&serverCtx](auto* ws, int /*code*/,
+        //                       std::string_view /*message*/) {
+        //              serverCtx.notificatorWS->RemoveClient(ws);
+        //          }})
         .ws<PerSocketData>(
             liveViewWsRoute,
             {.compression = uWS::DISABLED,

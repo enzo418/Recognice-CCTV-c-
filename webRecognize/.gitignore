@@ -38,6 +38,23 @@
 !src/web/src/components/Inputs
 !src/web/src/styles
 
+# DAL - Data access layer
+!src/DAL/
+!src/DAL/*
+
+# Domain
+!src/Domain/
+
+# CL - Cache layer
+!src/CL
+!src/CL/*
+
+# vendor
+!vendor/
+
+# Controllers
+!src/Controller/
+
 !CMakeLists.txt
 
 package-lock.json

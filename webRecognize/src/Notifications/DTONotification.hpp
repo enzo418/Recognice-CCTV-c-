@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <string>
 #include <unordered_map>
 
@@ -12,6 +13,6 @@ namespace Web {
         DTONotification() = default;
 
         std::string type;
-        std::string datetime;
+        std::time_t datetime;
     };
 };  // namespace Web

@@ -9,7 +9,10 @@ namespace Web {
             "{{\"type\":\"{0}\", \"content\":\"{1}\", \"group\":\"{2}\", "
             "\"date\":\"{3}\", \"id\": {4}, \"cameraID\": \"{5}\"}}",
             dtoNotification.type, dtoNotification.content,
-            dtoNotification.groupID, dtoNotification.datetime, worst_id, "123");
+            dtoNotification.groupID,
+            Observer::SpecialFunctions::TimeToString("%d/%m/%Y %H:%M:%S",
+                                                     dtoNotification.datetime),
+            worst_id, "123");
     }
 
     DTONotification ObserverDTONotToWebDTONot(
@@ -19,8 +22,7 @@ namespace Web {
             Observer::Helpers::Notifications::NOTIFICATION_TYPE_MAP.at(
                 (int)notf.type);
 
-        notification.datetime =
-            Observer::SpecialFunctions::GetCurrentTime("%d/%m/%Y %H:%M:%S");
+        notification.datetime = std::time_t(0);
 
         notification.content = notf.content;
         notification.groupID = notf.groupID;

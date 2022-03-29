@@ -19,6 +19,5 @@ namespace Web {
         RecognizeContext recognizeContext;
 
         std::unique_ptr<LiveViewsManager<SSL>> liveViewsManager;
-        std::unique_ptr<WebsocketNotificator<SSL>> notificatorWS;
     };
 }  // namespace Web

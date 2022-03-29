@@ -33,9 +33,24 @@ file(GLOB STREAM_CONTENT_SRC "${source_dir}/src/stream_content/*.cpp")
 
 file(GLOB NOTIFICATIONS_SR "${source_dir}/src/Notifications/*.cpp")
 
+file(GLOB DOMAIN_SR "${source_dir}/src/Domain/*.cpp")
+
+file(GLOB DAL_SR "${source_dir}/src/DAL/*.cpp" "${source_dir}/src/DAL/InMemory/*.cpp")
+
+file(GLOB CONTROLLER_SR "${source_dir}/src/Controller/*.cpp")
+
+file(GLOB CL_SR "${source_dir}/src/CL/*.cpp")
+
 # set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
 
-set(SOURCES ${COMMON_SRC} ${NOTIFICATIONS_SR} ${STREAM_CONTENT_SRC})
+set(SOURCES 
+	${COMMON_SRC} 
+	${NOTIFICATIONS_SR} 
+	${STREAM_CONTENT_SRC} 
+	${DOMAIN_SR} 
+	${DAL_SR} 
+	${CONTROLLER_SR} 
+	${CL_SR})
 
 # Print sources
 # message(${SOURCES})

@@ -5,8 +5,14 @@ namespace Observer::SpecialFunctions {
     std::string GetCurrentTime(const std::string& format) {
         std::chrono::time_point<std::chrono::system_clock> timepoint =
             std::chrono::system_clock::now();
+
         std::time_t time_now_t =
             std::chrono::system_clock::to_time_t(timepoint);
+        return std::move(TimeToString(format, time_now_t));
+    }
+
+    std::string TimeToString(const std::string& format,
+                             const std::time_t& time_now_t) {
         std::tm* now_tm = localtime(&time_now_t);
 
         std::ostringstream ss;

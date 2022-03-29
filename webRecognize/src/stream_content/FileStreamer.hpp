@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include "../../../recognize/Observer/src/Log/log.hpp"
 #include "../../uWebSockets/src/App.h"
 #include "../server_utils.hpp"
 #include "FileExtension.hpp"
@@ -14,17 +15,14 @@
 // Max buffer: 32kb = 32.768 bytes
 const size_t ReadWriteBufferSize = 32768;
 
-// it doesn't have a .cpp file since using templates makes it harded for the
-// linker.
-
-struct FileStreamer {
-    StaticFilesHandler* staticFiles;
-    std::string root;
-
+class FileStreamer {
    public:
-    FileStreamer(std::string root) : root(root) {
-        staticFiles = new StaticFilesHandler();
+    template <bool SSL>
+    static FileStreamer& Init(const std::string& root) {
+        return GetInstanceImpl<SSL>(root);
     }
+
+    static FileStreamer& GetInstance();
 
     template <bool SSL>
     bool streamRangedFile(uWS::HttpResponse<SSL>* res, const std::string& url,
@@ -241,6 +239,8 @@ struct FileStreamer {
         // /path/to/directory / url without initial '/'
         const std::string path = std::filesystem::path(directory) / url;
 
+        this->filesHandlerMtx.lock();
+
         // yes, in each request we check if the file exists
         // if it exists and doesn't have a handler then
         if (!staticFiles->fileExists(path)) {
@@ -250,12 +250,16 @@ struct FileStreamer {
                       << std::endl;
             res->writeStatus(HTTP_404_NOT_FOUND);
             res->end();
+
+            this->filesHandlerMtx.unlock();
             return false;
         } else if (!staticFiles->fileHandlerExists(path)) {
             staticFiles->addFileHandler(path);
         }
 
         FileReader* reader = staticFiles->getFileHandler(path);
+
+        this->filesHandlerMtx.unlock();
 
         // request is not ranged, send it chunked
         if (rangeHeader.empty()) {
@@ -265,5 +269,30 @@ struct FileStreamer {
             return streamRangedFile(res, url, reader, rangeHeader);
         }
     }
+
+   private:
+    StaticFilesHandler* staticFiles;
+    std::string root;
+
+    std::mutex filesHandlerMtx;
+
+    static FileStreamer* instance;
+
+   private:
+    FileStreamer(std::string root);
+
+    FileStreamer(FileStreamer const&);
+    void operator=(FileStreamer const&);
+
+    template <bool SSL>
+    static FileStreamer& GetInstanceImpl(const std::string& root) {
+        OBSERVER_ASSERT(instance == nullptr,
+                        "Multiple initializations of filestreamer");
+
+        instance = new FileStreamer(root);
+
+        return *instance;
+    }
 };
+
 #endif /* FILE_STREAMER */
