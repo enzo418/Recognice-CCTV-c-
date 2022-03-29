@@ -12,7 +12,15 @@ namespace Web::CL {
         NotificationCL(DAL::INotificationRepository* repo);
 
        public:
-        const Domain::Notification& Get(const std::string& id);
+        /**
+         * @brief Get a notification by id.
+         *
+         * @param id
+         * @return Domain::Notification A copy of the notification, since
+         * it cannot return a reference since it might be deleted right after
+         * the call.
+         */
+        Domain::Notification Get(const std::string& id);
 
         /**
          * @brief Checks if a notification exists.
@@ -25,7 +33,13 @@ namespace Web::CL {
          */
         bool Exists(const std::string& id);
 
-        const std::string& GetFilename(const std::string& id);
+        /**
+         * @brief Get the filename of a notification by id.
+         *
+         * @param id
+         * @return std::string returns a copy of the filename.
+         */
+        std::string GetFilename(const std::string& id);
 
        private:
         DAL::INotificationRepository* notificationRepository;

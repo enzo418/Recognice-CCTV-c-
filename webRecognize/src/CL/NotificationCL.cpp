@@ -6,7 +6,7 @@ namespace Web::CL {
           notificationCache(32, 10),
           notificationFilenameCache(40, 10) {}
 
-    const Domain::Notification& NotificationCL::Get(const std::string& id) {
+    Domain::Notification NotificationCL::Get(const std::string& id) {
         Domain::Notification notif;
 
         if (!notificationCache.tryGet(id, notif)) {
@@ -14,7 +14,7 @@ namespace Web::CL {
             notificationCache.insert(id, notif);
         }
 
-        return std::move(notif);
+        return notif;
     }
 
     bool NotificationCL::Exists(const std::string& id) {
@@ -22,7 +22,7 @@ namespace Web::CL {
                notificationRepository->Exists(id);
     }
 
-    const std::string& NotificationCL::GetFilename(const std::string& id) {
+    std::string NotificationCL::GetFilename(const std::string& id) {
         std::string filename;
 
         if (!notificationFilenameCache.tryGet(id, filename)) {
@@ -30,7 +30,7 @@ namespace Web::CL {
             notificationFilenameCache.insert(id, filename);
         }
 
-        return std::move(filename);
+        return filename;
     }
 
 }  // namespace Web::CL
