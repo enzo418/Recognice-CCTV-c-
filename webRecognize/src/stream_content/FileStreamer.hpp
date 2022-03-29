@@ -246,8 +246,9 @@ class FileStreamer {
         if (!staticFiles->fileExists(path)) {
             staticFiles->removeHandlerIfExists(path);
 
-            std::cout << HTTP_404_NOT_FOUND << " Did not find file: " << path
-                      << std::endl;
+            OBSERVER_WARN("{0} Did not find file: {1}", HTTP_404_NOT_FOUND,
+                          path);
+
             res->writeStatus(HTTP_404_NOT_FOUND);
             res->end();
 
@@ -265,6 +266,8 @@ class FileStreamer {
         if (rangeHeader.empty()) {
             return streamChunkedFile(res, url, reader);
         } else {
+            res->writeHeader("Access-Control-Allow-Origin", "*");
+
             // there is a range
             return streamRangedFile(res, url, reader, rangeHeader);
         }
