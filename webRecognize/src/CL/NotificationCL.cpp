@@ -26,7 +26,7 @@ namespace Web::CL {
         std::string filename;
 
         if (!notificationFilenameCache.tryGet(id, filename)) {
-            filename = this->Get(id).content;
+            filename = notificationRepository->Get(id).content;
             notificationFilenameCache.insert(id, filename);
         }
 
