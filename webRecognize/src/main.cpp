@@ -117,6 +117,14 @@ int main(int argc, char** argv) {
                  FileStreamer::GetInstance().streamFile(res, "/index.html",
                                                         rangeHeader);
              })
+        .get("/test",
+             [&notificationController](auto* res, auto* req) {
+                 Observer::DTONotification ev(
+                     0, "prender_sin_boton2.mp4",
+                     Observer::ENotificationType::VIDEO);
+                 notificationController.update(ev);
+                 res->end();
+             })
         /**
          * @brief Request a live view of the camera. If successfully
          * generated the live view it returns a json with the ws_feed_path, to
@@ -171,25 +179,26 @@ int main(int argc, char** argv) {
                          {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
                  }
              })
-        // .get("/stream/notification/:id",
-        //      [](auto* res, auto* req) {
-        //          std::string filename("prender_sin_boton2.mp4");
-        //          std::string id(req->getParameter(0));
-        //          std::string rangeHeader(req->getHeader("range"));
+        .get("/stream/notification/test11",
+             [](auto* res, auto* req) {
+                 std::string filename("prender_sin_boton2.mp4");
+                 //  std::string id(req->getParameter(0));
+                 std::string id = "test11";
+                 std::string rangeHeader(req->getHeader("range"));
 
-        //          // f = notificationService.getFilename(id)
-        //          //     if cache.isCached(id):
-        //          //         return cache.at(id)
-        //          //     else
-        //          //         db.notification.select.where id = id
-        //          //
-        //          // fileStreamer.streamFile(res, f, rangeHeader)
+                 // f = notificationService.getFilename(id)
+                 //     if cache.isCached(id):
+                 //         return cache.at(id)
+                 //     else
+                 //         db.notification.select.where id = id
+                 //
+                 // fileStreamer.streamFile(res, f, rangeHeader)
 
-        //          std::cout << "id: " << id << std::endl;
+                 std::cout << "id: " << id << std::endl;
 
-        //          FileStreamer::GetInstance().streamFile(res, filename,
-        //                                                 rangeHeader);
-        //      })
+                 FileStreamer::GetInstance().streamFile(res, filename,
+                                                        rangeHeader);
+             })
         .get("/*.*",
              [](auto* res, auto* req) {
                  std::string url(req->getUrl());

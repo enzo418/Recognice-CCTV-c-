@@ -85,6 +85,7 @@ class FileStreamer {
             ->writeHeader("Last-Modified",
                           "Thu, 17 Jun 2021 20:50:11 GMT")  // TODO: set actual
                                                             // modified time
+            ->writeHeader("Access-Control-Allow-Origin", "*")
             ->tryEndRaw(std::string_view(nullptr, 0), 0);
 
         res->onAborted(
@@ -266,8 +267,6 @@ class FileStreamer {
         if (rangeHeader.empty()) {
             return streamChunkedFile(res, url, reader);
         } else {
-            res->writeHeader("Access-Control-Allow-Origin", "*");
-
             // there is a range
             return streamRangedFile(res, url, reader, rangeHeader);
         }
