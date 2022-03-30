@@ -4,6 +4,7 @@
 #include <iterator>
 #include <string>
 
+#include "../../../../recognize/Observer/src/Log/log.hpp"
 #include "../ICameraRepository.hpp"
 
 namespace Web::DAL {
@@ -17,7 +18,7 @@ namespace Web::DAL {
 
         const Domain::Camera& Get(const std::string& element) override;
 
-        const std::vector<Domain::Camera>& GetAll() override;
+        const std::vector<Domain::Camera> GetAll(int limit = 100) override;
 
        private:
         std::vector<Domain::Camera> cameras;

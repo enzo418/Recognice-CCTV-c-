@@ -35,7 +35,19 @@ namespace Web::DAL {
         return *res;
     }
 
-    const std::vector<Camera>& CameraRepositoryMemory::GetAll() {
-        return cameras;
+    const std::vector<Camera> CameraRepositoryMemory::GetAll(int limit) {
+        OBSERVER_ASSERT(limit > 0 && limit <= cameras.size(),
+                        "Limit is out of bounds");
+
+        auto max = std::min(limit, (int)cameras.size());
+
+        std::vector<Camera> result;
+        result.reserve(max);
+
+        // start at end until rbegin + max.
+        // + sign since its reverse iterator.
+        result.insert(result.begin(), cameras.rbegin(), cameras.rbegin() + max);
+
+        return result;
     }
 }  // namespace Web::DAL

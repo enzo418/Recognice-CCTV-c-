@@ -16,6 +16,6 @@ namespace Web::DAL {
 
         virtual const Domain::Camera& Get(const std::string& id) = 0;
 
-        virtual const std::vector<Domain::Camera>& GetAll() = 0;
+        virtual const std::vector<Domain::Camera> GetAll(int limit = 100) = 0;
     };
 }  // namespace Web::DAL
