@@ -19,6 +19,7 @@ namespace Web::CL {
 
     bool NotificationCL::Exists(const std::string& id) {
         return notificationCache.contains(id) ||
+               notificationFilenameCache.contains(id) ||
                notificationRepository->Exists(id);
     }
 
