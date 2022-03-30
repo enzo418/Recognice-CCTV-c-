@@ -11,6 +11,7 @@
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
+#include "Parsing/JsonNotification.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileExtension.hpp"

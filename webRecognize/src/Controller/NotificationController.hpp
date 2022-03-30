@@ -6,6 +6,7 @@
 
 #include "../../../recognize/Observer/src/Domain/Notification/LocalNotifications.hpp"
 #include "../../uWebSockets/src/App.h"
+#include "../../vendor/json_dto/json_dto.hpp"
 #include "../CL/NotificationCL.hpp"
 #include "../DAL/INotificationRepository.hpp"
 #include "../Notifications/WebsocketNotificator.hpp"
@@ -121,6 +122,9 @@ namespace Web::Controller {
 
         auto notifications = notificationRepository->GetAll(limit);
 
-        res->endJson();
+        auto msg =
+            json_dto::to_json<std::vector<Domain::Notification>>(notifications);
+
+        res->endJson(msg);
     }
 }  // namespace Web::Controller

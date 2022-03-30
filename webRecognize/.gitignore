@@ -51,6 +51,11 @@
 
 # vendor
 !vendor/
+!vendor/*
+
+# Parsing
+!Parsing/
+!Parsing/*
 
 # Controllers
 !src/Controller/

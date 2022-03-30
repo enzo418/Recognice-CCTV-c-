@@ -12,6 +12,7 @@
         - `cd uSockets && make`
         - `sudo cp uSockets.a /usr/local/lib/`
         - `cd ./src && sudo cp libusockets.h /usr/include/`
+- [json_dto](https://github.com/Stiffstream/json_dto) included
 
 - Webpage:
     1. `cd ./webRecognize/src/web/`
