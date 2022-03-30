@@ -29,6 +29,7 @@
 #include "base64.hpp"
 
 // DAL
+#include "DAL/InMemory/CameraRepository.hpp"
 #include "DAL/InMemory/NotificationRepository.hpp"
 
 // CL
@@ -81,6 +82,7 @@ int main(int argc, char** argv) {
     Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
+    // notifications
     Web::DAL::NotificationRepositoryMemory notificationRepository;
     Web::CL::NotificationCL notificationCache(&notificationRepository);
     Web::Controller::NotificationController<SSL> notificationController(
@@ -89,8 +91,13 @@ int main(int argc, char** argv) {
     observer.SubscribeToNewNotifications(
         (Observer::INotificationEventSubscriber*)&notificationController);
 
-    // SubscribeToNewNotifications ->
-    //      serverctx.notificationRepo.add(notification)
+    // cameras
+    Web::DAL::CameraRepositoryMemory cameraRepository;
+
+    for (auto&& cam : cfg.camerasConfiguration) {
+        auto camera = Web::Domain::Camera(cam.name, cam.url);
+        cameraRepository.Add(camera);
+    }
 
     Observer::VideoSource cap;
     cap.Open(cfg.camerasConfiguration[0].url);

@@ -5,6 +5,7 @@
 
 #include "../../../recognize/Observer/src/Domain/Notification/DTONotification.hpp"
 #include "../../../recognize/Observer/src/Utils/NotificationTypesHelpers.hpp"
+#include "Camera.hpp"
 
 namespace Web::Domain {
     class Notification {
@@ -14,6 +15,7 @@ namespace Web::Domain {
         int groupID;
         std::string type;
         std::time_t datetime;
+        // Camera camera;
 
         // use default operators
         auto operator<=>(const Notification&) const = default;
@@ -21,6 +23,7 @@ namespace Web::Domain {
        public:
         Notification() = default;
 
-        Notification(const Observer::DTONotification& notification);
+        Notification(const Observer::DTONotification& notification
+                     /*, Camera camera*/);
     };
 }  // namespace Web::Domain
