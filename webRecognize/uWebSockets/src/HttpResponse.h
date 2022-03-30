@@ -379,6 +379,12 @@ public:
         internalEnd(data, data.length(), false, true, closeConnection);
     }
 
+    /* End the response with json headers */
+    void endJson(std::string_view data = {}, bool closeConnection = false) {
+        writeHeader("Content-Type", "application/json");
+        internalEnd(data, data.length(), false, true, closeConnection);
+    }
+
     /* End the response with an optional data chunk. Always starts a timeout. */
     void endRaw(std::string_view data = {}, bool closeConnection = false) {
         internalEnd(data, data.length(), false, false, closeConnection);
