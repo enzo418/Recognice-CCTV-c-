@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 namespace Web::DAL {
@@ -14,6 +15,6 @@ namespace Web::DAL {
 
         virtual const T& Get(const T_ID& id) = 0;
 
-        virtual const std::vector<T>& GetAll() = 0;
+        virtual const std::vector<T> GetAll(int limit = 100) = 0;
     };
 }  // namespace Web::DAL

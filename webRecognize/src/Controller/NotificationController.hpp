@@ -29,6 +29,8 @@ namespace Web::Controller {
 
         void StreamNotification(auto* res, auto* req);
 
+        void GetNotifications(auto* res, auto* req);
+
         void update(Observer::DTONotification ev) override;
 
        private:
@@ -46,6 +48,10 @@ namespace Web::Controller {
         // http
         app->get("/stream/notification/:id", [this](auto* res, auto* req) {
             this->StreamNotification(res, req);
+        });
+
+        app->get("/api/notifications/", [this](auto* res, auto* req) {
+            this->GetNotifications(res, req);
         });
 
         // ws
@@ -91,5 +97,30 @@ namespace Web::Controller {
 
         // notify all websocket subscribers about it
         notificatorWS.update(ev);
+    }
+
+    template <bool SSL>
+    void NotificationController<SSL>::GetNotifications(auto* res, auto* req) {
+        std::string limitStr(req->getQuery("limit"));
+
+        constexpr int MAX_LIMIT = 100;
+
+        int limit = MAX_LIMIT;
+
+        if (!limitStr.empty()) {
+            try {
+                limit = std::stoi(limitStr);
+            } catch (...) {
+                OBSERVER_WARN(
+                    "Requested notifications with an invalid limit: {0}",
+                    limitStr);
+            }
+
+            limit = limit > MAX_LIMIT || limit < 0 ? MAX_LIMIT : limit;
+        }
+
+        auto notifications = notificationRepository->GetAll(limit);
+
+        res->endJson();
     }
 }  // namespace Web::Controller

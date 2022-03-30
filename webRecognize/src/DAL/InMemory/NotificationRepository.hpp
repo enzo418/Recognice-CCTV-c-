@@ -4,6 +4,7 @@
 #include <iterator>
 #include <string>
 
+#include "../../../../recognize/Observer/src/Log/log.hpp"
 #include "../INotificationRepository.hpp"
 
 namespace Web::DAL {
@@ -17,7 +18,8 @@ namespace Web::DAL {
 
         const Domain::Notification& Get(const std::string& element) override;
 
-        const std::vector<Domain::Notification>& GetAll() override;
+        const std::vector<Domain::Notification> GetAll(
+            int limit = 100) override;
 
         const std::string& GetFilename(const std::string& id) override;
 

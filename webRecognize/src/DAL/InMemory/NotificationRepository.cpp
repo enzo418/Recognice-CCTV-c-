@@ -37,8 +37,22 @@ namespace Web::DAL {
         return *res;
     }
 
-    const std::vector<Notification>& NotificationRepositoryMemory::GetAll() {
-        return notifications;
+    const std::vector<Notification> NotificationRepositoryMemory::GetAll(
+        int limit) {
+        OBSERVER_ASSERT(limit > 0 && limit <= notifications.size(),
+                        "Limit is out of bounds");
+
+        auto max = std::min(limit, (int)notifications.size());
+
+        std::vector<Notification> result;
+        result.reserve(max);
+
+        // start at end until rbegin + max.
+        // + sign since its reverse iterator.
+        result.insert(result.begin(), notifications.rbegin(),
+                      notifications.rbegin() + max);
+
+        return result;
     }
 
     const std::string& NotificationRepositoryMemory::GetFilename(

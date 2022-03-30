@@ -17,7 +17,8 @@ namespace Web::DAL {
 
         virtual const Domain::Notification& Get(const std::string& id) = 0;
 
-        virtual const std::vector<Domain::Notification>& GetAll() = 0;
+        virtual const std::vector<Domain::Notification> GetAll(
+            int limit = 100) = 0;
 
         /**
          * @brief Get the filename of a notification
