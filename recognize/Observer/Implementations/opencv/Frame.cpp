@@ -14,6 +14,8 @@ namespace Observer {
                                     m_frame.type()));
     }
 
+    int Frame::GetNumberChannels() { return m_frame.channels(); }
+
     Frame::IType Frame::GetBlackImage(const Size& size, int numberChannels) {
         int type;
         switch (type) {

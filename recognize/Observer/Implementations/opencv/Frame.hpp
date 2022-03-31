@@ -52,6 +52,13 @@ namespace Observer {
         bool IsEmpty() override;
 
         /**
+         * @brief Get the number of channels
+         *
+         * @return int
+         */
+        int GetNumberChannels();
+
+        /**
          * @brief Rotates a image
          *
          * @param angle angle, on degrees

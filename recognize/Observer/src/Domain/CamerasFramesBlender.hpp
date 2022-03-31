@@ -44,6 +44,13 @@ namespace Observer {
 
         void InternalStart() override;
 
+        /**
+         * @brief If some frames have different number of channels this function
+         * will correct that, converting each frame to the maximum number of
+         * channel found between them all.
+         */
+        void NormalizeNumberOfChannels(std::vector<Frame>&);
+
        private:
         std::vector<std::queue<Frame>> frames;
         std::mutex mtxFrames;

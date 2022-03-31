@@ -42,6 +42,8 @@ namespace Observer {
 
             this->mtxFrames.unlock();
 
+            this->NormalizeNumberOfChannels(framesToShow);
+
             Frame frame = ImageDisplay::Get().StackImages(
                 &framesToShow[0], this->maxFrames, maxHStack);
 
@@ -105,5 +107,17 @@ namespace Observer {
 
         // can't be < 0 & > max
         sleepForMs = std::min(std::max(sleepForMs, 0), maxSleepTime);
+    }
+
+    void CamerasFramesBlender::NormalizeNumberOfChannels(
+        std::vector<Frame>& normalize) {
+        // check if it's necessary to normalize
+        for (auto& frame : normalize) {
+            int channels = frame.GetNumberChannels();
+
+            if (channels != 3) {
+                frame.ToColorSpace(ColorSpaceConversion::COLOR_GRAY2RGB);
+            }
+        }
     }
 }  // namespace Observer
