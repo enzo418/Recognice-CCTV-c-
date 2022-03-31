@@ -381,6 +381,7 @@ public:
 
     /* End the response with json headers */
     void endJson(std::string_view data = {}, bool closeConnection = false) {
+        writeHeader("Access-Control-Allow-Origin", "*");
         writeHeader("Content-Type", "application/json");
         internalEnd(data, data.length(), false, true, closeConnection);
     }
