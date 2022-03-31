@@ -238,7 +238,8 @@ class FileStreamer {
         if (url[0] == '/') url = url.substr(1, url.length() - 1);
 
         // /path/to/directory / url without initial '/'
-        const std::string path = std::filesystem::path(directory) / url;
+        const std::string path =
+            (std::filesystem::path(directory) / url).lexically_normal();
 
         this->filesHandlerMtx.lock();
 

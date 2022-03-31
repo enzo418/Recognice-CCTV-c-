@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     auto app = uWS::App();
 
     Web::ServerContext<SSL> serverCtx = {
-        .rootFolder = fs::current_path() / "web",
+        .rootFolder = fs::current_path(),
         .port = 3001,
         .recognizeContext = {true, nullptr},
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
 
                  std::string rangeHeader(req->getHeader("range"));
 
-                 FileStreamer::GetInstance().streamFile(res, "/index.html",
+                 FileStreamer::GetInstance().streamFile(res, "/web/index.html",
                                                         rangeHeader);
              })
         .get("/test",
@@ -211,6 +211,9 @@ int main(int argc, char** argv) {
              [](auto* res, auto* req) {
                  std::string url(req->getUrl());
                  std::string rangeHeader(req->getHeader("range"));
+
+                 // search file only on the web folder
+                 url = "/web/" + url;
 
                  if (!hasExtension(url)) {
                      req->setYield(true);  // mark as not handled
