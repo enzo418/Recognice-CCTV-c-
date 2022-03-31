@@ -14,6 +14,7 @@
 #include "../stream_content/FileStreamer.hpp"
 
 namespace Web::Controller {
+    extern const std::unordered_map<std::string, const std::string> endpoints;
 
     template <bool SSL>
     class NotificationController
@@ -36,6 +37,12 @@ namespace Web::Controller {
         void update(Observer::DTONotification ev) override;
 
        private:
+        std::vector<Web::DTONotification> NotificationsToDTO(
+            std::vector<Domain::Notification>&);
+
+        Web::DTONotification inline NotificationToDTO(Domain::Notification&);
+
+       private:
         Web::DAL::INotificationRepository* notificationRepository;
         Web::CL::NotificationCL* notificationCache;
 
@@ -48,19 +55,20 @@ namespace Web::Controller {
         Web::CL::NotificationCL* pNotCache)
         : notificationRepository(pNotRepo), notificationCache(pNotCache) {
         // http
-        app->get("/stream/notification/:id", [this](auto* res, auto* req) {
-            this->StreamNotification(res, req);
-        });
+        app->get(endpoints.at("notification-stream") + ":id",
+                 [this](auto* res, auto* req) {
+                     this->StreamNotification(res, req);
+                 });
 
-        app->get("/api/notifications/", [this](auto* res, auto* req) {
-            this->GetNotifications(res, req);
-        });
+        app->get(
+            endpoints.at("api-notifications"),
+            [this](auto* res, auto* req) { this->GetNotifications(res, req); });
 
         // ws
         notificatorWS.Start();
 
         app->ws<PerSocketData>(
-            "/notifications",
+            endpoints.at("ws-notifications"),
             {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,
              .open =
                  [this](auto* ws, const std::list<std::string_view>& paths) {
@@ -96,11 +104,7 @@ namespace Web::Controller {
 
         notificationRepository->Add(converted);
 
-        auto copy = Domain::Notification(converted);
-
-        // don't tell the clients the real file location,
-        // tell them where they can request to view it!
-        copy.content = "/stream/notification/" + converted.id;
+        auto copy = NotificationToDTO(converted);
 
         // notify all websocket subscribers about it
         notificatorWS.update(copy);
@@ -133,9 +137,35 @@ namespace Web::Controller {
             notf.camera.id = "0";
         }
 
-        auto msg =
-            json_dto::to_json<std::vector<Domain::Notification>>(notifications);
+        auto msg = json_dto::to_json<std::vector<Web::DTONotification>>(
+            NotificationsToDTO(notifications));
 
         res->endJson(msg);
+    }
+
+    template <bool SSL>
+    std::vector<Web::DTONotification>
+    NotificationController<SSL>::NotificationsToDTO(
+        std::vector<Domain::Notification>& parseNots) {
+        std::vector<Web::DTONotification> parsed(parseNots.size());
+
+        for (int i = 0; i < parseNots.size(); i++) {
+            parsed[i] = this->NotificationToDTO(parseNots[i]);
+        }
+
+        return parsed;
+    }
+
+    template <bool SSL>
+    Web::DTONotification NotificationController<SSL>::NotificationToDTO(
+        Domain::Notification& parseNot) {
+        Web::DTONotification parsed(parseNot);
+
+        if (parseNot.type != "text") {
+            // hide real filename but tell where to find the media
+            parsed.content = endpoints.at("notification-stream") + parsed.id;
+        }
+
+        return parsed;
     }
 }  // namespace Web::Controller
