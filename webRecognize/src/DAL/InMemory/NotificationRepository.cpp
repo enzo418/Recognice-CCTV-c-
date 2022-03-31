@@ -39,8 +39,7 @@ namespace Web::DAL {
 
     const std::vector<Notification> NotificationRepositoryMemory::GetAll(
         int limit) {
-        OBSERVER_ASSERT(limit > 0 && limit <= notifications.size(),
-                        "Limit is out of bounds");
+        if (limit < 0) OBSERVER_ERROR("Limit is out of bounds");
 
         auto max = std::min(limit, (int)notifications.size());
 
