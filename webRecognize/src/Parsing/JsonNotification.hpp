@@ -24,4 +24,11 @@ namespace json_dto {
             json_dto::mandatory("date", m.datetime) &
             json_dto::mandatory("cameraID", m.cameraID);
     }
+
+    template <typename Json_Io>
+    void json_io(Json_Io& io, Web::Domain::Camera& m) {
+        io& json_dto::mandatory("id", m.id) &
+            json_dto::mandatory("name", m.name) &
+            json_dto::mandatory("uri", m.uri);
+    }
 } /* namespace json_dto */
