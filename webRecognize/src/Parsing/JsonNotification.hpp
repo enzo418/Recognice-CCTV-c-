@@ -11,7 +11,8 @@ namespace json_dto {
             json_dto::mandatory("content", m.content) &
             json_dto::mandatory("group", m.groupID) &
             json_dto::mandatory("type", m.type) &
-            json_dto::mandatory("date", m.datetime);
+            json_dto::mandatory("date", m.datetime) &
+            json_dto::mandatory("camera", m.camera);
     }
 
     template <typename Json_Io>
