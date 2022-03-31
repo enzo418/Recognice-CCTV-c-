@@ -9,6 +9,7 @@
 #include "../../vendor/json_dto/json_dto.hpp"
 #include "../CL/NotificationCL.hpp"
 #include "../DAL/INotificationRepository.hpp"
+#include "../Domain/Camera.hpp"
 #include "../Notifications/WebsocketNotificator.hpp"
 #include "../stream_content/FileStreamer.hpp"
 
@@ -90,14 +91,19 @@ namespace Web::Controller {
     void NotificationController<SSL>::update(Observer::DTONotification ev) {
         auto converted = Domain::Notification(ev);
 
+        // add random camera id to test it
+        converted.camera.id = "0";
+
         notificationRepository->Add(converted);
+
+        auto copy = Domain::Notification(converted);
 
         // don't tell the clients the real file location,
         // tell them where they can request to view it!
-        ev.content = "/stream/notification/" + converted.id;
+        copy.content = "/stream/notification/" + converted.id;
 
         // notify all websocket subscribers about it
-        notificatorWS.update(ev);
+        notificatorWS.update(copy);
     }
 
     template <bool SSL>
@@ -121,6 +127,11 @@ namespace Web::Controller {
         }
 
         auto notifications = notificationRepository->GetAll(limit);
+
+        // add random camera id to test it
+        for (auto&& notf : notifications) {
+            notf.camera.id = "0";
+        }
 
         auto msg =
             json_dto::to_json<std::vector<Domain::Notification>>(notifications);

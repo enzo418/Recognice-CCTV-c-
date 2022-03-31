@@ -15,7 +15,7 @@ namespace Web::Domain {
         int groupID;
         std::string type;
         std::time_t datetime;
-        // Camera camera;
+        Camera camera;
 
         // use default operators
         auto operator<=>(const Notification&) const = default;

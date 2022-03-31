@@ -3,21 +3,22 @@
 #include <chrono>
 #include <deque>
 #include <mutex>
+#include <optional>
 #include <thread>
 
 #include "../../../recognize/Observer/src/Domain/Notification/LocalNotifications.hpp"
 #include "../../../recognize/Observer/src/IFunctionality.hpp"
 #include "../../../recognize/Observer/src/Log/log.hpp"
+#include "../../vendor/json_dto/json_dto.hpp"
+#include "../Domain/Notification.hpp"
 #include "../SocketData.hpp"
 #include "../WebsocketService.hpp"
 #include "DTONotification.hpp"
-#include "Notifications.hpp"
 
 namespace Web {
     template <bool SSL>
     class WebsocketNotificator : public IFunctionality,
-                                 public WebsocketService<SSL, PerSocketData>,
-                                 public Observer::INotificationEventSubscriber {
+                                 public WebsocketService<SSL, PerSocketData> {
        public:
         WebsocketNotificator();
         ~WebsocketNotificator();
@@ -34,7 +35,7 @@ namespace Web {
          */
         void Stop() override;
 
-        void update(Observer::DTONotification ev) override;
+        void update(Web::DTONotification ev);
 
        private:
         void InternalStart();
@@ -44,7 +45,7 @@ namespace Web {
 
        private:
         std::mutex mtxNotifications;
-        std::deque<Observer::DTONotification> notifications;
+        std::deque<Web::DTONotification> notifications;
 
        private:
         std::thread thread;
@@ -82,25 +83,25 @@ namespace Web {
             mtxNotifications.lock();
 
             if (!notifications.empty()) {
-                std::vector<std::string> jsons;
+                std::vector<Web::DTONotification> converted;
 
-                jsons.reserve(notifications.size());
+                converted.reserve(notifications.size());
 
-                // dump the buffer and send them
-                while (!notifications.empty()) {
-                    jsons.push_back(
-                        NotificationToJson(ObserverDTONotToWebDTONot(
-                            std::move(notifications.front()))));
+                // convert Domain::Notification into DTONotification
+                converted.insert(converted.begin(), notifications.begin(),
+                                 notifications.end());
 
-                    notifications.pop_front();
-                }
+                // remove all
+                notifications.clear();
 
                 mtxNotifications.unlock();
 
-                // TODO: evaluate possible thread pool
-                for (auto& json : jsons) {
-                    this->SendToClients(json.c_str(), json.size());
-                }
+                // parse all to json
+                auto json =
+                    json_dto::to_json<std::vector<Web::DTONotification>>(
+                        converted);
+
+                this->SendToClients(json.c_str(), json.size());
             } else {
                 mtxNotifications.unlock();
             }
@@ -110,7 +111,7 @@ namespace Web {
     }
 
     template <bool SSL>
-    void WebsocketNotificator<SSL>::update(Observer::DTONotification ev) {
+    void WebsocketNotificator<SSL>::update(Web::DTONotification ev) {
         std::lock_guard<std::mutex> g_n(mtxNotifications);
         notifications.push_back(ev);
     }

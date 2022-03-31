@@ -10,6 +10,6 @@ namespace Web::Domain {
         this->type = Observer::Helpers::Notifications::NOTIFICATION_TYPE_MAP.at(
             (int)notification.type);
 
-        datetime = std::time_t(0);
+        datetime = time(0);
     }
 }  // namespace Web::Domain

@@ -1,5 +1,4 @@
 
-#include <jsoncpp/json/writer.h>
 #include <spdlog/fmt/bundled/format.h>
 
 #include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
@@ -127,8 +126,9 @@ int main(int argc, char** argv) {
              })
         .get("/test",
              [&notificationController](auto* res, auto* req) {
+                 static int id = 0;
                  Observer::DTONotification ev(
-                     0, "prender_sin_boton2.mp4",
+                     id++, "prender_sin_boton2.mp4",
                      Observer::ENotificationType::VIDEO);
                  notificationController.update(ev);
                  res->end();
