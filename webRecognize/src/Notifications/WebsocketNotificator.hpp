@@ -83,23 +83,12 @@ namespace Web {
             mtxNotifications.lock();
 
             if (!notifications.empty()) {
-                std::vector<Web::DTONotification> converted;
-
-                converted.reserve(notifications.size());
-
-                // convert Domain::Notification into DTONotification
-                converted.insert(converted.begin(), notifications.begin(),
-                                 notifications.end());
-
-                // remove all
-                notifications.clear();
-
-                mtxNotifications.unlock();
-
                 // parse all to json
-                auto json =
-                    json_dto::to_json<std::vector<Web::DTONotification>>(
-                        converted);
+                auto json = json_dto::to_json<std::deque<Web::DTONotification>>(
+                    notifications);
+
+                notifications.clear();
+                mtxNotifications.unlock();
 
                 this->SendToClients(json.c_str(), json.size());
             } else {
