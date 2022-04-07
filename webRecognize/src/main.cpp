@@ -106,6 +106,8 @@ int main(int argc, char** argv) {
 
     threads.push_back(&observer);
 
+    observer.Start();
+
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
                    if (token) {
