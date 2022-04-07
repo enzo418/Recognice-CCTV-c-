@@ -52,6 +52,7 @@
 # vendor
 !vendor/
 !vendor/*
+!vendor/**
 
 # Parsing
 !Parsing/
