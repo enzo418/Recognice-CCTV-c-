@@ -60,6 +60,9 @@
 # Controllers
 !src/Controller/
 
+# Submodule
+!WebRecognize
+!WebRecognize/*
 
 !CMakeLists.txt
 
