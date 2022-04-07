@@ -1,0 +1,3 @@
+[submodule "webRecognize/WebRecognize"]
+	path = webRecognize/WebRecognize
+	url = https://github.com/enzo418/WebRecognize

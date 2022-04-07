@@ -65,3 +65,19 @@ add_executable(webRecognize ${SOURCES})
 # add -lssl if use ssl with uwebsocket
 # -lz is zlib
 target_link_libraries(webRecognize ${RECOGNIZER_LIBS} fmt::fmt "-l:uSockets.a" "-lz")
+
+
+## Build npm webpage
+file(TO_CMAKE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/WebRecognize WebDirectory)
+
+file(TO_CMAKE_PATH ${CMAKE_BINARY_DIR}/web WebOutputDirectory)
+
+message(STATUS "Web source directory: " ${WebDirectory})
+message(STATUS "Web output directory: " ${WebOutputDirectory})
+
+# WebRecognize npm target
+add_custom_target (npm-target ALL
+	COMMAND npm install -s && npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
+	WORKING_DIRECTORY ${WebDirectory}
+	COMMENT "Building the frontend"
+)
