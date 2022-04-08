@@ -10,6 +10,7 @@ if(APPLE)
 endif()
 
 option(WITH_CUDA "Use cuda DNN" ON)
+option(BUILD_FRONTEND "Build frontend" ON)
 
 if (WITH_CUDA)
 	MESSAGE(STATUS "WITH_CUDA")
@@ -72,12 +73,14 @@ file(TO_CMAKE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/WebRecognize WebDirectory)
 
 file(TO_CMAKE_PATH ${CMAKE_BINARY_DIR}/web WebOutputDirectory)
 
-message(STATUS "Web source directory: " ${WebDirectory})
-message(STATUS "Web output directory: " ${WebOutputDirectory})
+if(BUILD_FRONTEND)
+	message(STATUS "Web source directory: " ${WebDirectory})
+	message(STATUS "Web output directory: " ${WebOutputDirectory})
 
-# WebRecognize npm target
-add_custom_target (npm-target ALL
-	COMMAND npm install -s && npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
-	WORKING_DIRECTORY ${WebDirectory}
-	COMMENT "Building the frontend"
-)
+	# WebRecognize npm target
+	add_custom_target (npm-target ALL
+		COMMAND npm install -s && npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
+		WORKING_DIRECTORY ${WebDirectory}
+		COMMENT "Building the frontend"
+	)
+endif()
