@@ -78,7 +78,11 @@ class FileStreamer {
         // TODO: Use some real world streaming algorithm like
         // https://en.wikipedia.org/wiki/Streaming_media#Bandwidth
 
-        // use the smallest buffer size for the first request
+        // use the smallest buffer size on the first request
+        // this is for example, if a uer request a video we respond with a small
+        // part of the data to let the browser/program know that the media is
+        // available and can be played. After the users hits play we start to
+        // use a bigger buffer
         long desiredBuffer =
             ranges[0].start != 0 ? MaxBufferSize : ReadWriteBufferSize;
 
