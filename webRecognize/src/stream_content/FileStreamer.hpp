@@ -12,8 +12,11 @@
 #include "Range.hpp"
 #include "StaticFilesHandler.hpp"
 
-// Max buffer: 32kb = 32.768 bytes
+// Min buffer: 32kb = 32.768 bytes
 const size_t ReadWriteBufferSize = 32768;
+
+// Max buffer size: 2MB = 2e6 bytes
+const long MaxBufferSize = 2 * 1000 * 1000;
 
 class FileStreamer {
    public:
@@ -72,8 +75,14 @@ class FileStreamer {
             }
         }
 
-        auto firstContentLength =
-            std::min(fz - ranges[0].start, (long)ReadWriteBufferSize);
+        // TODO: Use some real world streaming algorithm like
+        // https://en.wikipedia.org/wiki/Streaming_media#Bandwidth
+
+        // use the smallest buffer size for the first request
+        long desiredBuffer =
+            ranges[0].start != 0 ? MaxBufferSize : ReadWriteBufferSize;
+
+        auto firstContentLength = std::min(fz - ranges[0].start, desiredBuffer);
 
         // always write status first
         res->writeStatus("206 Partial Content")
