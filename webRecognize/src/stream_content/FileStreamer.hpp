@@ -72,12 +72,15 @@ class FileStreamer {
             }
         }
 
+        auto firstContentLength =
+            std::min(fz - ranges[0].start, (long)ReadWriteBufferSize);
+
         // always write status first
         res->writeStatus("206 Partial Content")
             ->writeHeader("Content-Range",
                           std::string_view(rangesStringOut.data(),
                                            rangesStringOut.length()))
-            ->writeHeader("Content-Length", fz)
+            ->writeHeader("Content-Length", firstContentLength)
             ->writeHeader("Connection", "keep-alive")
             ->writeHeader("Accept-Ranges", "bytes")
             ->writeHeader("Content-Type",
