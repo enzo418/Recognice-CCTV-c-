@@ -151,14 +151,14 @@ int main(int argc, char** argv) {
                     std::string feed_id(
                         serverCtx.liveViewsManager->GetFeedId(uri));
 
-                    res->end(GetSuccessAlertReponse(GetJsonString(
+                    res->endJson(GetSuccessAlertReponse(GetJsonString(
                         {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
 
                     OBSERVER_TRACE(
                         "Opened camera connection in live view '{0}' as '{1}' ",
                         uri, feed_id);
                 } else {
-                    res->end(GetErrorAlertReponse(
+                    res->endJson(GetErrorAlertReponse(
                         GetJsonString({{"error",
                                         "Couldn't open a connection with "
                                         "the camera.",
@@ -185,8 +185,11 @@ int main(int argc, char** argv) {
                      std::string feed_id(
                          serverCtx.liveViewsManager->GetFeedId(uri));
 
-                     res->end(GetSuccessAlertReponse(GetJsonString(
+                     res->endJson(GetSuccessAlertReponse(GetJsonString(
                          {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
+                 } else {
+                     res->endJson(GetErrorAlertReponse(GetJsonString(
+                         {{"error", "Observer might not be running.", true}})));
                  }
              })
         .get("/stream/notification/test11",
