@@ -83,17 +83,15 @@ class FileStreamer {
         // part of the data to let the browser/program know that the media is
         // available and can be played. After the users hits play we start to
         // use a bigger buffer
-        long desiredBuffer =
-            ranges[0].start != 0 ? MaxBufferSize : ReadWriteBufferSize;
-
-        auto firstContentLength = std::min(fz - ranges[0].start, desiredBuffer);
+        auto contentLength =
+            std::min(fz - ranges[0].start, (long)ReadWriteBufferSize);
 
         // always write status first
         res->writeStatus("206 Partial Content")
             ->writeHeader("Content-Range",
                           std::string_view(rangesStringOut.data(),
                                            rangesStringOut.length()))
-            ->writeHeader("Content-Length", firstContentLength)
+            ->writeHeader("Content-Length", contentLength)
             ->writeHeader("Connection", "keep-alive")
             ->writeHeader("Accept-Ranges", "bytes")
             ->writeHeader("Content-Type",
@@ -109,29 +107,16 @@ class FileStreamer {
 
         std::string ran;
         std::string buf;
-        buf.resize(ReadWriteBufferSize);
+        buf.resize(contentLength);
 
         for (auto& range : ranges) {
-            // std::cout << "\tstart: " << range.start << " -> end: " <<
-            // range.end << std::endl;
-
             fileReader->seek(range.start, fileReader->beg());
-            long total = range.start;
-
-            // if we would support multiple ranges we need to send this:
-            // res ->writeStatus("206 Partial Content")
-            //     ->writeHeader("Content-Range",
-            //     getRangeStringForResponse(range, fz));
 
             auto bytesLeft = range.length();
+
             while (bytesLeft) {
                 auto of = std::min(buf.length(), bytesLeft);
-                total += of;
 
-                // ran = "bytes 0-" + std::to_string(total) + "/" +
-                // std::to_string(fz); std::cout << "Reading " << of << " bytes
-                // from file." << " Left: " << bytesLeft <<  " Ran: " << ran <<
-                // std::endl;
                 fileReader->read(buf.data(), of);
                 if (of <= 0) {
                     const static std::string unexpectedEof("Unexpected EOF");
@@ -142,12 +127,14 @@ class FileStreamer {
                     return false;
                 }
 
+                if (!fileReader->good()) {
+                    OBSERVER_WARN(
+                        "Ranged file stream - file isn't good! file: {}", url);
+                }
+
                 bytesLeft -= of;
 
                 if (!res->tryEndRaw(buf, of).first) {
-                    // std::cout << "ended range" << std::endl;
-                    // The client doesn't want any more data from this range.
-                    // Stop sending it.
                     break;
                 }
             }
