@@ -10,7 +10,8 @@ if(APPLE)
 endif()
 
 option(WITH_CUDA "Use cuda DNN" ON)
-option(BUILD_FRONTEND "Build frontend" ON)
+option(SKIP_INSTALL_FRONTEND_PACKAGES "Skip the installation of all the frontend packages before build" OFF)
+option(BUILD_FRONTEND "Should compile the frontend code" ON)
 
 if (WITH_CUDA)
 	MESSAGE(STATUS "WITH_CUDA")
@@ -77,9 +78,17 @@ if(BUILD_FRONTEND)
 	message(STATUS "Web source directory: " ${WebDirectory})
 	message(STATUS "Web output directory: " ${WebOutputDirectory})
 
+	if(NOT SKIP_INSTALL_FRONTEND_PACKAGES)
+		add_custom_target (npm-target ALL
+			COMMAND npm install -s
+			WORKING_DIRECTORY ${WebDirectory}
+			COMMENT "Installing packges of the frontend"
+		)
+	endif()
+
 	# WebRecognize npm target
 	add_custom_target (npm-target ALL
-		COMMAND npm install -s && npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
+		COMMAND npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
 		WORKING_DIRECTORY ${WebDirectory}
 		COMMENT "Building the frontend"
 	)
