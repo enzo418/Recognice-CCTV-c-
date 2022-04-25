@@ -1,5 +1,7 @@
 #include "ObserverCentral.hpp"
 
+#include "Configuration/CameraConfiguration.hpp"
+
 namespace Observer {
 
     ObserverCentral::ObserverCentral(Configuration pConfig)
@@ -123,7 +125,12 @@ namespace Observer {
     typename ObserverCentral::Camera ObserverCentral::GetNewCamera(
         CameraConfiguration& cfg) {
         ObserverCentral::Camera ct;
-        ct.camera = std::make_shared<CameraObserver>(&cfg);
+
+        if (cfg.type == ECameraType::VIEW) {
+            ct.camera = std::make_shared<PasiveCamera>(&cfg);
+        } else {
+            ct.camera = std::make_shared<ActiveCamera>(&cfg);
+        }
 
         // event validator
         ct.eventValidator = std::make_shared<EventValidator>(&cfg);

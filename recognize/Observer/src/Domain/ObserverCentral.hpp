@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../Functionality.hpp"
+#include "ActiveCamera.hpp"
 #include "CameraObserver.hpp"
 #include "CamerasFramesBlender.hpp"
 #include "Configuration/CameraConfiguration.hpp"
@@ -19,6 +20,7 @@
 #include "FrameDisplay.hpp"
 #include "Notification/Notification.hpp"
 #include "NotificationsController.hpp"
+#include "PasiveCamera.hpp"
 
 namespace Observer {
     class ObserverCentral : public Functionality {

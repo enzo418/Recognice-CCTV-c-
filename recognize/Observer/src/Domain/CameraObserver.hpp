@@ -43,25 +43,22 @@ namespace Observer {
          **/
         explicit CameraObserver(CameraConfiguration* configuration);
 
-        void SubscribeToCameraEvents(ICameraEventSubscriber* subscriber);
         void SubscribeToFramesUpdate(IFrameSubscriber* subscriber);
-        void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
+
+        virtual void SubscribeToCameraEvents(
+            ICameraEventSubscriber* subscriber) = 0;
+
+        virtual void SubscribeToThresholdUpdate(
+            IThresholdEventSubscriber* subscriber) = 0;
 
        protected:
-        void ProcessFrame(Frame& frame);
-
-        void ChangeDetected();
-
-        void NewVideoBuffer();
+        virtual void ProcessFrame(Frame& frame) = 0;
 
         void InternalStart() override final;
 
-       private:
+       protected:
         // camera configuration
         CameraConfiguration* cfg;
-
-        // current change threshold
-        double changeThreshold;
 
         // video source
         BufferedSource source;
@@ -69,38 +66,6 @@ namespace Observer {
         // video output
         VideoWriter writer;
 
-        std::unique_ptr<VideoBuffer> videoBufferForValidation;
-
-        FrameProcessor frameProcessor;
-
-        ThresholdManager thresholdManager;
-
         Publisher<int, Frame> framePublisher;
-
-        Publisher<CameraConfiguration*, CameraEvent> cameraEventsPublisher;
-
-        /* Proxy allows us to give our subscribers not only the threshold,
-         * but also the camera that updated the threshold.
-         */
-        class ThresholdEventPublisher : public ISubscriber<double> {
-           public:
-            explicit ThresholdEventPublisher(CameraConfiguration* pCfg)
-                : cfg(pCfg) {}
-
-            void subscribe(IThresholdEventSubscriber* subscriber) {
-                this->thresholdPublisher.subscribe(subscriber);
-            }
-
-            void update(double thresh) override {
-                this->thresholdPublisher.notifySubscribers(this->cfg, thresh);
-            }
-
-           private:
-            CameraConfiguration* cfg;
-            Publisher<CameraConfiguration*, double> thresholdPublisher;
-        };
-
-        // threshold publisher
-        ThresholdEventPublisher thresholdPublisher;
     };
 }  // namespace Observer

@@ -57,6 +57,8 @@ set(SRC_
         src/Domain/ObserverCentral.hpp src/Domain/ObserverCentral.cpp
         src/Domain/NotificationsController.hpp src/Domain/NotificationsController.cpp
         src/Domain/CameraObserver.hpp src/Domain/CameraObserver.cpp
+        src/Domain/ActiveCamera.hpp src/Domain/ActiveCamera.cpp
+        src/Domain/PasiveCamera.hpp src/Domain/PasiveCamera.cpp
 
         # notifications
         src/Domain/Notification/ImageNotification.hpp src/Domain/Notification/ImageNotification.cpp
