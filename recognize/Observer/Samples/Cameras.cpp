@@ -5,13 +5,14 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
+#include <ratio>
 #include <string>
 #include <thread>
 
 #include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
 #include "../../Observer/src/Domain/ObserverCentral.hpp"
 
-void Cameras(Observer::Configuration* cfg);
+void Cameras(Observer::Configuration* cfg, bool useCompression);
 
 using namespace Observer;
 
@@ -24,7 +25,8 @@ int main(int argc, char** argv) {
     const std::string keys =
         "{help h            |              | show help message}"
         "{config_path       | ./config.yml | path of the configuration file}"
-        "{seconds |  30   | seconds}";
+        "{seconds |  30   | seconds}"
+        "{use_compression | off | test to compress the image}";
 
     cv::CommandLineParser parser(argc, argv, keys);
 
@@ -38,6 +40,12 @@ int main(int argc, char** argv) {
         pathConfig = parser.get<std::string>("config_path");
     }
 
+    bool useCompression = false;
+    if (parser.has("use_compression")) {
+        useCompression =
+            parser.get<std::string>("use_compression", true) != "off";
+    }
+
     // initialize logger
     Observer::LogManager::Initialize();
     OBSERVER_INFO("Hi");
@@ -48,10 +56,10 @@ int main(int argc, char** argv) {
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
 
-    Cameras(&cfg);
+    Cameras(&cfg, useCompression);
 }
 
-void Cameras(Observer::Configuration* cfg) {
+void Cameras(Observer::Configuration* cfg, bool useCompression) {
     BufferedSource source;
     OBSERVER_INFO("Try open");
 
@@ -64,10 +72,30 @@ void Cameras(Observer::Configuration* cfg) {
 
     OBSERVER_INFO("Get");
     Frame frame;
+    std::vector<unsigned char> buffer;
+
+    Timer<std::chrono::nanoseconds> timer;
+
     while (source.IsOk()) {
         if (source.IsFrameAvailable()) {
+            timer.Start();
+
             frame = source.GetFrame();
-            OBSERVER_TRACE("Frame width: {}", frame.GetSize().width);
+
+            auto timeGetFrame = timer.GetDurationAndRestart();
+
+            if (useCompression) {
+                frame.EncodeImage(".jpg", 90, buffer);
+                OBSERVER_TRACE("Compressed!");
+            }
+
+            auto timeCompressFrame = timer.GetDuration();
+
+            OBSERVER_TRACE(
+                "Frame width: {} | Get took: {} ns | Compress Took: {} ns | "
+                "total: {} ns",
+                frame.GetSize().width, timeGetFrame, timeCompressFrame,
+                timeGetFrame + timeCompressFrame);
         }
     }
     /*
