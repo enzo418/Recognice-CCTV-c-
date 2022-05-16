@@ -170,4 +170,52 @@ TEST_F(ConfigurationTest, ShouldEmmitAndParseFromJson) {
     checkConfiguration(readedCfg, config);
 }
 
+TEST(ConfigurationObjectTest, ShouldSetValueOnNode) {
+    const std::string mockCfg =
+        "{configuration: {mediaFolderPath: 'test', off: 123}}";
+
+    Observer::ConfigurationParser::Object Obj;
+    ASSERT_TRUE(
+        Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
+
+    // field: configuration -> mediaFolderPath = ../web2/media2
+    std::string_view path = "configuration/mediaFolderPath/?to=../web2/media2";
+
+    ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
+        Obj, path));
+
+    auto s = Obj["configuration"]["mediaFolderPath"].as<std::string>();
+
+    ASSERT_TRUE(s == "../web2/media2");
+}
+
+TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
+    // same test as above with a complex data type
+    const std::string mockCfg =
+        "{configuration: {cameraConfiguration: [{ignoredAreas: []}], off: "
+        "123}}";
+
+    Observer::ConfigurationParser::Object Obj;
+    ASSERT_TRUE(
+        Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
+
+    // this time as an example we are refering to a camera field so
+    // Object must be a camera configuration object or it will fail
+    // field: ignoredAreas = <value>
+    std::string_view path =
+        "ignoredAreas/"
+        "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,\"y\":"
+        "15,\"width\":123,\"height\":435},{\"x\":7,\"y\":7,\"width\":112,"
+        "\"height\":2222}]";
+
+    auto cam1 = Obj["configuration"]["cameraConfiguration"][0];
+    ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
+        cam1, path));
+
+    auto data = Obj["configuration"]["cameraConfiguration"][0]["ignoredAreas"];
+
+    ASSERT_TRUE(data.IsSequence());
+    ASSERT_TRUE(data[0]["x"].as<int>() == 23);
+}
+
 // TODO: Add throw tests

@@ -1,6 +1,8 @@
 #include "ConfigurationParser.hpp"
 
 #include <yaml-cpp/exceptions.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
 
 #include <exception>
 #include <opencv2/opencv.hpp>
@@ -101,5 +103,86 @@ namespace Observer::ConfigurationParser {
 
     Configuration ParseJSON(const std::string& filePath) {
         return ParseYAML(filePath);
+    }
+
+    bool TrySetNodeValue(Object& obj, std::string* keys, int keysCount,
+                         const std::string& value) {
+        if (keysCount == 1 && obj[keys[0]]) {
+            obj[keys[0]] = YAML::Load(value);
+            return true;
+        } else if (keysCount > 1 && obj[keys[0]]) {
+            Object tmp = obj[keys[0]];
+            return TrySetNodeValue(tmp, &keys[1], keysCount - 1, value);
+        }
+
+        return false;
+    }
+
+    bool TrySetConfigurationFieldValue(Object& obj, std::string_view path) {
+        // each key represents a node on the configuration, so 50
+        // seems reasonably high.
+        std::array<std::string, 50> keys;
+        size_t keys_count = 0;
+
+        std::string value;
+
+        if (path.empty()) return false;
+
+        auto pos = path.find("?to=");
+        if (pos != std::string::npos) {
+            value = path.substr(pos + 4, path.length() - 1);
+            if (value.empty()) {
+                return false;
+            }
+
+            // remove ?to=<value>
+            path.remove_suffix(4 + (path.length() - (pos + 4)));
+        }
+
+        // split "/"
+        while (path.length()) {
+            auto pos = path.find("/");
+            if (pos == 0) {
+                // remove all / at the beggining
+                path.remove_prefix(1);
+            } else {
+                // if didn't found / just add what is left as a key
+                pos = pos == std::string::npos ? path.length() : pos;
+
+                if (keys_count >= keys.max_size()) {
+                    OBSERVER_WARN(
+                        "UNEXPECTED high number of keys while setting Node "
+                        "value");
+                    return false;
+                }
+
+                keys[keys_count++] = path.substr(0, pos);
+                path.remove_prefix(pos);
+            }
+        }
+
+        return TrySetNodeValue(obj, keys.data(), keys_count, value);
+    }
+
+    bool ReadConfigurationObject(const std::string& cofiguration,
+                                 Object& output) {
+        try {
+            output = YAML::Load(cofiguration);
+        } catch (...) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool ReadConfigurationObjectFromFile(const std::string& filePath,
+                                         Object& output) {
+        try {
+            output = YAML::LoadFile(filePath);
+        } catch (...) {
+            return false;
+        }
+
+        return true;
     }
 }  // namespace Observer::ConfigurationParser
