@@ -203,14 +203,14 @@ TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
     // Object must be a camera configuration object or it will fail
     // field: ignoredAreas = <value>
     std::string_view path =
-        "ignoredAreas/"
+        "configuration/cameraConfiguration/0/ignoredAreas/"
         "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,\"y\":"
         "15,\"width\":123,\"height\":435},{\"x\":7,\"y\":7,\"width\":112,"
         "\"height\":2222}]";
 
-    auto cam1 = Obj["configuration"]["cameraConfiguration"][0];
+    // auto cam1 = Obj["configuration"]["cameraConfiguration"][0];
     ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
-        cam1, path));
+        Obj, path));
 
     auto data = Obj["configuration"]["cameraConfiguration"][0]["ignoredAreas"];
 

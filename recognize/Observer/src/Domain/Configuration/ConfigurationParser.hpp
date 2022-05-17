@@ -63,7 +63,9 @@ namespace Observer::ConfigurationParser {
      * nodes as child of the node at `keys`.
      *
      * @param obj Node to iterate with the keys
-     * @param keys
+     * @param keys key in `obj`. Each key is a string, but the content is not
+     * limited to letters, that means "0" can be used to access the first
+     * element of a sequence and "name" to access the name value of `obj`.
      * @param keysCount
      * @param value
      * @return true on sucess
