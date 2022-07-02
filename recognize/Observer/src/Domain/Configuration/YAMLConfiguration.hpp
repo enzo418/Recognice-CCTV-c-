@@ -45,6 +45,7 @@ namespace YAML {
         static Node encode(const Observer::Configuration& rhs) {
             Node node;
 
+            node["name"] = rhs.name;
             node["mediaFolderPath"] = rhs.mediaFolderPath;
             node["notificationTextTemplate"] = rhs.notificationTextTemplate;
             node["telegramNotificationsConfiguration"] =
@@ -59,6 +60,8 @@ namespace YAML {
 
         static bool decode(const Node& node, Observer::Configuration& rhs) {
             //            auto cfgNode = node["configuration"];
+            
+            rhs.name = node["name"].as<std::string>();
             rhs.mediaFolderPath = node["mediaFolderPath"].as<std::string>();
             rhs.notificationTextTemplate =
                 node["notificationTextTemplate"].as<std::string>();

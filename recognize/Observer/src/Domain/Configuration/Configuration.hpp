@@ -15,6 +15,9 @@ namespace Observer {
             bool operator==(const ResizeNotification&) const = default;
         };
 
+        // configuration name
+        std::string name;
+
         // absolute path
         std::string mediaFolderPath;
 

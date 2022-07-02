@@ -122,7 +122,8 @@ class ConfigurationTest : public ::testing::Test {
             .processingConfiguration = {Size(640, 360), 15,
                                         Rect(1, 1, 233, 233)}};
 
-        this->config = {.mediaFolderPath = "../web/media",
+        this->config = {.name = "configuration test",
+                        .mediaFolderPath = "../web/media",
                         .notificationTextTemplate = "This is a template {N}",
                         .telegramConfiguration = telegramConfiguration,
                         .localWebConfiguration = localWebConfiguration,
@@ -143,6 +144,7 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
      * All the EXPECT are done like this to know wich is
      * component failing to validate.
      */
+    EXPECT_TRUE(cfg1.name == cfg2.name);
     EXPECT_TRUE(cfg1.mediaFolderPath == cfg2.mediaFolderPath);
     EXPECT_TRUE(cfg1.notificationTextTemplate == cfg2.notificationTextTemplate);
     EXPECT_TRUE(cfg1.outputConfiguration == cfg2.outputConfiguration);
