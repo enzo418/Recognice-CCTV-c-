@@ -1,11 +1,11 @@
 #include "ConfigurationParser.hpp"
 
-#include <yaml-cpp/exceptions.h>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
-
 #include <exception>
 #include <opencv2/opencv.hpp>
+
+#include "yaml-cpp/exceptions.h"
+#include "yaml-cpp/node/node.h"
+#include "yaml-cpp/node/parse.h"
 
 namespace Observer::ConfigurationParser {
     Configuration ParseYAML(const std::string& filePath) {
@@ -24,6 +24,10 @@ namespace Observer::ConfigurationParser {
 
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
+        } catch (YAML::KeyNotFound ex) {
+            OBSERVER_ERROR(
+                "Couldn't parse the configuration file, ERROR: Key not found ",
+                ex.msg);
         } catch (YAML::InvalidNode ex) {
             std::string message = "";
             if (!ex.mark.is_null()) {

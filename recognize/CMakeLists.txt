@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
 project(Recognize VERSION 1.0.0)
 
+set(CMAKE_DEBUG_POSTFIX "")
+
+
+enable_testing()
+include(GoogleTest)
+
 # Opencv package
 find_package(OpenCV REQUIRED)
 
@@ -10,7 +16,10 @@ find_package(spdlog REQUIRED)
 set(CURL_LIBRARY "-lcurl") 
 find_package(CURL REQUIRED) 
 
-find_package(yaml-cpp REQUIRED)
+# find_package(yaml-cpp REQUIRED)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp)
+set(YAML_CPP_INSTALL OFF)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp/include)
 
 # Json package
 # find_package(JSON REQUIRED)
@@ -89,8 +98,6 @@ endif()
 # =====
 include(${CMAKE_CURRENT_LIST_DIR}/tests/Tests.cmake)
 
-enable_testing()
-
 add_executable(
     tests
     "${TESTS_SOURCES}"
@@ -102,5 +109,4 @@ target_link_libraries(
     ${RECOGNIZER_LIBS}
 )
 
-include(GoogleTest)
 gtest_discover_tests(tests)

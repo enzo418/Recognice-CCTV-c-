@@ -1,11 +1,10 @@
 #pragma once
 
-#include <yaml-cpp/node/node.h>
-
 #include <array>
 
 #include "Configuration.hpp"
 #include "YAMLConfiguration.hpp"
+#include "yaml-cpp/node/node.h"
 
 namespace Observer::ConfigurationParser {
     // Object is the internal YAML/JSON node representation. It's used to cache

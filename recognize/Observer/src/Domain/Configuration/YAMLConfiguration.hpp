@@ -1,7 +1,5 @@
 #pragma once
 
-#include <yaml-cpp/yaml.h>
-
 #include <algorithm>
 #include <exception>
 #include <fstream>
@@ -15,6 +13,7 @@
 #include "../../Utils/SpecialStrings.hpp"
 #include "Configuration.hpp"
 #include "NotificationsServiceConfiguration.hpp"
+#include "yaml-cpp/yaml.h"
 
 #define ExistsInVector(svector, find_this)                          \
     std::find(std::begin(svector), std::end(svector), find_this) != \
@@ -60,7 +59,7 @@ namespace YAML {
 
         static bool decode(const Node& node, Observer::Configuration& rhs) {
             //            auto cfgNode = node["configuration"];
-            
+
             rhs.name = node["name"].as<std::string>();
             rhs.mediaFolderPath = node["mediaFolderPath"].as<std::string>();
             rhs.notificationTextTemplate =
