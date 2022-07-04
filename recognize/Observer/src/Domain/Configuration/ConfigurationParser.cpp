@@ -11,13 +11,13 @@
 namespace Observer::ConfigurationParser {
     std::string GetCustomMarkErrorMessage(const YAML::Mark& mark) {
         if (mark.is_null()) return "";
-        return fmt::format("at line {}, column {} or position {}", mark.line,
-                           mark.column, mark.pos);
+        return fmt::format("at line {}, column {} = position {}", mark.line + 1,
+                           mark.column + 1, mark.pos);
     }
 
     std::string GetCustomErrorMessage(const std::string& message,
                                       const YAML::Exception& ex) {
-        return fmt::format("{} {}\n\t > what: ", message,
+        return fmt::format("{} {}\n\t what (parser): {}", message,
                            GetCustomMarkErrorMessage(ex.mark), ex.what());
     }
 
@@ -32,16 +32,17 @@ namespace Observer::ConfigurationParser {
 
             // Todo throw custom ex
 
-            throw std::exception();
+            throw ConfigurationFileError();
         }
 
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
         } catch (const YAML::KeyNotFound& ex) {
             OBSERVER_ERROR(GetCustomErrorMessage(
-                fmt::format("Couldn't parse the configuration file, REQUIRED "
-                            "key \"{}\" was not found",
-                            ex.key),
+                fmt::format(
+                    "Couldn't parse the configuration file, REQUIRED "
+                    "key \"{}\" was not found on the object that starts",
+                    ex.key),
                 ex));
 
             throw MissingKey(ex.key);
@@ -50,7 +51,7 @@ namespace Observer::ConfigurationParser {
                 "Couldn't parse the configuration file, invalid node found",
                 ex));
 
-            throw std::exception();
+            throw ConfigurationFileError();
         } catch (const YAML::BadConversion& ex) {
             OBSERVER_ERROR(GetCustomErrorMessage(
                 "Couldn't parse the configuration file, unexpected format",
@@ -58,19 +59,15 @@ namespace Observer::ConfigurationParser {
 
             throw WrongType(ex.mark.line, ex.mark.column, ex.mark.pos);
         } catch (const YAML::ParserException& ex) {
-            std::string message = "";
-            if (!ex.mark.is_null()) {
-                message = "Line: " + std::to_string(ex.mark.line) +
-                          " Pos: " + std::to_string(ex.mark.pos);
-            }
-            message += " - " + ex.msg;
+            OBSERVER_ERROR(GetCustomErrorMessage(
+                "Couldn't parse the configuration file, parser error", ex));
 
-            // Log
-            OBSERVER_ERROR("Couldn't parse the configuration file: {}",
-                           message);
+            throw ConfigurationFileError();
         } catch (const std::exception& ex) {
             OBSERVER_ERROR("Couldn't parse the configuration file: {}",
                            ex.what());
+
+            throw ConfigurationFileError();
         }
 
         return cfg;

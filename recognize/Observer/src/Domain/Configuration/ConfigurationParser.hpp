@@ -12,14 +12,10 @@ namespace Observer::ConfigurationParser {
     // To be 100% clear it's not a "Configuration" (the struct).
     typedef YAML::Node Object;
 
-    struct MissingKey : public std::exception {
+    struct ConfigurationFileError : public std::runtime_error {
        public:
-        MissingKey(const std::string& pKeymissing)
-            : keymissing(std::move(pKeymissing)) {}
-
-        const char* what() const throw() {
-            return ("Missing Key '" + this->keymissing + "'").c_str();
-        }
+        ConfigurationFileError()
+            : std::runtime_error("File couldn't be processed") {}
 
         std::string keyMissing() const { return this->keymissing; }
 
@@ -27,12 +23,26 @@ namespace Observer::ConfigurationParser {
         std::string keymissing;
     };
 
-    struct WrongType : public std::exception {
+    struct MissingKey : public std::runtime_error {
+       public:
+        MissingKey(const std::string& pKeymissing)
+            : keymissing(std::move(pKeymissing)),
+              std::runtime_error("Missing Key '" + pKeymissing + "'") {}
+
+        std::string keyMissing() const { return this->keymissing; }
+
+       private:
+        std::string keymissing;
+        std::string what_;
+    };
+
+    struct WrongType : public std::runtime_error {
        public:
         WrongType(int pLine, int pColumn, int pPosition)
-            : mLine(pLine), mCol(pColumn), mPos(pPosition) {}
-
-        const char* what() const throw() { return "Bad conversion."; }
+            : mLine(pLine),
+              mCol(pColumn),
+              mPos(pPosition),
+              std::runtime_error("Bad conversion.") {}
 
         int line() const { return this->mLine; }
 
