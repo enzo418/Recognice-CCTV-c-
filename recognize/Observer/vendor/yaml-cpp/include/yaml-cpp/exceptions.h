@@ -215,9 +215,13 @@ namespace YAML {
         template <typename T>
         KeyNotFound(const Mark& mark_, const T& key_)
             : RepresentationException(mark_,
-                                      ErrorMsg::KEY_NOT_FOUND_WITH_KEY(key_)) {}
+                                      ErrorMsg::KEY_NOT_FOUND_WITH_KEY(key_)),
+              key(key_) {}
+
         KeyNotFound(const KeyNotFound&) = default;
         ~KeyNotFound() YAML_CPP_NOEXCEPT override;
+
+        std::string key;
     };
 
     template <typename T>

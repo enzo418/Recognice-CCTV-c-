@@ -10,6 +10,31 @@
         EXPECT_EQ(e.msg, message);                                 \
     }
 
+#define EXPECT_THROW_EXCEPTION_KEY(exception_type, statement, message, skey) \
+    ASSERT_THROW(statement, exception_type);                                 \
+    try {                                                                    \
+        statement;                                                           \
+    } catch (const exception_type& e) {                                      \
+        EXPECT_EQ(e.msg, message);                                           \
+        EXPECT_EQ(e.key, skey);                                              \
+    }
+
+#define EXPECT_THROW_MARK(statement, epos, eline, ecolumn) \
+    try {                                                  \
+        statement;                                         \
+    } catch (const YAML::Exception& ex) {                  \
+        ASSERT_EQ(ex.mark.pos, epos);                      \
+        ASSERT_EQ(ex.mark.line, eline);                    \
+        ASSERT_EQ(ex.mark.column, ecolumn);                \
+    }
+
+#define EXPECT_THROW_KEY(statement, skey)  \
+    try {                                  \
+        statement;                         \
+    } catch (const YAML::KeyNotFound& e) { \
+        EXPECT_EQ(e.key, skey);            \
+    }
+
 namespace YAML {
     namespace {
 
@@ -74,17 +99,19 @@ namespace YAML {
             const Node doc = Load(example_yaml);
 
             // Test that printable key is part of error message
-            EXPECT_THROW_EXCEPTION(YAML::KeyNotFound, doc["first"]["fourth"],
-                                   "key not found: \"fourth\"");
+            EXPECT_THROW_EXCEPTION_KEY(YAML::KeyNotFound,
+                                       doc["first"]["fourth"],
+                                       "key not found: \"fourth\"", "fourth");
 
-            EXPECT_THROW_EXCEPTION(YAML::KeyNotFound,
-                                   doc["first"][37].as<int>(),
-                                   "key not found: \"37\"");
+            EXPECT_THROW_EXCEPTION_KEY(YAML::KeyNotFound,
+                                       doc["first"][37].as<int>(),
+                                       "key not found: \"37\"", "37");
 
-            EXPECT_THROW_EXCEPTION(
+            EXPECT_THROW_EXCEPTION_KEY(
                 YAML::KeyNotFound, doc["first"][std::vector<int>()].as<int>(),
                 "invalid node; this may result from using a map "
-                "iterator as a sequence iterator, or vice-versa");
+                "iterator as a sequence iterator, or vice-versa",
+                "");
         }
 
         TEST(ErrorMessageTest, Ex9_3_KeyNotFoundMarks) {
@@ -99,31 +126,13 @@ namespace YAML {
             const Node doc = Load(example_yaml);
 
             // check marks on "first"
-            try {
-                doc["first"]["fourth"];
-            } catch (YAML::KeyNotFound ex) {
-                ASSERT_EQ(ex.mark.pos, 10);
-                ASSERT_EQ(ex.mark.line, 1);
-                ASSERT_EQ(ex.mark.column, 3);
-            }
+            EXPECT_THROW_MARK(doc["first"]["fourth"], 10, 1, 3);
 
             // mark should be (0,0,0) since doc has no "main2"
-            try {
-                doc["main2"]["two"];
-            } catch (YAML::KeyNotFound ex) {
-                ASSERT_EQ(ex.mark.pos, 0);
-                ASSERT_EQ(ex.mark.line, 0);
-                ASSERT_EQ(ex.mark.column, 0);
-            }
+            EXPECT_THROW_MARK(doc["main2"]["two"], 0, 0, 0);
 
             // check marks on "main2" from "main"
-            try {
-                doc["main"]["main2"]["two"];
-            } catch (YAML::KeyNotFound ex) {
-                ASSERT_EQ(ex.mark.pos, 54);
-                ASSERT_EQ(ex.mark.line, 5);
-                ASSERT_EQ(ex.mark.column, 6);
-            }
+            EXPECT_THROW_MARK(doc["main"]["main2"]["two"], 54, 5, 6);
         }
     }  // namespace
 }  // namespace YAML

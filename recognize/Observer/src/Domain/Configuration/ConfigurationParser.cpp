@@ -4,10 +4,23 @@
 #include <opencv2/opencv.hpp>
 
 #include "yaml-cpp/exceptions.h"
+#include "yaml-cpp/mark.h"
 #include "yaml-cpp/node/node.h"
 #include "yaml-cpp/node/parse.h"
 
 namespace Observer::ConfigurationParser {
+    std::string GetCustomMarkErrorMessage(const YAML::Mark& mark) {
+        if (mark.is_null()) return "";
+        return fmt::format("at line {}, column {} or position {}", mark.line,
+                           mark.column, mark.pos);
+    }
+
+    std::string GetCustomErrorMessage(const std::string& message,
+                                      const YAML::Exception& ex) {
+        return fmt::format("{} {}\n\t > what: ", message,
+                           GetCustomMarkErrorMessage(ex.mark), ex.what());
+    }
+
     Configuration ParseYAML(const std::string& filePath) {
         YAML::Node node;
         Configuration cfg;
@@ -24,43 +37,27 @@ namespace Observer::ConfigurationParser {
 
         try {
             cfg = node["configuration"].as<Observer::Configuration>();
-        } catch (YAML::KeyNotFound ex) {
-            OBSERVER_ERROR(
-                "Couldn't parse the configuration file, ERROR: Key not found ",
-                ex.msg);
-        } catch (YAML::InvalidNode ex) {
-            std::string message = "";
-            if (!ex.mark.is_null()) {
-                message = "Line: " + std::to_string(ex.mark.line) +
-                          " Pos: " + std::to_string(ex.mark.pos);
-            }
-            message += " - " + ex.msg;
+        } catch (const YAML::KeyNotFound& ex) {
+            OBSERVER_ERROR(GetCustomErrorMessage(
+                fmt::format("Couldn't parse the configuration file, REQUIRED "
+                            "key \"{}\" was not found",
+                            ex.key),
+                ex));
 
-            // Log
-            OBSERVER_ERROR("Couldn't parse the configuration file: {}",
-                           message);
+            throw MissingKey(ex.key);
+        } catch (const YAML::InvalidNode& ex) {
+            OBSERVER_ERROR(GetCustomErrorMessage(
+                "Couldn't parse the configuration file, invalid node found",
+                ex));
 
-            auto key = Observer::StringUtility::GetStringBetweenDelimiter(
-                ex.msg, "\"", "\"");
+            throw std::exception();
+        } catch (const YAML::BadConversion& ex) {
+            OBSERVER_ERROR(GetCustomErrorMessage(
+                "Couldn't parse the configuration file, unexpected format",
+                ex));
 
-            throw MissingKey(key.c_str());
-        }
-        /*        catch (const YAML::TypedBadConversion &ex) {
-                    std::cout << "Couldn't parse the configuration file: " <<
-           std::endl;
-
-                    if (!ex.mark.is_null()) {
-                        std::cout
-                                << "\n\t Line: " << ex.mark.line << "\n\t Pos: "
-           << ex.mark.pos
-                                << std::endl;
-                    }
-
-                    std::cout << "\tError: " << ex.msg << std::endl;
-
-                    throw WrongType(ex.mark.line, ex.mark.column, ex.mark.pos);
-                } */
-        catch (const YAML::ParserException& ex) {
+            throw WrongType(ex.mark.line, ex.mark.column, ex.mark.pos);
+        } catch (const YAML::ParserException& ex) {
             std::string message = "";
             if (!ex.mark.is_null()) {
                 message = "Line: " + std::to_string(ex.mark.line) +
@@ -74,7 +71,6 @@ namespace Observer::ConfigurationParser {
         } catch (const std::exception& ex) {
             OBSERVER_ERROR("Couldn't parse the configuration file: {}",
                            ex.what());
-            // TODO: This is soooooooo bad... return false or something...
         }
 
         return cfg;
