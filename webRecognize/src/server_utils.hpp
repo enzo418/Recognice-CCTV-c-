@@ -5,8 +5,13 @@
 
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <string_view>
 
+#include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
+#include "../../recognize/Observer/src/Log/log.hpp"
+#include "DTO/AvailableConfigurationDTO.hpp"
+#include "DTO/AvailableConfigurationsDTO.hpp"
 #include "iostream"
 #include "server_types.hpp"
 #include "vector"
@@ -87,7 +92,7 @@ void ReadNotificationsFile(const std::string& fn, Json::Value& target);
 void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
                             Json::FastWriter& writter);
 
-std::string GetConfigurationsPaths(
+std::vector<AvailableConfigurationDTO> GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach);
 
 std::string GetConfigurationsPathsJson(

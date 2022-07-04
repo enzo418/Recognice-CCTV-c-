@@ -17,7 +17,7 @@ set(CURL_LIBRARY "-lcurl")
 find_package(CURL REQUIRED) 
 
 # find_package(yaml-cpp REQUIRED)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp binary_dir)
 set(YAML_CPP_INSTALL OFF)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp/include)
 

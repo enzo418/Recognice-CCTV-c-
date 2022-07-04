@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "../vendor/json_dto/json_dto.hpp"
+
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
@@ -111,35 +113,50 @@ void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
     file.close();
 }
 
-std::string GetConfigurationsPaths(
+AvailableConfigurationsDTO GetConfigurationsPaths(
     const std::vector<std::string>& directoriesToSeach) {
-    std::string configsFiles = "[";
+    AvailableConfigurationsDTO configsFiles;
 
-    size_t i = 0;
     for (const auto& directory : directoriesToSeach) {
         if (std::filesystem::exists(directory)) {
             for (const auto& entry :
                  std::filesystem::directory_iterator(directory)) {
                 std::string path = entry.path().generic_string();
-                if (entry.path().extension() == ".ini") {
-                    if (i > 0) configsFiles += ",";
+                const auto ext = entry.path().extension();
+                if (ext == ".yaml" || ext == ".yml" || ext == ".json") {
+                    AvailableConfigurationDTO avCfg;
 
-                    configsFiles += "\"" + path + "\"";
-                    i++;
+                    // open configuration
+                    try {
+                        auto cfg =
+                            Observer::ConfigurationParser::ParseYAML(path);
+                        avCfg.name = cfg.name;
+                        avCfg.hash = std::hash<std::string> {}(path);
+                    } catch (...) {
+                        OBSERVER_TRACE(
+                            "File {0} is no a valid configuration but it's in "
+                            "a configuration directory!",
+                            path);
+                        continue;
+                    }
+
+                    configsFiles.names.push_back(avCfg);
                 }
             }
         }
     }
-
-    configsFiles += "]";
 
     return configsFiles;
 }
 
 std::string GetConfigurationsPathsJson(
     const std::vector<std::string>& directoriesToSeach) {
-    return GetJsonString("configuration_files",
-                         GetConfigurationsPaths(directoriesToSeach));
+    const auto paths = GetConfigurationsPaths(directoriesToSeach);
+
+    return json_dto::to_json(paths);
+
+    // return GetJsonString("configuration_files",
+    //                      GetConfigurationsPaths(directoriesToSeach));
 }
 
 std::string GetRecognizeStateJson(const bool& recognize_running) {

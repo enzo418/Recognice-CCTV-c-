@@ -65,6 +65,9 @@
 !WebRecognize
 !WebRecognize/*
 
+# DTO
+!src/DTO
+
 !CMakeLists.txt
 
 package-lock.json
