@@ -30,8 +30,6 @@ namespace Observer::ConfigurationParser {
         } catch (const YAML::BadFile& ex) {
             OBSERVER_ERROR("Couldn't open the configuration file.");
 
-            // Todo throw custom ex
-
             throw ConfigurationFileError();
         }
 
