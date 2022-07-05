@@ -5,8 +5,10 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <sstream>
 #include <string_view>
 
+#include "../vendor/json_dto/json_dto.hpp"
 #include "DTO/AvailableConfigurationDTO.hpp"
 #include "DTO/AvailableConfigurationsDTO.hpp"
 #include "iostream"
@@ -91,10 +93,7 @@ void ReadNotificationsFile(const std::string& fn, Json::Value& target);
 void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
                             Json::FastWriter& writter);
 
-std::vector<AvailableConfigurationDTO> GetAvailableConfigurations(
-    const std::vector<std::string>& directoriesToSeach);
-
-std::string GetConfigurationsPathsJson(
+AvailableConfigurationsDTO GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach);
 
 std::string GetRecognizeStateJson(const bool& recognize_running);

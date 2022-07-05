@@ -1,9 +1,4 @@
 #include "server_utils.hpp"
-
-#include <sstream>
-
-#include "../vendor/json_dto/json_dto.hpp"
-
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
@@ -113,7 +108,7 @@ void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
     file.close();
 }
 
-AvailableConfigurationsDTO GetConfigurationsPaths(
+AvailableConfigurationsDTO GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach) {
     AvailableConfigurationsDTO configsFiles;
 
@@ -131,7 +126,8 @@ AvailableConfigurationsDTO GetConfigurationsPaths(
                         auto cfg =
                             Observer::ConfigurationParser::ParseYAML(path);
                         avCfg.name = cfg.name;
-                        avCfg.hash = std::hash<std::string> {}(path);
+                        avCfg.hash =
+                            std::to_string(std::hash<std::string> {}(path));
                     } catch (...) {
                         OBSERVER_TRACE(
                             "File {0} is no a valid configuration but it's"
@@ -147,17 +143,6 @@ AvailableConfigurationsDTO GetConfigurationsPaths(
     }
 
     return configsFiles;
-}
-
-std::string GetConfigurationsPathsJson(
-    const std::vector<std::string>& directoriesToSeach) {
-    const auto paths = GetConfigurationsPaths(directoriesToSeach);
-
-    return "";
-    // return json_dto::to_json(paths);
-
-    // return GetJsonString("configuration_files",
-    //                      GetConfigurationsPaths(directoriesToSeach));
 }
 
 std::string GetRecognizeStateJson(const bool& recognize_running) {

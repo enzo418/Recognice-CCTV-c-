@@ -32,6 +32,9 @@
 #include "DAL/InMemory/CameraRepository.hpp"
 #include "DAL/InMemory/NotificationRepository.hpp"
 
+// DTO
+#include "DTO/json_dto_declarations.hpp"
+
 // CL
 #include "CL/NotificationCL.hpp"
 
@@ -211,6 +214,16 @@ int main(int argc, char** argv) {
 
                  FileStreamer::GetInstance().streamFile(res, filename,
                                                         rangeHeader);
+             })
+        .get("/api/configurationFiles",
+             [](auto* res, auto* req) {
+                 std::string url(req->getUrl());
+                 std::string rangeHeader(req->getHeader("range"));
+
+                 const auto paths = GetAvailableConfigurations(
+                     {"../../recognize/build/", "./", "./configurations/"});
+
+                 res->endJson(json_dto::to_json(paths));
              })
         .get("/*.*",
              [](auto* res, auto* req) {
