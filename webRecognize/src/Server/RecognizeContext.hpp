@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../recognize/Observer/src/Domain/ObserverCentral.hpp"
+#include "observer/Domain/ObserverCentral.hpp"
 
 namespace Web {
     struct RecognizeContext {

@@ -2,8 +2,8 @@
 
 #include <opencv2/highgui.hpp>
 
-#include "../../src/IImageDisplay.hpp"
 #include "Frame.hpp"
+#include "observer/IImageDisplay.hpp"
 
 namespace Observer {
     class ImageDisplay : public IImageDisplay {

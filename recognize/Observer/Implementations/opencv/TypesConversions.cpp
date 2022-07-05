@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 
-#include "../../src/Point.hpp"
-#include "../../src/Rect.hpp"
+#include "observer/Point.hpp"
+#include "observer/Rect.hpp"
 
 namespace Observer {
     template <>

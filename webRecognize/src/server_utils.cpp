@@ -134,8 +134,8 @@ AvailableConfigurationsDTO GetConfigurationsPaths(
                         avCfg.hash = std::hash<std::string> {}(path);
                     } catch (...) {
                         OBSERVER_TRACE(
-                            "File {0} is no a valid configuration but it's in "
-                            "a configuration directory!",
+                            "File {0} is no a valid configuration but it's"
+                            "in a configuration directory !",
                             path);
                         continue;
                     }
@@ -153,7 +153,8 @@ std::string GetConfigurationsPathsJson(
     const std::vector<std::string>& directoriesToSeach) {
     const auto paths = GetConfigurationsPaths(directoriesToSeach);
 
-    return json_dto::to_json(paths);
+    return "";
+    // return json_dto::to_json(paths);
 
     // return GetJsonString("configuration_files",
     //                      GetConfigurationsPaths(directoriesToSeach));

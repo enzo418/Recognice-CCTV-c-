@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "../Observer/src/Rect.hpp"
+#include "../Observer/src/observer/Rect.hpp"
 
 using namespace Observer;
 

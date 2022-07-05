@@ -1,8 +1,6 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
-#include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
-#include "../../recognize/Observer/src/Domain/ObserverCentral.hpp"
 #include "../uWebSockets/src/App.h"
 #include "../uWebSockets/src/HttpContextData.h"
 #include "../uWebSockets/src/Multipart.h"
@@ -11,6 +9,8 @@
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Parsing/JsonNotification.hpp"
+#include "observer/Domain/Configuration/ConfigurationParser.hpp"
+#include "observer/Domain/ObserverCentral.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileExtension.hpp"

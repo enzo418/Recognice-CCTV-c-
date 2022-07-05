@@ -3,9 +3,9 @@
 #include <mutex>
 #include <string_view>
 
-#include "../../../recognize/Observer/src/Implementation.hpp"
 #include "LiveVideo.hpp"
 #include "LiveViewExceptions.hpp"
+#include "observer/Implementation.hpp"
 
 namespace Web {
     template <bool SSL>

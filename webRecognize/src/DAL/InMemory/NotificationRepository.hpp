@@ -4,8 +4,8 @@
 #include <iterator>
 #include <string>
 
-#include "../../../../recognize/Observer/src/Log/log.hpp"
 #include "../INotificationRepository.hpp"
+#include "observer/Log/log.hpp"
 
 namespace Web::DAL {
     class NotificationRepositoryMemory : public INotificationRepository {

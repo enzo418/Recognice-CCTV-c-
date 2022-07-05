@@ -2,8 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../../src/IFrame.hpp"
-#include "../../src/Utils/SpecialEnums.hpp"
+#include "observer/IFrame.hpp"
+#include "observer/Utils/SpecialEnums.hpp"
 
 namespace Observer {
     class Frame : public IFrame {

@@ -3,9 +3,9 @@
 #include <ctime>
 #include <string>
 
-#include "../../../recognize/Observer/src/Domain/Notification/DTONotification.hpp"
-#include "../../../recognize/Observer/src/Utils/NotificationTypesHelpers.hpp"
 #include "Camera.hpp"
+#include "observer/Domain/Notification/DTONotification.hpp"
+#include "observer/Utils/NotificationTypesHelpers.hpp"
 
 namespace Web::Domain {
     class Notification {

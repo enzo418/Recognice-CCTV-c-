@@ -5,7 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 
-#include "../Observer/src/Domain/ThresholdManager.hpp"
+#include "../Observer/src/observer/Domain/ThresholdManager.hpp"
 
 using namespace Observer;
 

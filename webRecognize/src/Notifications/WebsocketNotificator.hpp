@@ -6,14 +6,14 @@
 #include <optional>
 #include <thread>
 
-#include "../../../recognize/Observer/src/Domain/Notification/LocalNotifications.hpp"
-#include "../../../recognize/Observer/src/IFunctionality.hpp"
-#include "../../../recognize/Observer/src/Log/log.hpp"
 #include "../../vendor/json_dto/json_dto.hpp"
 #include "../Domain/Notification.hpp"
 #include "../SocketData.hpp"
 #include "../WebsocketService.hpp"
 #include "DTONotification.hpp"
+#include "observer/Domain/Notification/LocalNotifications.hpp"
+#include "observer/IFunctionality.hpp"
+#include "observer/Log/log.hpp"
 
 namespace Web {
     template <bool SSL>

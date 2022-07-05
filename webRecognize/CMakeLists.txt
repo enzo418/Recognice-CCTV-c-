@@ -20,7 +20,13 @@ else()
 	MESSAGE(STATUS "NO CUDA")
 endif()
 
-find_package(fmt)
+
+# message(SPDLOG_FMT_EXTERNAL ${SPDLOG_FMT_EXTERNAL})
+# if(SPDLOG_FMT_EXTERNAL)
+#   add_compile_definitions(SPDLOG_FMT_EXTERNAL)
+#   add_definitions(-DSPDLOG_FMT_EXTERNAL)
+#   set(SPDLOG_FMT_EXTERNAL true)
+# endif()
 
 include(../recognize/CMakeLists.txt)
 
@@ -66,7 +72,7 @@ add_executable(webRecognize ${SOURCES})
 # set -l of opencv and curl 
 # add -lssl if use ssl with uwebsocket
 # -lz is zlib
-target_link_libraries(webRecognize ${RECOGNIZER_LIBS} fmt::fmt "-l:uSockets.a" "-lz")
+target_link_libraries(webRecognize ${RECOGNIZER_LIBS} "-l:uSockets.a" "-lz")
 
 
 ## Build npm webpage

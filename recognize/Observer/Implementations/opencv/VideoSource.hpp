@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../src/Domain/IVideoSource.hpp"
 #include "Frame.hpp"
+#include "observer/Domain/IVideoSource.hpp"
 
 namespace Observer {
     class VideoSource : public IVideoSource<Frame> {

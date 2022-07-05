@@ -2,8 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../../src/Blob/ImageDrawBlob.hpp"
 #include "Frame.hpp"
+#include "observer/Blob/ImageDrawBlob.hpp"
 
 namespace Observer {
     /**

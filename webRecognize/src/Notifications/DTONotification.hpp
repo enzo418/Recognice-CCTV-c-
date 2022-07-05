@@ -4,10 +4,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "../../../recognize/Observer/src/Domain/Configuration/Configuration.hpp"
-#include "../../../recognize/Observer/src/Domain/Notification/DTONotification.hpp"
-#include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
 #include "../Domain/Notification.hpp"
+#include "observer/Domain/Configuration/Configuration.hpp"
+#include "observer/Domain/Notification/DTONotification.hpp"
+#include "observer/Utils/SpecialEnums.hpp"
 
 namespace Web {
     struct DTONotification : Observer::DTONotification {

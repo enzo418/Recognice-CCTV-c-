@@ -2,8 +2,8 @@
 
 #include <mutex>
 
-#include "../../recognize/Observer/src/Log/log.hpp"
 #include "../uWebSockets/src/App.h"
+#include "observer/Log/log.hpp"
 
 namespace Web {
     template <bool SSL, typename SocketData>

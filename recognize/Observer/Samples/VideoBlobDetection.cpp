@@ -6,8 +6,8 @@
 #include <string>
 #include <thread>
 
-#include "../../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
-#include "../../Observer/src/Domain/ObserverCentral.hpp"
+#include "observer/Domain/Configuration/ConfigurationParser.hpp"
+#include "observer/Domain/ObserverCentral.hpp"
 
 void TestBlobDetection(Observer::Configuration* cfg, int start, int end);
 

@@ -1,6 +1,6 @@
 
 
-#include "../../src/Blob/FramesProcessor/FrameContextualizer.hpp"
+#include "observer/Blob/FramesProcessor/FrameContextualizer.hpp"
 
 namespace Observer {
     void FrameContextualizer::InitializePostConstructor() {

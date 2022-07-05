@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "../Observer/src/Utils/Math.hpp"
+#include "../Observer/src/observer/Utils/Math.hpp"
 
 using namespace Observer;
 

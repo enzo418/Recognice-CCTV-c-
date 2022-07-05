@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fmt/core.h>
 #include <json/json.h>
 
 #include <filesystem>
@@ -8,11 +7,11 @@
 #include <functional>
 #include <string_view>
 
-#include "../../recognize/Observer/src/Domain/Configuration/ConfigurationParser.hpp"
-#include "../../recognize/Observer/src/Log/log.hpp"
 #include "DTO/AvailableConfigurationDTO.hpp"
 #include "DTO/AvailableConfigurationsDTO.hpp"
 #include "iostream"
+#include "observer/Domain/Configuration/ConfigurationParser.hpp"
+#include "observer/Log/log.hpp"
 #include "server_types.hpp"
 #include "vector"
 

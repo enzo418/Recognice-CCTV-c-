@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "../../../recognize/Observer/src/Log/log.hpp"
+#include "observer/Log/log.hpp"
 #include "../../uWebSockets/src/App.h"
 #include "../server_utils.hpp"
 #include "FileExtension.hpp"

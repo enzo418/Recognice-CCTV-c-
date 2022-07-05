@@ -4,11 +4,11 @@
 #include <fstream>
 #include <opencv4/opencv2/core/types.hpp>
 
-#include "../Observer/src/Domain/Configuration/Configuration.hpp"
-#include "../Observer/src/Domain/Configuration/ConfigurationParser.hpp"
-#include "../Observer/src/Point.hpp"
-#include "../Observer/src/Rect.hpp"
-#include "../Observer/src/Size.hpp"
+#include "../Observer/src/observer/Domain/Configuration/Configuration.hpp"
+#include "../Observer/src/observer/Domain/Configuration/ConfigurationParser.hpp"
+#include "../Observer/src/observer/Point.hpp"
+#include "../Observer/src/observer/Rect.hpp"
+#include "../Observer/src/observer/Size.hpp"
 
 using namespace Observer;
 

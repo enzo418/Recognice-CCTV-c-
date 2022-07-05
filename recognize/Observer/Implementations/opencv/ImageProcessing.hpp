@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../../src/IImageProcessing.hpp"
 #include "Frame.hpp"
+#include "observer/IImageProcessing.hpp"
 
 namespace Observer {
     class ImageProcessing : public IImageProcessing {

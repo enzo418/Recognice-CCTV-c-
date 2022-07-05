@@ -2,8 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../../src/IImageIO.hpp"
 #include "Frame.hpp"
+#include "observer/IImageIO.hpp"
 
 namespace Observer {
 

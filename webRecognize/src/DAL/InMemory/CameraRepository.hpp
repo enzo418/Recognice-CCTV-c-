@@ -4,8 +4,8 @@
 #include <iterator>
 #include <string>
 
-#include "../../../../recognize/Observer/src/Log/log.hpp"
 #include "../ICameraRepository.hpp"
+#include "observer/Log/log.hpp"
 
 namespace Web::DAL {
     class CameraRepositoryMemory : public ICameraRepository {

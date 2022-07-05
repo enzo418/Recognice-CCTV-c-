@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../Observer/src/Log/log.hpp"
+#include "../Observer/src/observer/Log/log.hpp"
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

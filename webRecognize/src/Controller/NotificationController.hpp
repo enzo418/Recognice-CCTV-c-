@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#include "../../../recognize/Observer/src/Domain/Notification/LocalNotifications.hpp"
 #include "../../uWebSockets/src/App.h"
 #include "../../vendor/json_dto/json_dto.hpp"
 #include "../CL/NotificationCL.hpp"
@@ -12,6 +11,7 @@
 #include "../Domain/Camera.hpp"
 #include "../Notifications/WebsocketNotificator.hpp"
 #include "../stream_content/FileStreamer.hpp"
+#include "observer/Domain/Notification/LocalNotifications.hpp"
 
 namespace Web::Controller {
     extern const std::unordered_map<std::string, const std::string> endpoints;

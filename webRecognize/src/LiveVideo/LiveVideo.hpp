@@ -4,14 +4,14 @@
 #include <mutex>
 #include <thread>
 
-#include "../../../recognize/Observer/src/Functionality.hpp"
-#include "../../../recognize/Observer/src/Implementation.hpp"
-#include "../../../recognize/Observer/src/Log/log.hpp"
-#include "../../../recognize/Observer/src/Pattern/Camera/IFrameSubscriber.hpp"
-#include "../../../recognize/Observer/src/Utils/SpecialEnums.hpp"
 #include "../../../recognize/Observer/vendor/bitmask_operators.hpp"
 #include "../SocketData.hpp"
 #include "../WebsocketService.hpp"
+#include "observer/Functionality.hpp"
+#include "observer/Implementation.hpp"
+#include "observer/Log/log.hpp"
+#include "observer/Pattern/Camera/IFrameSubscriber.hpp"
+#include "observer/Utils/SpecialEnums.hpp"
 
 namespace Web {
     enum class LiveViewStatus {

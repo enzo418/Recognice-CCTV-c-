@@ -3,79 +3,79 @@ cmake_minimum_required(VERSION 3.12)
 set(SRC_
         vendor/bitmask_operators.hpp
 
-        src/Size.hpp src/Size.cpp
-        src/Rect.hpp src/Rect.cpp
-        src/Point.hpp src/Point.cpp
-        src/Vector.hpp src/Vector.cpp
+        src/observer/Size.hpp src/observer/Size.cpp
+        src/observer/Rect.hpp src/observer/Rect.cpp
+        src/observer/Point.hpp src/observer/Point.cpp
+        src/observer/Vector.hpp src/observer/Vector.cpp
 
-        src/Timer.hpp
-        src/Pattern/Camera/ICameraEventSubscriber.hpp
-        src/Pattern/Camera/IFrameSubscriber.hpp
-        src/Pattern/Camera/IThresholdEventSubscriber.hpp
-        src/Pattern/Event/IEventSubscriber.hpp
-        src/Pattern/Validation/IValidatorHandler.hpp
-        src/Pattern/ChainOfResponsibilityBasics.hpp
-        src/Pattern/ObserverBasics.hpp
-        src/SimpleBlockingQueue.hpp
-        src/Semaphore.hpp
+        src/observer/Timer.hpp
+        src/observer/Pattern/Camera/ICameraEventSubscriber.hpp
+        src/observer/Pattern/Camera/IFrameSubscriber.hpp
+        src/observer/Pattern/Camera/IThresholdEventSubscriber.hpp
+        src/observer/Pattern/Event/IEventSubscriber.hpp
+        src/observer/Pattern/Validation/IValidatorHandler.hpp
+        src/observer/Pattern/ChainOfResponsibilityBasics.hpp
+        src/observer/Pattern/ObserverBasics.hpp
+        src/observer/SimpleBlockingQueue.hpp
+        src/observer/Semaphore.hpp
         
-        src/CircularFrameBuffer.hpp src/CircularFrameBuffer.cpp
-        src/Functionality.hpp src/Functionality.cpp
-        src/IFunctionality.hpp
+        src/observer/CircularFrameBuffer.hpp src/observer/CircularFrameBuffer.cpp
+        src/observer/Functionality.hpp src/observer/Functionality.cpp
+        src/observer/IFunctionality.hpp
         
         # Interfaces for library dependant impl
-        src/IImageDisplay.hpp
-        src/IImageIO.hpp
-        src/IImageProcessing.hpp
-        src/Domain/IVideoSource.hpp
-        src/Domain/IVideoWriter.hpp
+        src/observer/IImageDisplay.hpp
+        src/observer/IImageIO.hpp
+        src/observer/IImageProcessing.hpp
+        src/observer/Domain/IVideoSource.hpp
+        src/observer/Domain/IVideoWriter.hpp
         
         # Implementation
-        src/Implementation.hpp
+        src/observer/Implementation.hpp
 
         # configuration
-        src/Domain/Configuration/CameraConfiguration.hpp
-        src/Domain/Configuration/Configuration.hpp
-        src/Domain/Configuration/NotificationsServiceConfiguration.hpp
-        src/Domain/Configuration/ConfigurationParser.cpp src/Domain/Configuration/ConfigurationParser.hpp
+        src/observer/Domain/Configuration/CameraConfiguration.hpp
+        src/observer/Domain/Configuration/Configuration.hpp
+        src/observer/Domain/Configuration/NotificationsServiceConfiguration.hpp
+        src/observer/Domain/Configuration/ConfigurationParser.cpp src/observer/Domain/Configuration/ConfigurationParser.hpp
 
         # validators
-        src/Domain/Validators/ValidatorHandler.hpp src/Domain/Validators/ValidatorHandler.cpp
-        src/Domain/Validators/ValidationResult.hpp src/Domain/Validators/ValidationResult.cpp
-        src/Domain/Validators/ValidatorByBlobs.hpp src/Domain/Validators/ValidatorByBlobs.cpp
+        src/observer/Domain/Validators/ValidatorHandler.hpp src/observer/Domain/Validators/ValidatorHandler.cpp
+        src/observer/Domain/Validators/ValidationResult.hpp src/observer/Domain/Validators/ValidationResult.cpp
+        src/observer/Domain/Validators/ValidatorByBlobs.hpp src/observer/Domain/Validators/ValidatorByBlobs.cpp
 
         # domain
-        src/Domain/Event/Event.cpp src/Domain/Event/Event.hpp
-        src/Domain/Event/CameraEvent.hpp src/Domain/Event/CameraEvent.cpp
-        src/Domain/BufferedSource.hpp src/Domain/BufferedSource.cpp
-        src/Domain/EventValidator.hpp src/Domain/EventValidator.cpp
-        src/Domain/FrameDisplay.hpp src/Domain/FrameDisplay.cpp
-        src/Domain/CamerasFramesBlender.hpp src/Domain/CamerasFramesBlender.cpp
-        src/Domain/FrameProcessor.hpp src/Domain/FrameProcessor.cpp
-        src/Domain/VideoBuffer.hpp src/Domain/VideoBuffer.cpp
-        src/Domain/ThresholdManager.cpp src/Domain/ThresholdManager.hpp
-        src/Domain/ObserverCentral.hpp src/Domain/ObserverCentral.cpp
-        src/Domain/NotificationsController.hpp src/Domain/NotificationsController.cpp
-        src/Domain/CameraObserver.hpp src/Domain/CameraObserver.cpp
-        src/Domain/ActiveCamera.hpp src/Domain/ActiveCamera.cpp
-        src/Domain/PasiveCamera.hpp src/Domain/PasiveCamera.cpp
+        src/observer/Domain/Event/Event.cpp src/observer/Domain/Event/Event.hpp
+        src/observer/Domain/Event/CameraEvent.hpp src/observer/Domain/Event/CameraEvent.cpp
+        src/observer/Domain/BufferedSource.hpp src/observer/Domain/BufferedSource.cpp
+        src/observer/Domain/EventValidator.hpp src/observer/Domain/EventValidator.cpp
+        src/observer/Domain/FrameDisplay.hpp src/observer/Domain/FrameDisplay.cpp
+        src/observer/Domain/CamerasFramesBlender.hpp src/observer/Domain/CamerasFramesBlender.cpp
+        src/observer/Domain/FrameProcessor.hpp src/observer/Domain/FrameProcessor.cpp
+        src/observer/Domain/VideoBuffer.hpp src/observer/Domain/VideoBuffer.cpp
+        src/observer/Domain/ThresholdManager.cpp src/observer/Domain/ThresholdManager.hpp
+        src/observer/Domain/ObserverCentral.hpp src/observer/Domain/ObserverCentral.cpp
+        src/observer/Domain/NotificationsController.hpp src/observer/Domain/NotificationsController.cpp
+        src/observer/Domain/CameraObserver.hpp src/observer/Domain/CameraObserver.cpp
+        src/observer/Domain/ActiveCamera.hpp src/observer/Domain/ActiveCamera.cpp
+        src/observer/Domain/PasiveCamera.hpp src/observer/Domain/PasiveCamera.cpp
 
         # notifications
-        src/Domain/Notification/ImageNotification.hpp src/Domain/Notification/ImageNotification.cpp
-        src/Domain/Notification/IMessagingService.hpp
-        src/Domain/Notification/Notification.cpp src/Domain/Notification/Notification.hpp
-        src/Domain/Notification/TelegramNotifications.cpp src/Domain/Notification/TelegramNotifications.hpp
-        src/Domain/Notification/TextNotification.cpp src/Domain/Notification/TextNotification.hpp
-        src/Domain/Notification/VideoNotification.hpp src/Domain/Notification/VideoNotification.cpp
-        src/Domain/Notification/MessagingService.cpp src/Domain/Notification/MessagingService.hpp
-        src/Domain/Notification/LocalNotifications.cpp src/Domain/Notification/LocalNotifications.hpp
+        src/observer/Domain/Notification/ImageNotification.hpp src/observer/Domain/Notification/ImageNotification.cpp
+        src/observer/Domain/Notification/IMessagingService.hpp
+        src/observer/Domain/Notification/Notification.cpp src/observer/Domain/Notification/Notification.hpp
+        src/observer/Domain/Notification/TelegramNotifications.cpp src/observer/Domain/Notification/TelegramNotifications.hpp
+        src/observer/Domain/Notification/TextNotification.cpp src/observer/Domain/Notification/TextNotification.hpp
+        src/observer/Domain/Notification/VideoNotification.hpp src/observer/Domain/Notification/VideoNotification.cpp
+        src/observer/Domain/Notification/MessagingService.cpp src/observer/Domain/Notification/MessagingService.hpp
+        src/observer/Domain/Notification/LocalNotifications.cpp src/observer/Domain/Notification/LocalNotifications.hpp
 
         # special functions
-        src/Utils/SpecialStrings.cpp src/Utils/SpecialStrings.hpp
-        src/Utils/SpecialEnums.hpp
-        src/Utils/SpecialFunctions.hpp src/Utils/SpecialFunctions.cpp
-        src/Utils/CurlWrapper.cpp src/Utils/CurlWrapper.hpp
-        src/Utils/Math.cpp src/Utils/Math.hpp
+        src/observer/Utils/SpecialStrings.cpp src/observer/Utils/SpecialStrings.hpp
+        src/observer/Utils/SpecialEnums.hpp
+        src/observer/Utils/SpecialFunctions.hpp src/observer/Utils/SpecialFunctions.cpp
+        src/observer/Utils/CurlWrapper.cpp src/observer/Utils/CurlWrapper.hpp
+        src/observer/Utils/Math.cpp src/observer/Utils/Math.hpp
 
         # extensions
         Extensions/opencv/extension_cv.hpp Extensions/opencv/extension_cv.cpp
@@ -93,18 +93,18 @@ set(SRC_
         Implementations/opencv/TypesConversions.cpp
 
         # logs
-        src/Log/managers/LogManagerSPD.hpp src/Log/managers/LogManagerSPD.cpp
-        src/Log/managers/log_constants.hpp
-        src/Log/log.hpp
+        src/observer/Log/managers/LogManagerSPD.hpp src/observer/Log/managers/LogManagerSPD.cpp
+        src/observer/Log/managers/log_constants.hpp
+        src/observer/Log/log.hpp
 
         # blobs
-        src/Blob/BlobDetector/Blob.cpp
-        src/Blob/BlobDetector/Finding.cpp
-        src/Blob/BlobDetector/TrackingBlob.cpp
-        src/Blob/FramesProcessor/FrameContextualizer.hpp src/Blob/FramesProcessor/FrameContextualizer.cpp
-        src/Blob/Contours/ContoursDetector.hpp src/Blob/Contours/ContoursDetector.cpp
-        src/Blob/BlobDetector/BlobDetector.hpp src/Blob/BlobDetector/BlobDetector.cpp
-        src/Blob/ImageDrawBlob.hpp
+        src/observer/Blob/BlobDetector/Blob.cpp
+        src/observer/Blob/BlobDetector/Finding.cpp
+        src/observer/Blob/BlobDetector/TrackingBlob.cpp
+        src/observer/Blob/FramesProcessor/FrameContextualizer.hpp src/observer/Blob/FramesProcessor/FrameContextualizer.cpp
+        src/observer/Blob/Contours/ContoursDetector.hpp src/observer/Blob/Contours/ContoursDetector.cpp
+        src/observer/Blob/BlobDetector/BlobDetector.hpp src/observer/Blob/BlobDetector/BlobDetector.cpp
+        src/observer/Blob/ImageDrawBlob.hpp
 )
 
 # ¿? USE PREMAKE PLS

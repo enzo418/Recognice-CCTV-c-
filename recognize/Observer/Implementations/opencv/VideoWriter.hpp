@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../src/Domain/IVideoWriter.hpp"
 #include "Frame.hpp"
+#include "observer/Domain/IVideoWriter.hpp"
 
 namespace Observer {
     class VideoWriter : public IVideoWriter<Frame> {

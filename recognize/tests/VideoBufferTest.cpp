@@ -4,7 +4,7 @@
 #include <fstream>
 #include <opencv4/opencv2/core/types.hpp>
 
-#include "../Observer/src/Domain/VideoBuffer.hpp"
+#include "../Observer/src/observer/Domain/VideoBuffer.hpp"
 
 // include all the implementations
 
