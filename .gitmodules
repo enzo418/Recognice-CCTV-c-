@@ -1,3 +1,6 @@
 [submodule "webRecognize/WebRecognize"]
 	path = webRecognize/WebRecognize
 	url = https://github.com/enzo418/WebRecognize
+[submodule "webRecognize/vendor/uWebSockets"]
+	path = webRecognize/vendor/uWebSockets
+	url = https://github.com/enzo418/uWebSockets

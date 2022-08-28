@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "observer/Log/log.hpp"
-#include "../../uWebSockets/src/App.h"
+#include "uWebSockets/App.h"
 #include "../server_utils.hpp"
 #include "FileExtension.hpp"
 #include "FileReader.hpp"
@@ -100,7 +100,7 @@ class FileStreamer {
                           "Thu, 17 Jun 2021 20:50:11 GMT")  // TODO: set actual
                                                             // modified time
             ->writeHeader("Access-Control-Allow-Origin", "*")
-            ->tryEndRaw(std::string_view(nullptr, 0), 0);
+            ->endWithoutBody();
 
         res->onAborted(
             [url]() { std::cout << "[" << url << "] ABORTED!" << std::endl; });
@@ -134,7 +134,7 @@ class FileStreamer {
 
                 bytesLeft -= of;
 
-                if (!res->tryEndRaw(buf, of).first) {
+                if (!res->tryEndWithoutContentLength(buf, of).first) {
                     break;
                 }
             }

@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "../../uWebSockets/src/App.h"
+#include "uWebSockets/App.h"
 #include "../../vendor/json_dto/json_dto.hpp"
 #include "../CL/NotificationCL.hpp"
 #include "../DAL/INotificationRepository.hpp"

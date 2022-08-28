@@ -5,34 +5,26 @@
     - zlib
     - fmt
     - opencv
-- [uWebSocket](https://github.com/uNetworking/uWebSockets/)
-    - already included a modified version
-    - [uSocket](https://github.com/uNetworking/uSockets/tree/5440dbac79bd76444175b76ee95dfcade12a6aac)
-        - `git clone https://github.com/uNetworking/uSockets/`
-        - `cd uSockets && make`
-        - `sudo cp uSockets.a /usr/local/lib/`
-        - `cd ./src && sudo cp libusockets.h /usr/include/`
-- [json_dto](https://github.com/Stiffstream/json_dto) included
+- [uWebSocket](https://github.com/uNetworking/uWebSockets/) - included - **no need to install it**
+    - if compiled with `-DWITH_OPENSSL=ON`, openssl is required to be installed *(system, check uSocket CMakeLists file).*
+- [json_dto](https://github.com/Stiffstream/json_dto) - included - **no need to install it**
 
-- Webpage:
-    1. `cd ./webRecognize/src/web/`
-    2. `npm install`
-    3. `npm run build`
+## Webpage
+cmake in the first run will do this: *(but you can disable it with BUILD_FRONTEND=OFF)*
+1. `cd ./webRecognize/src/web/`
+2. `npm install` - *Cmake option: SKIP_INSTALL_FRONTEND_PACKAGES=OFF|ON*
+3. `npm run build` - *Cmake option: BUILD_FRONTEND=OFF|ON*
 
 Finally to compile the server+recognizer run:
-    
 1. `cd ./webRecognize && mkdir build && cd /build/`
 
-2. Generate cmake files with or without cuda:
-
-    2.1. `cmake .. -DWITH_CUDA=ON`
-
-    or
-
-    2.1. `cmake .. -DWITH_CUDA=OFF`
+2. Generate cmake files with all the options:
+    2.1. `cmake .. options`
+        
+    >e.g. cmake .. -DWITH_CUDA=ON -DBUILD_FRONTEND=ON -DWITH_OPENSSL=OFF
 
     CUDA is currently only necessary if you want to use the yolov4 network with good performance.
-3. `make`
+3. `make -j`
 4. `./webRecognize`
 
 >Optionally you can pass the "--file_path=path" argument to start the recognizer with a file without having to choose it from the web.

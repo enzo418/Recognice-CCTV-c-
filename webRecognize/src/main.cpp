@@ -1,9 +1,9 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
-#include "../uWebSockets/src/App.h"
-#include "../uWebSockets/src/HttpContextData.h"
-#include "../uWebSockets/src/Multipart.h"
+#include "uWebSockets/App.h"
+#include "uWebSockets/HttpContextData.h"
+#include "uWebSockets/Multipart.h"
 #include "Controller/NotificationController.hpp"
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
