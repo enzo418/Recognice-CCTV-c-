@@ -4,6 +4,7 @@
 
 #include "uWebSockets/App.h"
 #include "observer/Log/log.hpp"
+#include "uWebSockets/WebSocketProtocol.h"
 
 namespace Web {
     template <bool SSL, typename SocketData>
@@ -52,11 +53,12 @@ namespace Web {
 
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
-            // static_assert(false, "Check backpressure");;
-            
             // ¿shoud execute this on a separate thread?
-            clients[i]->send(std::string_view(data, size), uWS::OpCode::BINARY,
-                             true);
+            if (clients[i]->send(std::string_view(data, size), uWS::OpCode::BINARY,
+                             true) != uWS::WsSendStatus::SUCCESS) {
+                // frame was not sent, maybe next will
+                OBSERVER_WARN("Websocket video backpressure!");
+            }
         }
     }
 
