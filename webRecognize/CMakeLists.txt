@@ -63,7 +63,7 @@ if(BUILD_FRONTEND)
 	message(STATUS "Web output directory: " ${WebOutputDirectory})
 
 	if(NOT SKIP_INSTALL_FRONTEND_PACKAGES)
-		add_custom_target (npm-target ALL
+		add_custom_target (npm-target-install ALL
 			COMMAND npm install -s
 			WORKING_DIRECTORY ${WebDirectory}
 			COMMENT "Installing packges of the frontend"
@@ -76,4 +76,6 @@ if(BUILD_FRONTEND)
 		WORKING_DIRECTORY ${WebDirectory}
 		COMMENT "Building the frontend"
 	)
+
+	add_dependencies(npm-target npm-target-install)
 endif()
