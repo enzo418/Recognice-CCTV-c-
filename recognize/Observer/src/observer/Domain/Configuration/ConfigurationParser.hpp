@@ -16,11 +16,6 @@ namespace Observer::ConfigurationParser {
        public:
         ConfigurationFileError()
             : std::runtime_error("File couldn't be processed") {}
-
-        std::string keyMissing() const { return this->keymissing; }
-
-       private:
-        std::string keymissing;
     };
 
     struct MissingKey : public std::runtime_error {
