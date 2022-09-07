@@ -98,6 +98,28 @@ namespace Observer::ConfigurationParser {
     bool TrySetConfigurationFieldValue(Object& obj, std::string_view path);
 
     /**
+    * @brief same as TrySetNodeValue but return a YAML Node with the value if found,
+    * else returns a YAML::NodeType::Null
+    * @param obj 
+    * @param keys 
+    * @param keysCount 
+    * @param value 
+    * @return YAML::Node 
+    */
+    YAML::Node TryGetNodeValue(Object& obj, std::string* keys, int keysCount);
+
+    /**
+     * @brief Follows the same rules as the functions above.
+     * 
+     * @param obj Node
+     * @param path to get key_n pass: <key_1>/<key_2>/.../<key_n>, see TrySetConfigurationFieldValue
+     * @param output 
+     * @return true 
+     * @return false 
+     */
+    bool TryGetConfigurationFieldValue(Object& obj, std::string_view path, YAML::Node& output);
+
+    /**
      * @brief Reads a configuration object from a string.
      *
      * @param cofiguration

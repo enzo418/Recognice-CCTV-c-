@@ -220,4 +220,22 @@ TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
     ASSERT_TRUE(data[0]["x"].as<int>() == 23);
 }
 
+TEST(ConfigurationObjectTest, ShouldGetValueOnNode) {
+    const std::string mockCfg =
+        "{configuration: {cameraConfiguration: [name: 'test']}}";
+
+    Observer::ConfigurationParser::Object Obj;
+    ASSERT_TRUE(
+        Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
+
+    std::string_view path = "configuration/cameraConfiguration/0/name";
+    
+    YAML::Node result;
+    // auto cam1 = Obj["configuration"]["cameraConfiguration"][0];
+    ASSERT_TRUE(Observer::ConfigurationParser::TryGetConfigurationFieldValue(
+        Obj, path, result));
+
+    ASSERT_TRUE("test" == result.as<std::string>());
+}
+
 // TODO: Add throw tests

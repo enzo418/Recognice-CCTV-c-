@@ -2,11 +2,13 @@
 
 #include <exception>
 #include <opencv2/opencv.hpp>
+#include <tuple>
 
 #include "yaml-cpp/exceptions.h"
 #include "yaml-cpp/mark.h"
 #include "yaml-cpp/node/node.h"
 #include "yaml-cpp/node/parse.h"
+#include "yaml-cpp/node/type.h"
 
 namespace Observer::ConfigurationParser {
     std::string GetCustomMarkErrorMessage(const YAML::Mark& mark) {
@@ -113,21 +115,30 @@ namespace Observer::ConfigurationParser {
         return false;
     }
 
-    bool TrySetConfigurationFieldValue(Object& obj, std::string_view path) {
+    YAML::Node TryGetNodeValue(Object& obj, std::string* keys, int keysCount) {
+        if (keysCount == 1 && obj[keys[0]]) {            
+            return obj[keys[0]];
+        } else if (keysCount > 1 && obj[keys[0]]) {
+            Object tmp = obj[keys[0]];
+            return TryGetNodeValue(tmp, &keys[1], keysCount - 1);
+        }
+
+        return YAML::Node(YAML::NodeType::Null);
+    }
+
+    auto GetPathKeys(std::string_view path, std::string& value) {
         // each key represents a node on the configuration, so 50
         // seems reasonably high.
         std::array<std::string, 50> keys;
-        size_t keys_count = 0;
+        int keys_count = 0;
 
-        std::string value;
-
-        if (path.empty()) return false;
+        if (path.empty()) return std::make_tuple(keys, -1);
 
         auto pos = path.find("?to=");
         if (pos != std::string::npos) {
             value = path.substr(pos + 4, path.length() - 1);
             if (value.empty()) {
-                return false;
+                return std::make_tuple(keys, -1);
             }
 
             // remove ?to=<value>
@@ -148,7 +159,7 @@ namespace Observer::ConfigurationParser {
                     OBSERVER_WARN(
                         "UNEXPECTED high number of keys while setting Node "
                         "value");
-                    return false;
+                    return std::make_tuple(keys, -1);;
                 }
 
                 keys[keys_count++] = path.substr(0, pos);
@@ -156,7 +167,28 @@ namespace Observer::ConfigurationParser {
             }
         }
 
+        return std::make_tuple(std::move(keys), keys_count);
+    }
+
+    bool TrySetConfigurationFieldValue(Object& obj, std::string_view path) {
+        std::string value;
+        auto [keys, keys_count] = GetPathKeys(path, value);
+
+        if (keys_count == -1) return false;
+
         return TrySetNodeValue(obj, keys.data(), keys_count, value);
+    }
+
+    bool TryGetConfigurationFieldValue(Object& obj, std::string_view path, YAML::Node& output) {
+        std::string value;
+        
+        auto [keys, keys_count] = GetPathKeys(path, value);
+        
+        if (keys_count == -1) return false;
+
+        output = TryGetNodeValue(obj, keys.data(), keys_count);
+        
+        return true;
     }
 
     bool ReadConfigurationObject(const std::string& cofiguration,
