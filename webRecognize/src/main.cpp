@@ -37,6 +37,7 @@
 
 // CL
 #include "CL/NotificationCL.hpp"
+#include "nldb/SQL3Implementation.hpp"
 
 const bool SSL = false;
 namespace fs = std::filesystem;
@@ -81,6 +82,33 @@ int main(int argc, char** argv) {
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
 
     auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
+
+    /* ------------------------ NLDB TEST - TMP ----------------------- */
+    nldb::LogManager::Initialize();
+    nldb::LogManager::SetLevel(nldb::log_level::err);
+
+    nldb::DBSL3 test;
+    if (!test.open("test.db")) {
+        throw std::runtime_error("Couldn't open the database");
+    }
+
+    auto query = nldb::Query(&test);
+
+    auto colCfg = query.collection("cfg");
+
+    auto ids = query.from(colCfg).insert(
+        {{{"name", "camera 1"}, {"url", "test@1.1.1.1:333"}},
+         {{"name", "camera 2"}, {"url", "test@1.1.1.1:334"}}});
+
+    for (auto&& id : ids) {
+        std::cout << "\tid: " << id;
+    }
+
+    std::cout << std::endl;
+
+    std::cout << query.from(colCfg).select().execute().dump(2) << std::endl;
+
+    // EDNTEST
 
     Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;

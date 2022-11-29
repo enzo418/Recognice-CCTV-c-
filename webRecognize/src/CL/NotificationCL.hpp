@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "../../vendor/LRUCache11.hpp"
 #include "../DAL/INotificationRepository.hpp"
 #include "../Domain/Notification.hpp"
+#include "lrucache11/LRUCache11.hpp"
 
 namespace Web::CL {
     class NotificationCL {
