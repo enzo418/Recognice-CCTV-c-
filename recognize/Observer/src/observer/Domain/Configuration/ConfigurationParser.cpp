@@ -83,12 +83,16 @@ namespace Observer::ConfigurationParser {
         fs.close();
     }
 
+    std::string NodeAsJson(YAML::Node& obj) {
+        YAML::Emitter emitter;
+        emitter << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << obj;
+        return std::string(emitter.c_str() + 1);  // Strip leading [ character
+    }
+
     std::string GetConfigurationAsJSON(const Configuration& cfg) {
         YAML::Node node;
         node["configuration"] = cfg;
-        YAML::Emitter emitter;
-        emitter << YAML::DoubleQuoted << YAML::Flow << YAML::BeginSeq << node;
-        return std::string(emitter.c_str() + 1);  // Strip leading [ character
+        return NodeAsJson(node);
     }
 
     void EmmitJSON(const std::string& filePath, const Configuration& cfg) {
@@ -115,10 +119,12 @@ namespace Observer::ConfigurationParser {
         return false;
     }
 
-    YAML::Node TryGetNodeValue(Object& obj, std::string* keys, int keysCount) {
-        if (keysCount == 1 && obj[keys[0]]) {            
+    YAML::Node TryGetNodeValue(const Object& obj, std::string* keys,
+                               int keysCount) {
+        if (keysCount == 1 && obj[keys[0]]) {
             return obj[keys[0]];
         } else if (keysCount > 1 && obj[keys[0]]) {
+            // TODO: Check it because surely this is copying the whole object!
             Object tmp = obj[keys[0]];
             return TryGetNodeValue(tmp, &keys[1], keysCount - 1);
         }
@@ -159,7 +165,8 @@ namespace Observer::ConfigurationParser {
                     OBSERVER_WARN(
                         "UNEXPECTED high number of keys while setting Node "
                         "value");
-                    return std::make_tuple(keys, -1);;
+                    return std::make_tuple(keys, -1);
+                    ;
                 }
 
                 keys[keys_count++] = path.substr(0, pos);
@@ -179,15 +186,16 @@ namespace Observer::ConfigurationParser {
         return TrySetNodeValue(obj, keys.data(), keys_count, value);
     }
 
-    bool TryGetConfigurationFieldValue(Object& obj, std::string_view path, YAML::Node& output) {
+    bool TryGetConfigurationFieldValue(Object& obj, std::string_view path,
+                                       YAML::Node& output) {
         std::string value;
-        
+
         auto [keys, keys_count] = GetPathKeys(path, value);
-        
+
         if (keys_count == -1) return false;
 
         output = TryGetNodeValue(obj, keys.data(), keys_count);
-        
+
         return true;
     }
 
