@@ -60,7 +60,8 @@ ExternalProject_Add(
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
 		-DCMAKE_BUILD_TYPE=RELEASE
 		-DNLDB_INSTALL=ON
-		-DNLDB_LOGGING=ON
+		-DNLDB_LOGGING=OFF
+		-DNLDB_BUILD_SHARED=OFF
     TEST_COMMAND ""
 )
 
@@ -77,7 +78,7 @@ add_subdirectory(vendor/uWebSockets)
 # Link libraries
 # -----
 # 		-lz is zlib
-target_link_libraries(webRecognize PUBLIC ${RECOGNIZER_LIBS} usocketslib "-lz" nolitedb_full)
+target_link_libraries(webRecognize PUBLIC ${RECOGNIZER_LIBS} usocketslib "-lz" nolitedb xsqllite3)
 
 # Build NPM Web Page
 # -----

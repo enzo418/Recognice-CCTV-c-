@@ -1,9 +1,6 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
-#include "uWebSockets/App.h"
-#include "uWebSockets/HttpContextData.h"
-#include "uWebSockets/Multipart.h"
 #include "Controller/NotificationController.hpp"
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
@@ -16,6 +13,9 @@
 #include "stream_content/FileExtension.hpp"
 #include "stream_content/FileReader.hpp"
 #include "stream_content/FileStreamer.hpp"
+#include "uWebSockets/App.h"
+#include "uWebSockets/HttpContextData.h"
+#include "uWebSockets/Multipart.h"
 
 // Selects a Region of interes from a camera fram
 #include <cstring>
@@ -253,6 +253,31 @@ int main(int argc, char** argv) {
 
                  res->endJson(json_dto::to_json(paths));
              })
+
+        .get("/api/configuration/:id",
+             [&argv](auto* res, auto* req) {
+                 std::string url(req->getUrl());
+                 auto id = req->getParameter(0);
+                 std::string fieldPath(req->getQuery("field"));
+                 fieldPath = "configuration/" + fieldPath;
+
+                 YAML::Node obj;
+                 Observer::ConfigurationParser::ReadConfigurationObjectFromFile(
+                     argv[1], obj);
+
+                 std::cout << "field: " << fieldPath << std::endl;
+
+                 YAML::Node rCfg;
+                 Observer::ConfigurationParser::TryGetConfigurationFieldValue(
+                     obj, fieldPath, rCfg);
+
+                 if (rCfg.IsNull()) {
+                     res->writeStatus(HTTP_404_NOT_FOUND)->end();
+                 }
+
+                 res->endJson(Observer::ConfigurationParser::NodeAsJson(rCfg));
+             })
+
         .get("/*.*",
              [](auto* res, auto* req) {
                  std::string url(req->getUrl());
