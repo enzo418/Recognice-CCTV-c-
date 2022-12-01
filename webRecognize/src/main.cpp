@@ -1,13 +1,21 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
+// nolitedb
+#include "nldb/SQL3Implementation.hpp"
+
+//
 #include "Controller/NotificationController.hpp"
+#include "DAL/ConfigurationDAO.hpp"
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Parsing/JsonNotification.hpp"
+#include "Utils/JsonLibrariesConversion.hpp"
+#include "nldb/backends/sqlite3/DB/DB.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
+#include "observer/Log/log.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileExtension.hpp"
@@ -37,7 +45,6 @@
 
 // CL
 #include "CL/NotificationCL.hpp"
-#include "nldb/SQL3Implementation.hpp"
 
 const bool SSL = false;
 namespace fs = std::filesystem;
@@ -67,6 +74,44 @@ int main(int argc, char** argv) {
 
     std::vector<IFunctionality*> threads;
 
+    /* ----------------- CONFIGURATIONS DAO ----------------- */
+    nldb::DBSL3 configurationsDB;
+    if (!configurationsDB.open("configurations.db")) {
+        OBSERVER_ERROR("Could not open the database!");
+        configurationsDB.throwLastError();
+    }
+
+    Web::DAL::ConfigurationDAO configurationDAO(&configurationsDB);
+
+    auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
+
+    // Insert the configurations as an example:
+    auto node = YAML::LoadFile(argv[1]);
+    auto real_config = node["configuration"];
+    std::string id =
+        configurationDAO.InsertConfiguration(Web::FromYAML(real_config));
+    OBSERVER_INFO("Inserted new configuration with id {}", id);
+
+    // dump stored data
+    nldb::Query testQuery = nldb::Query(&configurationsDB);
+
+    std::cout << "As string: "
+              << Observer::ConfigurationParser::NodeAsJson(real_config)
+              << std::endl;
+
+    std::cout << testQuery.from("configurations").select().execute()
+              << std::endl;
+
+    std::cout << std::endl
+              << std::endl
+              << testQuery.from("cameras").select().execute() << std::endl;
+
+    // NOTE: Well... seems like a yaml-cpp node cannot be converted to a json
+    // string without forcing double quotes everywhere
+    // https://github.com/jbeder/yaml-cpp/issues/941
+    // A rework must be done to stop using it and instead use nlohmann json
+
+    /* ---------------- MAIN UWEBSOCKETS APP ---------------- */
     auto app = uWS::App();
 
     Web::ServerContext<SSL> serverCtx = {
@@ -83,12 +128,11 @@ int main(int argc, char** argv) {
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
-
+    /* ------------------- CREATE OBSERVER ------------------ */
     Observer::ObserverCentral observer(cfg);
     serverCtx.recognizeContext.observer = &observer;
 
-    // notifications
+    /* -------------- NOTIFICATIONS REPOSITORY -------------- */
     Web::DAL::NotificationRepositoryMemory notificationRepository;
     Web::CL::NotificationCL notificationCache(&notificationRepository);
     Web::Controller::NotificationController<SSL> notificationController(
@@ -97,7 +141,7 @@ int main(int argc, char** argv) {
     observer.SubscribeToNewNotifications(
         (Observer::INotificationEventSubscriber*)&notificationController);
 
-    // cameras
+    /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
     for (auto&& cam : cfg.camerasConfiguration) {
@@ -105,15 +149,18 @@ int main(int argc, char** argv) {
         cameraRepository.Add(camera);
     }
 
+    /* ----------------------- GET FPS ---------------------- */
+    // TODO: what is this?
     Observer::VideoSource cap;
     cap.Open(cfg.camerasConfiguration[0].url);
     double fps = cap.GetFPS();
     cap.Close();
 
+    /* ---------------- START OBSERVER THREAD --------------- */
     threads.push_back(&observer);
-
     observer.Start();
 
+    /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
                    if (token) {

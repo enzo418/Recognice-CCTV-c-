@@ -68,6 +68,9 @@
 # DTO
 !src/DTO
 
+# Utils
+!src/Utils
+
 !CMakeLists.txt
 
 package-lock.json

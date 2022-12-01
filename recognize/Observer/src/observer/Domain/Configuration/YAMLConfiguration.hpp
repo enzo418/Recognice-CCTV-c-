@@ -53,7 +53,7 @@ namespace YAML {
             node["localWebNotificationsConfiguration"] =
                 rhs.localWebConfiguration;
             node["outputPreviewConfiguration"] = rhs.outputConfiguration;
-            node["cameraConfiguration"] = rhs.camerasConfiguration;
+            node["cameras"] = rhs.camerasConfiguration;
             node["resizeNotifications"] = rhs.resizeNotifications;
             return node;
         }
@@ -75,7 +75,7 @@ namespace YAML {
                 node["outputPreviewConfiguration"]
                     .as<Observer::OutputPreviewConfiguration>();
             rhs.camerasConfiguration =
-                node["cameraConfiguration"]
+                node["cameras"]
                     .as<std::vector<Observer::CameraConfiguration>>();
             rhs.resizeNotifications =
                 node["resizeNotifications"]

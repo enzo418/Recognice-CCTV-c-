@@ -22,6 +22,10 @@ endif()
 
 include(../recognize/CMakeLists.txt)
 
+
+# Include our own files
+include_directories(src/)
+
 # clangd:
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
