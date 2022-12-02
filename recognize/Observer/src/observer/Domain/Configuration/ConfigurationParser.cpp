@@ -73,7 +73,7 @@ namespace Observer::ConfigurationParser {
         return cfg;
     }
 
-    void EmmitYAML(const std::string& filePath, const Configuration& cfg) {
+    void EmitYAML(const std::string& filePath, const Configuration& cfg) {
         std::ofstream fs(filePath);
 
         YAML::Node out;
@@ -95,7 +95,7 @@ namespace Observer::ConfigurationParser {
         return NodeAsJson(node);
     }
 
-    void EmmitJSON(const std::string& filePath, const Configuration& cfg) {
+    void EmitJSON(const std::string& filePath, const Configuration& cfg) {
         std::ofstream jsonout(filePath);
         auto jsonstr = GetConfigurationAsJSON(cfg);
         jsonout << jsonstr;

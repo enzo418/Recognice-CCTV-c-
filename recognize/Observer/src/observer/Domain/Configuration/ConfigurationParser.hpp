@@ -39,24 +39,39 @@ namespace Observer::ConfigurationParser {
               mPos(pPosition),
               std::runtime_error("Bad conversion.") {}
 
+        WrongType(std::string pGot, std::string pExpected, std::string pValue)
+            : mGot(std::move(pGot)),
+              mExpected(std::move(pExpected)),
+              mValue(std::move(pValue)),
+              std::runtime_error("Bad conversion.") {}
+
         int line() const { return this->mLine; }
 
         int column() const { return this->mCol; }
 
         int position() const { return this->mPos; }
 
+        std::string got() const { return this->mGot; }
+
+        std::string expected() const { return this->mExpected; }
+
+        std::string value() const { return this->mValue; }
+
        private:
         int mLine;
         int mCol;
         int mPos;
+        std::string mGot;
+        std::string mExpected;
+        std::string mValue;
     };
 
     // yamlcpp
     Configuration ParseYAML(const std::string& filePath);
-    void EmmitYAML(const std::string& filePath, const Configuration& cfg);
+    void EmitYAML(const std::string& filePath, const Configuration& cfg);
 
     Configuration ParseJSON(const std::string& filePath);
-    void EmmitJSON(const std::string& filePath, const Configuration& cfg);
+    void EmitJSON(const std::string& filePath, const Configuration& cfg);
 
     std::string NodeAsJson(YAML::Node& obj);
 

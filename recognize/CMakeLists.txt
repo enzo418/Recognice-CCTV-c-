@@ -58,9 +58,11 @@ target_link_libraries(recognize ${DEPENDENCY_LIBS})
 
 # ---------------------- SAMPLES ---------------------- #
 if(RECO_BUILD_SAMPLES)
-    add_executable(recognize_sample ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recognizer.cpp)
-    # set -l of opencv and curl
-    target_link_libraries(recognize_sample recognize)
+    add_executable(config_sample ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/ConfigurationReader.cpp)
+    target_link_libraries(config_sample recognize)
+
+    # add_executable(recognize_sample ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recognizer.cpp)
+    # target_link_libraries(recognize_sample recognize)
 
     if(RECO_BUILD_OPTIONAL_BINARIES)
         add_executable(liveBlobDetection ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/LiveBlobDetection.cpp)

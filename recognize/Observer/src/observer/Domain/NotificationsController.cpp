@@ -196,7 +196,7 @@ namespace Observer {
             {ETrazable::IMAGE, ENotificationType::IMAGE},
             {ETrazable::VIDEO, ENotificationType::VIDEO}};
 
-        ENotificationType typesAccepted = cfg->noticationsToSend;
+        ENotificationType typesAccepted = cfg->notificationsToSend;
 
         this->services.push_back(service);
 

@@ -11,7 +11,7 @@ namespace Observer {
         this->ProcessConfiguration();
 
         this->framesBlender.SetNumberCameras(
-            static_cast<int>(this->config.camerasConfiguration.size()));
+            static_cast<int>(this->config.cameras.size()));
 
         this->functionalityThreads.emplace_back(&this->framesBlender);
         this->functionalityThreads.emplace_back(&this->frameDisplay);
@@ -28,7 +28,7 @@ namespace Observer {
         }
 
         OBSERVER_TRACE("Creating the cameras");
-        this->CreateCameras(this->config.camerasConfiguration);
+        this->CreateCameras(this->config.cameras);
 
         OBSERVER_TRACE("Starting the cameras");
         this->StartAllCameras(useNotifications);
@@ -145,7 +145,7 @@ namespace Observer {
         }
 
         // 2. remove disabled cameras
-        auto& camsConfig = this->config.camerasConfiguration;
+        auto& camsConfig = this->config.cameras;
         auto size = camsConfig.size();
         for (int i = 0; i < size; i++) {
             if (camsConfig[i].type == ECameraType::DISABLED) {

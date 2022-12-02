@@ -19,7 +19,7 @@ namespace Observer {
         double secondsBetweenImageNotification;
         double secondsBetweenVideoNotification;
 
-        ENotificationType noticationsToSend;
+        ENotificationType notificationsToSend;
 
         bool onNotifSendExtraImageNotfWithAllTheCameras;
 

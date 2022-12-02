@@ -7,3 +7,9 @@
 [submodule "webRecognize/vendor/nolitedb"]
 	path = webRecognize/vendor/nolitedb
 	url = https://github.com/enzo418/nolitedb
+[submodule "recognize/Observer/vendor/json"]
+	path = recognize/Observer/vendor/json
+	url = https://github.com/nlohmann/json
+[submodule "recognize/Observer/vendor/magic_enum"]
+	path = recognize/Observer/vendor/magic_enum
+	url = https://github.com/Neargye/magic_enum

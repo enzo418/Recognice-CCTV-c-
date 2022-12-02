@@ -57,3 +57,23 @@ ExternalProject_Add(
 add_dep(dep-yaml-cpp)
 add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp/include)
 add_lib(yaml-cpp)
+
+# -------------------- NLOHMANN JSON ------------------- #
+ExternalProject_Add(
+    dep-json
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/json
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
+        -DNLOHMANN_JSON_INCLUDE_INSTALL_DIR=${DEPENDENCY_INSTALL_DIR}
+        -DJSON_Install=ON
+        -DJSON_BuildTests=OFF
+    TEST_COMMAND ""
+)
+
+add_dep(dep-json)
+add_include(${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/json/include)
+
+# --------------------- MAGIC ENUM --------------------- #
+add_include(${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/magic_enum/include)

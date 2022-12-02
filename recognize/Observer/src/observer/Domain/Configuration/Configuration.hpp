@@ -29,7 +29,7 @@ namespace Observer {
 
         OutputPreviewConfiguration outputConfiguration;
 
-        std::vector<CameraConfiguration> camerasConfiguration;
+        std::vector<CameraConfiguration> cameras;
 
         ResizeNotification resizeNotifications;
 

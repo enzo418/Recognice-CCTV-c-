@@ -9,6 +9,8 @@
 #include "../Observer/src/observer/Point.hpp"
 #include "../Observer/src/observer/Rect.hpp"
 #include "../Observer/src/observer/Size.hpp"
+#include "nlohmann/json.hpp"
+#include "observer/Domain/Configuration/NLHJSONConfiguration.hpp"
 
 using namespace Observer;
 
@@ -35,7 +37,7 @@ class ConfigurationTest : public ::testing::Test {
         telegramConfiguration.secondsBetweenImageNotification = 5.1;
         telegramConfiguration.secondsBetweenTextNotification = 5.1;
         telegramConfiguration.secondsBetweenVideoNotification = 5.1;
-        telegramConfiguration.noticationsToSend =
+        telegramConfiguration.notificationsToSend =
             ENotificationType::VIDEO | ENotificationType::TEXT;
 
         LocalWebNotificationsConfiguration localWebConfiguration = {
@@ -47,9 +49,9 @@ class ConfigurationTest : public ::testing::Test {
         localWebConfiguration.secondsBetweenImageNotification = 5.1;
         localWebConfiguration.secondsBetweenTextNotification = 5.1;
         localWebConfiguration.secondsBetweenVideoNotification = 5.1;
-        localWebConfiguration.noticationsToSend = ENotificationType::VIDEO |
-                                                  ENotificationType::TEXT |
-                                                  ENotificationType::IMAGE;
+        localWebConfiguration.notificationsToSend = ENotificationType::VIDEO |
+                                                    ENotificationType::TEXT |
+                                                    ENotificationType::IMAGE;
 
         ThresholdingParams thresholdingParams = {
             .FramesBetweenDiffFrames = 6,
@@ -76,8 +78,10 @@ class ConfigurationTest : public ::testing::Test {
 
         BlobDetectionConfiguration blobConfiguration = {
             .blobDetectorParams = detectorParams,
+            .blobFilters = filtersBlob,
             .contoursFilters = contoursFilters,
-            .thresholdingParams = thresholdingParams};
+            .thresholdingParams = thresholdingParams,
+        };
 
         CameraConfiguration camera1 = {
             .name = "TestCamera1",
@@ -89,7 +93,7 @@ class ConfigurationTest : public ::testing::Test {
             .type = ECameraType::NOTIFICATOR,
             .minimumChangeThreshold = 101,
             .increaseThresholdFactor = 1.03,
-            .secondsBetweenTresholdUpdate = 5,
+            .secondsBetweenThresholdUpdate = 5,
             .saveDetectedChangeInVideo = false,
             .ignoredAreas = {Rect(15, 15, 640, 360), Rect(5, 15, 123, 435),
                              Rect(7, 7, 112, 444)},
@@ -112,7 +116,7 @@ class ConfigurationTest : public ::testing::Test {
             .type = ECameraType::OBJECT_DETECTOR,
             .minimumChangeThreshold = 12,
             .increaseThresholdFactor = 5.002,
-            .secondsBetweenTresholdUpdate = 7,
+            .secondsBetweenThresholdUpdate = 7,
             .saveDetectedChangeInVideo = true,
             .ignoredAreas = {Rect(2, 2, 622, 117)},
             .videoValidatorBufferSize = 10,
@@ -128,7 +132,7 @@ class ConfigurationTest : public ::testing::Test {
                         .telegramConfiguration = telegramConfiguration,
                         .localWebConfiguration = localWebConfiguration,
                         .outputConfiguration = outputPreview,
-                        .camerasConfiguration = {camera1, camera2}};
+                        .cameras = {camera1, camera2}};
     }
 
     // void TearDown() override {}
@@ -141,7 +145,7 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
      * own overloads for the == operator. To ensure that it's
      * using our == operator we need to use assert/expect true.
      *
-     * All the EXPECT are done like this to know wich is
+     * All the EXPECT are done like this to know which is
      * component failing to validate.
      */
     EXPECT_TRUE(cfg1.name == cfg2.name);
@@ -150,26 +154,39 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
     EXPECT_TRUE(cfg1.outputConfiguration == cfg2.outputConfiguration);
     EXPECT_TRUE(cfg1.telegramConfiguration == cfg2.telegramConfiguration);
     EXPECT_TRUE(cfg1.localWebConfiguration == cfg2.localWebConfiguration);
-    EXPECT_TRUE(cfg1.camerasConfiguration == cfg2.camerasConfiguration);
-    ASSERT_TRUE(cfg1 == cfg2);
+    for (auto& cam1 : cfg1.cameras) {
+        for (auto& cam2 : cfg2.cameras) {
+            if (cam1.url == cam2.url) {
+                EXPECT_TRUE(cam1.name == cam2.name);
+                EXPECT_TRUE(cam1.blobDetection == cam2.blobDetection);
+                EXPECT_TRUE(cam1.objectDetectionMethod ==
+                            cam2.objectDetectionMethod);
+                EXPECT_TRUE(cam1.ignoredAreas == cam2.ignoredAreas);
+                EXPECT_TRUE(cam1.processingConfiguration ==
+                            cam2.processingConfiguration);
+                EXPECT_TRUE(cam1.resizeTo == cam2.resizeTo);
+                EXPECT_TRUE(cam1 == cam2);
+            }
+        }
+    }
 }
 
-TEST_F(ConfigurationTest, ShouldEmmitAndParseFromYAML) {
+TEST_F(ConfigurationTest, ShouldEmitAndParseFromYAML) {
     const std::string file = "test1.yaml";
-    ConfigurationParser::EmmitYAML(file, config);
+    ConfigurationParser::EmitYAML(file, config);
 
-    Configuration readedCfg = ConfigurationParser::ParseYAML(file);
+    Configuration readCfg = ConfigurationParser::ParseYAML(file);
 
-    checkConfiguration(readedCfg, config);
+    checkConfiguration(readCfg, config);
 }
 
-TEST_F(ConfigurationTest, ShouldEmmitAndParseFromJson) {
+TEST_F(ConfigurationTest, ShouldEmitAndParseFromJson) {
     const std::string file = "test1.json";
-    ConfigurationParser::EmmitJSON(file, config);
+    ConfigurationParser::EmitJSON(file, config);
 
-    Configuration readedCfg = ConfigurationParser::ParseJSON(file);
+    Configuration readCfg = ConfigurationParser::ParseJSON(file);
 
-    checkConfiguration(readedCfg, config);
+    checkConfiguration(readCfg, config);
 }
 
 TEST(ConfigurationObjectTest, ShouldSetValueOnNode) {
@@ -201,7 +218,7 @@ TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
     ASSERT_TRUE(
         Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
 
-    // this time as an example we are refering to a camera field so
+    // this time as an example we are referring to a camera field so
     // Object must be a camera configuration object or it will fail
     // field: ignoredAreas = <value>
     std::string_view path =
@@ -239,3 +256,12 @@ TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
 // }
 
 // TODO: Add throw tests
+
+TEST_F(ConfigurationTest, ShouldEmitAndParseFromNlohmannJson) {
+    const std::string file = "nlh_test1.json";
+    nlohmann::json j = config;
+
+    Configuration readCfg = j;
+
+    checkConfiguration(readCfg, config);
+}

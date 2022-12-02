@@ -53,7 +53,7 @@ namespace YAML {
             node["localWebNotificationsConfiguration"] =
                 rhs.localWebConfiguration;
             node["outputPreviewConfiguration"] = rhs.outputConfiguration;
-            node["cameras"] = rhs.camerasConfiguration;
+            node["cameras"] = rhs.cameras;
             node["resizeNotifications"] = rhs.resizeNotifications;
             return node;
         }
@@ -74,9 +74,8 @@ namespace YAML {
             rhs.outputConfiguration =
                 node["outputPreviewConfiguration"]
                     .as<Observer::OutputPreviewConfiguration>();
-            rhs.camerasConfiguration =
-                node["cameras"]
-                    .as<std::vector<Observer::CameraConfiguration>>();
+            rhs.cameras = node["cameras"]
+                              .as<std::vector<Observer::CameraConfiguration>>();
             rhs.resizeNotifications =
                 node["resizeNotifications"]
                     .as<Observer::Configuration::ResizeNotification>();
@@ -101,7 +100,7 @@ namespace YAML {
                 rhs.secondsBetweenImageNotification;
             node["secondsBetweenVideoNotification"] =
                 rhs.secondsBetweenVideoNotification;
-            node["noticationsToSend"] = rhs.noticationsToSend;
+            node["noticationsToSend"] = rhs.notificationsToSend;
             node["onNotifSendExtraImageNotfWithAllTheCameras"] =
                 rhs.onNotifSendExtraImageNotfWithAllTheCameras;
             node["drawTraceOfChangeOn"] = rhs.drawTraceOfChangeOn;
@@ -117,7 +116,7 @@ namespace YAML {
                 node["secondsBetweenImageNotification"].as<double>();
             rhs.secondsBetweenVideoNotification =
                 node["secondsBetweenVideoNotification"].as<double>();
-            rhs.noticationsToSend =
+            rhs.notificationsToSend =
                 node["noticationsToSend"].as<Observer::ENotificationType>();
             rhs.onNotifSendExtraImageNotfWithAllTheCameras =
                 node["onNotifSendExtraImageNotfWithAllTheCameras"].as<bool>();
@@ -237,7 +236,7 @@ namespace YAML {
             node["minimumChangeThreshold"] = rhs.minimumChangeThreshold;
             node["increaseThresholdFactor"] = rhs.increaseThresholdFactor;
             node["secondsBetweenTresholdUpdate"] =
-                rhs.secondsBetweenTresholdUpdate;
+                rhs.secondsBetweenThresholdUpdate;
             node["saveDetectedChangeInVideo"] = rhs.saveDetectedChangeInVideo;
             node["ignoredAreas"] = rhs.ignoredAreas;
             node["videoValidatorBufferSize"] = rhs.videoValidatorBufferSize;
@@ -262,7 +261,7 @@ namespace YAML {
                 node["minimumChangeThreshold"].as<int>();
             rhs.increaseThresholdFactor =
                 node["increaseThresholdFactor"].as<double>();
-            rhs.secondsBetweenTresholdUpdate =
+            rhs.secondsBetweenThresholdUpdate =
                 node["secondsBetweenTresholdUpdate"].as<int>();
             rhs.saveDetectedChangeInVideo =
                 node["saveDetectedChangeInVideo"].as<bool>();
