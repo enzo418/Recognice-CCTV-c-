@@ -119,18 +119,6 @@ namespace Observer::ConfigurationParser {
 
     bool TrySetConfigurationFieldValue(Object& obj,
                                        std::string_view pathAndValue) {
-        // https://www.rfc-editor.org/rfc/rfc6902#section-4.3
-        // std::string path;
-        // std::string_view value;
-        // std::tie(path, value) = GetPathAndValue(pathAndValue);
-
-        // if (!path.starts_with("/")) path = "/" + path;
-
-        // json j_patch = {{"op", "replace"}, {"path", path}, {"value", value}};
-
-        // obj = obj.patch(j_patch);
-        // return true;
-
         std::string value;
         auto [keys, keys_count] = GetPathKeys(pathAndValue, value);
 
