@@ -58,7 +58,8 @@ int main(int argc, char** argv) {
               << " curr dir: " << std::filesystem::current_path().string()
               << std::endl;
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
     LiveTestBlobDetection(&cfg, camera_number);
 }
@@ -66,13 +67,13 @@ int main(int argc, char** argv) {
 void LiveTestBlobDetection(Observer::Configuration* cfg, int camera_number) {
     ImageDisplay::Get().CreateWindow("image");
 
-    OBSERVER_ASSERT(!cfg->camerasConfiguration.empty(),
+    OBSERVER_ASSERT(!cfg->cameras.empty(),
                     "There should be at least 1 camera.");
 
-    OBSERVER_ASSERT(camera_number < cfg->camerasConfiguration.size(),
+    OBSERVER_ASSERT(camera_number < cfg->cameras.size(),
                     "No camera at given position. The position starts from 0.");
 
-    auto camera = cfg->camerasConfiguration[camera_number];
+    auto camera = cfg->cameras[camera_number];
 
     auto videouri = camera.url;
 

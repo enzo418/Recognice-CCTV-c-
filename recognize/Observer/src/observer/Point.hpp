@@ -5,6 +5,12 @@
 #include <ostream>
 #include <tuple>
 
+template <typename T>
+concept PointType = requires(T a) {
+                        a.x;
+                        a.y;
+                    };
+
 namespace Observer {
     struct Point {
         Point();
@@ -25,10 +31,12 @@ namespace Observer {
 
         // We know how to convert from some point of some library to this one
         template <typename Point_>
+            requires PointType<Point_>
         Point(const Point_&);
 
         // We know how to convert this Point to some Point_
         template <typename Point_>
+            requires PointType<Point_>
         operator Point_();
     };
 

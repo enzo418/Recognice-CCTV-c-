@@ -171,39 +171,18 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
     }
 }
 
-TEST_F(ConfigurationTest, ShouldEmitAndParseFromYAML) {
-    const std::string file = "test1.yaml";
-    ConfigurationParser::EmitYAML(file, config);
-
-    Configuration readCfg = ConfigurationParser::ParseYAML(file);
-
-    checkConfiguration(readCfg, config);
-}
-
-TEST_F(ConfigurationTest, ShouldEmitAndParseFromJson) {
-    const std::string file = "test1.json";
-    ConfigurationParser::EmitJSON(file, config);
-
-    Configuration readCfg = ConfigurationParser::ParseJSON(file);
-
-    checkConfiguration(readCfg, config);
-}
-
 TEST(ConfigurationObjectTest, ShouldSetValueOnNode) {
-    const std::string mockCfg =
-        "{configuration: {mediaFolderPath: 'test', off: 123}}";
+    const std::string mockCfg = R"({"mediaFolderPath": "test", "off": 123})";
 
-    Observer::ConfigurationParser::Object Obj;
-    ASSERT_TRUE(
-        Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
+    Observer::ConfigurationParser::Object Obj = json::parse(mockCfg);
 
-    // field: configuration -> mediaFolderPath = ../web2/media2
-    std::string_view path = "configuration/mediaFolderPath/?to=../web2/media2";
+    // field: mediaFolderPath = ../web2/media2
+    std::string_view path = R"(/mediaFolderPath/?to="../web2/media2")";
 
     ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
         Obj, path));
 
-    auto s = Obj["configuration"]["mediaFolderPath"].as<std::string>();
+    auto s = Obj["mediaFolderPath"].get<std::string>();
 
     ASSERT_TRUE(s == "../web2/media2");
 }
@@ -211,49 +190,43 @@ TEST(ConfigurationObjectTest, ShouldSetValueOnNode) {
 TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
     // same test as above with a complex data type
     const std::string mockCfg =
-        "{configuration: {cameras: [{ignoredAreas: []}], off: "
-        "123}}";
+        R"({"cameras": [{"ignoredAreas": []}], "off": 123})";
 
-    Observer::ConfigurationParser::Object Obj;
-    ASSERT_TRUE(
-        Observer::ConfigurationParser::ReadConfigurationObject(mockCfg, Obj));
+    Observer::ConfigurationParser::Object Obj = json::parse(mockCfg);
 
     // this time as an example we are referring to a camera field so
     // Object must be a camera configuration object or it will fail
     // field: ignoredAreas = <value>
     std::string_view path =
-        "configuration/cameras/0/ignoredAreas/"
-        "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,\"y\":"
+        "cameras/0/ignoredAreas/"
+        "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,"
+        "\"y\":"
         "15,\"width\":123,\"height\":435},{\"x\":7,\"y\":7,\"width\":112,"
         "\"height\":2222}]";
 
-    // auto cam1 = Obj["configuration"]["cameras"][0];
+    // auto cam1 = Obj["cameras"][0];
     ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
         Obj, path));
 
-    auto data = Obj["configuration"]["cameras"][0]["ignoredAreas"];
+    auto data = Obj["cameras"][0]["ignoredAreas"];
 
-    ASSERT_TRUE(data.IsSequence());
-    ASSERT_TRUE(data[0]["x"].as<int>() == 23);
+    ASSERT_TRUE(data.is_array());
+    ASSERT_TRUE(data[0]["x"].get<int>() == 23);
 }
 
-// TEST(ConfigurationObjectTest, ShouldGetValueOnNode) {
-//     const std::string mockCfg = "{configuration: {cameras: [name: 'test']}}";
+TEST(ConfigurationObjectTest, ShouldGetValueOnNode) {
+    const std::string mockCfg =
+        R"({"configuration": {"cameras": [{"name": "test"}]}})";
 
-//     Observer::ConfigurationParser::Object Obj;
-//     ASSERT_TRUE(
-//         Observer::ConfigurationParser::ReadConfigurationObject(mockCfg,
-//         Obj));
+    Observer::ConfigurationParser::Object Obj = json::parse(mockCfg);
 
-//     std::string_view path = "configuration/cameras/0/name";
+    std::string_view path = "configuration/cameras/0/name";
 
-//     YAML::Node result;
-//     // auto cam1 = Obj["configuration"]["cameras"][0];
-//     ASSERT_TRUE(Observer::ConfigurationParser::TryGetConfigurationFieldValue(
-//         Obj, path, result));
+    json result =
+        Observer::ConfigurationParser::TryGetConfigurationFieldValue(Obj, path);
 
-//     ASSERT_TRUE("test" == result.as<std::string>());
-// }
+    ASSERT_TRUE("test" == result.get<std::string>());
+}
 
 // TODO: Add throw tests
 
@@ -264,4 +237,4 @@ TEST_F(ConfigurationTest, ShouldEmitAndParseFromNlohmannJson) {
     Configuration readCfg = j;
 
     checkConfiguration(readCfg, config);
-}
+};

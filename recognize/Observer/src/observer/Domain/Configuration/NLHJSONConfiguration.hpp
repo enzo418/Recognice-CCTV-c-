@@ -3,15 +3,20 @@
 #include <exception>
 
 #include "Configuration.hpp"
+#include "ParsingExceptions.hpp"
 #include "magic_enum.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/Configuration/NotificationsServiceConfiguration.hpp"
 #include "observer/Domain/Configuration/OutputPreviewConfiguration.hpp"
+#include "observer/RecoJson.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
+#include "observer/Utils/SpecialStrings.hpp"
 
-using json = nlohmann::json;
+#define ExistsInVector(svector, find_this)                          \
+    std::find(std::begin(svector), std::end(svector), find_this) != \
+        std::end(svector)
 
 namespace Observer {
 
@@ -104,7 +109,7 @@ namespace Observer {
                                        showIgnoredAreas, showProcessedFrames);
 
     /* ------------------ ENotificationType ----------------- */
-    void to_json(json& j, const ENotificationType& p) {
+    inline void to_json(json& j, const ENotificationType& p) {
         std::vector<std::string> out;
 
         if (has_flag(p, ENotificationType::TEXT)) {
@@ -122,11 +127,10 @@ namespace Observer {
         j = out;
     }
 
-    void from_json(const json& j, ENotificationType& p) {
+    inline void from_json(const json& j, ENotificationType& p) {
         if (!j.is_array()) {
-            throw ConfigurationParser::WrongType(
-                std::string(magic_enum::enum_name(j.type())), "array",
-                j.dump());
+            throw ConfigurationParser::WrongType(j.type_name(), "array",
+                                                 j.dump());
         }
 
         p = Observer::ENotificationType::NONE;
@@ -157,7 +161,7 @@ namespace Observer {
     }
 
     /* ---------------------- ETrazable --------------------- */
-    void to_json(json& j, const ETrazable& p) {
+    inline void to_json(json& j, const ETrazable& p) {
         std::vector<std::string> out;
 
         if (has_flag(p, ETrazable::IMAGE)) {
@@ -171,11 +175,10 @@ namespace Observer {
         j = out;
     }
 
-    void from_json(const json& j, ETrazable& p) {
+    inline void from_json(const json& j, ETrazable& p) {
         if (!j.is_array()) {
-            throw ConfigurationParser::WrongType(
-                std::string(magic_enum::enum_name(j.type())), "array",
-                j.dump());
+            throw ConfigurationParser::WrongType(j.type_name(), "array",
+                                                 j.dump());
         }
 
         p = Observer::ETrazable::NONE;
@@ -209,26 +212,28 @@ namespace Observer {
         onNotifSendExtraImageNotfWithAllTheCameras, drawTraceOfChangeOn);
 
     /* ---------- LocalWebNotificationsConfiguration --------- */
-    void to_json(json& j, const LocalWebNotificationsConfiguration& p) {
+    inline void to_json(json& j, const LocalWebNotificationsConfiguration& p) {
         to_json(j,
                 reinterpret_cast<const NotificationsServiceConfiguration&>(p));
         j["webServerUrl"] = p.webServerUrl;
     }
 
-    void from_json(const json& j, LocalWebNotificationsConfiguration& p) {
+    inline void from_json(const json& j,
+                          LocalWebNotificationsConfiguration& p) {
         j.at("webServerUrl").get_to(p.webServerUrl);
         from_json(j, dynamic_cast<NotificationsServiceConfiguration&>(p));
     }
 
     /* ---------- TelegramNotificationsConfiguration --------- */
-    void to_json(json& j, const TelegramNotificationsConfiguration& p) {
+    inline void to_json(json& j, const TelegramNotificationsConfiguration& p) {
         to_json(j,
                 reinterpret_cast<const NotificationsServiceConfiguration&>(p));
         j["apiKey"] = p.apiKey;
         j["chatID"] = p.chatID;
     }
 
-    void from_json(const json& j, TelegramNotificationsConfiguration& p) {
+    inline void from_json(const json& j,
+                          TelegramNotificationsConfiguration& p) {
         j.at("apiKey").get_to(p.apiKey);
         j.at("chatID").get_to(p.chatID);
         from_json(j, reinterpret_cast<NotificationsServiceConfiguration&>(p));

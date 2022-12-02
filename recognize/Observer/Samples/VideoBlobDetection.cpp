@@ -55,7 +55,8 @@ int main(int argc, char** argv) {
               << " curr dir: " << std::filesystem::current_path().string()
               << std::endl;
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
     TestBlobDetection(&cfg, start, end);
 }
@@ -64,10 +65,10 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
                        int videoend) {
     ImageDisplay::Get().CreateWindow("image");
 
-    OBSERVER_ASSERT(!cfg->camerasConfiguration.empty(),
+    OBSERVER_ASSERT(!cfg->cameras.empty(),
                     "There should be at least 1 camera.");
 
-    auto camera = cfg->camerasConfiguration[0];
+    auto camera = cfg->cameras[0];
 
     auto videouri = camera.url;
 

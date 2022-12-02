@@ -42,22 +42,6 @@ find_package(CURL REQUIRED)
 add_include(${CURL_INCLUDE_DIR})
 add_lib("${CURL_LIBRARIES}")
 
-# ---------------------- YAML-CPP ---------------------- #
-ExternalProject_Add(
-    dep-yaml-cpp
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/yaml-cpp
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
-               -DYAML_CPP_INSTALL=ON
-               -DYAML_CPP_BUILD_TESTS=OFF
-    TEST_COMMAND ""
-)
-
-add_dep(dep-yaml-cpp)
-add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/yaml-cpp/include)
-add_lib(yaml-cpp)
-
 # -------------------- NLOHMANN JSON ------------------- #
 ExternalProject_Add(
     dep-json

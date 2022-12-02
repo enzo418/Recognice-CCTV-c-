@@ -24,7 +24,7 @@ struct CameraThread {
 int main(int argc, char** argv) {
     const std::string keys =
         "{help h            |              | show help message}"
-        "{config_path       | ./config.yml | path of the configuration file}"
+        "{config_path       | ./config.json | path of the configuration file}"
         "{seconds |  30   | seconds}"
         "{use_compression | off | test to compress the image}";
 
@@ -54,7 +54,8 @@ int main(int argc, char** argv) {
               << " curr dir: " << std::filesystem::current_path().string()
               << std::endl;
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
     Cameras(&cfg, useCompression);
 }
@@ -63,7 +64,7 @@ void Cameras(Observer::Configuration* cfg, bool useCompression) {
     BufferedSource source;
     OBSERVER_INFO("Try open");
 
-    source.TryOpen(cfg->camerasConfiguration[0].url);
+    source.TryOpen(cfg->cameras[0].url);
 
     OBSERVER_INFO("Check ok");
     if (!source.IsOk()) {

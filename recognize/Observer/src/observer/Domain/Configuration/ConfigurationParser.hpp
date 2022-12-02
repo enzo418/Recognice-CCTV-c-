@@ -3,77 +3,21 @@
 #include <array>
 
 #include "Configuration.hpp"
-#include "YAMLConfiguration.hpp"
-#include "yaml-cpp/node/node.h"
+#include "NLHJSONConfiguration.hpp"
+#include "nlohmann/json.hpp"
+#include "observer/RecoJson.hpp"
 
 namespace Observer::ConfigurationParser {
     // Object is the internal YAML/JSON node representation. It's used to cache
     // configurations, minimizing I/O operations.
-    // To be 100% clear it's not a "Configuration" (the struct).
-    typedef YAML::Node Object;
+    typedef json Object;
 
-    struct ConfigurationFileError : public std::runtime_error {
-       public:
-        ConfigurationFileError()
-            : std::runtime_error("File couldn't be processed") {}
-    };
+    std::string NodeAsJson(nlohmann::json& obj);
 
-    struct MissingKey : public std::runtime_error {
-       public:
-        MissingKey(const std::string& pKeymissing)
-            : keymissing(std::move(pKeymissing)),
-              std::runtime_error("Missing Key '" + pKeymissing + "'") {}
+    void ConfigurationToJsonFile(const std::string& filePath,
+                                 const Configuration& cfg);
 
-        std::string keyMissing() const { return this->keymissing; }
-
-       private:
-        std::string keymissing;
-        std::string what_;
-    };
-
-    struct WrongType : public std::runtime_error {
-       public:
-        WrongType(int pLine, int pColumn, int pPosition)
-            : mLine(pLine),
-              mCol(pColumn),
-              mPos(pPosition),
-              std::runtime_error("Bad conversion.") {}
-
-        WrongType(std::string pGot, std::string pExpected, std::string pValue)
-            : mGot(std::move(pGot)),
-              mExpected(std::move(pExpected)),
-              mValue(std::move(pValue)),
-              std::runtime_error("Bad conversion.") {}
-
-        int line() const { return this->mLine; }
-
-        int column() const { return this->mCol; }
-
-        int position() const { return this->mPos; }
-
-        std::string got() const { return this->mGot; }
-
-        std::string expected() const { return this->mExpected; }
-
-        std::string value() const { return this->mValue; }
-
-       private:
-        int mLine;
-        int mCol;
-        int mPos;
-        std::string mGot;
-        std::string mExpected;
-        std::string mValue;
-    };
-
-    // yamlcpp
-    Configuration ParseYAML(const std::string& filePath);
-    void EmitYAML(const std::string& filePath, const Configuration& cfg);
-
-    Configuration ParseJSON(const std::string& filePath);
-    void EmitJSON(const std::string& filePath, const Configuration& cfg);
-
-    std::string NodeAsJson(YAML::Node& obj);
+    Configuration ConfigurationFromJsonFile(const std::string& filePath);
 
     std::string GetConfigurationAsJSON(const Configuration& cfg);
 
@@ -89,7 +33,7 @@ namespace Observer::ConfigurationParser {
      * element of a sequence and "name" to access the name value of `obj`.
      * @param keysCount
      * @param value
-     * @return true on sucess
+     * @return true on success
      * @return false on key not found
      */
     bool TrySetNodeValue(Object& obj, std::string* keys, int keysCount,
@@ -104,7 +48,7 @@ namespace Observer::ConfigurationParser {
      *
      * @param obj Node
      * @param path string with the syntax: <key_1>/<key_2>/.../?to=<value> where
-     * key is the first key to visit on `obj` and iteareate wit the rest of
+     * key is the first key to visit on `obj` and iterate wit the rest of
      * keys until the last one. <value> must be decoded if it comes from
      * an url, but can be anything since we parse it before insertion, see
      * the function above.
@@ -115,16 +59,15 @@ namespace Observer::ConfigurationParser {
     bool TrySetConfigurationFieldValue(Object& obj, std::string_view path);
 
     /**
-     * @brief same as TrySetNodeValue but return a YAML Node with the value if
-     * found, else returns a YAML::NodeType::Null
+     * @brief same as TrySetNodeValue but return a Node with the value if
+     * found, else returns json null
      * @param obj
      * @param keys
      * @param keysCount
      * @param value
-     * @return YAML::Node
+     * @return json
      */
-    YAML::Node TryGetNodeValue(const Object& obj, std::string* keys,
-                               int keysCount);
+    json TryGetNodeValue(const Object& obj, std::string* keys, int keysCount);
 
     /**
      * @brief Follows the same rules as the functions above.
@@ -133,31 +76,8 @@ namespace Observer::ConfigurationParser {
      * @param path to get key_n pass: <key_1>/<key_2>/.../<key_n>, see
      * TrySetConfigurationFieldValue
      * @param output
-     * @return true
-     * @return false
+     * @return json
      */
-    bool TryGetConfigurationFieldValue(Object& obj, std::string_view path,
-                                       YAML::Node& output);
+    json TryGetConfigurationFieldValue(Object& obj, std::string_view path);
 
-    /**
-     * @brief Reads a configuration object from a string.
-     *
-     * @param cofiguration
-     * @param output
-     * @return true on sucess, modifies `output` parameter.
-     * @return false on parsin error.
-     */
-    bool ReadConfigurationObject(const std::string& cofiguration,
-                                 Object& output);
-
-    /**
-     * @brief Reads a configuration object from a file.
-     *
-     * @param filePath
-     * @param output
-     * @return true on sucess, modifies `output` parameter.
-     * @return false
-     */
-    bool ReadConfigurationObjectFromFile(const std::string& filePath,
-                                         Object& output);
 }  // namespace Observer::ConfigurationParser

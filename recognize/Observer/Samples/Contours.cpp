@@ -50,16 +50,17 @@ int main(int argc, char** argv) {
               << " curr dir: " << std::filesystem::current_path().string()
               << std::endl;
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
     RecordCamera(&cfg, seconds);
 }
 
 void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
-    auto camcfg = &cfg->camerasConfiguration[0];
+    auto camcfg = &cfg->cameras[0];
     Observer::VideoSource source;
 
-    source.Open(cfg->camerasConfiguration[0].url);
+    source.Open(cfg->cameras[0].url);
 
     if (!source.isOpened()) {
         OBSERVER_ERROR("Could not open the camera.");

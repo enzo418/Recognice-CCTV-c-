@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
               << " curr dir: " << std::filesystem::current_path().string()
               << std::endl;
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(pathConfig);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
     StartObserver(&cfg);
 }
