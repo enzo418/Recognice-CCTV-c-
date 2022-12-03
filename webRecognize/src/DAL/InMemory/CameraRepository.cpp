@@ -2,6 +2,8 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
+#include "Domain/Camera.hpp"
+
 namespace Web::DAL {
     using Domain::Camera;
 
@@ -11,8 +13,9 @@ namespace Web::DAL {
         return element.id;
     }
 
-    void CameraRepositoryMemory::Remove(const Camera& element) {
-        auto res = std::find(cameras.begin(), cameras.end(), element);
+    void CameraRepositoryMemory::Remove(const std::string& id) {
+        auto res = std::find_if(cameras.begin(), cameras.end(),
+                                [&id](Camera& cam) { return cam.id == id; });
 
         if (res != cameras.end()) {
             cameras.erase(res);
@@ -27,7 +30,7 @@ namespace Web::DAL {
         return res != cameras.end();
     }
 
-    const Camera& CameraRepositoryMemory::Get(const std::string& id) {
+    Camera CameraRepositoryMemory::Get(const std::string& id) {
         auto res =
             std::find_if(cameras.begin(), cameras.end(),
                          [&id](const Camera& el) { return el.id == id; });

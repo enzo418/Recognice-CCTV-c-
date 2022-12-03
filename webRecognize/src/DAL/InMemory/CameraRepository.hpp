@@ -12,11 +12,11 @@ namespace Web::DAL {
        public:
         std::string Add(Domain::Camera& element) override;
 
-        void Remove(const Domain::Camera& element) override;
+        void Remove(const std::string& id) override;
 
         bool Exists(const std::string& id) override;
 
-        const Domain::Camera& Get(const std::string& element) override;
+        Domain::Camera Get(const std::string& element) override;
 
         const std::vector<Domain::Camera> GetAll(int limit = 100) override;
 

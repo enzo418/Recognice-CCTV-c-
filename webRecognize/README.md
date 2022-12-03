@@ -1,5 +1,5 @@
 # Compiling
-- You will need installed on your system
+- Libraries that need to be installed
     - compiler for c++ >= 20
     - curl
     - zlib
@@ -7,7 +7,6 @@
     - opencv
 - [uWebSocket](https://github.com/uNetworking/uWebSockets/) - included - **no need to install it**
     - if compiled with `-DWITH_OPENSSL=ON`, openssl is required to be installed *(system, check uSocket CMakeLists file).*
-- [json_dto](https://github.com/Stiffstream/json_dto) - included - **no need to install it**
 
 ## Webpage
 cmake in the first run will do this: *(but you can disable it with BUILD_FRONTEND=OFF)*

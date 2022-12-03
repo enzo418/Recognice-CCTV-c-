@@ -6,7 +6,6 @@
 #include <sstream>
 #include <string_view>
 
-#include "../vendor/json_dto/json_dto.hpp"
 #include "DTO/AvailableConfigurationDTO.hpp"
 #include "DTO/AvailableConfigurationsDTO.hpp"
 #include "iostream"

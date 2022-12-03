@@ -2,6 +2,8 @@
 
 #include <spdlog/fmt/bundled/format.h>
 
+#include "Domain/Notification.hpp"
+
 namespace Web::DAL {
     using Domain::Notification;
 
@@ -11,9 +13,9 @@ namespace Web::DAL {
         return element.id;
     }
 
-    void NotificationRepositoryMemory::Remove(const Notification& element) {
-        auto res =
-            std::find(notifications.begin(), notifications.end(), element);
+    void NotificationRepositoryMemory::Remove(const std::string& id) {
+        auto res = std::find_if(notifications.begin(), notifications.end(),
+                                [&id](Notification& n) { return n.id == id; });
 
         if (res != notifications.end()) {
             notifications.erase(res);
@@ -28,8 +30,7 @@ namespace Web::DAL {
         return res != notifications.end();
     }
 
-    const Notification& NotificationRepositoryMemory::Get(
-        const std::string& id) {
+    Notification NotificationRepositoryMemory::Get(const std::string& id) {
         auto res =
             std::find_if(notifications.begin(), notifications.end(),
                          [&id](const Notification& el) { return el.id == id; });
@@ -54,7 +55,7 @@ namespace Web::DAL {
         return result;
     }
 
-    const std::string& NotificationRepositoryMemory::GetFilename(
+    std::string NotificationRepositoryMemory::GetFilename(
         const std::string& id) {
         return this->Get(id).content;
     }

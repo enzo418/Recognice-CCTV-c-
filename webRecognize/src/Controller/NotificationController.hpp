@@ -4,20 +4,19 @@
 #include <memory>
 #include <string>
 
-#include "uWebSockets/App.h"
-#include "../../vendor/json_dto/json_dto.hpp"
 #include "../CL/NotificationCL.hpp"
 #include "../DAL/INotificationRepository.hpp"
 #include "../Domain/Camera.hpp"
 #include "../Notifications/WebsocketNotificator.hpp"
 #include "../stream_content/FileStreamer.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
+#include "uWebSockets/App.h"
 
 namespace Web::Controller {
     extern const std::unordered_map<std::string, const std::string> endpoints;
 
     template <bool SSL>
-    class NotificationController
+    class NotificationController final
         : public Observer::INotificationEventSubscriber {
        public:
         NotificationController(uWS::App* app,
@@ -133,14 +132,12 @@ namespace Web::Controller {
         auto notifications = notificationRepository->GetAll(limit);
 
         // add random camera id to test it
-        for (auto&& notf : notifications) {
-            notf.camera.id = "0";
+        for (auto&& notification : notifications) {
+            notification.camera.id = "0";
         }
 
-        auto msg = json_dto::to_json<std::vector<Web::DTONotification>>(
-            NotificationsToDTO(notifications));
-
-        res->endJson(msg);
+        nlohmann::json jsonNotifications = NotificationsToDTO(notifications);
+        res->endJson(jsonNotifications.dump());
     }
 
     template <bool SSL>

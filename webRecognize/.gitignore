@@ -55,9 +55,9 @@
 !vendor/*
 !vendor/**
 
-# Parsing
-!Parsing/
-!Parsing/*
+# Serialization
+!Serialization/
+!Serialization/*
 
 # Controllers
 !src/Controller/

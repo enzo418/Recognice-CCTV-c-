@@ -2,6 +2,7 @@
 #include <spdlog/fmt/bundled/format.h>
 
 // nolitedb
+#include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
 //
@@ -10,7 +11,8 @@
 #include "LiveVideo/CameraLiveVideo.hpp"
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
-#include "Parsing/JsonNotification.hpp"
+#include "Serialization/JsonAvailableConfigurationDTO.hpp"
+#include "Serialization/JsonSerialization.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
@@ -38,9 +40,6 @@
 // DAL
 #include "DAL/InMemory/CameraRepository.hpp"
 #include "DAL/InMemory/NotificationRepository.hpp"
-
-// DTO
-#include "DTO/json_dto_declarations.hpp"
 
 // CL
 #include "CL/NotificationCL.hpp"
@@ -85,23 +84,6 @@ int main(int argc, char** argv) {
     auto cfg =
         Observer::ConfigurationParser::ConfigurationFromJsonFile(argv[1]);
 
-    // Insert the configurations as an example:
-    nldb::json node = Observer::ConfigurationParser::ConfigurationAsJSON(cfg);
-    std::string id = configurationDAO.InsertConfiguration(node);
-    OBSERVER_INFO("Inserted new configuration with id {}", id);
-
-    // dump stored data
-    nldb::Query testQuery = nldb::Query(&configurationsDB);
-
-    std::cout << "As string: " << node << std::endl;
-
-    std::cout << testQuery.from("configurations").select().execute()
-              << std::endl;
-
-    std::cout << std::endl
-              << std::endl
-              << testQuery.from("cameras").select().execute() << std::endl;
-
     /* ---------------- MAIN UWEBSOCKETS APP ---------------- */
     auto app = uWS::App();
 
@@ -124,7 +106,14 @@ int main(int argc, char** argv) {
     serverCtx.recognizeContext.observer = &observer;
 
     /* -------------- NOTIFICATIONS REPOSITORY -------------- */
-    Web::DAL::NotificationRepositoryMemory notificationRepository;
+    nldb::DBSL3 notificationsDB;
+    if (!notificationsDB.open("notifications.db")) {
+        OBSERVER_ERROR("Could not open the database!");
+        notificationsDB.throwLastError();
+    }
+
+    Web::DAL::NotificationRepositoryNLDB notificationRepository(
+        &notificationsDB);
     Web::CL::NotificationCL notificationCache(&notificationRepository);
     Web::Controller::NotificationController<SSL> notificationController(
         &app, &notificationRepository, &notificationCache);
@@ -264,7 +253,9 @@ int main(int argc, char** argv) {
                  const auto paths = GetAvailableConfigurations(
                      {"../../recognize/build/", "./", "./configurations/"});
 
-                 res->endJson(json_dto::to_json(paths));
+                 nldb::json paths_json = paths;
+
+                 res->endJson(paths_json.dump());
              })
 
         .get("/api/configuration/:id",

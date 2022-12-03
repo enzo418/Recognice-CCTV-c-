@@ -2,14 +2,14 @@
 
 #include "MessagingService.hpp"
 #include "observer/Utils/SpecialFunctions.hpp"
-//#include <restclient-cpp/restclient.h>
+// #include <restclient-cpp/restclient.h>
 #include "observer/Log/log.hpp"
 #include "observer/Pattern/Event/IEventSubscriber.hpp"
 #include "observer/Utils/CurlWrapper.hpp"
 
 namespace Observer {
     class INotificationEventSubscriber : public ISubscriber<DTONotification> {
-        void update(DTONotification ev) override = 0;
+        virtual void update(DTONotification ev) override = 0;
     };
 }  // namespace Observer
 

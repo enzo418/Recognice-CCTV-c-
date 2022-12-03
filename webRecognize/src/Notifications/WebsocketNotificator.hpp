@@ -6,11 +6,12 @@
 #include <optional>
 #include <thread>
 
-#include "../../vendor/json_dto/json_dto.hpp"
 #include "../Domain/Notification.hpp"
 #include "../SocketData.hpp"
 #include "../WebsocketService.hpp"
 #include "DTONotification.hpp"
+#include "Serialization/JsonSerialization.hpp"
+#include "nlohmann/json.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
 #include "observer/IFunctionality.hpp"
 #include "observer/Log/log.hpp"
@@ -84,8 +85,8 @@ namespace Web {
 
             if (!notifications.empty()) {
                 // parse all to json
-                auto json = json_dto::to_json<std::deque<Web::DTONotification>>(
-                    notifications);
+                nlohmann::json json_obj = notifications;
+                const std::string json = json_obj.dump();
 
                 notifications.clear();
                 mtxNotifications.unlock();

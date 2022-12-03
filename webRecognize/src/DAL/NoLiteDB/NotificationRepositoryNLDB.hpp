@@ -5,10 +5,17 @@
 #include <string>
 
 #include "../INotificationRepository.hpp"
+#include "nldb/Collection.hpp"
+#include "nldb/Query/Query.hpp"
+#include "nldb/SQL3Implementation.hpp"
+#include "nldb/backends/sqlite3/DB/DB.hpp"
 #include "observer/Log/log.hpp"
 
 namespace Web::DAL {
-    class NotificationRepositoryMemory : public INotificationRepository {
+    class NotificationRepositoryNLDB : public INotificationRepository {
+       public:
+        NotificationRepositoryNLDB(nldb::DBSL3* db);
+
        public:
         std::string Add(Domain::Notification& element) override;
 
@@ -16,7 +23,7 @@ namespace Web::DAL {
 
         bool Exists(const std::string& id) override;
 
-        Domain::Notification Get(const std::string& element) override;
+        Domain::Notification Get(const std::string& id) override;
 
         const std::vector<Domain::Notification> GetAll(
             int limit = 100) override;
@@ -24,6 +31,8 @@ namespace Web::DAL {
         std::string GetFilename(const std::string& id) override;
 
        private:
-        std::vector<Domain::Notification> notifications;
+        nldb::DBSL3* db;
+        nldb::Query<nldb::DBSL3> query;
+        nldb::Collection colNotifications;
     };
 }  // namespace Web::DAL
