@@ -35,6 +35,14 @@ add_dependencies(webRecognize ${DEPENDENCY_LIST})
 target_link_directories(webRecognize PUBLIC ${DEPENDENCY_LIB_DIR})
 target_include_directories(webRecognize PUBLIC ${DEPENDENCY_INCLUDE_LIST})
 
+# Define build type
+target_compile_definitions(webRecognize PUBLIC
+							$<$<CONFIG:Debug>:BUILD_DEBUG>
+							$<$<CONFIG:RelWithDebInfo>:BUILD_DEBUG>
+							$<$<CONFIG:Release>:BUILD_RELEASE>
+							$<$<CONFIG:MinSizeRel>:BUILD_RELEASE>
+)
+
 # Link libraries
 # -----
 target_link_libraries(webRecognize PUBLIC ${DEPENDENCY_LIBS})

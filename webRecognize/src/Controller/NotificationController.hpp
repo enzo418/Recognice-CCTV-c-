@@ -10,6 +10,7 @@
 #include "../Notifications/WebsocketNotificator.hpp"
 #include "../stream_content/FileStreamer.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
+#include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
 
 namespace Web::Controller {
@@ -77,6 +78,34 @@ namespace Web::Controller {
                  [this](auto* ws, int /*code*/, std::string_view /*message*/) {
                      this->notificatorWS.RemoveClient(ws);
                  }});
+
+#if BUILD_DEBUG
+
+        app->post(endpoints.at("api-notifications"), [this](auto* res,
+                                                            auto* req) {
+            res->onAborted([]() {});
+
+            std::string buffer;
+
+            res->onData([this, res, buffer = std::move(buffer)](
+                            std::string_view data, bool last) mutable {
+                buffer.append(data.data(), data.length());
+
+                if (last) {
+                    // We read all the data
+                    Observer::DTONotification notification =
+                        nlohmann::json::parse(buffer);
+
+                    this->update(notification);
+
+                    OBSERVER_TRACE("Added notification via api post endpoint");
+
+                    res->end("Notification added");
+                }
+            });
+        });
+
+#endif
     }
 
     template <bool SSL>

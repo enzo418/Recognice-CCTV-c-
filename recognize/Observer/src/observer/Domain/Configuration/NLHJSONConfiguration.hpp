@@ -1,6 +1,7 @@
 #pragma once
 
 #include <exception>
+#include <stdexcept>
 
 #include "Configuration.hpp"
 #include "ParsingExceptions.hpp"
@@ -128,35 +129,44 @@ namespace Observer {
     }
 
     inline void from_json(const json& j, ENotificationType& p) {
-        if (!j.is_array()) {
-            throw ConfigurationParser::WrongType(j.type_name(), "array",
-                                                 j.dump());
-        }
+        if (j.is_array()) {
+            p = Observer::ENotificationType::NONE;
 
-        p = Observer::ENotificationType::NONE;
+            std::vector<std::string> types;
 
-        std::vector<std::string> types;
+            try {
+                types = j.get<std::vector<std::string>>();
+            } catch (const std::exception& e) {
+                throw ConfigurationParser::WrongType("N/A", "string", j.dump());
+            }
 
-        try {
-            types = j.get<std::vector<std::string>>();
-        } catch (const std::exception& e) {
-            throw ConfigurationParser::WrongType("N/A", "string", j.dump());
-        }
+            for (auto& val : types) {
+                Observer::StringUtility::StringToLower(val);
+            }
 
-        for (auto& val : types) {
+            if (ExistsInVector(types, "text")) {
+                p |= ENotificationType::TEXT;
+            }
+
+            if (ExistsInVector(types, "image")) {
+                p |= ENotificationType::IMAGE;
+            }
+
+            if (ExistsInVector(types, "video")) {
+                p |= ENotificationType::VIDEO;
+            }
+        } else if (j.is_string()) {
+            std::string val = j.get<std::string>();
             Observer::StringUtility::StringToLower(val);
-        }
 
-        if (ExistsInVector(types, "text")) {
-            p |= ENotificationType::TEXT;
-        }
-
-        if (ExistsInVector(types, "image")) {
-            p |= ENotificationType::IMAGE;
-        }
-
-        if (ExistsInVector(types, "video")) {
-            p |= ENotificationType::VIDEO;
+            if (val == "image")
+                p = ENotificationType::IMAGE;
+            else if (val == "video")
+                p = ENotificationType::VIDEO;
+            else if (val == "text")
+                p = ENotificationType::TEXT;
+            else
+                throw std::runtime_error("Unknown notification type: " + val);
         }
     }
 

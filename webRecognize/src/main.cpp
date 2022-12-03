@@ -3,6 +3,7 @@
 
 // nolitedb
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
+#include "nldb/LOG/managers/log_constants.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
 //
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
     // initialize logger
     Observer::LogManager::Initialize();
     nldb::LogManager::Initialize();
-    nldb::LogManager::SetLevel(nldb::log_level::err);
+    nldb::LogManager::SetLevel(nldb::log_level::warn);
 
     if (argc <= 1) {
         OBSERVER_ERROR(
@@ -128,13 +129,6 @@ int main(int argc, char** argv) {
         auto camera = Web::Domain::Camera(cam.name, cam.url);
         cameraRepository.Add(camera);
     }
-
-    /* ----------------------- GET FPS ---------------------- */
-    // TODO: what is this?
-    Observer::VideoSource cap;
-    cap.Open(cfg.cameras[0].url);
-    double fps = cap.GetFPS();
-    cap.Close();
 
     /* ---------------- START OBSERVER THREAD --------------- */
     threads.push_back(&observer);
@@ -368,4 +362,7 @@ int main(int argc, char** argv) {
     for (auto& funcThread : threads) {
         funcThread->Stop();
     }
+
+    notificationsDB.close();
+    configurationsDB.close();
 }

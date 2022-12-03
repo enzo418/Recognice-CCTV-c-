@@ -34,6 +34,7 @@ namespace Web::DAL {
         nldb::json result = query.from(colNotifications)
                                 .select()
                                 .where(colNotifications["id"] == id)
+                                .includeInnerIds()
                                 .execute();
 
         if (result.empty()) {
@@ -49,6 +50,8 @@ namespace Web::DAL {
 
         nldb::json result =
             query.from(colNotifications).select().limit(limit).execute();
+
+        std::cout << "result: " << result << std::endl;
 
         return result;
     }
