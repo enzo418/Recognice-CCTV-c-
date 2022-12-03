@@ -24,7 +24,10 @@ namespace Observer::ConfigurationParser {
         return cfg;
     }
 
-    std::string NodeAsJson(Object& obj) { return obj.dump(); }
+    json ConfigurationAsJSON(const Configuration& cfg) {
+        json j = cfg;
+        return j;
+    }
 
     bool TrySetNodeValue(Object& obj, std::string* keys, int keysCount,
                          const std::string& value) {

@@ -32,7 +32,7 @@ endif()
 # ------------------ MAIN CMAKE FILES ------------------ #
 
 # Dependecies file
-include(Dependency.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/Dependency.cmake)
 
 # Sources list
 include(${CMAKE_CURRENT_LIST_DIR}/Observer/CMakeLists.txt)

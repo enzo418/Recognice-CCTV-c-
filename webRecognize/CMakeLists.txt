@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(WebRecognize VERSION 1.0.0)
 
-
+# ----------------------- OPTIONS ---------------------- #
 option(WITH_CUDA "Use cuda DNN" OFF)
 option(SKIP_INSTALL_FRONTEND_PACKAGES "Skip the installation of all the frontend packages before build" OFF)
 option(BUILD_FRONTEND "Should compile the frontend code" ON)
@@ -10,18 +10,10 @@ if (WITH_CUDA)
 	MESSAGE(STATUS "WITH_CUDA")
 	add_definitions(-DWITH_CUDA)
 else()
-MESSAGE(STATUS "NO CUDA")
+	MESSAGE(STATUS "NO CUDA")
 endif()
 
-# message(SPDLOG_FMT_EXTERNAL ${SPDLOG_FMT_EXTERNAL})
-# if(SPDLOG_FMT_EXTERNAL)
-#   add_compile_definitions(SPDLOG_FMT_EXTERNAL)
-#   add_definitions(-DSPDLOG_FMT_EXTERNAL)
-#   set(SPDLOG_FMT_EXTERNAL true)
-# endif()
-
-include(../recognize/CMakeLists.txt)
-
+include(Dependency.cmake)
 
 # Include our own files
 include_directories(src/)
@@ -29,60 +21,23 @@ include_directories(src/)
 # clangd:
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(source_dir "${PROJECT_SOURCE_DIR}")
+# -------------- COMPILATION CONFIGURATION ------------- #
+set (CMAKE_CXX_STANDARD 20)
 
-file(GLOB_RECURSE CPPSRCS "${source_dir}/src/*.cpp")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lX11")
 
-set(SOURCES ${CPPSRCS})
-
-# Compiler
-# -----
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -lX11")
+file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(webRecognize ${SOURCES})
 
-# External projects
-include(ExternalProject)
-
-set(DEPENDENCY_INSTALL_DIR ${PROJECT_BINARY_DIR}/install) 
-set(DEPENDENCY_INCLUDE_DIR ${DEPENDENCY_INSTALL_DIR}/include) 
-set(DEPENDENCY_LIB_DIR ${DEPENDENCY_INSTALL_DIR}/lib) # GNUInstallDirs
+add_dependencies(webRecognize ${DEPENDENCY_LIST})
 
 target_link_directories(webRecognize PUBLIC ${DEPENDENCY_LIB_DIR})
-
-# uWebsockets
-# ----
-include_directories(vendor/uWebSockets/src)
-
-# nolitedb
-# ----
-ExternalProject_Add(
-    nolitedb-dep
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/nolitedb
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
-		-DCMAKE_BUILD_TYPE=RELEASE
-		-DNLDB_INSTALL=ON
-		-DNLDB_LOGGING=ON
-		-DNLDB_BUILD_SHARED=OFF
-    TEST_COMMAND ""
-)
-
-include_directories(${DEPENDENCY_INSTALL_DIR}/include/)
-add_dependencies(webRecognize nolitedb-dep)
-
-# 	We need to include uSockets again since we are using add_directories.
-# 	other alternatives are use target_include_directories or include the
-#	cmakelists from uWebSockets
-include_directories(vendor/uWebSockets/uSockets/src)
-
-add_subdirectory(vendor/uWebSockets)
+target_include_directories(webRecognize PUBLIC ${DEPENDENCY_INCLUDE_LIST})
 
 # Link libraries
 # -----
-# 		-lz is zlib
-target_link_libraries(webRecognize PUBLIC ${RECOGNIZER_LIBS} usocketslib "-lz" nolitedb xsqllite3)
+target_link_libraries(webRecognize PUBLIC ${DEPENDENCY_LIBS})
 
 # Build NPM Web Page
 # -----

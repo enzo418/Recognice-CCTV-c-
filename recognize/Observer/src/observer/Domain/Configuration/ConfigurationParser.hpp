@@ -12,14 +12,14 @@ namespace Observer::ConfigurationParser {
     // configurations, minimizing I/O operations.
     typedef json Object;
 
-    std::string NodeAsJson(nlohmann::json& obj);
-
     void ConfigurationToJsonFile(const std::string& filePath,
                                  const Configuration& cfg);
 
     Configuration ConfigurationFromJsonFile(const std::string& filePath);
 
-    std::string GetConfigurationAsJSON(const Configuration& cfg);
+    std::string ConfigurationAsJSONString(const Configuration& cfg);
+
+    json ConfigurationAsJSON(const Configuration& cfg);
 
     /**
      * @brief Tries to set a value to a node located at `keys`.

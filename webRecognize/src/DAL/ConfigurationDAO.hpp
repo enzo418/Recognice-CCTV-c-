@@ -3,9 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "Utils/JsonLibrariesConversion.hpp"
 #include "nldb/SQL3Implementation.hpp"
-#include "yaml-cpp/node/node.h"
 
 namespace Web::DAL {
     class ConfigurationDAO {
@@ -20,9 +18,9 @@ namespace Web::DAL {
          * Observer::ConfigurationParser.
          *
          * @param id
-         * @return YAML::Node
+         * @return nldb::json
          */
-        YAML::Node Get(const std::string& id);
+        nldb::json Get(const std::string& id);
 
         /**
          * @brief Insert a new configuration.

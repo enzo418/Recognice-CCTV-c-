@@ -16,6 +16,7 @@
 !.clang-format
 !LICENSE
 !.clang-format
+!Dependency.cmake
 
 # server
 !src/stream_content

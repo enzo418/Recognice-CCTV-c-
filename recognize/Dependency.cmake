@@ -45,7 +45,7 @@ add_lib("${CURL_LIBRARIES}")
 # -------------------- NLOHMANN JSON ------------------- #
 ExternalProject_Add(
     dep-json
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/json
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/json
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     CMAKE_ARGS
@@ -57,7 +57,7 @@ ExternalProject_Add(
 )
 
 add_dep(dep-json)
-add_include(${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/json/include)
+add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/json/include)
 
 # --------------------- MAGIC ENUM --------------------- #
-add_include(${CMAKE_CURRENT_SOURCE_DIR}/Observer/vendor/magic_enum/include)
+add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/magic_enum/include)

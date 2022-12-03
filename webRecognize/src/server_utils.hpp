@@ -1,7 +1,5 @@
 #pragma once
 
-#include <json/json.h>
-
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -81,17 +79,6 @@ std::string GetErrorAlertReponse(const std::string& message,
 
 std::string GetSuccessAlertReponse(const std::string& message,
                                    const std::string& extra = "");
-
-// datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss
-void AppendNotification(Json::Value& root, const std::string& type,
-                        const std::string& content, const std::string& group_id,
-                        const std::string& datetime,
-                        const std::string& directory);
-
-void ReadNotificationsFile(const std::string& fn, Json::Value& target);
-
-void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
-                            Json::FastWriter& writter);
 
 AvailableConfigurationsDTO GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach);

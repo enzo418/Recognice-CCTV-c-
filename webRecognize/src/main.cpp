@@ -11,7 +11,6 @@
 #include "LiveVideo/LiveVideo.hpp"
 #include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Parsing/JsonNotification.hpp"
-#include "Utils/JsonLibrariesConversion.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
@@ -83,21 +82,18 @@ int main(int argc, char** argv) {
 
     Web::DAL::ConfigurationDAO configurationDAO(&configurationsDB);
 
-    auto cfg = Observer::ConfigurationParser::ParseYAML(argv[1]);
+    auto cfg =
+        Observer::ConfigurationParser::ConfigurationFromJsonFile(argv[1]);
 
     // Insert the configurations as an example:
-    auto node = YAML::LoadFile(argv[1]);
-    auto real_config = node["configuration"];
-    std::string id =
-        configurationDAO.InsertConfiguration(Web::FromYAML(real_config));
+    nldb::json node = Observer::ConfigurationParser::ConfigurationAsJSON(cfg);
+    std::string id = configurationDAO.InsertConfiguration(node);
     OBSERVER_INFO("Inserted new configuration with id {}", id);
 
     // dump stored data
     nldb::Query testQuery = nldb::Query(&configurationsDB);
 
-    std::cout << "As string: "
-              << Observer::ConfigurationParser::NodeAsJson(real_config)
-              << std::endl;
+    std::cout << "As string: " << node << std::endl;
 
     std::cout << testQuery.from("configurations").select().execute()
               << std::endl;
@@ -105,11 +101,6 @@ int main(int argc, char** argv) {
     std::cout << std::endl
               << std::endl
               << testQuery.from("cameras").select().execute() << std::endl;
-
-    // NOTE: Well... seems like a yaml-cpp node cannot be converted to a json
-    // string without forcing double quotes everywhere
-    // https://github.com/jbeder/yaml-cpp/issues/941
-    // A rework must be done to stop using it and instead use nlohmann json
 
     /* ---------------- MAIN UWEBSOCKETS APP ---------------- */
     auto app = uWS::App();
@@ -144,7 +135,7 @@ int main(int argc, char** argv) {
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
-    for (auto&& cam : cfg.camerasConfiguration) {
+    for (auto&& cam : cfg.cameras) {
         auto camera = Web::Domain::Camera(cam.name, cam.url);
         cameraRepository.Add(camera);
     }
@@ -152,7 +143,7 @@ int main(int argc, char** argv) {
     /* ----------------------- GET FPS ---------------------- */
     // TODO: what is this?
     Observer::VideoSource cap;
-    cap.Open(cfg.camerasConfiguration[0].url);
+    cap.Open(cfg.cameras[0].url);
     double fps = cap.GetFPS();
     cap.Close();
 
@@ -283,21 +274,20 @@ int main(int argc, char** argv) {
                  std::string fieldPath(req->getQuery("field"));
                  fieldPath = "configuration/" + fieldPath;
 
-                 YAML::Node obj;
-                 Observer::ConfigurationParser::ReadConfigurationObjectFromFile(
-                     argv[1], obj);
+                 nldb::json obj =
+                     Observer::ConfigurationParser::ConfigurationFromJsonFile(
+                         argv[1]);
 
                  std::cout << "field: " << fieldPath << std::endl;
 
-                 YAML::Node rCfg;
-                 Observer::ConfigurationParser::TryGetConfigurationFieldValue(
-                     obj, fieldPath, rCfg);
+                 nldb::json value = Observer::ConfigurationParser::
+                     TryGetConfigurationFieldValue(obj, fieldPath);
 
-                 if (rCfg.IsNull()) {
+                 if (value.is_null()) {
                      res->writeStatus(HTTP_404_NOT_FOUND)->end();
                  }
 
-                 res->endJson(Observer::ConfigurationParser::NodeAsJson(rCfg));
+                 res->endJson(value.dump());
              })
 
         .get("/*.*",

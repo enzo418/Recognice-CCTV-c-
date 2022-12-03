@@ -26,7 +26,7 @@ namespace Web::DAL {
         }
     }
 
-    YAML::Node ConfigurationDAO::Get(const std::string& id) {
+    nldb::json ConfigurationDAO::Get(const std::string& id) {
         auto colCfgs = query.collection("configurations");
         nldb::json configurationsFound =
             query.from(colCfgs).select().where(colCfgs["_id"] == id).execute();
@@ -34,7 +34,7 @@ namespace Web::DAL {
         if (configurationsFound.size() == 1) {
             nldb::json& cfg = configurationsFound[0];
             AddCamerasToConfiguration(cfg);
-            return FromNlohmann(cfg);
+            return cfg;
         }
 
         throw std::runtime_error("Configuration not found");

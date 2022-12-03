@@ -1,4 +1,7 @@
 #include "server_utils.hpp"
+
+#include "observer/Domain/Configuration/ConfigurationParser.hpp"
+
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
@@ -71,43 +74,6 @@ std::string GetSuccessAlertReponse(const std::string& message,
                           {"extra", extra, true}});
 }
 
-// datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss
-void AppendNotification(Json::Value& root, const std::string& type,
-                        const std::string& content, const std::string& group_id,
-                        const std::string& datetime,
-                        const std::string& directory) {
-    Json::Value pnt;
-    pnt["type"] = type;
-    pnt["content"] = content;
-    pnt["group_id"] = group_id;
-    pnt["datetime"] = datetime;
-    pnt["directory"] = directory;
-    root.append(pnt);
-}
-
-void ReadNotificationsFile(const std::string& fn, Json::Value& target) {
-    if (std::filesystem::exists(fn)) {
-        Json::Reader reader;
-
-        std::ifstream file_source(fn, std::ifstream::binary);
-
-        if (!reader.parse(file_source, target, false)) {
-            std::cout << "couldn't read the notifications history: the file \""
-                      << fn << "\" has a bad json format!\n";
-        }
-
-        file_source.close();
-    }
-}
-
-void WriteNotificationsFile(const std::string& fn, Json::Value& notifications,
-                            Json::FastWriter& writter) {
-    std::ofstream file(fn, std::ifstream::binary);
-    file << writter.write(notifications);
-    file.flush();
-    file.close();
-}
-
 AvailableConfigurationsDTO GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach) {
     AvailableConfigurationsDTO configsFiles;
@@ -118,13 +84,13 @@ AvailableConfigurationsDTO GetAvailableConfigurations(
                  std::filesystem::directory_iterator(directory)) {
                 std::string path = entry.path().generic_string();
                 const auto ext = entry.path().extension();
-                if (ext == ".yaml" || ext == ".yml" || ext == ".json") {
+                if (ext == ".json") {
                     AvailableConfigurationDTO avCfg;
 
                     // open configuration
                     try {
-                        auto cfg =
-                            Observer::ConfigurationParser::ParseYAML(path);
+                        auto cfg = Observer::ConfigurationParser::
+                            ConfigurationFromJsonFile(path);
                         avCfg.name = cfg.name;
                         avCfg.hash =
                             std::to_string(std::hash<std::string> {}(path));
