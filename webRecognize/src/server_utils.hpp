@@ -16,6 +16,7 @@
 
 extern const std::string HTTP_MULTIPART;
 extern const std::string HTTP_FORM_URLENCODED;
+extern const char* HTTP_400_BAD_REQUEST;
 extern const char* HTTP_404_NOT_FOUND;
 extern const char* HTTP_301_MOVED_PERMANENTLY;
 
@@ -83,3 +84,13 @@ AvailableConfigurationsDTO GetAvailableConfigurations(
     const std::vector<std::string>& directoriesToSeach);
 
 std::string GetRecognizeStateJson(const bool& recognize_running);
+
+#if BUILD_DEBUG
+
+inline void allowCrossOrigin(auto* res) {
+    res->writeHeader("Access-Control-Allow-Origin", "*");
+    res->writeHeader("Access-Control-Allow-Methods",
+                     "GET, POST, PUT, DELETE, OPTIONS");
+}
+
+#endif

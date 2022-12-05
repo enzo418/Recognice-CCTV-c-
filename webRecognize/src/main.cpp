@@ -14,6 +14,7 @@
 #include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Serialization/JsonAvailableConfigurationDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
+#include "Utils/StringUtils.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
@@ -252,18 +253,84 @@ int main(int argc, char** argv) {
                  res->endJson(paths_json.dump());
              })
 
+        .post("/api/configuration/",
+              [&configurationDAO](auto* res, auto* req) {
+                  res->onAborted([]() {});
+
+                  std::string buffer;
+
+                  res->onData([&configurationDAO, res,
+                               buffer = std::move(buffer)](
+                                  std::string_view data, bool last) mutable {
+                      buffer.append(data.data(), data.length());
+
+                      if (last) {
+                          //   std::cout << "buffer: " << buffer << std::endl;
+
+                          Observer::Configuration configuration;
+                          nldb::json bufferAsJson;
+
+                          // default response is an error
+                          nldb::json response = {
+                              {"status", 400},
+                              {"title", "invalid configuration"},
+                              {"detail",
+                               "we couldn't parse the configuration, check "
+                               "that it has all the fields needed"}};
+
+                          try {
+                              if (!buffer.empty()) {
+                                  // Replace escaped quotes with quotes
+                                  Web::StringUtils::replaceSubstring(
+                                      buffer, "\\\"", "\"");
+
+                                  // "{name: ..., ...}" to {name: ..., ...}
+                                  if (buffer.starts_with('"')) {
+                                      bufferAsJson = nlohmann::json::parse(
+                                          buffer.begin() + 1, buffer.end() - 1);
+                                  } else {
+                                      bufferAsJson =
+                                          nlohmann::json::parse(buffer);
+                                  }
+
+                                  configuration = bufferAsJson;
+                              } else {
+                                  bufferAsJson = configuration;
+                              }
+
+                              auto ids = configurationDAO.InsertConfiguration(
+                                  bufferAsJson);
+
+                              // set success response
+                              response = {{"id", ids[0]}};
+                              res->writeHeader("Content-Type",
+                                               "application/json");
+                          } catch (const std::exception& e) {
+                              std::cout
+                                  << "Configuration wasn't added: " << e.what()
+                                  << std::endl;
+
+                              res->writeStatus(HTTP_400_BAD_REQUEST);
+                              res->writeHeader("Content-Type",
+                                               "application/problem+json");
+                          }
+
+#if BUILD_DEBUG
+                          allowCrossOrigin(res);
+#endif
+
+                          res->end(response.dump());
+                      }
+                  });
+              })
         .get("/api/configuration/:id",
-             [&argv](auto* res, auto* req) {
+             [&configurationDAO](auto* res, auto* req) {
                  std::string url(req->getUrl());
                  auto id = req->getParameter(0);
                  std::string fieldPath(req->getQuery("field"));
-                 fieldPath = "configuration/" + fieldPath;
+                 fieldPath = fieldPath;
 
-                 nldb::json obj =
-                     Observer::ConfigurationParser::ConfigurationFromJsonFile(
-                         argv[1]);
-
-                 std::cout << "field: " << fieldPath << std::endl;
+                 nldb::json obj = configurationDAO.Get(std::string(id));
 
                  nldb::json value = Observer::ConfigurationParser::
                      TryGetConfigurationFieldValue(obj, fieldPath);
