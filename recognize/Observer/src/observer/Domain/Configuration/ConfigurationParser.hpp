@@ -78,6 +78,6 @@ namespace Observer::ConfigurationParser {
      * @param output
      * @return json
      */
-    json TryGetConfigurationFieldValue(Object& obj, std::string_view path);
+    json GetConfigurationFieldValue(Object& obj, std::string_view path);
 
 }  // namespace Observer::ConfigurationParser

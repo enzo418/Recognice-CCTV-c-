@@ -223,7 +223,7 @@ TEST(ConfigurationObjectTest, ShouldGetValueOnNode) {
     std::string_view path = "configuration/cameras/0/name";
 
     json result =
-        Observer::ConfigurationParser::TryGetConfigurationFieldValue(Obj, path);
+        Observer::ConfigurationParser::GetConfigurationFieldValue(Obj, path);
 
     ASSERT_TRUE("test" == result.get<std::string>());
 }

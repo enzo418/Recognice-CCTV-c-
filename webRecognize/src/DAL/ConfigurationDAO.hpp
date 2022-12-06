@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "nldb/Collection.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
 namespace Web::DAL {
@@ -22,6 +23,8 @@ namespace Web::DAL {
          */
         nldb::json Get(const std::string& id);
 
+        nldb::json GetCamera(const std::string& id);
+
         /**
          * @brief Insert a new configuration.
          *
@@ -34,10 +37,15 @@ namespace Web::DAL {
 
         void UpdateCamera(const std::string& id, const nldb::json& data);
 
+        // Get all the ids and names of the configurations stored.
+        nldb::json GetAllNamesAndId();
+
        private:
         void AddCamerasToConfiguration(nldb::json& cfg);
 
         nldb::DBSL3* db;
         nldb::Query<nldb::DBSL3> query;
+        nldb::Collection colConfiguration;
+        nldb::Collection colCamera;
     };
 }  // namespace Web::DAL

@@ -45,6 +45,7 @@
 
 // CL
 #include "CL/NotificationCL.hpp"
+#include "Utils/JsonUtils.hpp"
 
 const bool SSL = false;
 namespace fs = std::filesystem;
@@ -252,7 +253,11 @@ int main(int argc, char** argv) {
 
                  res->endJson(paths_json.dump());
              })
-
+        .get("/api/configuration/",
+             [&configurationDAO](auto* res, auto* req) {
+                 // Get all the configurations id and name available
+                 res->endJson(configurationDAO.GetAllNamesAndId().dump());
+             })
         .post("/api/configuration/",
               [&configurationDAO](auto* res, auto* req) {
                   res->onAborted([]() {});
@@ -315,10 +320,6 @@ int main(int argc, char** argv) {
                                                "application/problem+json");
                           }
 
-#if BUILD_DEBUG
-                          allowCrossOrigin(res);
-#endif
-
                           res->end(response.dump());
                       }
                   });
@@ -330,10 +331,44 @@ int main(int argc, char** argv) {
                  std::string fieldPath(req->getQuery("field"));
                  fieldPath = fieldPath;
 
-                 nldb::json obj = configurationDAO.Get(std::string(id));
+                 nldb::json obj;
+                 try {
+                     obj = configurationDAO.Get(std::string(id));
+                 } catch (const std::exception& e) {
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->end("Configuration not found");
+                 }
 
-                 nldb::json value = Observer::ConfigurationParser::
-                     TryGetConfigurationFieldValue(obj, fieldPath);
+                 // Get the camera from the database if requested
+                 auto camerasPos = fieldPath.find("cameras/");
+                 if (fieldPath.find("cameras/") != fieldPath.npos) {
+                     fieldPath = fieldPath.substr(camerasPos + 8 /*cameras/*/);
+                     auto nextSlash = fieldPath.find("/");
+                     if (nextSlash != fieldPath.npos) {
+                         // get the camera
+                         auto cameraID = fieldPath.substr(0, nextSlash);
+                         try {
+                             obj = configurationDAO.GetCamera(cameraID);
+                         } catch (const std::exception& e) {
+                             res->writeStatus(HTTP_404_NOT_FOUND)
+                                 ->end("Camera not found");
+                         }
+
+                         // remove the id from the path
+                         fieldPath = fieldPath.substr(nextSlash);
+                     }
+                 }
+
+                 nldb::json value;
+                 try {
+                     value = Observer::ConfigurationParser::
+                         GetConfigurationFieldValue(obj, fieldPath);
+                 } catch (const std::exception& e) {
+                     std::cout
+                         << "Couldn't get configuration field: " << e.what()
+                         << std::endl;
+                     res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                 }
 
                  if (value.is_null()) {
                      res->writeStatus(HTTP_404_NOT_FOUND)->end();
@@ -341,6 +376,122 @@ int main(int argc, char** argv) {
 
                  res->endJson(value.dump());
              })
+
+        .post(
+            "/api/configuration/:id",
+            [&configurationDAO](auto* res, auto* req) {
+                res->onAborted([]() {});
+
+                std::string buffer;
+
+                res->onData([&configurationDAO, res, req,
+                             buffer = std::move(buffer)](std::string_view data,
+                                                         bool last) mutable {
+                    buffer.append(data.data(), data.length());
+
+                    if (last) {
+                        // uWebSocket can't take POST with header???? wtf
+
+                        /*std::string
+                        contentType(req->getHeader("content-type")); if
+                        (contentType != "application/json") {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Expected a json body");
+                            return;
+                        }*/
+
+                        nlohmann::json parsed;
+                        try {
+                            parsed = nlohmann::json::parse(buffer);
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Body is not a valid json");
+                            return;
+                        }
+
+                        if (parsed.is_null() || !parsed.contains("field") ||
+                            !parsed.contains("value") ||
+                            !parsed["field"].is_string()) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Expected json members: field and value");
+                            return;
+                        }
+
+                        std::string lastPathKey;
+                        std::string fieldPath =
+                            parsed["field"].get<std::string>();
+
+                        auto camerasPos = fieldPath.find("cameras/");
+                        if (fieldPath.find("cameras/") != fieldPath.npos) {
+                            // UPDATE A CAMERA
+                            fieldPath =
+                                fieldPath.substr(camerasPos + 8 /*cameras/*/);
+                            auto nextSlash = fieldPath.find("/");
+                            if (nextSlash != fieldPath.npos) {
+                                // get the camera
+                                auto cameraID = fieldPath.substr(0, nextSlash);
+
+                                // TODO: ensure that cameraID belongs to
+                                // parameter.id
+
+                                nldb::json updated = Web::GenerateJsonFromPath(
+                                    fieldPath, &lastPathKey);
+
+                                updated[lastPathKey] = parsed["value"];
+
+                                try {
+                                    configurationDAO.UpdateCamera(cameraID,
+                                                                  updated);
+                                } catch (const nldb::WrongPropertyType& e) {
+                                    nldb::json problem = {
+                                        {"title", "Wrong property type"},
+                                        {"invalidParams",
+                                         {{lastPathKey,
+                                           {{"reason", e.what()}}}}}};
+
+                                    res->writeStatus(HTTP_400_BAD_REQUEST)
+                                        ->writeHeader(
+                                            "Content-Type",
+                                            "application/problem+json")
+                                        ->end(problem.dump());
+                                } catch (...) {
+                                    res->writeStatus(
+                                           HTTP_500_INTERNAL_SERVER_ERROR)
+                                        ->end();
+                                }
+                            }
+                        } else {
+                            // UPDATE A CONFIGURATION
+                            std::string id(req->getParameter(0));
+
+                            nldb::json updated = Web::GenerateJsonFromPath(
+                                fieldPath, &lastPathKey);
+
+                            updated[lastPathKey] = parsed["value"];
+
+                            try {
+                                configurationDAO.UpdateConfiguration(id,
+                                                                     updated);
+                            } catch (const nldb::WrongPropertyType& e) {
+                                nldb::json problem = {
+                                    {"title", "Wrong property type"},
+                                    {"invalidParams",
+                                     {{lastPathKey, {{"reason", e.what()}}}}}};
+
+                                res->writeStatus(HTTP_400_BAD_REQUEST)
+                                    ->writeHeader("Content-Type",
+                                                  "application/problem+json")
+                                    ->end(problem.dump());
+                            } catch (...) {
+                                res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                                    ->end();
+                            }
+                        }
+
+                        res->end("field updated");
+                    }
+                });
+            })
 
         .get("/*.*",
              [](auto* res, auto* req) {
@@ -410,7 +561,8 @@ int main(int argc, char** argv) {
                              feedID);
 
                          ws->send(
-                             "Wrong feed id, this one doesn't exists! Closing "
+                             "Wrong feed id, this one doesn't exists! "
+                             "Closing "
                              "connection.");
                          ws->end();
                      }

@@ -4,6 +4,7 @@
 
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
+const char* HTTP_500_INTERNAL_SERVER_ERROR = "500 Internal Server Error";
 const char* HTTP_400_BAD_REQUEST = "400 Bad request";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
 const char* HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";

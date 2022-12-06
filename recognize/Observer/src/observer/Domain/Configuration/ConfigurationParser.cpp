@@ -130,7 +130,7 @@ namespace Observer::ConfigurationParser {
         return TrySetNodeValue(obj, keys.data(), keys_count, value);
     }
 
-    json TryGetConfigurationFieldValue(Object& obj, std::string_view path) {
+    json GetConfigurationFieldValue(Object& obj, std::string_view path) {
         std::string pathWithSlash(path);
         if (!path.starts_with("/")) pathWithSlash = "/" + pathWithSlash;
 

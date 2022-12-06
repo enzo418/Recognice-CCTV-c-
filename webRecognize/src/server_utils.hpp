@@ -16,6 +16,7 @@
 
 extern const std::string HTTP_MULTIPART;
 extern const std::string HTTP_FORM_URLENCODED;
+extern const char* HTTP_500_INTERNAL_SERVER_ERROR;
 extern const char* HTTP_400_BAD_REQUEST;
 extern const char* HTTP_404_NOT_FOUND;
 extern const char* HTTP_301_MOVED_PERMANENTLY;

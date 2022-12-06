@@ -2,7 +2,11 @@
 
 namespace Web::DAL {
 
-    ConfigurationDAO::ConfigurationDAO(nldb::DBSL3* pDb) : db(pDb), query(db) {}
+    ConfigurationDAO::ConfigurationDAO(nldb::DBSL3* pDb)
+        : db(pDb),
+          query(db),
+          colConfiguration("configurations"),
+          colCamera("cameras") {}
 
     void ConfigurationDAO::AddCamerasToConfiguration(nldb::json& cfg) {
         if (cfg.contains("cameras") && cfg["cameras"].size() > 0) {
@@ -10,26 +14,26 @@ namespace Web::DAL {
             // cameras:
             auto& json_cameras = cfg["cameras"];
 
-            auto colCameras = query.collection("cameras");
-
-            auto condition = colCameras["_id"] == (std::string)json_cameras[0];
+            auto condition = colCamera["id"] == (std::string)json_cameras[0];
 
             for (int i = 1; i < json_cameras.size(); i++) {
                 condition = condition ||
-                            colCameras["_id"] == (std::string)json_cameras[i];
+                            colCamera["id"] == (std::string)json_cameras[i];
             }
 
             nldb::json cameras =
-                query.from(colCameras).select().where(condition).execute();
+                query.from(colCamera).select().where(condition).execute();
 
             cfg["cameras"] = cameras;
         }
     }
 
     nldb::json ConfigurationDAO::Get(const std::string& id) {
-        auto colCfgs = query.collection("configurations");
         nldb::json configurationsFound =
-            query.from(colCfgs).select().where(colCfgs["_id"] == id).execute();
+            query.from(colConfiguration)
+                .select()
+                .where(colConfiguration["id"] == id)
+                .execute();
 
         if (configurationsFound.size() == 1) {
             nldb::json& cfg = configurationsFound[0];
@@ -38,6 +42,19 @@ namespace Web::DAL {
         }
 
         throw std::runtime_error("Configuration not found");
+    }
+
+    nldb::json ConfigurationDAO::GetCamera(const std::string& id) {
+        nldb::json res = this->query.from(colCamera)
+                             .select()
+                             .where(colCamera["id"] == id)
+                             .execute();
+
+        if (res.size() == 1) {
+            return res[0];
+        }
+
+        throw std::runtime_error("Camera not found");
     }
 
     std::string ConfigurationDAO::InsertConfiguration(
@@ -51,16 +68,22 @@ namespace Web::DAL {
             config["cameras"] = newIds;
         }
 
-        return query.from("configurations").insert(config)[0];
+        return query.from(colConfiguration).insert(config)[0];
     }
 
     void ConfigurationDAO::UpdateConfiguration(const std::string& id,
                                                const nldb::json& data) {
-        query.from("configurations").update(id, data);
+        query.from(colConfiguration).update(id, data);
     }
 
     void ConfigurationDAO::UpdateCamera(const std::string& id,
                                         const nldb::json& data) {
-        query.from("cameras").update(id, data);
+        query.from(colCamera).update(id, data);
+    }
+
+    nldb::json ConfigurationDAO::GetAllNamesAndId() {
+        return query.from(colConfiguration)
+            .select(colConfiguration["id"], colConfiguration["name"])
+            .execute();
     }
 }  // namespace Web::DAL
