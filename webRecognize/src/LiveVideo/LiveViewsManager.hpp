@@ -126,13 +126,15 @@ namespace Web {
     template <bool SSL>
     void LiveViewsManager<SSL>::RemoveClient(Client* client) {
         std::string feedId(client->getUserData()->pathSubscribed);
-        auto feed = camerasLiveView[feedId];
+        if (Exists(feedId)) {
+            auto feed = camerasLiveView[feedId];
 
-        feed->RemoveClient(client);
+            feed->RemoveClient(client);
 
-        if (feed->GetTotalClients() == 0) {
-            feed->Stop();
-            OBSERVER_TRACE("Stopping live view since there are no clients");
+            if (feed->GetTotalClients() == 0) {
+                feed->Stop();
+                OBSERVER_TRACE("Stopping live view since there are no clients");
+            }
         }
     }
 

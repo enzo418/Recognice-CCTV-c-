@@ -3,6 +3,7 @@
 
 // nolitedb
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
+#include "LiveVideo/LiveViewExceptions.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
@@ -173,25 +174,37 @@ int main(int argc, char** argv) {
         .get(
             "/api/requestCameraStream",
             [&serverCtx](auto* res, auto* req) {
-                res->writeHeader("Content-Type", "application/json");
                 std::string uri(req->getQuery("uri"));
 
                 if (serverCtx.liveViewsManager->CreateCameraView(uri)) {
-                    std::string feed_id(
-                        serverCtx.liveViewsManager->GetFeedId(uri));
+                    std::string feed_id;
 
-                    res->endJson(GetSuccessAlertReponse(GetJsonString(
-                        {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
+                    try {
+                        feed_id = serverCtx.liveViewsManager->GetFeedId(uri);
+                    } catch (const Web::InvalidCameraUriException& e) {
+                        nlohmann::json error = {
+                            {"title", "Invalid camera uri"}};
+
+                        res->writeStatus(HTTP_404_NOT_FOUND)
+                            ->endProblemJson(error.dump());
+                    } catch (...) {
+                        res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                    }
+
+                    nlohmann::json response = {{"ws_feed_id", feed_id}};
+
+                    res->endJson(response.dump());
 
                     OBSERVER_TRACE(
                         "Opened camera connection in live view '{0}' as '{1}' ",
                         uri, feed_id);
                 } else {
-                    res->endJson(GetErrorAlertReponse(
-                        GetJsonString({{"error",
-                                        "Couldn't open a connection with "
-                                        "the camera.",
-                                        true}})));
+                    nlohmann::json error = {
+                        {"title",
+                         "Couldn't open a connection with the camera."}};
+
+                    res->writeStatus(HTTP_400_BAD_REQUEST)
+                        ->endProblemJson(error.dump());
                     OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'",
                                    uri);
                 }
@@ -202,8 +215,6 @@ int main(int argc, char** argv) {
          */
         .get("/api/requestObserverStream",
              [&serverCtx, &observer](auto* res, auto* req) {
-                 res->writeHeader("Content-Type", "application/json");
-
                  auto uri = Web::LiveViewsManager<SSL>::observerUri;
 
                  if (!observer.IsRunning()) {
@@ -214,11 +225,15 @@ int main(int argc, char** argv) {
                      std::string feed_id(
                          serverCtx.liveViewsManager->GetFeedId(uri));
 
-                     res->endJson(GetSuccessAlertReponse(GetJsonString(
-                         {{"ws_feed_path", liveViewPrefix + feed_id, true}})));
+                     nlohmann::json response = {{"ws_feed_id", feed_id}};
+
+                     res->endJson(response.dump());
                  } else {
-                     res->endJson(GetErrorAlertReponse(GetJsonString(
-                         {{"error", "Observer might not be running.", true}})));
+                     nlohmann::json error = {
+                         {"title", "Observer might not be running."}};
+
+                     res->writeStatus(HTTP_400_BAD_REQUEST)
+                         ->endProblemJson(error.dump());
                  }
              })
         .get("/stream/notification/test11",
