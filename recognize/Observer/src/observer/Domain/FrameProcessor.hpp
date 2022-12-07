@@ -33,6 +33,8 @@ namespace Observer {
         /**
          * @brief Construct a new Frame Processor object
          *
+         * @param resizeSize Even if the frame was already resize, user might
+         * want to resize it again.
          * @param roi region of interest to crop
          * @param noiseThreshold
          * @param rotation angle to rotate the image in degrees
