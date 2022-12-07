@@ -6,7 +6,7 @@
 #include "observer/IImageProcessing.hpp"
 
 namespace Observer {
-    class ImageProcessing : public IImageProcessing {
+    class ImageProcessing final : public IImageProcessing {
        public:
         void FindContours(Frame& frame,
                           std::vector<std::vector<Point>>& outContours,

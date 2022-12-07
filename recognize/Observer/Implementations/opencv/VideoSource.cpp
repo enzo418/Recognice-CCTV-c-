@@ -1,5 +1,7 @@
 #include "VideoSource.hpp"
 
+#include <opencv2/videoio.hpp>
+
 namespace Observer {
     void VideoSource::Open(const std::string& url) {
         try {
@@ -19,5 +21,10 @@ namespace Observer {
     bool VideoSource::isOpened() { return this->videoCapture.isOpened(); }
 
     int VideoSource::GetFPS() { return videoCapture.get(cv::CAP_PROP_FPS); }
+
+    Size VideoSource::GetSize() {
+        return Size {(int)videoCapture.get(cv::CAP_PROP_FRAME_WIDTH),
+                     (int)videoCapture.get(cv::CAP_PROP_FRAME_HEIGHT)};
+    }
 
 }  // namespace Observer

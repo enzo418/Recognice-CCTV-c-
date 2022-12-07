@@ -6,7 +6,7 @@
 #include "observer/Utils/SpecialEnums.hpp"
 
 namespace Observer {
-    class Frame : public IFrame {
+    class Frame final : public IFrame {
        public:
         // internal type
         typedef cv::Mat IType;

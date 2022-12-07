@@ -4,7 +4,7 @@
 #include "observer/Domain/IVideoSource.hpp"
 
 namespace Observer {
-    class VideoSource : public IVideoSource<Frame> {
+    class VideoSource final : public IVideoSource<Frame> {
        public:
         VideoSource() = default;
 
@@ -17,6 +17,8 @@ namespace Observer {
         bool isOpened() override;
 
         int GetFPS() override;
+
+        Size GetSize() override;
 
        private:
         cv::VideoCapture videoCapture;

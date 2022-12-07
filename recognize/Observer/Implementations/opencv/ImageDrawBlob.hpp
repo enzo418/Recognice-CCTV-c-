@@ -10,7 +10,7 @@ namespace Observer {
      * @brief Singleton implementation of image draw blob
      *
      */
-    class ImageDrawBlob : public IImageDrawBlob {
+    class ImageDrawBlob final : public IImageDrawBlob {
        public:
         void DrawBlob(Frame& frame, Blob& blob, int frameNumber,
                       double scaleX = 1, double scaleY = 1) override;

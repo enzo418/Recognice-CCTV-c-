@@ -11,7 +11,7 @@ namespace Observer {
      * @brief Singleton implementation of IImageIO.
      *
      */
-    class ImageIO : public IImageIO {
+    class ImageIO final : public IImageIO {
        public:
         /**
          * @brief Writes an image to disk

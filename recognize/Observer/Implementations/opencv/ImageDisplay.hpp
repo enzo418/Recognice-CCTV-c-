@@ -6,7 +6,7 @@
 #include "observer/IImageDisplay.hpp"
 
 namespace Observer {
-    class ImageDisplay : public IImageDisplay {
+    class ImageDisplay final : public IImageDisplay {
        public:
         /**
          * @brief Create a new Window

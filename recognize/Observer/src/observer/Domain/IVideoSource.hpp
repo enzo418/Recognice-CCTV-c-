@@ -3,6 +3,8 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "observer/Size.hpp"
+
 namespace Observer {
     // all the implementations (VideoSource) will provide a type
     class VideoSource;
@@ -19,5 +21,7 @@ namespace Observer {
         virtual bool isOpened() = 0;
 
         virtual int GetFPS() = 0;
+
+        virtual Size GetSize() = 0;
     };
 }  // namespace Observer

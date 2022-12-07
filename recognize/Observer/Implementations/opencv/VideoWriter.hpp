@@ -4,7 +4,7 @@
 #include "observer/Domain/IVideoWriter.hpp"
 
 namespace Observer {
-    class VideoWriter : public IVideoWriter<Frame> {
+    class VideoWriter final : public IVideoWriter<Frame> {
        private:
         cv::VideoWriter writer;
 
