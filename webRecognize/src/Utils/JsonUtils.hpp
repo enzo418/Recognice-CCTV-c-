@@ -43,29 +43,31 @@ namespace Web {
      * {
      *  zee: {
      *      foo: {
-     *          bar: null
+     *          bar: @value
      *      }
      * }
      *
      * @param path a / separated string of words
+     * @param value value to set to the last key
      * @param lastKey will be set to the last key found
      * @return nlohmann::json
      */
     nlohmann::json inline GenerateJsonFromPath(const std::string& path,
+                                               const nlohmann::json& value,
                                                std::string* lastKey = nullptr) {
         using json = nlohmann::json;
 
         auto [keys, keysCount] = GetPathKeys(path);
 
-        json result;
-        json& ref = result;
+        json result = json::object();
+        json* ref = &result;
 
         for (int i = 0; i < keysCount; i++) {
             if (i == keysCount - 1) {
-                ref[keys[i]] = nullptr;
+                (*ref)[keys[i]] = value;
             } else {
-                ref[keys[i]] = json::object();
-                ref = ref[keys[i]];
+                (*ref)[keys[i]] = json::object();
+                ref = &(*ref)[keys[i]];
             }
         }
 
@@ -74,6 +76,13 @@ namespace Web {
         }
 
         return result;
+
+        // Another way could be requesting a json as a parameter and use
+        // json_pointer to get the reference since it will create the missing
+        // keys
+        // https://nlohmann.github.io/json/api/basic_json/operator%5B%5D/#notes
+        // like so:
+        // result[json::json_pointer(path)];
     }
 
 }  // namespace Web

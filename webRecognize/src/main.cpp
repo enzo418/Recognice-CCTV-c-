@@ -446,13 +446,14 @@ int main(int argc, char** argv) {
                                 // get the camera
                                 auto cameraID = fieldPath.substr(0, nextSlash);
 
+                                // remove the id from the path
+                                fieldPath = fieldPath.substr(nextSlash);
+
                                 // TODO: ensure that cameraID belongs to
                                 // parameter.id
 
                                 nldb::json updated = Web::GenerateJsonFromPath(
-                                    fieldPath, &lastPathKey);
-
-                                updated[lastPathKey] = parsed["value"];
+                                    fieldPath, parsed["value"], &lastPathKey);
 
                                 try {
                                     configurationDAO.UpdateCamera(cameraID,
@@ -480,9 +481,7 @@ int main(int argc, char** argv) {
                             std::string id(req->getParameter(0));
 
                             nldb::json updated = Web::GenerateJsonFromPath(
-                                fieldPath, &lastPathKey);
-
-                            updated[lastPathKey] = parsed["value"];
+                                fieldPath, parsed["value"], &lastPathKey);
 
                             try {
                                 configurationDAO.UpdateConfiguration(id,
@@ -507,6 +506,31 @@ int main(int argc, char** argv) {
                     }
                 });
             })
+
+        .get("/api/getCameraDefaults",
+             [](auto* res, auto* req) {
+                 std::string uri(req->getQuery("uri"));
+
+                 Observer::VideoSource cap;
+                 cap.Open(uri);
+
+                 if (cap.isOpened()) {
+                     double fps = cap.GetFPS();
+                     Observer::Size size = cap.GetSize();
+
+                     nlohmann::json response = {{"fps", fps}, {"size", size}};
+
+                     res->endJson(response.dump());
+
+                     cap.Close();
+                 } else {
+                     nlohmann::json response = {
+                         {"title", "Camera not avilable"}};
+
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->endProblemJson(response.dump());
+                 }
+             })
 
         .get("/*.*",
              [](auto* res, auto* req) {
