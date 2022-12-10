@@ -34,6 +34,7 @@
 #include <filesystem>
 #include <memory>
 #include <string_view>
+#include <unordered_map>
 
 // #include "AreaSelector.hpp"
 #include "Server/ServerContext.hpp"
@@ -133,6 +134,11 @@ int main(int argc, char** argv) {
         cameraRepository.Add(camera);
     }
 
+    /* ---------------- CACHED CAMERA IMAGES ---------------- */
+    // url -> image
+    std::unordered_map<std::string, std::vector<unsigned char>>
+        cachedCameraImage;
+
     /* ---------------- START OBSERVER THREAD --------------- */
     threads.push_back(&observer);
     observer.Start();
@@ -155,15 +161,6 @@ int main(int argc, char** argv) {
 
                  FileStreamer::GetInstance().streamFile(res, "/web/index.html",
                                                         rangeHeader);
-             })
-        .get("/test",
-             [&notificationController](auto* res, auto* req) {
-                 static int id = 0;
-                 Observer::DTONotification ev(
-                     id++, "prender_sin_boton2.mp4",
-                     Observer::ENotificationType::VIDEO);
-                 notificationController.update(ev);
-                 res->end();
              })
         /**
          * @brief Request a live view of the camera. If successfully
@@ -189,6 +186,7 @@ int main(int argc, char** argv) {
                             ->endProblemJson(error.dump());
                     } catch (...) {
                         res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                        return;
                     }
 
                     nlohmann::json response = {{"ws_feed_id", feed_id}};
@@ -235,38 +233,6 @@ int main(int argc, char** argv) {
                      res->writeStatus(HTTP_400_BAD_REQUEST)
                          ->endProblemJson(error.dump());
                  }
-             })
-        .get("/stream/notification/test11",
-             [](auto* res, auto* req) {
-                 std::string filename("prender_sin_boton2.mp4");
-                 //  std::string id(req->getParameter(0));
-                 std::string id = "test11";
-                 std::string rangeHeader(req->getHeader("range"));
-
-                 // f = notificationService.getFilename(id)
-                 //     if cache.isCached(id):
-                 //         return cache.at(id)
-                 //     else
-                 //         db.notification.select.where id = id
-                 //
-                 // fileStreamer.streamFile(res, f, rangeHeader)
-
-                 std::cout << "id: " << id << std::endl;
-
-                 FileStreamer::GetInstance().streamFile(res, filename,
-                                                        rangeHeader);
-             })
-        .get("/api/configurationFiles",
-             [](auto* res, auto* req) {
-                 std::string url(req->getUrl());
-                 std::string rangeHeader(req->getHeader("range"));
-
-                 const auto paths = GetAvailableConfigurations(
-                     {"../../recognize/build/", "./", "./configurations/"});
-
-                 nldb::json paths_json = paths;
-
-                 res->endJson(paths_json.dump());
              })
         .get("/api/configuration/",
              [&configurationDAO](auto* res, auto* req) {
@@ -352,6 +318,7 @@ int main(int argc, char** argv) {
                  } catch (const std::exception& e) {
                      res->writeStatus(HTTP_404_NOT_FOUND)
                          ->end("Configuration not found");
+                     return;
                  }
 
                  // Get the camera from the database if requested
@@ -367,6 +334,7 @@ int main(int argc, char** argv) {
                          } catch (const std::exception& e) {
                              res->writeStatus(HTTP_404_NOT_FOUND)
                                  ->end("Camera not found");
+                             return;
                          }
 
                          // remove the id from the path
@@ -383,10 +351,12 @@ int main(int argc, char** argv) {
                          << "Couldn't get configuration field: " << e.what()
                          << std::endl;
                      res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                     return;
                  }
 
                  if (value.is_null()) {
                      res->writeStatus(HTTP_404_NOT_FOUND)->end();
+                     return;
                  }
 
                  res->endJson(value.dump());
@@ -508,8 +478,29 @@ int main(int argc, char** argv) {
             })
 
         .get("/api/getCameraDefaults",
-             [](auto* res, auto* req) {
+             [&configurationDAO](auto* res, auto* req) {
                  std::string uri(req->getQuery("uri"));
+
+                 if (uri.empty()) {
+                     // then try to get it from the database with:
+                     std::string camera_id(req->getQuery("camera_id"));
+
+                     if (camera_id.empty()) {
+                         res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                         return;
+                     }
+
+                     try {
+                         auto camera = configurationDAO.GetCamera(camera_id);
+                         uri = camera["url"];
+                     } catch (const std::exception& e) {
+                         nlohmann::json response = {
+                             {"title", "Camera not found"}};
+
+                         res->writeStatus(HTTP_404_NOT_FOUND)
+                             ->endProblemJson(response.dump());
+                     }
+                 }
 
                  Observer::VideoSource cap;
                  cap.Open(uri);
@@ -531,6 +522,63 @@ int main(int argc, char** argv) {
                          ->endProblemJson(response.dump());
                  }
              })
+
+        .get(
+            "/api/getCameraFrame",
+            [&configurationDAO, &cachedCameraImage](auto* res, auto* req) {
+                std::string uri(req->getQuery("uri"));
+
+                if (uri.empty()) {
+                    // then try to get it from the database with:
+                    std::string camera_id(req->getQuery("camera_id"));
+
+                    if (camera_id.empty()) {
+                        res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                        return;
+                    }
+
+                    try {
+                        auto camera = configurationDAO.GetCamera(camera_id);
+                        uri = camera["url"];
+                    } catch (const std::exception& e) {
+                        nlohmann::json response = {
+                            {"title", "Camera not found"}};
+
+                        res->writeStatus(HTTP_404_NOT_FOUND)
+                            ->endProblemJson(response.dump());
+                    }
+                }
+
+                if (!cachedCameraImage.contains(uri)) {
+                    Observer::VideoSource cap;
+                    Observer::Frame frame;
+
+                    cap.Open(uri);
+                    cap.GetNextFrame(frame);
+
+                    int tries = 100;
+                    while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
+
+                    if (tries <= 0) {
+                        nlohmann::json response = {
+                            {"title", "Camera didn't return any valid frames"}};
+
+                        res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                            ->endProblemJson(response.dump());
+                        return;
+                    }
+
+                    std::vector<unsigned char> buffer;
+                    frame.EncodeImage(".jpg", 90, buffer);
+
+                    cachedCameraImage[uri] = std::move(buffer);
+                }
+
+                auto& buffer = cachedCameraImage[uri];
+                res->writeHeader("content-type", "image/jpeg")
+                    ->end(
+                        std::string_view((char*)buffer.data(), buffer.size()));
+            })
 
         .get("/*.*",
              [](auto* res, auto* req) {

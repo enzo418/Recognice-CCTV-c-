@@ -68,7 +68,7 @@ namespace Observer {
         ECameraType type;
 
         // minimum amount of pixel that changed to trigger a validator
-        int minimumChangeThreshold = 5;
+        int minimumChangeThreshold = 100;
 
         // factor to increase the threshold when updating it
         double increaseThresholdFactor = 1.2;

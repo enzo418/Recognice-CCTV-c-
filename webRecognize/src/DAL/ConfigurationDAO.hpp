@@ -20,9 +20,17 @@ namespace Web::DAL {
          *
          * @param id
          * @return nldb::json
+         * @throws std::runtime_error on config not found
          */
         nldb::json Get(const std::string& id);
 
+        /**
+         * @brief Get the Camera object
+         *
+         * @param id
+         * @return nldb::json
+         * @throws std::runtime_error on camera not found
+         */
         nldb::json GetCamera(const std::string& id);
 
         /**
