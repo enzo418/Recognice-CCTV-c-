@@ -49,7 +49,7 @@ namespace Observer {
             images[i] = wrappedImages[i].GetInternalFrame();
         }
 
-        return Frame(InternalStackImages(&images[0], arraySize));
+        return Frame(InternalStackImages(&images[0], arraySize, maxHStack));
     }
 
     /**
