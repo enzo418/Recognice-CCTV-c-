@@ -65,13 +65,6 @@ int main(int argc, char** argv) {
     nldb::LogManager::Initialize();
     nldb::LogManager::SetLevel(nldb::log_level::warn);
 
-    if (argc <= 1) {
-        OBSERVER_ERROR(
-            "Missing configuration file argument.\n"
-            "Usage: ./webRecognize ./config_test.yml");
-        return 1;
-    }
-
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral> recognizer;
 
@@ -86,16 +79,13 @@ int main(int argc, char** argv) {
 
     Web::DAL::ConfigurationDAO configurationDAO(&configurationsDB);
 
-    auto cfg =
-        Observer::ConfigurationParser::ConfigurationFromJsonFile(argv[1]);
-
     /* ---------------- MAIN UWEBSOCKETS APP ---------------- */
     auto app = uWS::App();
 
     Web::ServerContext<SSL> serverCtx = {
         .rootFolder = fs::current_path(),
         .port = 3001,
-        .recognizeContext = {true, nullptr},
+        .recognizeContext = {false, nullptr},
 
         // this should not be like this, allocating on heap. This should be on a
         // class that manages all of this, like App or Server. But for now it
@@ -105,10 +95,6 @@ int main(int argc, char** argv) {
             OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
-
-    /* ------------------- CREATE OBSERVER ------------------ */
-    Observer::ObserverCentral observer(cfg);
-    serverCtx.recognizeContext.observer = &observer;
 
     /* -------------- NOTIFICATIONS REPOSITORY -------------- */
     nldb::DBSL3 notificationsDB;
@@ -123,25 +109,50 @@ int main(int argc, char** argv) {
     Web::Controller::NotificationController<SSL> notificationController(
         &app, &notificationRepository, &notificationCache);
 
-    observer.SubscribeToNewNotifications(
-        (Observer::INotificationEventSubscriber*)&notificationController);
-
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
-    for (auto&& cam : cfg.cameras) {
-        auto camera = Web::Domain::Camera(cam.name, cam.url);
-        cameraRepository.Add(camera);
-    }
+    // for (auto&& cam : cfg.cameras) {
+    //     auto camera = Web::Domain::Camera(cam.name, cam.url);
+    //     cameraRepository.Add(camera);
+    // }
 
     /* ---------------- CACHED CAMERA IMAGES ---------------- */
     // url -> image
     std::unordered_map<std::string, std::vector<unsigned char>>
         cachedCameraImage;
 
-    /* ---------------- START OBSERVER THREAD --------------- */
-    threads.push_back(&observer);
-    observer.Start();
+    /* ------------------- CREATE OBSERVER ------------------ */
+    const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
+                                 &notificationController,
+                                 &threads](const Observer::Configuration& cfg) {
+        if (observerCtx.observer)
+            OBSERVER_WARN("Observer wasn't null at start");
+
+        observerCtx.observer = std::make_unique<Observer::ObserverCentral>(cfg);
+
+        observerCtx.observer->SubscribeToNewNotifications(
+            (Observer::INotificationEventSubscriber*)&notificationController);
+
+        observerCtx.observer->Start();
+
+        observerCtx.running = true;
+    };
+
+    const auto stopRecognize = [&observerCtx = serverCtx.recognizeContext]() {
+        if (observerCtx.observer && observerCtx.running) {
+            observerCtx.observer->Stop();
+        }
+
+        observerCtx.running = false;
+        observerCtx.observer = nullptr;
+    };
+
+    if (argc > 1) {
+        auto cfg =
+            Observer::ConfigurationParser::ConfigurationFromJsonFile(argv[1]);
+        startRecognize(cfg);
+    }
 
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
@@ -164,62 +175,60 @@ int main(int argc, char** argv) {
              })
         /**
          * @brief Request a live view of the camera. If successfully
-         * generated the live view it returns a json with the ws_feed_path, to
-         * wich the client can request a WebSocket connection and we will
+         * generated the live view it returns a json with the ws_feed_path,
+         * to wich the client can request a WebSocket connection and we will
          * provide the images through it
          */
-        .get(
-            "/api/requestCameraStream",
-            [&serverCtx](auto* res, auto* req) {
-                std::string uri(req->getQuery("uri"));
+        .get("/api/requestCameraStream",
+             [&serverCtx](auto* res, auto* req) {
+                 std::string uri(req->getQuery("uri"));
 
-                if (serverCtx.liveViewsManager->CreateCameraView(uri)) {
-                    std::string feed_id;
+                 if (serverCtx.liveViewsManager->CreateCameraView(uri)) {
+                     std::string feed_id;
 
-                    try {
-                        feed_id = serverCtx.liveViewsManager->GetFeedId(uri);
-                    } catch (const Web::InvalidCameraUriException& e) {
-                        nlohmann::json error = {
-                            {"title", "Invalid camera uri"}};
+                     try {
+                         feed_id = serverCtx.liveViewsManager->GetFeedId(uri);
+                     } catch (const Web::InvalidCameraUriException& e) {
+                         nlohmann::json error = {
+                             {"title", "Invalid camera uri"}};
 
-                        res->writeStatus(HTTP_404_NOT_FOUND)
-                            ->endProblemJson(error.dump());
-                    } catch (...) {
-                        res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-                        return;
-                    }
+                         res->writeStatus(HTTP_404_NOT_FOUND)
+                             ->endProblemJson(error.dump());
+                     } catch (...) {
+                         res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                         return;
+                     }
 
-                    nlohmann::json response = {{"ws_feed_id", feed_id}};
+                     nlohmann::json response = {{"ws_feed_id", feed_id}};
 
-                    res->endJson(response.dump());
+                     res->endJson(response.dump());
 
-                    OBSERVER_TRACE(
-                        "Opened camera connection in live view '{0}' as '{1}' ",
-                        uri, feed_id);
-                } else {
-                    nlohmann::json error = {
-                        {"title",
-                         "Couldn't open a connection with the camera."}};
+                     OBSERVER_TRACE(
+                         "Opened camera connection in live view '{0}' as "
+                         "'{1}' ",
+                         uri, feed_id);
+                 } else {
+                     nlohmann::json error = {
+                         {"title",
+                          "Couldn't open a connection with the camera."}};
 
-                    res->writeStatus(HTTP_400_BAD_REQUEST)
-                        ->endProblemJson(error.dump());
-                    OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'",
-                                   uri);
-                }
-            })
+                     res->writeStatus(HTTP_400_BAD_REQUEST)
+                         ->endProblemJson(error.dump());
+                     OBSERVER_ERROR(
+                         "Couldn't open live camera view, uri: '{0}'", uri);
+                 }
+             })
         /**
-         * @brief does the same thing as requestCameraStream but provinding a
-         * path to the observer live view.
+         * @brief does the same thing as requestCameraStream but providing
+         * a path to the observer live view.
          */
         .get("/api/requestObserverStream",
-             [&serverCtx, &observer](auto* res, auto* req) {
+             [&serverCtx, &observerCtx = serverCtx.recognizeContext](
+                 auto* res, auto* req) {
                  auto uri = Web::LiveViewsManager<SSL>::observerUri;
 
-                 if (!observer.IsRunning()) {
-                     observer.Start();
-                 }
-
-                 if (serverCtx.liveViewsManager->CreateObserverView(uri)) {
+                 if (observerCtx.running &&
+                     serverCtx.liveViewsManager->CreateObserverView(uri)) {
                      std::string feed_id(
                          serverCtx.liveViewsManager->GetFeedId(uri));
 
@@ -228,7 +237,7 @@ int main(int argc, char** argv) {
                      res->endJson(response.dump());
                  } else {
                      nlohmann::json error = {
-                         {"title", "Observer might not be running."}};
+                         {"title", "Observer is not running."}};
 
                      res->writeStatus(HTTP_400_BAD_REQUEST)
                          ->endProblemJson(error.dump());
@@ -398,7 +407,9 @@ int main(int argc, char** argv) {
                             !parsed.contains("value") ||
                             !parsed["field"].is_string()) {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
-                                ->end("Expected json members: field and value");
+                                ->end(
+                                    "Expected json members: field and "
+                                    "value");
                             return;
                         }
 
@@ -578,6 +589,76 @@ int main(int argc, char** argv) {
                 res->writeHeader("content-type", "image/jpeg")
                     ->end(
                         std::string_view((char*)buffer.data(), buffer.size()));
+            })
+
+        .get("/api/start/:config_id",
+             [&configurationDAO, &observerCtx = serverCtx.recognizeContext,
+              &startRecognize](auto* res, auto* req) {
+                 if (observerCtx.running) {
+                     nlohmann::json response = {
+                         {"title", "Observer is already running"}};
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->endProblemJson(response.dump());
+                     return;
+                 }
+
+                 auto id = req->getParameter(0);
+                 observerCtx.running_config_id = std::string(id);
+
+                 nldb::json obj;
+                 try {
+                     obj = configurationDAO.Get(std::string(id));
+                 } catch (const std::exception& e) {
+                     nlohmann::json response = {
+                         {"title", "Configuration not found"}};
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->endProblemJson(response.dump());
+                     return;
+                 }
+
+                 Observer::Configuration cfg;
+                 try {
+                     cfg = obj;
+                 } catch (const std::exception& e) {
+                     nlohmann::json response = {
+                         {"title", "Not a valid configuration"}};
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->endProblemJson(response.dump());
+                     return;
+                 }
+
+                 startRecognize(cfg);
+
+                 res->end(nlohmann::json(
+                              ObserverStatusDTO {
+                                  .running = true,
+                                  .config_id = observerCtx.running_config_id})
+                              .dump());
+             })
+
+        .get("/api/stop",
+             [&observerCtx = serverCtx.recognizeContext, &stopRecognize](
+                 auto* res, auto* req) {
+                 if (observerCtx.running) {
+                     stopRecognize();
+                 }
+
+                 res->end(nlohmann::json(
+                              ObserverStatusDTO {.running = false,
+                                                 .config_id = std::nullopt})
+                              .dump());
+             })
+
+        .get(
+            "/api/observerStatus",
+            [&observerCtx = serverCtx.recognizeContext](auto* res, auto* req) {
+                bool running = observerCtx.running;
+                std::optional<std::string> cfg_id;
+                if (running) cfg_id = observerCtx.running_config_id;
+
+                res->end(nlohmann::json(ObserverStatusDTO {.running = running,
+                                                           .config_id = cfg_id})
+                             .dump());
             })
 
         .get("/*.*",

@@ -5,6 +5,7 @@
 namespace Web {
     struct RecognizeContext {
         bool running;
-        Observer::ObserverCentral* observer;
+        std::unique_ptr<Observer::ObserverCentral> observer;
+        std::string running_config_id;
     };
 };  // namespace Web
