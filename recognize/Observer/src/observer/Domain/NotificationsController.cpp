@@ -166,17 +166,17 @@ namespace Observer {
 
     void NotificationsController::ConsumeNotifications() {
         while (this->running) {
-            // 1. semaphore adquire - There is at leat 1 notification
-            smpQueue.acquire();
-
-            /// TODO: Improve quality with a unorded_map with the queues, like
-            /// drawable
-            if (this->textQueue.size() > 0) {
-                this->Send(std::move(this->textQueue.pop()));
-            } else if (this->imageQueue.size() > 0) {
-                this->Send(std::move(this->imageQueue.pop()));
-            } else if (this->videoQueue.size() > 0) {
-                this->Send(std::move(this->videoQueue.pop()));
+            // 1. semaphore acquire - There is at least 1 notification
+            if (smpQueue.acquire_timeout<250>()) {
+                /// TODO: Improve quality with a unordered_map with the queues,
+                /// like drawable
+                if (this->textQueue.size() > 0) {
+                    this->Send(std::move(this->textQueue.pop()));
+                } else if (this->imageQueue.size() > 0) {
+                    this->Send(std::move(this->imageQueue.pop()));
+                } else if (this->videoQueue.size() > 0) {
+                    this->Send(std::move(this->videoQueue.pop()));
+                }
             }
         }
     }

@@ -25,6 +25,8 @@ void Functionality::Stop() {
     if (thread.joinable()) {
         thread.join();
     }
+
+    this->PostStop();
 }
 
 void Functionality::PostStop() {}

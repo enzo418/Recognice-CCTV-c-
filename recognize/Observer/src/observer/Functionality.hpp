@@ -37,7 +37,7 @@ class Functionality : public IFunctionality {
      * method. You need to assure that it will only stop from two ways:
      *  1. End of the method is reached, call stop to release the thread
      * (optional).
-     *  2. Stop is called. If a inifinite loop was beign used inside this
+     *  2. Stop is called. If a infinite loop was being used inside this
      * method, a condition will be needed to checked if running is set or
      * not.
      */
