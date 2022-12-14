@@ -27,8 +27,8 @@ namespace Observer {
 
        public:
         /**
-         * @brief Set the size to wich all the blobs will be scaled before beign
-         * returned.
+         * @brief Set the size to which all the blobs will be scaled before
+         * being returned.
          *
          * @param sizeToScale size to scale them
          */
