@@ -79,7 +79,7 @@ namespace Observer {
             }
         } else {
             std::unordered_map<int, std::vector<Finding>> matches;
-            // 1. for every persistent blob compute the probabilty to each
+            // 1. for every persistent blob compute the probability to each
             // temporal blob
             for (int i = 0; i < this->pastTrackedBlobs.size(); i++) {
                 matches[i] = {};
