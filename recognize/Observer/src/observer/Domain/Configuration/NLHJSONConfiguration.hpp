@@ -100,9 +100,8 @@ namespace Observer {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
         CameraConfiguration, name, url, resizeTo, fps, positionOnOutput,
         rotation, type, minimumChangeThreshold, increaseThresholdFactor,
-        secondsBetweenThresholdUpdate, saveDetectedChangeInVideo, ignoredAreas,
-        videoValidatorBufferSize, restrictedAreas, objectDetectionMethod,
-        processingConfiguration, blobDetection);
+        secondsBetweenThresholdUpdate, videoValidatorBufferSize,
+        objectDetectionMethod, processingConfiguration, blobDetection);
 
     /* ------------- OutputPreviewConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OutputPreviewConfiguration, showOutput,

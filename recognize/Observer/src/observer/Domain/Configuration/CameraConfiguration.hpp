@@ -76,19 +76,10 @@ namespace Observer {
         // seconds to wait before updating the camera threshold again
         int secondsBetweenThresholdUpdate = 15;
 
-        // TODO: what is it
-        bool saveDetectedChangeInVideo = true;
-
-        // list of rectangles to ignore if a change happens inside it
-        std::vector<Rect> ignoredAreas;
-
         // How much frames to use to validate the change
         int videoValidatorBufferSize = 30;
 
-        // Restricted areas to check when validating a change
-        std::vector<RestrictedArea> restrictedAreas;
-
-        // Method to dected the objects
+        // Method to detect the objects
         EObjectDetectionMethod objectDetectionMethod;
 
         BlobDetectionConfiguration blobDetection;

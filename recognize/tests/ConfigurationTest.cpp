@@ -94,12 +94,7 @@ class ConfigurationTest : public ::testing::Test {
             .minimumChangeThreshold = 101,
             .increaseThresholdFactor = 1.03,
             .secondsBetweenThresholdUpdate = 5,
-            .saveDetectedChangeInVideo = false,
-            .ignoredAreas = {Rect(15, 15, 640, 360), Rect(5, 15, 123, 435),
-                             Rect(7, 7, 112, 444)},
             .videoValidatorBufferSize = 60,
-            .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
-                                 ERestrictionType::ALLOW}},
             .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
             .blobDetection = blobConfiguration,
             .processingConfiguration = {Size(640, 360), 35,
@@ -117,11 +112,7 @@ class ConfigurationTest : public ::testing::Test {
             .minimumChangeThreshold = 12,
             .increaseThresholdFactor = 5.002,
             .secondsBetweenThresholdUpdate = 7,
-            .saveDetectedChangeInVideo = true,
-            .ignoredAreas = {Rect(2, 2, 622, 117)},
             .videoValidatorBufferSize = 10,
-            .restrictedAreas = {{{Point(10, 10), Point(5, 5)},
-                                 ERestrictionType::DENY}},
             .objectDetectionMethod = EObjectDetectionMethod::NONE,
             .processingConfiguration = {Size(640, 360), 15,
                                         Rect(1, 1, 233, 233)}};
@@ -161,7 +152,6 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
                 EXPECT_TRUE(cam1.blobDetection == cam2.blobDetection);
                 EXPECT_TRUE(cam1.objectDetectionMethod ==
                             cam2.objectDetectionMethod);
-                EXPECT_TRUE(cam1.ignoredAreas == cam2.ignoredAreas);
                 EXPECT_TRUE(cam1.processingConfiguration ==
                             cam2.processingConfiguration);
                 EXPECT_TRUE(cam1.resizeTo == cam2.resizeTo);
@@ -187,32 +177,32 @@ TEST(ConfigurationObjectTest, ShouldSetValueOnNode) {
     ASSERT_TRUE(s == "../web2/media2");
 }
 
-TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
-    // same test as above with a complex data type
-    const std::string mockCfg =
-        R"({"cameras": [{"ignoredAreas": []}], "off": 123})";
+// TEST(ConfigurationObjectTest, ShouldSetArrayValueOnNode) {
+//     // same test as above with a complex data type
+//     const std::string mockCfg =
+//         R"({"cameras": [{"ignoredAreas": []}], "off": 123})";
 
-    Observer::ConfigurationParser::Object Obj = json::parse(mockCfg);
+//     Observer::ConfigurationParser::Object Obj = json::parse(mockCfg);
 
-    // this time as an example we are referring to a camera field so
-    // Object must be a camera configuration object or it will fail
-    // field: ignoredAreas = <value>
-    std::string_view path =
-        "cameras/0/ignoredAreas/"
-        "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,"
-        "\"y\":"
-        "15,\"width\":123,\"height\":435},{\"x\":7,\"y\":7,\"width\":112,"
-        "\"height\":2222}]";
+//     // this time as an example we are referring to a camera field so
+//     // Object must be a camera configuration object or it will fail
+//     // field: ignoredAreas = <value>
+//     std::string_view path =
+//         "cameras/0/ignoredAreas/"
+//         "?to=[{\"x\":23,\"y\":15,\"width\":640,\"height\":360},{\"x\":5,"
+//         "\"y\":"
+//         "15,\"width\":123,\"height\":435},{\"x\":7,\"y\":7,\"width\":112,"
+//         "\"height\":2222}]";
 
-    // auto cam1 = Obj["cameras"][0];
-    ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
-        Obj, path));
+//     // auto cam1 = Obj["cameras"][0];
+//     ASSERT_TRUE(Observer::ConfigurationParser::TrySetConfigurationFieldValue(
+//         Obj, path));
 
-    auto data = Obj["cameras"][0]["ignoredAreas"];
+//     auto data = Obj["cameras"][0]["ignoredAreas"];
 
-    ASSERT_TRUE(data.is_array());
-    ASSERT_TRUE(data[0]["x"].get<int>() == 23);
-}
+//     ASSERT_TRUE(data.is_array());
+//     ASSERT_TRUE(data[0]["x"].get<int>() == 23);
+// }
 
 TEST(ConfigurationObjectTest, ShouldGetValueOnNode) {
     const std::string mockCfg =
