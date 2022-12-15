@@ -38,6 +38,11 @@ namespace Observer {
         template <typename Point_>
             requires PointType<Point_>
         operator Point_();
+
+        // Same but for const
+        template <typename Point_>
+            requires PointType<Point_>
+        operator Point_() const;
     };
 
     std::ostream& operator<<(std::ostream& os, const Point& pt);

@@ -7,6 +7,14 @@
 #include "Point.hpp"
 #include "Size.hpp"
 
+template <typename T>
+concept RectType = requires(T a) {
+                       a.x;
+                       a.y;
+                       a.width;
+                       a.height;
+                   };
+
 namespace Observer {
     struct Rect {
         Rect();
@@ -52,12 +60,18 @@ namespace Observer {
         Rect Intersection(const Rect& other);
 
         // We know how to convert from some rect of some library to this one
-        template <typename Rect_>
+        template <RectType Rect_>
         Rect(const Rect_&);
 
         // We know how to convert this Rect to some Rect_
         template <typename Rect_>
+            requires RectType<Rect_>
         operator Rect_();
+
+        // same for const
+        template <typename Rect_>
+            requires RectType<Rect_>
+        operator Rect_() const;
     };
 
     std::ostream& operator<<(std::ostream& os, const Rect& pt);

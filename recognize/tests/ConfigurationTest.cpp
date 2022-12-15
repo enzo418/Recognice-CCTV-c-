@@ -97,8 +97,16 @@ class ConfigurationTest : public ::testing::Test {
             .videoValidatorBufferSize = 60,
             .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
             .blobDetection = blobConfiguration,
-            .processingConfiguration = {Size(640, 360), 35,
-                                        Rect(10, 10, 640, 360)},
+            .processingConfiguration =
+                {// resize
+                 Size(640, 360),
+                 // noise thresh
+                 35,
+                 // roi
+                 Rect(10, 10, 640, 360),
+                 // masks
+                 {{{0, 1}, {1, 1}, {2, 2}, {3, 3}},
+                  {{4, 600}, {200, 660}, {99, 23}, {333, 423}}}},
         };
 
         CameraConfiguration camera2 = {

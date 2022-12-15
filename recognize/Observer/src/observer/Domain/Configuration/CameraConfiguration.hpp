@@ -31,6 +31,8 @@ namespace Observer {
         YOLODNN_V4 = 4
     };
 
+    typedef std::vector<Observer::Point> Mask;
+
     struct ProcessingConfiguration {
         // resize all the frames before processing to save cpu/memory
         Size resize;
@@ -42,6 +44,9 @@ namespace Observer {
         // is roi.x + roi.width <= resize.width &
         // roi.y + roi.height <= resize.height
         Rect roi;
+
+        // Mask parts of the image out at the processing/detection stage
+        std::vector<Mask> masks;
 
         bool operator==(const ProcessingConfiguration&) const = default;
     };

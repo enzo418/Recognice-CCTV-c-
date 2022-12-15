@@ -7,6 +7,7 @@ set(SRC_
         src/observer/Rect.hpp src/observer/Rect.cpp
         src/observer/Point.hpp src/observer/Point.cpp
         src/observer/Vector.hpp src/observer/Vector.cpp
+        src/observer/ScalarVector.hpp
 
         src/observer/Timer.hpp
         src/observer/Pattern/Camera/ICameraEventSubscriber.hpp
@@ -26,6 +27,7 @@ set(SRC_
         # Interfaces for library dependant impl
         src/observer/IImageDisplay.hpp
         src/observer/IImageIO.hpp
+        src/observer/IImageDraw.hpp
         src/observer/IImageProcessing.hpp
         src/observer/Domain/IVideoSource.hpp
         src/observer/Domain/IVideoWriter.hpp
@@ -91,6 +93,7 @@ set(SRC_
         Implementations/opencv/ImageDrawBlob.hpp Implementations/opencv/ImageDrawBlob.cpp
         Implementations/opencv/FrameContextualizer.cpp
         Implementations/opencv/TypesConversions.cpp
+        Implementations/opencv/ImageDraw.hpp Implementations/opencv/ImageDraw.cpp
 
         # logs
         src/observer/Log/managers/LogManagerSPD.hpp src/observer/Log/managers/LogManagerSPD.cpp

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Rect.hpp"
@@ -16,6 +17,9 @@ namespace Observer {
         // holder for the diff frame
         Frame diffFrame;
 
+        // Calculated mask from the configuration passed
+        Frame mask;
+
         //
         double accumulatorThresholds;
 
@@ -30,17 +34,7 @@ namespace Observer {
         Size resizeSize;
 
        public:
-        /**
-         * @brief Construct a new Frame Processor object
-         *
-         * @param resizeSize Even if the frame was already resize, user might
-         * want to resize it again.
-         * @param roi region of interest to crop
-         * @param noiseThreshold
-         * @param rotation angle to rotate the image in degrees
-         */
-        FrameProcessor(Size resizeSize, Rect roi, double noiseThreshold,
-                       double rotation);
+        FrameProcessor(const ProcessingConfiguration&, double cameraRotation);
 
         FrameProcessor& NormalizeFrame(Frame& frame) &;
 

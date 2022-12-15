@@ -67,12 +67,14 @@ if(RECO_BUILD_SAMPLES)
         add_executable(cameraRecording ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recording.cpp)
         add_executable(contoursShow ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Contours.cpp)
         add_executable(camerasTest ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Cameras.cpp)
-        
+        add_executable(masksTests ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Masks.cpp)
+
         target_link_libraries(liveBlobDetection recognize)
         target_link_libraries(videoBlobDetection recognize)
         target_link_libraries(cameraRecording recognize)
         target_link_libraries(contoursShow recognize)
         target_link_libraries(camerasTest recognize)
+        target_link_libraries(masksTests recognize)
     endif()
 endif()
 

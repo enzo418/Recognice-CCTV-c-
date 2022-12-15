@@ -3,10 +3,7 @@
 namespace Observer {
     ActiveCamera::ActiveCamera(CameraConfiguration* pCfg)
         : CameraObserver(pCfg),
-          frameProcessor(pCfg->processingConfiguration.resize,
-                         pCfg->processingConfiguration.roi,
-                         pCfg->processingConfiguration.noiseThreshold,
-                         pCfg->rotation),
+          frameProcessor(pCfg->processingConfiguration, pCfg->rotation),
           thresholdManager(pCfg->minimumChangeThreshold,
                            pCfg->increaseThresholdFactor,
                            pCfg->increaseThresholdFactor),

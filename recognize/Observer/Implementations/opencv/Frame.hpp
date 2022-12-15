@@ -173,6 +173,19 @@ namespace Observer {
         void EncodeImage(const std::string& ext, int quality,
                          std::vector<uchar>& buffer) override;
 
+        /**
+         * @brief inverts the image.
+         */
+        void BitwiseNot() override;
+
+        /**
+         * @brief Modifies this image, leaving only the masked parts.
+         * They should have the same size.
+         *
+         * @param mask
+         */
+        void Mask(Frame& mask) override;
+
        private:
         IType m_frame;
     };

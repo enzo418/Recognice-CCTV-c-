@@ -35,7 +35,7 @@ namespace Observer {
      * The constructor of a frame would need at lest 3 different ones:
      *      1. Frame(): Creates an empty frame
      *      2. Frame(size, channels): Creates a frame with a size and number of
-     *         channels.
+     *         channels, filled with zeros.
      */
     class IFrame {
        public:
@@ -162,5 +162,9 @@ namespace Observer {
                                  std::vector<unsigned char>& buffer) = 0;
 
         virtual bool IsEmpty() = 0;
+
+        virtual void BitwiseNot() = 0;
+
+        virtual void Mask(Frame& mask) = 0;
     };
 }  // namespace Observer

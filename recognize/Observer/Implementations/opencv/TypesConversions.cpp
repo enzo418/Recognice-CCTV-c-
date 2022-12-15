@@ -14,10 +14,20 @@ namespace Observer {
     }
 
     template <>
+    Rect::operator cv::Rect() const {
+        return cv::Rect(this->x, this->y, this->width, this->height);
+    }
+
+    template <>
     Point::Point(const cv::Point& t) : x(t.x), y(t.y) {}
 
     template <>
     Point::operator cv::Point() {
+        return cv::Point(this->x, this->y);
+    }
+
+    template <>
+    Point::operator cv::Point() const {
         return cv::Point(this->x, this->y);
     }
 }  // namespace Observer

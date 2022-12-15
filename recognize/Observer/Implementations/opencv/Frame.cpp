@@ -224,4 +224,12 @@ namespace Observer {
         std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, quality};
         cv::imencode(ext, m_frame, buffer, params);
     }
+
+    void Frame::BitwiseNot() { cv::bitwise_not(this->m_frame, this->m_frame); }
+
+    void Frame::Mask(Frame& mask) {
+        // cv::bitwise_and(this->m_frame, mask.GetInternalFrame(),
+        // this->m_frame);
+        this->m_frame.setTo(cv::Scalar(0, 0, 0), mask.GetInternalFrame());
+    }
 }  // namespace Observer

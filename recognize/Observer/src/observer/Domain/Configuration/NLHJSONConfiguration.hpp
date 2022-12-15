@@ -93,7 +93,7 @@ namespace Observer {
                                        contoursFilters, thresholdingParams);
 
     /* --------------- ProcessingConfiguration -------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessingConfiguration, resize,
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessingConfiguration, resize, masks,
                                        noiseThreshold, roi);
 
     /* ----------------- CameraConfiguration ---------------- */
