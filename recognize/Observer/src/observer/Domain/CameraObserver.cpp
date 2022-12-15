@@ -61,7 +61,7 @@ namespace Observer {
 
             int sleepExactly = realTimeBetweenFrames - duration;
 
-            int buffered = source.BufferedAmmount();
+            int buffered = source.BufferedAmount();
             if (sleepExactly > 0 && buffered == 0) {
                 std::this_thread::sleep_for(
                     std::chrono::milliseconds(sleepExactly));

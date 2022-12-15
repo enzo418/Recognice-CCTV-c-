@@ -74,6 +74,6 @@ namespace Observer {
 
     bool BufferedSource::IsOk() { return running && source.isOpened(); }
 
-    int BufferedSource::BufferedAmmount() { return queue.size(); }
+    int BufferedSource::BufferedAmount() { return queue.size(); }
 
 }  // namespace Observer

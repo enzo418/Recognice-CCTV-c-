@@ -38,7 +38,7 @@ namespace Observer {
 
         /**
          * @brief Get a frame. Before calling this function you should check
-         * wether a frame is avabilable or not.
+         * wether a frame is available or not.
          *
          * Data race: In case of multiple consumers while it may say a frame is
          * available another consumer already consumed it, and when you try to
@@ -53,7 +53,7 @@ namespace Observer {
 
         double GetFPS();
 
-        int BufferedAmmount();
+        int BufferedAmount();
 
        private:
         bool TryOpenConnection(const std::string& sourceUri);
