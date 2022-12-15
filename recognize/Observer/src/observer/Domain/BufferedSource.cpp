@@ -30,7 +30,7 @@ namespace Observer {
     void BufferedSource::InternalStart() {
         if (!this->IsOk()) {
             OBSERVER_WARN(
-                "Connection to source couldn't be stablished. URI: {}",
+                "Connection to source couldn't be stabilized. URI: {}",
                 sourceUri);
 
             this->Stop();
