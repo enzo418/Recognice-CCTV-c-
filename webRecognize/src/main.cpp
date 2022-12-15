@@ -293,11 +293,11 @@ int main(int argc, char** argv) {
                                   bufferAsJson = configuration;
                               }
 
-                              auto ids = configurationDAO.InsertConfiguration(
+                              std::string id = configurationDAO.InsertConfiguration(
                                   bufferAsJson);
 
                               // set success response
-                              response = {{"id", ids[0]}};
+                              response = {{"id", id}};
                               res->writeHeader("Content-Type",
                                                "application/json");
                           } catch (const std::exception& e) {
