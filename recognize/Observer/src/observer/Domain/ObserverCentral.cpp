@@ -127,7 +127,7 @@ namespace Observer {
         ObserverCentral::Camera ct;
 
         if (cfg.type == ECameraType::VIEW) {
-            ct.camera = std::make_shared<PasiveCamera>(&cfg);
+            ct.camera = std::make_shared<PassiveCamera>(&cfg);
         } else {
             ct.camera = std::make_shared<ActiveCamera>(&cfg);
         }

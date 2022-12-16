@@ -3,9 +3,9 @@
 #include "CameraObserver.hpp"
 
 namespace Observer {
-    class PasiveCamera : public CameraObserver {
+    class PassiveCamera final : public CameraObserver {
        public:
-        explicit PasiveCamera(CameraConfiguration* configuration);
+        explicit PassiveCamera(CameraConfiguration* configuration);
 
        public:
         void SubscribeToCameraEvents(
@@ -16,5 +16,7 @@ namespace Observer {
 
        protected:
         void ProcessFrame(Frame& frame) override;
+
+        void SetupDependencies() override;
     };
 }  // namespace Observer

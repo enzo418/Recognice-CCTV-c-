@@ -40,6 +40,8 @@ namespace Observer {
         // sleep is required.
         int waitAccumulative = 0;
 
+        this->SetupDependencies();
+
         Frame frame;
         while (this->running && source.IsOk()) {
             if (source.IsFrameAvailable()) {

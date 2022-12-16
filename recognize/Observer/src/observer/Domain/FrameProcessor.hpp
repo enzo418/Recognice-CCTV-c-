@@ -33,12 +33,25 @@ namespace Observer {
 
         Size resizeSize;
 
+        Size cameraFeedSize;
+
+        std::vector<Mask> masks;
+
        public:
         FrameProcessor(const ProcessingConfiguration&, double cameraRotation);
 
         FrameProcessor& NormalizeFrame(Frame& frame) &;
 
         double DetectChanges();
+
+        /**
+         * @brief This method should be called once connection to the camera was
+         * established and before a call to NormalizeFrame/DetectChanges is
+         * done.
+         *
+         * @param cameraFeedSize size of the frames received from the camera
+         */
+        void Setup(Size cameraFeedSize);
     };
 
 }  // namespace Observer

@@ -69,11 +69,21 @@ void OpenCamera(Observer::Configuration* cfg, int cameraIndex) {
     Observer::ImageDisplay::Get().CreateWindow("Image");
     Observer::ImageDisplay::Get().CreateWindow("mask");
 
-    Frame imageMask(source.GetSize(), 1);
+    Frame imageMask;
+
+    imageMask = Frame(source.GetSize(), 1);
+
+    std::cout << "channels: " << imageMask.GetNumberChannels() << std::endl;
+
+    std::cout << "masks: " << camCfg->processingConfiguration.masks.size()
+              << std::endl;
 
     for (auto& mask : camCfg->processingConfiguration.masks) {
         ImageDraw::Get().FillConvexPoly(imageMask, mask, ScalarVector::White());
     }
+
+    std::cout << "channels after: " << imageMask.GetNumberChannels()
+              << std::endl;
 
     imageMask.Resize(Size(640, 360));
 

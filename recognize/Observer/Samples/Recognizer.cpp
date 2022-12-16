@@ -18,7 +18,7 @@ enum RecognizerMode { RECOGNIZER, RECORDING, BLOB, BLOB_LIVE };
 int main(int argc, char** argv) {
     const std::string keys =
         "{help h            |              | show help message}"
-        "{config_path       | ./config.yml | path of the configuration file}";
+        "{config_path       | ./config.json | path of the configuration file}";
 
     cv::CommandLineParser parser(argc, argv, keys);
 

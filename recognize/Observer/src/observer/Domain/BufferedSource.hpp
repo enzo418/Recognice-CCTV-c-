@@ -55,6 +55,8 @@ namespace Observer {
 
         int BufferedAmount();
 
+        Size GetInputResolution();
+
        private:
         bool TryOpenConnection(const std::string& sourceUri);
 

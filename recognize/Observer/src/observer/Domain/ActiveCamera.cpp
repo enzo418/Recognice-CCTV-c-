@@ -55,6 +55,10 @@ namespace Observer {
         this->thresholdManager.Add(change);
     }
 
+    void ActiveCamera::SetupDependencies() {
+        this->frameProcessor.Setup(this->source.GetInputResolution());
+    }
+
     void ActiveCamera::ChangeDetected() {
         this->videoBufferForValidation->ChangeWasDetected();
     }

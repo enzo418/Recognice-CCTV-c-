@@ -1,14 +1,16 @@
 #include "PasiveCamera.hpp"
 
 namespace Observer {
-    PasiveCamera::PasiveCamera(CameraConfiguration* pConfiguration)
+    PassiveCamera::PassiveCamera(CameraConfiguration* pConfiguration)
         : CameraObserver(pConfiguration) {}
 
-    void PasiveCamera::ProcessFrame(Frame& frame) {}
+    void PassiveCamera::ProcessFrame(Frame& frame) {}
 
-    void PasiveCamera::SubscribeToCameraEvents(
+    void PassiveCamera::SubscribeToCameraEvents(
         ICameraEventSubscriber* subscriber) {}
 
-    void PasiveCamera::SubscribeToThresholdUpdate(
+    void PassiveCamera::SubscribeToThresholdUpdate(
         IThresholdEventSubscriber* subscriber) {}
+
+    void PassiveCamera::SetupDependencies() {}
 }  // namespace Observer

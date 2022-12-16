@@ -1,5 +1,7 @@
 #include "FrameProcessor.hpp"
 
+#include <stdexcept>
+
 namespace Observer {
 
     FrameProcessor::FrameProcessor(const ProcessingConfiguration& cfg,
@@ -10,16 +12,23 @@ namespace Observer {
         this->rotation = rotation;
         this->firstCall = true;
         this->resizeSize = cfg.resize;
+        this->masks = cfg.masks;
 
         OBSERVER_ASSERT(this->roi.x + this->roi.width <= resizeSize.width &&
                             this->roi.y + this->roi.height <= resizeSize.height,
                         "The roi is taken from the resized image so it should "
                         "be inside it.");
+    }
+
+    void FrameProcessor::Setup(Size pCameraFeedSize) {
+        this->cameraFeedSize = pCameraFeedSize;
 
         /* -------------- BUILD MASK FROM PARAMETER ------------- */
-        this->mask = Frame(this->resizeSize, 1);  // starts as 0
+        // use the input resolution because they were calculated with a raw
+        // frame from it.
+        this->mask = Frame(this->cameraFeedSize, 1);  // starts as 0
 
-        for (auto& maskPoints : cfg.masks) {
+        for (auto& maskPoints : this->masks) {
             ImageDraw::Get().FillConvexPoly(this->mask, maskPoints,
                                             ScalarVector::White());
         }
@@ -47,15 +56,23 @@ namespace Observer {
 
         // set lastFrame to a valid frame so we can operate over it
         if (firstCall) {
-            // ImageDisplay<T>::CreateWindow("ee");
+            // ImageDisplay::Get().CreateWindow("diff");
+            // ImageDisplay::Get().CreateWindow("frame");
+
+            if (this->cameraFeedSize.empty()) {
+                throw std::logic_error("Precondition: call Setup before.");
+            }
+
             firstCall = false;
             frame.CopyTo(lastFrame);
         }
 
+        // ImageDisplay::Get().ShowImage("frame", frame);
+
         // get the difference between the current and last frame
         diffFrame = frame.AbsoluteDifference(lastFrame);
 
-        // ImageDisplay<T>::ShowImage("ee", this->diffFrame);
+        // ImageDisplay::Get().ShowImage("diff", this->diffFrame);
 
         // make the changes bigger
         diffFrame.GaussianBlur(3);

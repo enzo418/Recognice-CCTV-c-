@@ -54,6 +54,8 @@ namespace Observer {
        protected:
         virtual void ProcessFrame(Frame& frame) = 0;
 
+        virtual void SetupDependencies() = 0;
+
         void InternalStart() override final;
 
        protected:

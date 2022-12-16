@@ -17,6 +17,8 @@ namespace Observer {
        protected:
         void ProcessFrame(Frame& frame) override;
 
+        void SetupDependencies() override;
+
         void ChangeDetected();
 
         void NewVideoBuffer();

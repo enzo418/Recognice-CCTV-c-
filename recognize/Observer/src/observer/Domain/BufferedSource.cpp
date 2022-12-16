@@ -76,4 +76,6 @@ namespace Observer {
 
     int BufferedSource::BufferedAmount() { return queue.size(); }
 
+    Size BufferedSource::GetInputResolution() { return this->source.GetSize(); }
+
 }  // namespace Observer

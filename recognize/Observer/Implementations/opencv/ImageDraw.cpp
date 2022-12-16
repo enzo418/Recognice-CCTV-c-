@@ -9,7 +9,8 @@ namespace Observer {
             cvPoints[i] = points[i];
         }
 
-        cv::fillConvexPoly(image.GetInternalFrame(), cvPoints, points.size(),
+        cv::fillConvexPoly(image.GetInternalFrame(), cvPoints,
+                           (int)points.size(),
                            cv::Scalar(color.b, color.g, color.r));
     }
 
