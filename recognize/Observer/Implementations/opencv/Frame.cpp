@@ -1,5 +1,7 @@
 #include "Frame.hpp"
 
+#include <stdexcept>
+
 namespace Observer {
     Frame::Frame() {}
     Frame::Frame(IType&& frame) { m_frame = frame; }
@@ -18,7 +20,7 @@ namespace Observer {
 
     Frame::IType Frame::GetBlackImage(const Size& size, int numberChannels) {
         int type;
-        switch (type) {
+        switch (numberChannels) {
             case 1:
                 type = CV_8UC1;
                 break;
@@ -31,6 +33,8 @@ namespace Observer {
             case 4:
                 type = CV_8UC4;
                 break;
+            default:
+                throw std::runtime_error("channel must be <= 4");
         }
 
         return cv::Mat::zeros(size.height, size.width, type);
