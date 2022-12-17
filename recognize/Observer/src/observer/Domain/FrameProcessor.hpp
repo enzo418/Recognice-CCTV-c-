@@ -49,6 +49,9 @@ namespace Observer {
          * established and before a call to NormalizeFrame/DetectChanges is
          * done.
          *
+         * It's optimization because we prepare/calculate things that would
+         * otherwise be calculated on every new frame.
+         *
          * @param cameraFeedSize size of the frames received from the camera
          */
         void Setup(Size cameraFeedSize);

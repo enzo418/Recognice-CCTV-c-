@@ -40,9 +40,9 @@ namespace Observer {
         // value used to remove noise in the image
         double noiseThreshold = 45;
 
-        // region of interest, taken from resize. That means that the relation
-        // is roi.x + roi.width <= resize.width &
-        // roi.y + roi.height <= resize.height
+        // region of interest, relative to the camera resolution.
+        // roi.x + roi.width <= resize.width & roi.y +
+        // roi.height <= resize.height
         Rect roi;
 
         // Mask parts of the image out at the processing/detection stage

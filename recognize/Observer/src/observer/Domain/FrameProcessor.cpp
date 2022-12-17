@@ -13,15 +13,13 @@ namespace Observer {
         this->firstCall = true;
         this->resizeSize = cfg.resize;
         this->masks = cfg.masks;
-
-        OBSERVER_ASSERT(this->roi.x + this->roi.width <= resizeSize.width &&
-                            this->roi.y + this->roi.height <= resizeSize.height,
-                        "The roi is taken from the resized image so it should "
-                        "be inside it.");
     }
 
     void FrameProcessor::Setup(Size pCameraFeedSize) {
         this->cameraFeedSize = pCameraFeedSize;
+
+        // if no resize was given use the camera resolution
+        if (this->resizeSize.empty()) this->resizeSize = this->cameraFeedSize;
 
         /* -------------- BUILD MASK FROM PARAMETER ------------- */
         // use the input resolution because they were calculated with a raw
@@ -34,6 +32,27 @@ namespace Observer {
         }
 
         this->mask.Resize(this->resizeSize);
+
+        /* ----------- RESIZE ROI TO MATCH LAST RESIZE ---------- */
+        OBSERVER_ASSERT(
+            this->roi.x + this->roi.width <= this->cameraFeedSize.width &&
+                this->roi.y + this->roi.height <= this->cameraFeedSize.height,
+            "The roi is relative to the input (camera) resolution so it should "
+            "be included or be the same as it.");
+
+        // Roi was selected relative to the camera resolution
+        // We can't move the roi at the beginning of `NormalizeFrame` because we
+        // don't can be sure that `frame` will always have the camera
+        // resolution.
+        double scaleX =
+            this->resizeSize.width / (double)this->cameraFeedSize.width;
+        double scaleY =
+            this->resizeSize.height / (double)this->cameraFeedSize.height;
+
+        this->roi.x *= scaleX;
+        this->roi.width *= scaleX;
+        this->roi.y *= scaleY;
+        this->roi.height *= scaleY;
     }
 
     FrameProcessor& FrameProcessor::NormalizeFrame(Frame& frame) & {
@@ -57,7 +76,7 @@ namespace Observer {
         // set lastFrame to a valid frame so we can operate over it
         if (firstCall) {
             // ImageDisplay::Get().CreateWindow("diff");
-            // ImageDisplay::Get().CreateWindow("frame");
+            ImageDisplay::Get().CreateWindow("frame");
 
             if (this->cameraFeedSize.empty()) {
                 throw std::logic_error("Precondition: call Setup before.");
@@ -67,7 +86,7 @@ namespace Observer {
             frame.CopyTo(lastFrame);
         }
 
-        // ImageDisplay::Get().ShowImage("frame", frame);
+        ImageDisplay::Get().ShowImage("frame", frame);
 
         // get the difference between the current and last frame
         diffFrame = frame.AbsoluteDifference(lastFrame);
