@@ -48,8 +48,11 @@ namespace Web::DAL {
         int limit) {
         if (limit < 0) OBSERVER_ERROR("Limit is out of bounds");
 
-        nldb::json result =
-            query.from(colNotifications).select().limit(limit).execute();
+        nldb::json result = query.from(colNotifications)
+                                .select()
+                                .limit(limit)
+                                .includeInnerIds()  // needed to set camera.id
+                                .execute();
 
         std::cout << "result: " << result << std::endl;
 
