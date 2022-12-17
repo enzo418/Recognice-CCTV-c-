@@ -2,8 +2,8 @@
 
 #include <mutex>
 
-#include "uWebSockets/App.h"
 #include "observer/Log/log.hpp"
+#include "uWebSockets/App.h"
 #include "uWebSockets/WebSocketProtocol.h"
 
 namespace Web {
@@ -53,11 +53,12 @@ namespace Web {
 
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
-            // ¿shoud execute this on a separate thread?
-            if (clients[i]->send(std::string_view(data, size), uWS::OpCode::BINARY,
-                             true) != uWS::WsSendStatus::SUCCESS) {
+            // ¿should execute this on a separate thread?
+            if (clients[i]->send(std::string_view(data, size),
+                                 uWS::OpCode::BINARY,
+                                 true) != uWS::WsSendStatus::SUCCESS) {
                 // frame was not sent, maybe next will
-                OBSERVER_WARN("Websocket video backpressure!");
+                OBSERVER_WARN("Websocket video back-pressure!");
             }
         }
     }

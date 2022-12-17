@@ -18,8 +18,9 @@
 
 namespace Web {
     template <bool SSL>
-    class WebsocketNotificator : public IFunctionality,
-                                 public WebsocketService<SSL, PerSocketData> {
+    class WebsocketNotificator final
+        : public IFunctionality,
+          public WebsocketService<SSL, PerSocketData> {
        public:
         WebsocketNotificator();
         ~WebsocketNotificator();
@@ -62,7 +63,7 @@ namespace Web {
 
     template <bool SSL>
     void WebsocketNotificator<SSL>::Start() {
-        OBSERVER_ASSERT(!running, "WebsocketNotificator alredy running!");
+        OBSERVER_ASSERT(!running, "WebsocketNotificator already running!");
 
         this->running = true;
 
