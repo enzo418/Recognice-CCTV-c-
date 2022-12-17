@@ -5,9 +5,11 @@
 #include <string>
 
 #include "../INotificationRepository.hpp"
+#include "Domain/Notification.hpp"
 #include "observer/Log/log.hpp"
 
 namespace Web::DAL {
+
     class NotificationRepositoryMemory : public INotificationRepository {
        public:
         std::string Add(Domain::Notification& element) override;

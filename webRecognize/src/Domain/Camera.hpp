@@ -5,9 +5,9 @@
 namespace Web::Domain {
     class Camera {
        public:
+        std::string cameraID;
         std::string name;
         std::string uri;
-        std::string id;
 
        public:
         Camera() = default;

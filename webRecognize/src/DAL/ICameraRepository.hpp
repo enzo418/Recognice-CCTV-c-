@@ -4,7 +4,9 @@
 #include <vector>
 
 #include "../Domain/Camera.hpp"
+
 namespace Web::DAL {
+
     class ICameraRepository {
        public:
         virtual std::string Add(Domain::Camera& element) = 0;

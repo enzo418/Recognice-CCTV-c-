@@ -8,14 +8,15 @@ namespace Web::DAL {
     using Domain::Notification;
 
     std::string NotificationRepositoryMemory::Add(Notification& element) {
-        element.id = fmt::format("n{0}", notifications.size());
+        element.notificationID = fmt::format("n{0}", notifications.size());
         notifications.push_back(element);
-        return element.id;
+        return element.notificationID;
     }
 
     void NotificationRepositoryMemory::Remove(const std::string& id) {
-        auto res = std::find_if(notifications.begin(), notifications.end(),
-                                [&id](Notification& n) { return n.id == id; });
+        auto res = std::find_if(
+            notifications.begin(), notifications.end(),
+            [&id](Notification& n) { return n.notificationID == id; });
 
         if (res != notifications.end()) {
             notifications.erase(res);
@@ -23,17 +24,17 @@ namespace Web::DAL {
     }
 
     bool NotificationRepositoryMemory::Exists(const std::string& id) {
-        auto res =
-            std::find_if(notifications.begin(), notifications.end(),
-                         [&id](const Notification& el) { return el.id == id; });
+        auto res = std::find_if(
+            notifications.begin(), notifications.end(),
+            [&id](const Notification& el) { return el.notificationID == id; });
 
         return res != notifications.end();
     }
 
     Notification NotificationRepositoryMemory::Get(const std::string& id) {
-        auto res =
-            std::find_if(notifications.begin(), notifications.end(),
-                         [&id](const Notification& el) { return el.id == id; });
+        auto res = std::find_if(
+            notifications.begin(), notifications.end(),
+            [&id](const Notification& el) { return el.notificationID == id; });
 
         return *res;
     }

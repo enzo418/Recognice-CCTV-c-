@@ -37,9 +37,10 @@ namespace Observer {
         for (auto&& service : this->services) {
             if (this->servicesType[{service,
                                     flag_to_int(ENotificationType::TEXT)}]) {
-                service->SendText(DTONotification(notification.GetGroupID(),
-                                                  notification.GetContent(),
-                                                  ENotificationType::TEXT));
+                service->SendText(DTONotification(
+                    notification.GetGroupID(), notification.GetContent(),
+                    ENotificationType::TEXT,
+                    notification.GetEvent().GetCameraName()));
             }
         }
     }
@@ -63,9 +64,10 @@ namespace Observer {
 
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::IMAGE)]) {
-                service->SendImage(DTONotification(notification.GetGroupID(),
-                                                   notification.GetContent(),
-                                                   ENotificationType::IMAGE));
+                service->SendImage(DTONotification(
+                    notification.GetGroupID(), notification.GetContent(),
+                    ENotificationType::IMAGE,
+                    notification.GetEvent().GetCameraName()));
             }
         }
 
@@ -83,9 +85,10 @@ namespace Observer {
             // 4. For each service that need the trace call
             // SendVideo(image2path)
             for (auto&& service : servD) {
-                service->SendImage(DTONotification(notification.GetGroupID(),
-                                                   notification.GetContent(),
-                                                   ENotificationType::IMAGE));
+                service->SendImage(DTONotification(
+                    notification.GetGroupID(), notification.GetContent(),
+                    ENotificationType::IMAGE,
+                    notification.GetEvent().GetCameraName()));
             }
         }
     }
@@ -115,9 +118,10 @@ namespace Observer {
             // SendVideo(videopath)
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(notification.GetGroupID(),
-                                                   notification.GetContent(),
-                                                   ENotificationType::VIDEO));
+                service->SendVideo(DTONotification(
+                    notification.GetGroupID(), notification.GetContent(),
+                    ENotificationType::VIDEO,
+                    notification.GetEvent().GetCameraName()));
             }
         }
 
@@ -136,9 +140,10 @@ namespace Observer {
             // SendVideo(video2path)
             for (auto&& service :
                  this->drawableServices[flag_to_int(ETrazable::VIDEO)]) {
-                service->SendVideo(DTONotification(notification.GetGroupID(),
-                                                   notification.GetContent(),
-                                                   ENotificationType::VIDEO));
+                service->SendVideo(DTONotification(
+                    notification.GetGroupID(), notification.GetContent(),
+                    ENotificationType::VIDEO,
+                    notification.GetEvent().GetCameraName()));
             }
         }
     }

@@ -2,6 +2,7 @@
 
 #include <list>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "../CL/NotificationCL.hpp"
@@ -9,6 +10,11 @@
 #include "../Domain/Camera.hpp"
 #include "../Notifications/WebsocketNotificator.hpp"
 #include "../stream_content/FileStreamer.hpp"
+#include "DAL/ConfigurationDAO.hpp"
+#include "DTO/DTONotification.hpp"
+#include "Domain/Notification.hpp"
+#include "Server/ServerContext.hpp"
+#include "nlohmann/json.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
@@ -22,7 +28,9 @@ namespace Web::Controller {
        public:
         NotificationController(uWS::App* app,
                                Web::DAL::INotificationRepository* nRepo,
-                               Web::CL::NotificationCL* nCache);
+                               Web::CL::NotificationCL* nCache,
+                               Web::DAL::ConfigurationDAO* configurationDAO,
+                               Web::ServerContext<SSL>* serverCtx);
 
         void OnOpenWebsocket(auto* ws,
                              const std::list<std::string_view>& paths);
@@ -37,23 +45,30 @@ namespace Web::Controller {
         void update(Observer::DTONotification ev) override;
 
        private:
-        std::vector<Web::DTONotification> NotificationsToDTO(
-            std::vector<Domain::Notification>&);
+        std::vector<Web::API::DTONotification> NotificationsToDTO(
+            const std::vector<Domain::Notification>&);
 
-        Web::DTONotification inline NotificationToDTO(Domain::Notification&);
+        Web::API::DTONotification inline NotificationToDTO(
+            const Domain::Notification&);
 
        private:
         Web::DAL::INotificationRepository* notificationRepository;
         Web::CL::NotificationCL* notificationCache;
-
+        Web::DAL::ConfigurationDAO* configurationDAO;
         Web::WebsocketNotificator<SSL> notificatorWS;
+        Web::ServerContext<SSL>* serverCtx;
     };
 
     template <bool SSL>
     NotificationController<SSL>::NotificationController(
         uWS::App* app, Web::DAL::INotificationRepository* pNotRepo,
-        Web::CL::NotificationCL* pNotCache)
-        : notificationRepository(pNotRepo), notificationCache(pNotCache) {
+        Web::CL::NotificationCL* pNotCache,
+        Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::ServerContext<SSL>* pServerCtx)
+        : notificationRepository(pNotRepo),
+          notificationCache(pNotCache),
+          configurationDAO(pConfigurationDAO),
+          serverCtx(pServerCtx) {
         // http
         app->get(endpoints.at("notification-stream") + ":id",
                  [this](auto* res, auto* req) {
@@ -125,17 +140,42 @@ namespace Web::Controller {
 
     template <bool SSL>
     void NotificationController<SSL>::update(Observer::DTONotification ev) {
-        auto converted = Domain::Notification(ev);
+        /**
+         * Observer notification ->  Domain Notification -> (Get camera id and
+         * add it to repository and get id) -> set those id to domain
+         * notification -> (simplify it so can be sent to client) ->
+         * -> Web::API::Notification -> send it through the websocket
+         */
 
-        // add random camera id to test it
-        converted.camera.id = "0";
+        auto notification = Domain::Notification(ev);
 
-        notificationRepository->Add(converted);
+        try {
+            auto camera = configurationDAO->FindCamera(
+                serverCtx->recognizeContext.running_config_id, ev.cameraName);
 
-        auto copy = NotificationToDTO(converted);
+            notification.camera.cameraID = camera["id"];
+            notification.camera.name = camera["name"];
+            notification.camera.uri = camera["url"];
+        } catch (const std::exception& e) {
+            OBSERVER_ERROR(
+                "Unexpected error: camera not found with name {0} on "
+                "configuration {1}",
+                ev.cameraName, serverCtx->recognizeContext.running_config_id);
+            throw std::runtime_error(
+                std::string("Camera was not found while trying to add a new "
+                            "notification. parent what(): ") +
+                e.what());
+        }
+
+        std::string newID = notificationRepository->Add(notification);
+
+        notification.notificationID = newID;
+
+        Web::API::DTONotification apiNotification =
+            NotificationToDTO(notification);
 
         // notify all websocket subscribers about it
-        notificatorWS.update(copy);
+        notificatorWS.update(apiNotification);
     }
 
     template <bool SSL>
@@ -158,22 +198,18 @@ namespace Web::Controller {
             limit = limit > MAX_LIMIT || limit < 0 ? MAX_LIMIT : limit;
         }
 
-        auto notifications = notificationRepository->GetAll(limit);
-
-        // add random camera id to test it
-        for (auto&& notification : notifications) {
-            notification.camera.id = "0";
-        }
+        std::vector<Domain::Notification> notifications =
+            notificationRepository->GetAll(limit);
 
         nlohmann::json jsonNotifications = NotificationsToDTO(notifications);
         res->endJson(jsonNotifications.dump());
     }
 
     template <bool SSL>
-    std::vector<Web::DTONotification>
+    std::vector<Web::API::DTONotification>
     NotificationController<SSL>::NotificationsToDTO(
-        std::vector<Domain::Notification>& parseNots) {
-        std::vector<Web::DTONotification> parsed(parseNots.size());
+        const std::vector<Domain::Notification>& parseNots) {
+        std::vector<Web::API::DTONotification> parsed(parseNots.size());
 
         for (int i = 0; i < parseNots.size(); i++) {
             parsed[i] = this->NotificationToDTO(parseNots[i]);
@@ -183,9 +219,9 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    Web::DTONotification NotificationController<SSL>::NotificationToDTO(
-        Domain::Notification& parseNot) {
-        Web::DTONotification parsed(parseNot);
+    Web::API::DTONotification NotificationController<SSL>::NotificationToDTO(
+        const Domain::Notification& parseNot) {
+        Web::API::DTONotification parsed(parseNot);
 
         if (parseNot.type != "text") {
             // hide real filename but tell where to find the media

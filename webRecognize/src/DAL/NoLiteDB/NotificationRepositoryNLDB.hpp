@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../INotificationRepository.hpp"
+#include "Domain/Notification.hpp"
 #include "nldb/Collection.hpp"
 #include "nldb/Query/Query.hpp"
 #include "nldb/SQL3Implementation.hpp"

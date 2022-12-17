@@ -10,7 +10,7 @@
 namespace Web::Domain {
     class Notification {
        public:
-        std::string id;
+        std::string notificationID;
         std::string content;
         int groupID;
         std::string type;

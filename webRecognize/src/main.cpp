@@ -59,7 +59,7 @@ static const std::string liveViewWsRoute = liveViewPrefix + "*";
 
 constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
-int main(int argc, char** argv) {
+int main() {
     // initialize logger
     Observer::LogManager::Initialize();
     nldb::LogManager::Initialize();
@@ -107,7 +107,8 @@ int main(int argc, char** argv) {
         &notificationsDB);
     Web::CL::NotificationCL notificationCache(&notificationRepository);
     Web::Controller::NotificationController<SSL> notificationController(
-        &app, &notificationRepository, &notificationCache);
+        &app, &notificationRepository, &notificationCache, &configurationDAO,
+        &serverCtx);
 
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
@@ -147,12 +148,6 @@ int main(int argc, char** argv) {
         observerCtx.running = false;
         observerCtx.observer = nullptr;
     };
-
-    if (argc > 1) {
-        auto cfg =
-            Observer::ConfigurationParser::ConfigurationFromJsonFile(argv[1]);
-        startRecognize(cfg);
-    }
 
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
@@ -293,8 +288,9 @@ int main(int argc, char** argv) {
                                   bufferAsJson = configuration;
                               }
 
-                              std::string id = configurationDAO.InsertConfiguration(
-                                  bufferAsJson);
+                              std::string id =
+                                  configurationDAO.InsertConfiguration(
+                                      bufferAsJson);
 
                               // set success response
                               response = {{"id", id}};
@@ -323,7 +319,7 @@ int main(int argc, char** argv) {
 
                  nldb::json obj;
                  try {
-                     obj = configurationDAO.Get(std::string(id));
+                     obj = configurationDAO.GetConfiguration(std::string(id));
                  } catch (const std::exception& e) {
                      res->writeStatus(HTTP_404_NOT_FOUND)
                          ->end("Configuration not found");
@@ -591,6 +587,23 @@ int main(int argc, char** argv) {
                         std::string_view((char*)buffer.data(), buffer.size()));
             })
 
+        .get("/api/camera/:id",
+             [&configurationDAO](auto* res, auto* req) {
+                 auto id = std::string(req->getParameter(0));
+
+                 try {
+                     nldb::json camera = configurationDAO.GetCamera(id);
+
+                     //  TODO: We need to respond only with {name, id, url}
+                     //  for that we should use camera repository
+                     res->endJson(camera.dump());
+                 } catch (const std::exception& e) {
+                     nlohmann::json response = {{"title", "camera not found"}};
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->endProblemJson(response.dump());
+                 }
+             })
+
         .get("/api/start/:config_id",
              [&configurationDAO, &observerCtx = serverCtx.recognizeContext,
               &startRecognize](auto* res, auto* req) {
@@ -607,7 +620,7 @@ int main(int argc, char** argv) {
 
                  nldb::json obj;
                  try {
-                     obj = configurationDAO.Get(std::string(id));
+                     obj = configurationDAO.GetConfiguration(std::string(id));
                  } catch (const std::exception& e) {
                      nlohmann::json response = {
                          {"title", "Configuration not found"}};
@@ -630,7 +643,7 @@ int main(int argc, char** argv) {
                  startRecognize(cfg);
 
                  res->end(nlohmann::json(
-                              ObserverStatusDTO {
+                              Web::ObserverStatusDTO {
                                   .running = true,
                                   .config_id = observerCtx.running_config_id})
                               .dump());
@@ -644,22 +657,22 @@ int main(int argc, char** argv) {
                  }
 
                  res->end(nlohmann::json(
-                              ObserverStatusDTO {.running = false,
-                                                 .config_id = std::nullopt})
+                              Web::ObserverStatusDTO {
+                                  .running = false, .config_id = std::nullopt})
                               .dump());
              })
 
-        .get(
-            "/api/observerStatus",
-            [&observerCtx = serverCtx.recognizeContext](auto* res, auto* req) {
-                bool running = observerCtx.running;
-                std::optional<std::string> cfg_id;
-                if (running) cfg_id = observerCtx.running_config_id;
+        .get("/api/observerStatus",
+             [&observerCtx = serverCtx.recognizeContext](auto* res, auto* req) {
+                 bool running = observerCtx.running;
+                 std::optional<std::string> cfg_id;
+                 if (running) cfg_id = observerCtx.running_config_id;
 
-                res->end(nlohmann::json(ObserverStatusDTO {.running = running,
-                                                           .config_id = cfg_id})
-                             .dump());
-            })
+                 res->end(nlohmann::json(
+                              Web::ObserverStatusDTO {.running = running,
+                                                      .config_id = cfg_id})
+                              .dump());
+             })
 
         .get("/*.*",
              [](auto* res, auto* req) {

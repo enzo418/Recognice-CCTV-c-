@@ -8,14 +8,15 @@ namespace Web::DAL {
     using Domain::Camera;
 
     std::string CameraRepositoryMemory::Add(Camera& element) {
-        element.id = fmt::format("c{0}", cameras.size());
+        element.cameraID = fmt::format("c{0}", cameras.size());
         cameras.push_back(element);
-        return element.id;
+        return element.cameraID;
     }
 
     void CameraRepositoryMemory::Remove(const std::string& id) {
-        auto res = std::find_if(cameras.begin(), cameras.end(),
-                                [&id](Camera& cam) { return cam.id == id; });
+        auto res =
+            std::find_if(cameras.begin(), cameras.end(),
+                         [&id](Camera& cam) { return cam.cameraID == id; });
 
         if (res != cameras.end()) {
             cameras.erase(res);
@@ -25,7 +26,7 @@ namespace Web::DAL {
     bool CameraRepositoryMemory::Exists(const std::string& id) {
         auto res =
             std::find_if(cameras.begin(), cameras.end(),
-                         [&id](const Camera& el) { return el.id == id; });
+                         [&id](const Camera& el) { return el.cameraID == id; });
 
         return res != cameras.end();
     }
@@ -33,7 +34,7 @@ namespace Web::DAL {
     Camera CameraRepositoryMemory::Get(const std::string& id) {
         auto res =
             std::find_if(cameras.begin(), cameras.end(),
-                         [&id](const Camera& el) { return el.id == id; });
+                         [&id](const Camera& el) { return el.cameraID == id; });
 
         return *res;
     }

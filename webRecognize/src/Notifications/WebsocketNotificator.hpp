@@ -9,7 +9,7 @@
 #include "../Domain/Notification.hpp"
 #include "../SocketData.hpp"
 #include "../WebsocketService.hpp"
-#include "DTONotification.hpp"
+#include "DTO/DTONotification.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
@@ -37,7 +37,7 @@ namespace Web {
          */
         void Stop() override;
 
-        void update(Web::DTONotification ev);
+        void update(Web::API::DTONotification ev);
 
        private:
         void InternalStart();
@@ -47,7 +47,7 @@ namespace Web {
 
        private:
         std::mutex mtxNotifications;
-        std::deque<Web::DTONotification> notifications;
+        std::deque<Web::API::DTONotification> notifications;
 
        private:
         std::thread thread;
@@ -102,7 +102,7 @@ namespace Web {
     }
 
     template <bool SSL>
-    void WebsocketNotificator<SSL>::update(Web::DTONotification ev) {
+    void WebsocketNotificator<SSL>::update(Web::API::DTONotification ev) {
         std::lock_guard<std::mutex> g_n(mtxNotifications);
         notifications.push_back(ev);
     }

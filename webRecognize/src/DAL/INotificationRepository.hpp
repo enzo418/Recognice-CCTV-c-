@@ -6,6 +6,7 @@
 #include "../Domain/Notification.hpp"
 
 namespace Web::DAL {
+
     class INotificationRepository {
        public:
         virtual std::string Add(Domain::Notification& element) = 0;

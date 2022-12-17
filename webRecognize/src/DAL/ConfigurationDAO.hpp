@@ -22,7 +22,7 @@ namespace Web::DAL {
          * @return nldb::json
          * @throws std::runtime_error on config not found
          */
-        nldb::json Get(const std::string& id);
+        nldb::json GetConfiguration(const std::string& id);
 
         /**
          * @brief Get the Camera object
@@ -32,6 +32,18 @@ namespace Web::DAL {
          * @throws std::runtime_error on camera not found
          */
         nldb::json GetCamera(const std::string& id);
+
+        /**
+         * @brief Search for a camera in a configuration based on its name
+         *
+         * @param configuration_id
+         * @param cameraName
+         * @return nldb::json
+         * @throw std::runtime_error if configuration wasn't found
+         * @throw std::runtime_error if camera wasn't found
+         */
+        nldb::json FindCamera(const std::string& configuration_id,
+                              const std::string& cameraName);
 
         /**
          * @brief Insert a new configuration.
