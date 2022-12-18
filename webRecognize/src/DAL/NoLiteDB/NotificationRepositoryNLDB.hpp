@@ -31,6 +31,8 @@ namespace Web::DAL {
 
         std::string GetFilename(const std::string& id) override;
 
+        int GetLastGroupID() override;
+
        private:
         nldb::DBSL3* db;
         nldb::Query<nldb::DBSL3> query;

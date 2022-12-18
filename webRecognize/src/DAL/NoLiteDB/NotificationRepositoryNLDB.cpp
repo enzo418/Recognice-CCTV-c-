@@ -77,4 +77,16 @@ namespace Web::DAL {
     std::string NotificationRepositoryNLDB::GetFilename(const std::string& id) {
         return this->Get(id).content;
     }
+
+    int NotificationRepositoryNLDB::GetLastGroupID() {
+        nldb::json result = query.from(colNotifications)
+                                .select(colNotifications["groupID"])
+                                .sortBy(colNotifications["groupID"].desc())
+                                .limit(1)
+                                .execute();
+
+        if (result.empty()) return 0;
+
+        return result[0]["groupID"];
+    }
 }  // namespace Web::DAL

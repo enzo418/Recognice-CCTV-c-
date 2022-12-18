@@ -52,6 +52,14 @@ namespace Web::Controller {
             const Domain::Notification&);
 
        private:
+        /**
+         * @brief We get the last group id at the start and then we start
+         * counting from that to avoid using the same group as previous
+         * instances. Observer has its own count internally.
+         */
+        int initialGroupID {0};
+
+       private:
         Web::DAL::INotificationRepository* notificationRepository;
         Web::CL::NotificationCL* notificationCache;
         Web::DAL::ConfigurationDAO* configurationDAO;
@@ -69,6 +77,9 @@ namespace Web::Controller {
           notificationCache(pNotCache),
           configurationDAO(pConfigurationDAO),
           serverCtx(pServerCtx) {
+        // set initial group id
+        initialGroupID = notificationRepository->GetLastGroupID();
+
         // http
         app->get(endpoints.at("notification-stream") + ":id",
                  [this](auto* res, auto* req) {
@@ -148,6 +159,8 @@ namespace Web::Controller {
          */
 
         auto notification = Domain::Notification(ev);
+
+        notification.groupID += initialGroupID + 1;
 
         try {
             auto camera = configurationDAO->FindCamera(

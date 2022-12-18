@@ -27,5 +27,7 @@ namespace Web::DAL {
          * @return std::string
          */
         virtual std::string GetFilename(const std::string& id) = 0;
+
+        virtual int GetLastGroupID() = 0;
     };
 }  // namespace Web::DAL

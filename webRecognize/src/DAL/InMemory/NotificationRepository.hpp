@@ -25,6 +25,8 @@ namespace Web::DAL {
 
         std::string GetFilename(const std::string& id) override;
 
+        int GetLastGroupID() override;
+
        private:
         std::vector<Domain::Notification> notifications;
     };

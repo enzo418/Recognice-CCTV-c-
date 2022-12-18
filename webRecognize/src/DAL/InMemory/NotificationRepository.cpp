@@ -60,4 +60,10 @@ namespace Web::DAL {
         const std::string& id) {
         return this->Get(id).content;
     }
+
+    int NotificationRepositoryMemory::GetLastGroupID() {
+        if (this->notifications.empty()) return 0;
+
+        return this->notifications.back().groupID;
+    }
 }  // namespace Web::DAL
