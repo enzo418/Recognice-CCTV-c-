@@ -1,5 +1,9 @@
 #include "ConfigurationDAO.hpp"
 
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 namespace Web::DAL {
 
     ConfigurationDAO::ConfigurationDAO(nldb::DBSL3* pDb)
@@ -82,6 +86,36 @@ namespace Web::DAL {
         }
 
         throw std::runtime_error("Camera not found");
+    }
+
+    std::string ConfigurationDAO::AddCameraToConfiguration(
+        const std::string& configurationID,
+        const nldb::json& cameraConfiguration) {
+        // first check that the configuration exists
+        nldb::json result =
+            query.from(colConfiguration)
+                .select(colConfiguration["cameras"])
+                .where(colConfiguration["_id"] == configurationID)
+                .execute();
+
+        if (result.empty()) throw std::runtime_error("configuration not found");
+
+        nldb::json& cfg = result[0];
+
+        // insert the camera
+        std::vector<std::string> ids =
+            query.from(colCamera).insert(cameraConfiguration);
+
+        std::string& cameraID = ids[0];
+
+        // add the camera id to the configuration cameras
+        cfg["cameras"].push_back(cameraID);
+
+        // push the modified list to the database
+        query.from(colConfiguration)
+            .update(configurationID, {{"cameras", cfg["cameras"]}});
+
+        return cameraID;
     }
 
     nldb::json ConfigurationDAO::FindCamera(const std::string& configuration_id,

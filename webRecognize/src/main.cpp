@@ -17,6 +17,7 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Utils/StringUtils.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
+#include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/Log/log.hpp"
@@ -238,78 +239,311 @@ int main() {
                          ->endProblemJson(error.dump());
                  }
              })
+
         .get("/api/configuration/",
              [&configurationDAO](auto* res, auto* req) {
                  // Get all the configurations id and name available
                  res->endJson(configurationDAO.GetAllNamesAndId().dump());
              })
-        .post("/api/configuration/",
-              [&configurationDAO](auto* res, auto* req) {
-                  res->onAborted([]() {});
 
-                  std::string buffer;
+        // create a new configuration
+        .post(
+            "/api/configuration/",
+            [&configurationDAO](auto* res, auto* req) {
+                res->onAborted([]() {});
 
-                  res->onData([&configurationDAO, res,
-                               buffer = std::move(buffer)](
-                                  std::string_view data, bool last) mutable {
-                      buffer.append(data.data(), data.length());
+                std::string buffer;
 
-                      if (last) {
-                          //   std::cout << "buffer: " << buffer << std::endl;
+                res->onData([&configurationDAO, res,
+                             buffer = std::move(buffer)](std::string_view data,
+                                                         bool last) mutable {
+                    buffer.append(data.data(), data.length());
 
-                          Observer::Configuration configuration;
-                          nldb::json bufferAsJson;
+                    if (last) {
+                        //   std::cout << "buffer: " << buffer << std::endl;
 
-                          // default response is an error
-                          nldb::json response = {
-                              {"status", 400},
-                              {"title", "invalid configuration"},
-                              {"detail",
-                               "we couldn't parse the configuration, check "
-                               "that it has all the fields needed"}};
+                        Observer::Configuration configuration;
+                        nldb::json bufferAsJson;
 
-                          try {
-                              if (!buffer.empty()) {
-                                  // Replace escaped quotes with quotes
-                                  Web::StringUtils::replaceSubstring(
-                                      buffer, "\\\"", "\"");
+                        // default response is an error
+                        nldb::json response = {
+                            {"status", 400},
+                            {"title", "invalid configuration"},
+                            {"detail",
+                             "we couldn't parse the configuration, check "
+                             "that it has all the fields needed"}};
 
-                                  // "{name: ..., ...}" to {name: ..., ...}
-                                  if (buffer.starts_with('"')) {
-                                      bufferAsJson = nlohmann::json::parse(
-                                          buffer.begin() + 1, buffer.end() - 1);
-                                  } else {
-                                      bufferAsJson =
-                                          nlohmann::json::parse(buffer);
-                                  }
+                        try {
+                            if (!buffer.empty()) {
+                                // Replace escaped quotes with quotes
+                                Web::StringUtils::replaceSubstring(
+                                    buffer, "\\\"", "\"");
 
-                                  configuration = bufferAsJson;
-                              } else {
-                                  bufferAsJson = configuration;
-                              }
+                                // "{name: ..., ...}" to {name: ..., ...}
+                                if (buffer.starts_with('"')) {
+                                    bufferAsJson = nlohmann::json::parse(
+                                        buffer.begin() + 1, buffer.end() - 1);
+                                } else {
+                                    bufferAsJson =
+                                        nlohmann::json::parse(buffer);
+                                }
 
-                              std::string id =
-                                  configurationDAO.InsertConfiguration(
-                                      bufferAsJson);
+                                // should clone
+                                if (bufferAsJson.contains("clone_id")) {
+                                    // move this code into a clone configuration
+                                    // method that takes a json
 
-                              // set success response
-                              response = {{"id", id}};
-                              res->writeHeader("Content-Type",
-                                               "application/json");
-                          } catch (const std::exception& e) {
-                              std::cout
-                                  << "Configuration wasn't added: " << e.what()
-                                  << std::endl;
+                                    if (!bufferAsJson["clone_id"].is_string()) {
+                                        res->writeStatus(HTTP_400_BAD_REQUEST)
+                                            ->endProblemJson(
+                                                (nlohmann::json {
+                                                     {"title",
+                                                      "clone_id must be of "
+                                                      "type string"}})
+                                                    .dump());
+                                        return;
+                                    }
 
-                              res->writeStatus(HTTP_400_BAD_REQUEST);
-                              res->writeHeader("Content-Type",
-                                               "application/problem+json");
-                          }
+                                    nldb::json config;
+                                    try {
+                                        config =
+                                            configurationDAO.GetConfiguration(
+                                                bufferAsJson["clone_id"]);
+                                    } catch (const std::exception& e) {
+                                        res->writeStatus(HTTP_404_NOT_FOUND)
+                                            ->endProblemJson(
+                                                (nlohmann::json {
+                                                     {"title",
+                                                      "configuration not "
+                                                      "found"}})
+                                                    .dump());
+                                        return;
+                                    }
 
-                          res->end(response.dump());
-                      }
-                  });
-              })
+                                    // erase the id so it generates a new
+                                    // one, also change its name to name +
+                                    // "copy"
+
+                                    config["name"] =
+                                        config["name"].get<std::string>() +
+                                        " copy";
+
+                                    config.erase("_id");
+                                    config.erase("id");
+
+                                    bufferAsJson = config;
+                                }
+
+                                configuration = bufferAsJson;
+                            } else {
+                                bufferAsJson = configuration;
+                            }
+
+                            std::string id =
+                                configurationDAO.InsertConfiguration(
+                                    bufferAsJson);
+
+                            // set success response
+                            response = {{"id", id}};
+                            res->writeHeader("Content-Type",
+                                             "application/json");
+                        } catch (const std::exception& e) {
+                            OBSERVER_WARN("Configuration wasn't added: {}",
+                                          e.what());
+
+                            res->writeStatus(HTTP_400_BAD_REQUEST);
+                            res->writeHeader("Content-Type",
+                                             "application/problem+json");
+                        }
+
+                        res->end(response.dump());
+                    }
+                });
+            })
+
+        // clone a configuration
+        // Note: temporarily moved to the function above
+        /*.post(
+            "/api/configurationClone",
+            [&configurationDAO](auto* res, auto* req) {
+                res->onAborted([]() {});
+
+                std::string buffer;
+
+                res->onData([&configurationDAO, res,
+                             buffer = std::move(buffer)](std::string_view
+                             data,
+                                                         bool last) mutable {
+                    buffer.append(data.data(), data.length());
+
+                    if (last) {
+                        nlohmann::json parsed;
+
+                        try {
+                            parsed = nlohmann::json::parse(buffer);
+                        } catch (const std::exception& e) {
+        OBSERVER_WARN("Couldn't parse body into JSON: {}",
+                                        e.what());
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title",
+                                          "Couldn't parse body into JSON"}})
+                                        .dump());
+                            return;
+                        }
+
+                        if (!parsed.contains("id") ||
+                            !parsed["id"].is_string()) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {{"title",
+                                                      "body must contain "
+                                                      "'id' of type
+                                                      string"}})
+                                        .dump());
+                            return;
+                        }
+
+                        nldb::json config;
+                        try {
+                            config =
+                                configurationDAO.GetConfiguration(parsed["id"]);
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_404_NOT_FOUND)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title", "configuration not
+                                         found"}})
+                                        .dump());
+                            return;
+                        }
+
+                        try {
+                            // erase the id so it generates a new one, also
+                            // change its name to name + "copy"
+
+                            config["name"] =
+                                config["name"].get<std::string>() + "copy";
+
+                            config.erase("_id");
+                            config.erase("id");
+
+                            std::string newID =
+                                configurationDAO.InsertConfiguration(config);
+
+                            res->endJson(
+                                (nlohmann::json {{"id", newID}}).dump());
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_404_NOT_FOUND)
+                                ->endProblemJson(
+                                    (nlohmann::json {{"title",
+                                                      "could not insert the "
+                                                      "cloned
+                                                      configuration"}})
+                                        .dump());
+                            return;
+                        }
+                    }
+                });
+            })*/
+
+        // create a new camera
+        .post(
+            "/api/configuration/:id/camera/",
+            [&configurationDAO](auto* res, auto* req) {
+                res->onAborted([]() {});
+
+                std::string buffer;
+
+                res->onData([&configurationDAO, res, req,
+                             buffer = std::move(buffer)](std::string_view data,
+                                                         bool last) mutable {
+                    buffer.append(data.data(), data.length());
+
+                    if (last) {
+                        nlohmann::json parsed;
+
+                        try {
+                            parsed = nlohmann::json::parse(buffer);
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title", "body must a json"}})
+                                        .dump());
+                            return;
+                        }
+
+                        auto configurationID =
+                            std::string(req->getParameter(0));
+
+                        // creat a instance with the default value
+                        Observer::CameraConfiguration cam;
+                        nldb::json jsonCamera;
+
+                        if (parsed.contains("clone_id")) {
+                            // clone the camera
+                            if (!parsed["clone_id"].is_string()) {
+                                res->writeStatus(HTTP_400_BAD_REQUEST)
+                                    ->endProblemJson(
+                                        (nlohmann::json {{"title",
+                                                          "clone_id must be of "
+                                                          "type string"}})
+                                            .dump());
+                                return;
+                            }
+
+                            try {
+                                jsonCamera = configurationDAO.GetCamera(
+                                    parsed["clone_id"]);
+
+                                // erase id
+                                jsonCamera.erase("_id");
+                                jsonCamera.erase("id");
+
+                                // change name to copy
+                                jsonCamera["name"] =
+                                    jsonCamera["name"].get<std::string>() +
+                                    " copy";
+
+                            } catch (const std::exception& e) {
+                                res->writeStatus(HTTP_400_BAD_REQUEST)
+                                    ->endProblemJson(
+                                        (nlohmann::json {
+                                             {"title",
+                                              "camera to clone not found"}})
+                                            .dump());
+                                return;
+                            }
+                        } else {
+                            // parse the default camera to json
+                            jsonCamera = cam;
+                        }
+
+                        try {
+                            std::string newCameraID =
+                                configurationDAO.AddCameraToConfiguration(
+                                    configurationID, jsonCamera);
+
+                            res->endJson(
+                                (nlohmann::json {{"id", configurationID}})
+                                    .dump());
+                        } catch (const std::exception& e) {
+                            OBSERVER_WARN("Could not add the new camera: {}",
+                                          e.what());
+
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title",
+                                          "couldn't add the new camera"}})
+                                        .dump());
+                        }
+                    }
+                });
+            })
+
         .get("/api/configuration/:id",
              [&configurationDAO](auto* res, auto* req) {
                  std::string url(req->getUrl());

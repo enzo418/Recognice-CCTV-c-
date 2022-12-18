@@ -34,6 +34,16 @@ namespace Web::DAL {
         nldb::json GetCamera(const std::string& id);
 
         /**
+         * @brief Adds a new camera to a configuration
+         *
+         * @param configurationID target configuration
+         * @return std::string
+         */
+        std::string AddCameraToConfiguration(
+            const std::string& configurationID,
+            const nldb::json& cameraConfiguration);
+
+        /**
          * @brief Search for a camera in a configuration based on its name
          *
          * @param configuration_id
