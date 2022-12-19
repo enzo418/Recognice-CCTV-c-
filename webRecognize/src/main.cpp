@@ -254,13 +254,21 @@ int main() {
 
                 std::string buffer;
 
-                res->onData([&configurationDAO, res,
+                res->onData([&configurationDAO, req, res,
                              buffer = std::move(buffer)](std::string_view data,
                                                          bool last) mutable {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
                         //   std::cout << "buffer: " << buffer << std::endl;
+
+                        auto ct = std::string(req->getHeader("content-type"));
+
+                        if (ct != "application/json") {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Expected a json body");
+                            return;
+                        }
 
                         Observer::Configuration configuration;
                         nldb::json bufferAsJson;
@@ -274,20 +282,9 @@ int main() {
                              "that it has all the fields needed"}};
 
                         try {
-                            if (!buffer.empty()) {
-                                // Replace escaped quotes with quotes
-                                Web::StringUtils::replaceSubstring(
-                                    buffer, "\\\"", "\"");
+                            bufferAsJson = nlohmann::json::parse(buffer);
 
-                                // "{name: ..., ...}" to {name: ..., ...}
-                                if (buffer.starts_with('"')) {
-                                    bufferAsJson = nlohmann::json::parse(
-                                        buffer.begin() + 1, buffer.end() - 1);
-                                } else {
-                                    bufferAsJson =
-                                        nlohmann::json::parse(buffer);
-                                }
-
+                            if (!bufferAsJson.empty()) {
                                 // should clone
                                 if (bufferAsJson.contains("clone_id")) {
                                     // move this code into a clone configuration
@@ -462,6 +459,13 @@ int main() {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
+                        if (req->getHeader("content-type") !=
+                            "application/json") {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Expected a json body");
+                            return;
+                        }
+
                         nlohmann::json parsed;
 
                         try {
@@ -470,7 +474,7 @@ int main() {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
                                 ->endProblemJson(
                                     (nlohmann::json {
-                                         {"title", "body must a json"}})
+                                         {"title", "body isn't a valid json"}})
                                         .dump());
                             return;
                         }
@@ -545,6 +549,28 @@ int main() {
                 });
             })
 
+        // delete a camera
+        .del("/api/configuration/:id/camera/:cam_id",
+             [&configurationDAO](auto* res, auto* req) {
+                 auto configID = std::string(req->getParameter(0));
+                 auto cameraID = std::string(req->getParameter(1));
+
+                 try {
+                     configurationDAO.DeleteCameraFromConfiguration(configID,
+                                                                    cameraID);
+                 } catch (const std::exception& e) {
+                     res->writeStatus(HTTP_400_BAD_REQUEST)
+                         ->endProblemJson(
+                             (nlohmann::json {
+                                  {"title", "could not delete this camera"}})
+                                 .dump());
+
+                     return;
+                 }
+
+                 res->writeStatus(HTTP_204_NO_CONTENT)->end();
+             })
+
         .get("/api/configuration/:id",
              [&configurationDAO](auto* res, auto* req) {
                  std::string url(req->getUrl());
@@ -615,15 +641,12 @@ int main() {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
-                        // uWebSocket can't take POST with header???? wtf
-
-                        /*std::string
-                        contentType(req->getHeader("content-type")); if
-                        (contentType != "application/json") {
+                        if (req->getHeader("content-type") !=
+                            "application/json") {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
                                 ->end("Expected a json body");
                             return;
-                        }*/
+                        }
 
                         nlohmann::json parsed;
                         try {
@@ -926,6 +949,25 @@ int main() {
                      res->end();
                  }
              })
+
+        // setup preflight requests
+        .options("/*",
+                 [](auto* res, auto* req) {
+                     res->writeStatus(HTTP_204_NO_CONTENT)
+
+                         // allow all methods
+                         ->writeHeader("Access-Control-Allow-Methods", "*")
+
+                         ->writeHeader("Access-Control-Allow-Headers", "*")
+
+                         // allow COR
+                         ->writeHeader("Access-Control-Allow-Origin", "*")
+
+                         // cache preflight at max, 24h
+                         ->writeHeader("Access-Control-Max-Age", "86400")
+
+                         ->tryEndWithoutContentLength({}, 0);
+                 })
 
         .get("/*",
              [](auto* res, auto* req) {

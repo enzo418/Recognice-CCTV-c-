@@ -20,6 +20,7 @@ extern const char* HTTP_500_INTERNAL_SERVER_ERROR;
 extern const char* HTTP_400_BAD_REQUEST;
 extern const char* HTTP_404_NOT_FOUND;
 extern const char* HTTP_301_MOVED_PERMANENTLY;
+extern const char* HTTP_204_NO_CONTENT;
 
 std::string GetJsonString(const std::string& key, const std::string& value);
 

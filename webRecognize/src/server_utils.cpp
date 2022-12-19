@@ -8,6 +8,7 @@ const char* HTTP_500_INTERNAL_SERVER_ERROR = "500 Internal Server Error";
 const char* HTTP_400_BAD_REQUEST = "400 Bad request";
 const char* HTTP_404_NOT_FOUND = "404 Not Found";
 const char* HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
+const char* HTTP_204_NO_CONTENT = "204 No Content";
 
 std::string GetJsonString(const std::string& key, const std::string& value) {
     return fmt::format("{{\"{0}\": {1}}}", key, value);

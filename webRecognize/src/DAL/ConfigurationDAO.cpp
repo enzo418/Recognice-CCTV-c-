@@ -118,6 +118,34 @@ namespace Web::DAL {
         return cameraID;
     }
 
+    void ConfigurationDAO::DeleteCameraFromConfiguration(
+        const std::string& configurationID, const std::string& cameraID) {
+        // first check that the configuration exists
+        // also, get its camera list
+        nldb::json result =
+            query.from(colConfiguration)
+                .select(colConfiguration["cameras"])
+                .where(colConfiguration["_id"] == configurationID)
+                .execute();
+
+        if (result.empty()) throw std::runtime_error("configuration not found");
+
+        nldb::json& cfg = result[0];
+        std::vector<std::string> cameras =
+            cfg["cameras"].get<std::vector<std::string>>();
+
+        // remove the camera id from the array
+        const auto it = std::find(cameras.begin(), cameras.end(), cameraID);
+        if (it != cameras.end()) {
+            cameras.erase(it);
+
+            cfg["cameras"] = cameras;
+
+            // it will only update "cameras"
+            query.from(colConfiguration).update(configurationID, cfg);
+        }
+    }
+
     nldb::json ConfigurationDAO::FindCamera(const std::string& configuration_id,
                                             const std::string& cameraName) {
         nldb::json configurationsFound =

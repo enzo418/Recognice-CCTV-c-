@@ -44,6 +44,15 @@ namespace Web::DAL {
             const nldb::json& cameraConfiguration);
 
         /**
+         * @brief Deletes a camera from a configuration
+         *
+         * @param configurationID
+         * @param cameraID
+         */
+        void DeleteCameraFromConfiguration(const std::string& configurationID,
+                                           const std::string& cameraID);
+
+        /**
          * @brief Search for a camera in a configuration based on its name
          *
          * @param configuration_id
