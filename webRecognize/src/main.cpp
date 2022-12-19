@@ -517,6 +517,8 @@ int main() {
                                 return;
                             }
                         } else {
+                            cam.name = "new camera";
+
                             // parse the default camera to json
                             jsonCamera = cam;
                         }
@@ -527,8 +529,7 @@ int main() {
                                     configurationID, jsonCamera);
 
                             res->endJson(
-                                (nlohmann::json {{"id", configurationID}})
-                                    .dump());
+                                (nlohmann::json {{"id", newCameraID}}).dump());
                         } catch (const std::exception& e) {
                             OBSERVER_WARN("Could not add the new camera: {}",
                                           e.what());
