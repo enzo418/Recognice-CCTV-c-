@@ -549,6 +549,15 @@ int main() {
                 });
             })
 
+        // delete a configuration
+        .del("/api/configuration/:id",
+             [&configurationDAO](auto* res, auto* req) {
+                 auto configID = std::string(req->getParameter(0));
+                 configurationDAO.DeleteConfiguration(configID);
+
+                 res->writeStatus(HTTP_204_NO_CONTENT)->end();
+             })
+
         // delete a camera
         .del("/api/configuration/:id/camera/:cam_id",
              [&configurationDAO](auto* res, auto* req) {

@@ -48,6 +48,7 @@ namespace Web::DAL {
          *
          * @param configurationID
          * @param cameraID
+         * @throws std::runtime_error on configuration not found
          */
         void DeleteCameraFromConfiguration(const std::string& configurationID,
                                            const std::string& cameraID);
@@ -71,6 +72,8 @@ namespace Web::DAL {
          * @return std::string id of the new configuration
          */
         std::string InsertConfiguration(const nldb::json& config);
+
+        void DeleteConfiguration(const std::string& id);
 
         void UpdateConfiguration(const std::string& id, const nldb::json& data);
 

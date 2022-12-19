@@ -207,6 +207,10 @@ namespace Web::DAL {
         return query.from(colConfiguration).insert(config)[0];
     }
 
+    void ConfigurationDAO::DeleteConfiguration(const std::string& id) {
+        query.from(colConfiguration).remove(id);
+    }
+
     void ConfigurationDAO::UpdateConfiguration(const std::string& id,
                                                const nldb::json& data) {
         query.from(colConfiguration).update(id, data);
