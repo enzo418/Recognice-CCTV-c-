@@ -35,7 +35,7 @@ namespace Observer {
 
     struct ProcessingConfiguration {
         // resize all the frames before processing to save cpu/memory
-        Size resize;
+        Size resize {640, 360};
 
         // value used to remove noise in the image
         double noiseThreshold = 45;
@@ -52,25 +52,25 @@ namespace Observer {
     };
 
     struct CameraConfiguration {
-        std::string name;
+        std::string name {"camera_name"};
 
         std::string url;
 
         // resize each frame received to this size.
         // If the camera send 1280x760 you can resize it to 640x360 or
         // 1920x1080.
-        Size resizeTo;
+        Size resizeTo {1280, 360};
 
         // camera max fps to use. Lower fps lowers the CPU usage
-        double fps;
+        double fps {20};
 
         // position of the camera in the preview. 0 = top left
-        int positionOnOutput;
+        int positionOnOutput {0};
 
         // rotation of the camera in degrees
-        double rotation;
+        double rotation {0};
 
-        ECameraType type;
+        ECameraType type {ECameraType::VIEW};
 
         // minimum amount of pixel that changed to trigger a validator
         int minimumChangeThreshold = 100;
@@ -85,7 +85,8 @@ namespace Observer {
         int videoValidatorBufferSize = 30;
 
         // Method to detect the objects
-        EObjectDetectionMethod objectDetectionMethod;
+        EObjectDetectionMethod objectDetectionMethod {
+            EObjectDetectionMethod::NONE};
 
         BlobDetectionConfiguration blobDetection;
 
