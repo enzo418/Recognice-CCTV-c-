@@ -10,7 +10,7 @@ namespace Observer {
         BlobDetectorParams blobDetectorParams;
         BlobFilters blobFilters;
         ContoursFilter contoursFilters;
-        ThresholdingParams thresholdingParams;
+        ThresholdParams thresholdParams;
 
         bool operator==(const BlobDetectionConfiguration&) const = default;
     };

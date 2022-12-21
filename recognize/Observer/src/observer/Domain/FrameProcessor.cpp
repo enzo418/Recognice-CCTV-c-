@@ -76,7 +76,7 @@ namespace Observer {
         // set lastFrame to a valid frame so we can operate over it
         if (firstCall) {
             // ImageDisplay::Get().CreateWindow("diff");
-            ImageDisplay::Get().CreateWindow("frame");
+            // ImageDisplay::Get().CreateWindow("frame");
 
             if (this->cameraFeedSize.empty()) {
                 throw std::logic_error("Precondition: call Setup before.");
@@ -86,7 +86,7 @@ namespace Observer {
             frame.CopyTo(lastFrame);
         }
 
-        ImageDisplay::Get().ShowImage("frame", frame);
+        // ImageDisplay::Get().ShowImage("frame", frame);
 
         // get the difference between the current and last frame
         diffFrame = frame.AbsoluteDifference(lastFrame);

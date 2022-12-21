@@ -2,7 +2,7 @@
 
 namespace Observer {
     FrameContextualizer::FrameContextualizer(
-        const ThresholdingParams& pThreshParams) {
+        const ThresholdParams& pThreshParams) {
         this->params = pThreshParams;
 
         this->contextDiffFrames.reserve(this->params.ContextFrames);

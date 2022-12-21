@@ -90,7 +90,7 @@ void TestBlobDetection(Observer::Configuration* cfg, int videostart,
 
     // cap.set(cv::CAP_PROP_POS_MSEC, videostart * 1000);
 
-    ThresholdingParams param = camera.blobDetection.thresholdingParams;
+    ThresholdParams param = camera.blobDetection.thresholdParams;
 
     ContoursFilter filter = camera.blobDetection.contoursFilters;
 

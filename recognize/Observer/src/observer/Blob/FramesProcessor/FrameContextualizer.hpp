@@ -16,7 +16,7 @@ namespace Observer {
      */
     class FrameContextualizer {
        public:
-        FrameContextualizer(const ThresholdingParams& params);
+        FrameContextualizer(const ThresholdParams& params);
 
        public:
         std::vector<Frame> GenerateDiffFrames(std::vector<Frame>& frames);
@@ -52,6 +52,6 @@ namespace Observer {
         std::vector<Frame> contextDiffFrames;
 
        protected:
-        ThresholdingParams params;
+        ThresholdParams params;
     };
 }  // namespace Observer

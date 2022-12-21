@@ -2,7 +2,7 @@
 
 namespace Observer {
     ContoursDetector::ContoursDetector(
-        const ThresholdingParams& thresholdingParams,
+        const ThresholdParams& thresholdingParams,
         const ContoursFilter& filterContours)
         : contextBuilder(thresholdingParams),
           params(thresholdingParams),

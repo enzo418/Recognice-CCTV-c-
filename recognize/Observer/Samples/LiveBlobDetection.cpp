@@ -90,7 +90,7 @@ void LiveTestBlobDetection(Observer::Configuration* cfg, int camera_number) {
     auto fps = cap.GetFPS();
     OBSERVER_INFO("FPS: {0}", fps);
 
-    ThresholdingParams param = camera.blobDetection.thresholdingParams;
+    ThresholdParams param = camera.blobDetection.thresholdParams;
 
     ContoursFilter filter = camera.blobDetection.contoursFilters;
 

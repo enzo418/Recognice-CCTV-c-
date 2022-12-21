@@ -101,15 +101,14 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     // Observer::ImageDisplay<FrameType>::DestroyWindow("Image");
     source.Close();
 
-    ContoursDetector contoursDetector(camcfg->blobDetection.thresholdingParams,
+    ContoursDetector contoursDetector(camcfg->blobDetection.thresholdParams,
                                       camcfg->blobDetection.contoursFilters);
 
     // const double factor = ((double)config->resizeNotifications.video /
     // 100.0);
-    Size displaySize =
-        camcfg->blobDetection.thresholdingParams.Resize.resize
-            ? camcfg->blobDetection.thresholdingParams.Resize.size
-            : frames[0].GetSize();
+    Size displaySize = camcfg->blobDetection.thresholdParams.Resize.resize
+                           ? camcfg->blobDetection.thresholdParams.Resize.size
+                           : frames[0].GetSize();
 
     contoursDetector.SetScale(displaySize);
 

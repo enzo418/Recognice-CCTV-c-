@@ -4,7 +4,7 @@
 namespace Observer {
     ValidatorByBlobs::ValidatorByBlobs(
         const BlobDetectionConfiguration& pDetectorCfg)
-        : contoursDetector(pDetectorCfg.thresholdingParams,
+        : contoursDetector(pDetectorCfg.thresholdParams,
                            pDetectorCfg.contoursFilters),
           blobDetector(pDetectorCfg.blobDetectorParams,
                        pDetectorCfg.blobFilters, this->contoursDetector),

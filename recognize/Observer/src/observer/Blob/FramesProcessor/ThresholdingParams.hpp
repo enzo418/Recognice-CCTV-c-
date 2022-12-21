@@ -3,7 +3,7 @@
 #include "observer/Size.hpp"
 
 namespace Observer {
-    struct ThresholdingParams {
+    struct ThresholdParams {
        public:
         struct ResizeParam {
             Size size;
@@ -24,6 +24,6 @@ namespace Observer {
         int BrightnessAboveThreshold;
         ResizeParam Resize;
 
-        bool operator==(const ThresholdingParams&) const = default;
+        bool operator==(const ThresholdParams&) const = default;
     };
 }  // namespace Observer

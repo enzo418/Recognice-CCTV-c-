@@ -53,7 +53,7 @@ class ConfigurationTest : public ::testing::Test {
                                                     ENotificationType::TEXT |
                                                     ENotificationType::IMAGE;
 
-        ThresholdingParams thresholdingParams = {
+        ThresholdParams thresholdingParams = {
             .FramesBetweenDiffFrames = 6,
             .ContextFrames = 6,
             .MedianBlurKernelSize = 3,
@@ -80,7 +80,7 @@ class ConfigurationTest : public ::testing::Test {
             .blobDetectorParams = detectorParams,
             .blobFilters = filtersBlob,
             .contoursFilters = contoursFilters,
-            .thresholdingParams = thresholdingParams,
+            .thresholdParams = thresholdingParams,
         };
 
         CameraConfiguration camera1 = {

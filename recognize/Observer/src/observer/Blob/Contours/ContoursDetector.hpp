@@ -10,7 +10,7 @@
 namespace Observer {
     class ContoursDetector {
        public:
-        ContoursDetector(const ThresholdingParams& thresholdingParams,
+        ContoursDetector(const ThresholdParams& thresholdingParams,
                          const ContoursFilter& filterContours);
 
        public:
@@ -52,7 +52,7 @@ namespace Observer {
         bool ContourIsInsideIgnoredSet(std::vector<Point>& contour);
 
        public:
-        ThresholdingParams params;
+        ThresholdParams params;
         ContoursFilter filters;
         FrameContextualizer contextBuilder;
         Size scaleTarget;

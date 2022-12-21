@@ -77,20 +77,19 @@ namespace Observer {
                                        MinimumArea, ignoredAreas, ignoredSets);
 
     /* ----------- ThresholdingParams::ResizeParam ---------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ThresholdingParams::ResizeParam, size,
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ThresholdParams::ResizeParam, size,
                                        resize);
 
     /* ----------------- ThresholdingParams ----------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ThresholdingParams,
-                                       FramesBetweenDiffFrames, ContextFrames,
-                                       MedianBlurKernelSize,
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ThresholdParams, FramesBetweenDiffFrames,
+                                       ContextFrames, MedianBlurKernelSize,
                                        GaussianBlurKernelSize, DilationSize,
                                        BrightnessAboveThreshold, Resize);
 
     /* ------------- BlobDetectionConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration,
                                        blobDetectorParams, blobFilters,
-                                       contoursFilters, thresholdingParams);
+                                       contoursFilters, thresholdParams);
 
     /* --------------- ProcessingConfiguration -------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessingConfiguration, resize, masks,
