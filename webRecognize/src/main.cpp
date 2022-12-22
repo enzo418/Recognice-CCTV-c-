@@ -254,15 +254,16 @@ int main() {
 
                 std::string buffer;
 
-                res->onData([&configurationDAO, req, res,
+                // get it before we attach the reader
+                auto ct = std::string(req->getHeader("content-type"));
+
+                res->onData([&configurationDAO, req, res, ct,
                              buffer = std::move(buffer)](std::string_view data,
                                                          bool last) mutable {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
                         //   std::cout << "buffer: " << buffer << std::endl;
-
-                        auto ct = std::string(req->getHeader("content-type"));
 
                         if (ct != "application/json") {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
@@ -453,14 +454,15 @@ int main() {
 
                 std::string buffer;
 
-                res->onData([&configurationDAO, res, req,
+                auto ct = std::string(req->getHeader("content-type"));
+
+                res->onData([&configurationDAO, res, req, ct,
                              buffer = std::move(buffer)](std::string_view data,
                                                          bool last) mutable {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
-                        if (req->getHeader("content-type") !=
-                            "application/json") {
+                        if (ct != "application/json") {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
                                 ->end("Expected a json body");
                             return;
@@ -644,14 +646,16 @@ int main() {
 
                 std::string buffer;
 
-                res->onData([&configurationDAO, res, req,
+                // get it before we attach the reader
+                auto ct = std::string(req->getHeader("content-type"));
+
+                res->onData([&configurationDAO, res, req, ct,
                              buffer = std::move(buffer)](std::string_view data,
                                                          bool last) mutable {
                     buffer.append(data.data(), data.length());
 
                     if (last) {
-                        if (req->getHeader("content-type") !=
-                            "application/json") {
+                        if (ct != "application/json") {
                             res->writeStatus(HTTP_400_BAD_REQUEST)
                                 ->end("Expected a json body");
                             return;
