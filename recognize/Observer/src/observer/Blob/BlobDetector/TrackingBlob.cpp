@@ -13,7 +13,7 @@ namespace Observer {
         this->SetCenter(this->boundingRect);
         this->centers[frameIndex] = this->center;
 
-        // to avoid not having a velocity in the first apparence, make it null
+        // to avoid not having a velocity in the first appearance, make it null
         this->velocities[frameIndex] = Vec(this->center, this->center);
 
         this->appearsOnFrames.push_back(frameIndex);

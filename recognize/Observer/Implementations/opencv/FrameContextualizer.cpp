@@ -10,7 +10,7 @@ namespace Observer {
             cv::Point(params.DilationSize, params.DilationSize));
     }
 
-    void FrameContextualizer::ApplyThresholding(Frame& diffFrame) {
+    void FrameContextualizer::ApplyThreshold(Frame& diffFrame) {
         auto& frame = diffFrame.GetInternalFrame();
 
         // Normalizing noise
@@ -25,13 +25,13 @@ namespace Observer {
         // Normalizing noise 3
         cv::morphologyEx(frame, frame, cv::MORPH_OPEN, morphologyElement);
 
-        double mediumBrigthness = 10;
+        double mediumBrightness = 10;
         auto nonzero = cv::countNonZero(frame);
         if (nonzero != 0) {
-            mediumBrigthness = (double)cv::sum(frame)[0] / nonzero;
+            mediumBrightness = (double)cv::sum(frame)[0] / nonzero;
         }
         cv::threshold(frame, frame,
-                      mediumBrigthness * params.BrightnessAboveThreshold, 255,
+                      mediumBrightness * params.BrightnessAboveThreshold, 255,
                       cv::THRESH_BINARY);
     }
 }  // namespace Observer

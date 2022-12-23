@@ -125,14 +125,14 @@ namespace Observer {
                     // 3. Get a temporal blob than includes all of them
                     std::vector<Point> points(sz);
 
-                    int lastp = 0;
+                    int last_p = 0;
                     for (auto blob : blobs) {
                         auto bp = std::move(blob.TakePoints());
                         int n = bp.size();
-                        std::swap_ranges(points.begin() + lastp,
-                                         points.begin() + lastp + bp.size(),
+                        std::swap_ranges(points.begin() + last_p,
+                                         points.begin() + last_p + bp.size(),
                                          bp.begin());
-                        lastp += n;
+                        last_p += n;
                     }
 
                     Rect rect = BoundingRect(points);

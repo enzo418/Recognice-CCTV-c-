@@ -13,7 +13,7 @@ namespace Observer {
     std::vector<Frame> FrameContextualizer::GenerateDiffFrames(
         std::vector<Frame>& frames) {
         std::vector<Frame> diffs(frames.size());
-        std::vector<Frame> formatedFrames(frames.size());
+        std::vector<Frame> formattedFrames(frames.size());
         Frame diff;
 
         // 1. Get the diff between two frames
@@ -31,7 +31,7 @@ namespace Observer {
 
             current.ToColorSpace(ColorSpaceConversion::COLOR_RGB2GRAY);
 
-            formatedFrames[i] = current;
+            formattedFrames[i] = current;
 
             if (i == 1) {
                 if (params.Resize.resize) {
@@ -39,12 +39,12 @@ namespace Observer {
                 }
 
                 previous.ToColorSpace(ColorSpaceConversion::COLOR_RGB2GRAY);
-                formatedFrames[0] = previous;
+                formattedFrames[0] = previous;
             }
         }
 
         // 2. Get the diff frames
-        Frame lastFrame = formatedFrames[0];
+        Frame lastFrame = formattedFrames[0];
 
         Size size = lastFrame.GetSize();
         // fill the firsts diff frames that we are going to skip...
@@ -56,9 +56,9 @@ namespace Observer {
         for (int i = params.FramesBetweenDiffFrames; i < frames.size();
              i += params.FramesBetweenDiffFrames) {
             // diff between the last 2 frames
-            diff = lastFrame.AbsoluteDifference(formatedFrames[i]);
+            diff = lastFrame.AbsoluteDifference(formattedFrames[i]);
 
-            this->ApplyThresholding(diff);
+            this->ApplyThreshold(diff);
 
             // since there will not be diff frames in all the
             // FramesBetweenDiffFrames following frames, just use this one for
@@ -69,7 +69,7 @@ namespace Observer {
                 diff.CopyTo(diffs[j]);
             }
 
-            lastFrame = formatedFrames[i];
+            lastFrame = formattedFrames[i];
         }
 
         diffs[0] = diffs[1];
@@ -103,7 +103,7 @@ namespace Observer {
         diff = grayFrame.AbsoluteDifference(this->lastFrame);
 
         // remove noise from the image
-        this->ApplyThresholding(diff);
+        this->ApplyThreshold(diff);
 
         // add the context
         diff.CopyTo(this->lastDiffFrameContext);

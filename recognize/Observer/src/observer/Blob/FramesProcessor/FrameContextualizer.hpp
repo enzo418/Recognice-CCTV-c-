@@ -35,7 +35,7 @@ namespace Observer {
          *
          * @param frame
          */
-        void ApplyThresholding(Frame& frame);
+        void ApplyThreshold(Frame& frame);
 
         /**
          * @brief Initialize members like morphologyElement to optimize memory

@@ -20,8 +20,8 @@ namespace Observer {
         int GetFrameCounter();
 
         /**
-         * @brief Set the size to wich all the contours will be scaled before
-         * beign filtered and returned.
+         * @brief Set the size to which all the contours will be scaled before
+         * being filtered and returned.
          *
          * @param sizeToScale size to scale them
          */

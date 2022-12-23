@@ -1,11 +1,10 @@
 #include "ContoursDetector.hpp"
 
 namespace Observer {
-    ContoursDetector::ContoursDetector(
-        const ThresholdParams& thresholdingParams,
-        const ContoursFilter& filterContours)
-        : contextBuilder(thresholdingParams),
-          params(thresholdingParams),
+    ContoursDetector::ContoursDetector(const ThresholdParams& thresholdParams,
+                                       const ContoursFilter& filterContours)
+        : contextBuilder(thresholdParams),
+          params(thresholdParams),
           filters(filterContours) {}
 
     FrameContours ContoursDetector::FindContours(Frame& frame) {
@@ -65,16 +64,16 @@ namespace Observer {
 
         FrameContours filtered;
 
-        double avrgArea = 0;
-        int contorus_size = 0;
+        double avgArea = 0;
+        int contours_size = 0;
         std::vector<double> contours_areas(contours.size());
         std::vector<bool> contour_overlap(contours.size(), false);
 
-        // Get the area of each contour and calcule the average
+        // Get the area of each contour and calculate the average
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = BoundingRect(contours[i]);
             double area = rect.area();
-            avrgArea += area;
+            avgArea += area;
             contours_areas[i] = area;
 
             // check for intersection with ignored areas
@@ -90,12 +89,12 @@ namespace Observer {
             }
         }
 
-        avrgArea /= contours.size();
+        avgArea /= contours.size();
 
         // Delete all the contours that doesn't comply with the filters
         auto sz = contours.size();
         for (int i = 0; i < sz; i++) {
-            const bool areaFilter = (contours_areas[i] >= avrgArea ||
+            const bool areaFilter = (contours_areas[i] >= avgArea ||
                                      !filters.FilterByAverageArea) &&
                                     contours_areas[i] >= filters.MinimumArea;
 
@@ -187,7 +186,8 @@ namespace Observer {
         // if for some set the contour has all of its point inside it, then
         // return true, else keep searching. Hopefully is the first one.
 
-        const double perc = filters.ignoredSets.minPercentageToIgnore / 100.0;
+        const double percentage =
+            filters.ignoredSets.minPercentageToIgnore / 100.0;
         for (auto& set : filters.ignoredSets.sets) {
             int contourSize = contour.size();
             int total = 0;
@@ -196,7 +196,7 @@ namespace Observer {
                 total += PointPolygonTest(set, point) > 0;
             }
 
-            if (total >= contourSize * perc) {
+            if (total >= contourSize * percentage) {
                 return true;
             }
         }
