@@ -11,7 +11,7 @@ namespace Observer {
      * @brief Generates a frame with all the context requested in the parameters
      * based on previous frames.
      *
-     * it's a incomplete templated class, that means a especialization is needed
+     * it's a incomplete templated class, that means a specialization is needed
      * for some of its methods.
      */
     class FrameContextualizer {
@@ -30,7 +30,7 @@ namespace Observer {
 
         /**
          * @brief Apply threshold to a image.
-         * Each especialization it should implement a thresholding based on the
+         * Each specialization it should implement a threshold based on the
          * parameters given.
          *
          * @param frame
