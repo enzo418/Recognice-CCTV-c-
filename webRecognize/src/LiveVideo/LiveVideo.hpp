@@ -111,7 +111,7 @@ namespace Web {
             this->GetNextFrame();
 
             this->mtxFrame.lock();
-            if (!this->encoded && this->imageReady) {
+            if (!this->encoded && this->imageReady && !this->frame.IsEmpty()) {
                 this->frame.EncodeImage(".jpg", this->quality, buffer);
                 this->encoded = true;
             }

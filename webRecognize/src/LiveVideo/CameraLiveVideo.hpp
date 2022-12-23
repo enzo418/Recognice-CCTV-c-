@@ -5,6 +5,7 @@
 
 #include "LiveVideo.hpp"
 #include "LiveViewExceptions.hpp"
+#include "observer/Domain/BufferedSource.hpp"
 #include "observer/Implementation.hpp"
 
 namespace Web {
@@ -34,7 +35,7 @@ namespace Web {
         void OpenCamera();
 
        private:
-        Observer::VideoSource source;
+        Observer::BufferedSource source;
         std::string cameraUri;
 
        private:
@@ -58,7 +59,7 @@ namespace Web {
          * There is no need to lock the frame mutex since it's the only
          * way to get the frames and its called from the main loop.
          */
-        source.GetNextFrame(this->frame);
+        this->frame = source.GetFrame();
 
         this->NewValidFrameReceived();
     }
@@ -80,9 +81,9 @@ namespace Web {
 
     template <bool SSL>
     void CameraLiveVideo<SSL>::OpenCamera() {
-        source.Open(cameraUri);
+        source.TryOpen(cameraUri);
 
-        if (source.isOpened()) {
+        if (source.IsOk()) {
             Observer::clear_flag(this->status, Status::CLOSED);
             Observer::clear_flag(this->status, Status::ERROR);
 
