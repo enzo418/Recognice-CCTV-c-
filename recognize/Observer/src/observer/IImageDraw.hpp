@@ -11,5 +11,10 @@ namespace Observer {
         virtual void FillConvexPoly(Frame& image,
                                     const std::vector<Point>& points,
                                     const ScalarVector& color) = 0;
+
+        virtual void DrawContours(
+            std::vector<Frame>& frames,
+            const std::vector<std::vector<std::vector<Point>>>& videoContours,
+            const ScalarVector& color) = 0;
     };
 }  // namespace Observer
