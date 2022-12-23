@@ -43,7 +43,7 @@ namespace Observer {
          * @param maxHStack Number of images to stack horizontally on each row
          * @return Frame
          */
-        virtual Frame StackImages(Frame* images, uint8_t arraySize,
-                                  uint8_t maxHStack = 2) = 0;
+        virtual Frame StackImages(Frame* images, int arraySize,
+                                  int maxHStack = 2) = 0;
     };
 }  // namespace Observer

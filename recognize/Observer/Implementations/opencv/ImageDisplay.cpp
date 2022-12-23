@@ -33,8 +33,8 @@ namespace Observer {
         cv::destroyWindow(name);
     }
 
-    Frame ImageDisplay::StackImages(Frame* wrappedImages, uint8_t arraySize,
-                                    uint8_t maxHStack) {
+    Frame ImageDisplay::StackImages(Frame* wrappedImages, int arraySize,
+                                    int maxHStack) {
         std::vector<cv::Mat> images(arraySize);
 
         // Transform cv::Mat wrapper vector to cv::Mat vector.
@@ -61,8 +61,8 @@ namespace Observer {
      * 0 to automatically calculate it.
      * @return Frame
      */
-    cv::Mat ImageDisplay::HStackPadded(cv::Mat* images, uint8_t arraySize,
-                                       uint8_t height) {
+    cv::Mat ImageDisplay::HStackPadded(cv::Mat* images, int arraySize,
+                                       int height) {
         int maxHeight = 0;
         cv::Mat res;
 
@@ -70,13 +70,13 @@ namespace Observer {
 
         if (height == 0) {
             // calculate the ideal height (bigger)
-            for (ushort i = 0; i < arraySize; i++) {
+            for (int i = 0; i < arraySize; i++) {
                 if (images[i].rows > maxHeight) maxHeight = images[i].rows;
             }
         } else
             maxHeight = height;
 
-        for (ushort i = 0; i < arraySize; i++) {
+        for (int i = 0; i < arraySize; i++) {
             assert(images[i].dims <= 2);
             assert(images[i].type() == images[0].type());
             if (images[i].rows != maxHeight)
@@ -102,8 +102,8 @@ namespace Observer {
      * calculate it.
      * @return Frame
      */
-    cv::Mat ImageDisplay::VStackPadded(cv::Mat* images, uint8_t arraySize,
-                                       uint8_t width) {
+    cv::Mat ImageDisplay::VStackPadded(cv::Mat* images, int arraySize,
+                                       int width) {
         int maxWidth = 0;
         cv::Mat res;
 
@@ -136,9 +136,8 @@ namespace Observer {
      * @param maxHStack Number of images to stack horizontally on each row
      * @return Frame
      */
-    cv::Mat ImageDisplay::InternalStackImages(cv::Mat* images,
-                                              uint8_t arraySize,
-                                              uint8_t maxHStack) {
+    cv::Mat ImageDisplay::InternalStackImages(cv::Mat* images, int arraySize,
+                                              int maxHStack) {
         std::vector<cv::Mat> hstacked;
         int count = 0;
 
@@ -174,8 +173,8 @@ namespace Observer {
      * @param left Pad to add in the left side of the image
      * @param right Pad to add in the right side of the image
      */
-    void ImageDisplay::AddPad(cv::Mat& image, uint8_t top, uint8_t bottom,
-                              uint8_t left, uint8_t right) {
+    void ImageDisplay::AddPad(cv::Mat& image, int top, int bottom, int left,
+                              int right) {
         cv::copyMakeBorder(image, image, top, bottom, left, right,
                            cv::BORDER_CONSTANT);
     }

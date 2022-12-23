@@ -40,8 +40,8 @@ namespace Observer {
          * @param maxHStack Number of images to stack horizontally on each row
          * @return Frame
          */
-        Frame StackImages(Frame* images, uint8_t arraySize,
-                          uint8_t maxHStack = 2) override;
+        Frame StackImages(Frame* images, int arraySize,
+                          int maxHStack = 2) override;
 
         /**
          * @brief Get the instance
@@ -51,8 +51,8 @@ namespace Observer {
         static ImageDisplay& Get();
 
        private:
-        cv::Mat InternalStackImages(cv::Mat* images, uint8_t arraySize,
-                                    uint8_t maxHStack = 2);
+        cv::Mat InternalStackImages(cv::Mat* images, int arraySize,
+                                    int maxHStack = 2);
 
         /**
          * @brief Stack images Horizontally
@@ -63,8 +63,7 @@ namespace Observer {
          * 0 to automatically calculate it.
          * @return Frame
          */
-        cv::Mat HStackPadded(cv::Mat* images, uint8_t arraySize,
-                             uint8_t height);
+        cv::Mat HStackPadded(cv::Mat* images, int arraySize, int height);
 
         /**
          * @brief Stack images Vertically
@@ -75,8 +74,7 @@ namespace Observer {
          * calculate it.
          * @return Frame
          */
-        cv::Mat VStackPadded(cv::Mat* images, uint8_t arraySize,
-                             uint8_t width = 0);
+        cv::Mat VStackPadded(cv::Mat* images, int arraySize, int width = 0);
 
         /**
          * @brief Add pad to iamge
@@ -87,7 +85,7 @@ namespace Observer {
          * @param left Pad to add in the left side of the image
          * @param right Pad to add in the right side of the image
          */
-        void AddPad(cv::Mat& image, uint8_t top = 0, uint8_t bottom = 0,
-                    uint8_t left = 0, uint8_t right = 0);
+        void AddPad(cv::Mat& image, int top = 0, int bottom = 0, int left = 0,
+                    int right = 0);
     };
 }  // namespace Observer
