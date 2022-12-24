@@ -28,18 +28,13 @@ namespace Observer {
         return contours;
     }
 
-    VideoContours ContoursDetector::FindContours(std::vector<Frame>& frames) {
-        VideoContours contours(frames.size());
+    VideoContours ContoursDetector::FindContoursFromDiffFrames(
+        const std::vector<Frame>& pDiffFrames) {
+        std::vector<Frame> diffFrames = std::move(pDiffFrames);
 
-        // ImageDisplay<TFrame>::CreateWindow("diffimg");
-
-        std::vector<Frame> diffFrames =
-            this->contextBuilder.GenerateDiffFrames(frames);
+        VideoContours contours(diffFrames.size());
 
         for (int i = 0; i < diffFrames.size(); i++) {
-            // ImageDisplay<TFrame>::ShowImage("diffimg", diffFrames[i]);
-            // cv::waitKey(0);
-
             ImageProcessing::Get().FindContours(
                 diffFrames[i], contours[i],
                 ContourRetrievalMode::CONTOUR_RETR_LIST,
@@ -54,9 +49,12 @@ namespace Observer {
 
         this->ScaleContours(contours);
 
-        // ImageDisplay<TFrame>::DestroyWindow("diffimg");
-
         return contours;
+    }
+
+    VideoContours ContoursDetector::FindContours(std::vector<Frame>& frames) {
+        return FindContoursFromDiffFrames(
+            this->contextBuilder.GenerateDiffFrames(frames));
     }
 
     FrameContours ContoursDetector::FilterContours(FrameContours& contours) {

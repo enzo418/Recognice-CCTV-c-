@@ -17,6 +17,15 @@ namespace Observer {
         FrameContours FindContours(Frame& frame);
         VideoContours FindContours(std::vector<Frame>& frames);
 
+        /**
+         * @brief Same as above but expects frames with 1 channel
+         *
+         * @param frames 1 channel frame list
+         * @return VideoContours
+         */
+        VideoContours FindContoursFromDiffFrames(
+            const std::vector<Frame>& diffFrames);
+
         int GetFrameCounter();
 
         /**
