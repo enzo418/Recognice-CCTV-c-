@@ -5,17 +5,17 @@ namespace Observer {
 
     Blob::Blob(int pId) { this->id = pId; }
 
-    int Blob::GetId() { return this->id; }
+    int Blob::GetId() const { return this->id; }
 
-    int Blob::GetFirstAppearance() {
+    int Blob::GetFirstAppearance() const {
         return this->appearsOnFrames.empty() ? 0
                                              : this->appearsOnFrames.front();
     }
-    int Blob::GetLastAppearance() {
+    int Blob::GetLastAppearance() const {
         return this->appearsOnFrames.empty() ? 0 : this->appearsOnFrames.back();
     }
 
-    Vec Blob::GetVelocity(int frameIndex) {
+    Vec Blob::GetVelocity(int frameIndex) const {
         if (this->velocities.find(frameIndex) != this->velocities.end()) {
             return this->velocities.at(frameIndex);
         } else {
@@ -23,7 +23,7 @@ namespace Observer {
         }
     }
 
-    Rect Blob::GetBoundingRect(int frameIndex) {
+    Rect Blob::GetBoundingRect(int frameIndex) const {
         if (this->boundingRects.find(frameIndex) != this->boundingRects.end()) {
             return this->boundingRects.at(frameIndex);
         } else {
@@ -31,7 +31,7 @@ namespace Observer {
         }
     }
 
-    Point Blob::GetCenter(int frameIndex) {
+    Point Blob::GetCenter(int frameIndex) const {
         if (this->centers.find(frameIndex) != this->centers.end()) {
             return this->centers.at(frameIndex);
         } else {

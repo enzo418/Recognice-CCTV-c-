@@ -24,21 +24,21 @@ namespace Observer {
          *
          * @return int
          */
-        int GetId();
+        int GetId() const;
 
         /**
          * @brief Get the index of the first frame where it appears
          *
          * @return int
          */
-        int GetFirstAppearance();
+        int GetFirstAppearance() const;
 
         /**
          * @brief Get the index of the last frame where it appears
          *
          * @return int
          */
-        int GetLastAppearance();
+        int GetLastAppearance() const;
 
         /**
          * @brief Get the velocity at the index. If not found return an empty
@@ -47,14 +47,14 @@ namespace Observer {
          * @param frameIndex
          * @return Vec
          */
-        Vec GetVelocity(int frameIndex);
+        Vec GetVelocity(int frameIndex) const;
 
         /**
          * @brief Get the center of the blob.
          *
          * @return Point
          */
-        Point GetCenter(int frameIndex);
+        Point GetCenter(int frameIndex) const;
 
         /**
          * @brief Get the bounding rect at some index. If not found then return
@@ -63,7 +63,7 @@ namespace Observer {
          * @param frameIndex
          * @return Rect
          */
-        Rect GetBoundingRect(int frameIndex);
+        Rect GetBoundingRect(int frameIndex) const;
 
         /**
          * @brief Get the appearances.
