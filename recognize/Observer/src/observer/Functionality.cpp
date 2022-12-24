@@ -2,33 +2,36 @@
 
 #include <thread>
 
-Functionality::Functionality() { running = false; }
+namespace Observer {
 
-Functionality::~Functionality() {
-    if (running) {
-        this->Stop();
-    }
-}
+    Functionality::Functionality() { running = false; }
 
-void Functionality::Start() {
-    if (running) {
-        this->Stop();
+    Functionality::~Functionality() {
+        if (running) {
+            this->Stop();
+        }
     }
 
-    running = true;
-    thread = std::thread(&Functionality::InternalStart, this);
-}
+    void Functionality::Start() {
+        if (running) {
+            this->Stop();
+        }
 
-void Functionality::Stop() {
-    running = false;
-
-    if (thread.joinable()) {
-        thread.join();
+        running = true;
+        thread = std::thread(&Functionality::InternalStart, this);
     }
 
-    this->PostStop();
-}
+    void Functionality::Stop() {
+        running = false;
 
-void Functionality::PostStop() {}
+        if (thread.joinable()) {
+            thread.join();
+        }
 
-bool Functionality::IsRunning() { return running; }
+        this->PostStop();
+    }
+
+    void Functionality::PostStop() {}
+
+    bool Functionality::IsRunning() { return running; }
+}  // namespace Observer
