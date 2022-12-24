@@ -19,7 +19,11 @@ namespace Observer {
          * @param path path with the filename
          * @param image
          */
-        void SaveImage(const std::string& path, Frame& image) override;
+        void SaveImage(const std::string& path, Frame& image,
+                       const std::vector<int>& flags = {}) override;
+
+        void SaveImages(const std::string& path, std::vector<Frame>& images,
+                        const std::vector<int>& flags = {}) override;
 
         /**
          * @brief Read an image from disk
@@ -28,6 +32,9 @@ namespace Observer {
          * @param imageOut
          */
         void ReadImage(const std::string& path, Frame& imageOut) override;
+
+        void ReadImages(const std::string& path,
+                        std::vector<Frame>& imagesOut) override;
 
         /**
          * @brief Get the instance
