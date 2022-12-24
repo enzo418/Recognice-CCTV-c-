@@ -957,7 +957,7 @@ int main() {
                      req->setYield(true);  // mark as not handled
                  } else if (FileStreamer::GetInstance().streamFile(
                                 res, url, rangeHeader)) {
-                     // std::cout << "Succesfull sended file" << std::endl;
+                     // std::cout << "Successfully sended file" << std::endl;
                  } else {
                      res->end();
                  }

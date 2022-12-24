@@ -4,13 +4,13 @@
 #include <filesystem>
 #include <iostream>
 
-#include "observer/Log/log.hpp"
-#include "uWebSockets/App.h"
 #include "../server_utils.hpp"
 #include "FileExtension.hpp"
 #include "FileReader.hpp"
 #include "Range.hpp"
 #include "StaticFilesHandler.hpp"
+#include "observer/Log/log.hpp"
+#include "uWebSockets/App.h"
 
 // Min buffer: 32kb = 32.768 bytes
 const size_t ReadWriteBufferSize = 32768;
@@ -157,7 +157,7 @@ class FileStreamer {
          *https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding#directives
          *
          * When we reach the end of file then we send an chunk with 0 size,
-         * if sucess then the client should have responded with an FIN flag and
+         * if success then the client should have responded with an FIN flag and
          *we of course try to end as the user said.
          *
          * Tranfer-Enconding chunk doesn't allow to seek for a specific range on
@@ -165,6 +165,9 @@ class FileStreamer {
          **/
 
         long fz = fileReader->getFileSize();
+
+        res->writeHeader("Transfer-Encoding", "chunked")
+            ->writeHeader("Access-Control-Allow-Origin", "*");
 
         res->onAborted(
             [url]() { std::cout << "[" << url << "] ABORTED!" << std::endl; });
