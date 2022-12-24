@@ -37,15 +37,13 @@ namespace Observer {
                                     int maxHStack) {
         std::vector<cv::Mat> images(arraySize);
 
-        // Transform cv::Mat wrapper vector to cv::Mat vector.
-        // Can we just store all the pointers to the image like
-        // std::vector<cv::Mat*> images = for wrappedimages as w return
-        // &w.Internal()?
-        // no, since the internal stack uses pointers to speed up the process.
-        // So we need to copy them.
+        // Instead of a contiguous Observer::Frame we need contiguous cv::Mat so
+        // we build an array of that
 
         for (int i = 0; i < arraySize; i++) {
-            // pray that the internal type is copying the image on = op!
+            // cv::Mat operator= documentation:
+            //  "Matrix assignment is an O(1) operation. This means that no data
+            //  is copied but the data is shared and the reference counter"
             images[i] = wrappedImages[i].GetInternalFrame();
         }
 
