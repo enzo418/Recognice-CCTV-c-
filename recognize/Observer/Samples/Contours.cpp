@@ -8,10 +8,11 @@
 #include <string>
 #include <thread>
 
+#include "observer/Domain/BufferedSource.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 
-void RecordCamera(Observer::Configuration* cfg, int minutes);
+void Start(Observer::Configuration* cfg, int minutes);
 
 using namespace Observer;
 
@@ -53,16 +54,16 @@ int main(int argc, char** argv) {
     auto cfg =
         Observer::ConfigurationParser::ConfigurationFromJsonFile(pathConfig);
 
-    RecordCamera(&cfg, seconds);
+    Start(&cfg, seconds);
 }
 
-void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
-    auto camcfg = &cfg->cameras[0];
-    Observer::VideoSource source;
+void Start(Observer::Configuration* cfg, int pSeconds) {
+    auto camCfg = &cfg->cameras[0];
+    Observer::BufferedSource source;
 
-    source.Open(cfg->cameras[0].url);
+    source.TryOpen(cfg->cameras[0].url);
 
-    if (!source.isOpened()) {
+    if (!source.IsOk()) {
         OBSERVER_ERROR("Could not open the camera.");
         return;
     }
@@ -75,25 +76,25 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     Observer::ImageDisplay::Get().CreateWindow("Image");
 
     Frame frame;
-    int delay = source.GetFPS() * 27;
-    while (delay--) {
-        source.GetNextFrame(frame);
-    }
 
     timer.Start();
     int i = 0;
     // timer.GetDuration() < pSeconds
     while (i < source.GetFPS() * pSeconds) {
-        source.GetNextFrame(frame);
+        if (source.IsFrameAvailable()) {
+            frame = source.GetFrame();
 
-        frame.Resize(Size(640, 360));
+            if (frame.IsEmpty()) continue;
 
-        frames.push_back(frame.Clone());
+            frame.Resize(Size(640, 360));
 
-        Observer::ImageDisplay::Get().ShowImage("Image", frame);
+            frames.push_back(frame.Clone());
 
-        OBSERVER_TRACE("Left: {} seconds", pSeconds - timer.GetDuration());
-        i++;
+            Observer::ImageDisplay::Get().ShowImage("Image", frame);
+
+            OBSERVER_TRACE("Left: {} seconds", pSeconds - timer.GetDuration());
+            i++;
+        }
         // cv::waitKey(1000.0 / source.GetFPS());
         // cv::waitKey(1000.0 / source.GetFPS());
     }
@@ -101,13 +102,13 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     // Observer::ImageDisplay<FrameType>::DestroyWindow("Image");
     source.Close();
 
-    ContoursDetector contoursDetector(camcfg->blobDetection.thresholdParams,
-                                      camcfg->blobDetection.contoursFilters);
+    ContoursDetector contoursDetector(camCfg->blobDetection.thresholdParams,
+                                      camCfg->blobDetection.contoursFilters);
 
     // const double factor = ((double)config->resizeNotifications.video /
     // 100.0);
-    Size displaySize = camcfg->blobDetection.thresholdParams.Resize.resize
-                           ? camcfg->blobDetection.thresholdParams.Resize.size
+    Size displaySize = camCfg->blobDetection.thresholdParams.Resize.resize
+                           ? camCfg->blobDetection.thresholdParams.Resize.size
                            : frames[0].GetSize();
 
     contoursDetector.SetScale(displaySize);
@@ -119,12 +120,12 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
     // contoursDetector.ScaleContours(cts, displaySize);
 
     // std::vector<Rect> realAreas;
-    // auto ref = camcfg->blobDetection.contoursFilters.ignoredAreas.reference;
+    // auto ref = camCfg->blobDetection.contoursFilters.ignoredAreas.reference;
     // double scaleX = (double)displaySize.width / ref.width;
     // double scaleY = (double)displaySize.height / ref.height;
 
     // for (auto& rect :
-    //      camcfg->blobDetection.contoursFilters.ignoredAreas.areas) {
+    //      camCfg->blobDetection.contoursFilters.ignoredAreas.areas) {
     //     realAreas.push_back(Rect(rect.x * scaleX, rect.y * scaleY,
     //                              rect.width * scaleX, rect.height * scaleY));
     // }
@@ -135,7 +136,7 @@ void RecordCamera(Observer::Configuration* cfg, int pSeconds) {
         frame.Resize(displaySize);
 
         // for (auto& rect :
-        //      camcfg->blobDetection.contoursFilters.ignoredAreas.areas) {
+        //      camCfg->blobDetection.contoursFilters.ignoredAreas.areas) {
         //     cv::rectangle(frame, rect, cv::Scalar(255, 0, 255));
         // }
 
