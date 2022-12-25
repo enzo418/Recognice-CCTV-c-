@@ -37,7 +37,10 @@ namespace Web {
     template <bool SSL>
     void WebsocketNotificator<SSL>::InternalStart() {
         while (this->running) {
-            if (!smpQueue.acquire_timeout<250>()) {
+            if (smpQueue.acquire_timeout<250>()) {
+                OBSERVER_ASSERT(notifications.size() > 0,
+                                "semaphore logic error");
+
                 // parse all to json
                 nlohmann::json json_obj = nlohmann::json::array();
 
