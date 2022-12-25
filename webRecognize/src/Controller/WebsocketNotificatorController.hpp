@@ -15,6 +15,8 @@
 #include "observer/Domain/Notification/LocalNotifications.hpp"
 #include "observer/IFunctionality.hpp"
 #include "observer/Log/log.hpp"
+#include "observer/Semaphore.hpp"
+#include "observer/SimpleBlockingQueue.hpp"
 
 namespace Web {
     template <bool SSL>
@@ -46,8 +48,8 @@ namespace Web {
         bool running;
 
        private:
-        std::mutex mtxNotifications;
-        std::deque<Web::API::DTONotification> notifications;
+        Semaphore smpQueue;
+        Observer::SimpleBlockingQueue<Web::API::DTONotification> notifications;
 
        private:
         std::thread thread;
@@ -82,28 +84,24 @@ namespace Web {
     template <bool SSL>
     void WebsocketNotificator<SSL>::InternalStart() {
         while (this->running) {
-            mtxNotifications.lock();
-
-            if (!notifications.empty()) {
+            if (!smpQueue.acquire_timeout<250>()) {
                 // parse all to json
-                nlohmann::json json_obj = notifications;
+                nlohmann::json json_obj = nlohmann::json::array();
+
+                while (notifications.size() > 0) {
+                    json_obj.push_back(notifications.pop());
+                }
+
                 const std::string json = json_obj.dump();
 
-                notifications.clear();
-                mtxNotifications.unlock();
-
                 this->SendToClients(json.c_str(), json.size());
-            } else {
-                mtxNotifications.unlock();
             }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
         }
     }
 
     template <bool SSL>
     void WebsocketNotificator<SSL>::update(Web::API::DTONotification ev) {
-        std::lock_guard<std::mutex> g_n(mtxNotifications);
-        notifications.push_back(ev);
+        notifications.push(ev);
+        smpQueue.release();
     }
 }  // namespace Web
