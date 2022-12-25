@@ -13,7 +13,7 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
-#include "observer/IFunctionality.hpp"
+#include "observer/Functionality.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
 #include "observer/SimpleBlockingQueue.hpp"
@@ -21,65 +21,18 @@
 namespace Web {
     template <bool SSL>
     class WebsocketNotificator final
-        : public IFunctionality,
+        : public Observer::Functionality,
           public WebsocketService<SSL, PerSocketData> {
        public:
-        WebsocketNotificator();
-        ~WebsocketNotificator();
-
-        /**
-         * @brief Doesn't lock.
-         *
-         */
-        void Start() override;
-
-        /**
-         * @brief Doesn't lock.
-         *
-         */
-        void Stop() override;
-
         void update(Web::API::DTONotification ev);
 
        private:
         void InternalStart();
 
        private:
-        bool running;
-
-       private:
         Semaphore smpQueue;
         Observer::SimpleBlockingQueue<Web::API::DTONotification> notifications;
-
-       private:
-        std::thread thread;
     };
-
-    template <bool SSL>
-    WebsocketNotificator<SSL>::WebsocketNotificator() {}
-
-    template <bool SSL>
-    WebsocketNotificator<SSL>::~WebsocketNotificator() {
-        this->Stop();
-    }
-
-    template <bool SSL>
-    void WebsocketNotificator<SSL>::Start() {
-        OBSERVER_ASSERT(!running, "WebsocketNotificator already running!");
-
-        this->running = true;
-
-        thread = std::thread(&WebsocketNotificator<SSL>::InternalStart, this);
-    }
-
-    template <bool SSL>
-    void WebsocketNotificator<SSL>::Stop() {
-        this->running = false;
-
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
 
     template <bool SSL>
     void WebsocketNotificator<SSL>::InternalStart() {

@@ -6,7 +6,6 @@
 #include "../LiveVideo/CameraLiveVideo.hpp"
 #include "../LiveVideo/LiveViewsManager.hpp"
 #include "../LiveVideo/ObserverLiveVideo.hpp"
-#include "../Notifications/WebsocketNotificator.hpp"
 #include "RecognizeContext.hpp"
 
 namespace Web {
