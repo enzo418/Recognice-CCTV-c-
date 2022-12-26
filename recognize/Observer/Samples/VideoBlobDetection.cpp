@@ -194,8 +194,6 @@ std::vector<Frame> ReadBufferFromCamera(
 
     frames.reserve((videoEnd - videoStart) * fileBufferData.fps);
 
-    int iFrame = 0;
-    int max = std::numeric_limits<int>::max();
     Frame frame;
 
     Timer<std::chrono::seconds> bufferStartTime(false);
@@ -224,7 +222,6 @@ std::vector<Frame> ReadBufferFromCamera(
 
             OBSERVER_TRACE("Time left: {}",
                            videoEnd - bufferTimer.GetDuration());
-            iFrame++;
         }
     }
 
@@ -311,7 +308,7 @@ void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
 
     std::vector<Frame> blobsFrames(frames.size());
 
-    for (int i = 0; i < frames.size(); i++) {
+    for (size_t i = 0; i < frames.size(); i++) {
         frames[i].CopyTo(contoursFrames[i]);
         frames[i].CopyTo(blobsFrames[i]);
     }
@@ -334,7 +331,7 @@ void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
     ImageDisplay::Get().CreateWindow("image");
 
     Frame frame;
-    int i = 0;
+    size_t i = 0;
     while (true) {
         framesToStack = {frames[i], diffFrames[i], contoursFrames[i],
                          blobsFrames[i]};
