@@ -7,6 +7,7 @@
 #include "ParsingExceptions.hpp"
 #include "magic_enum.hpp"
 #include "nlohmann/json.hpp"
+#include "observer/Blob/BlobDetector/Blob.hpp"
 #include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/Configuration/NotificationsServiceConfiguration.hpp"

@@ -56,6 +56,9 @@ endif()
 
 target_link_libraries(recognize ${DEPENDENCY_LIBS})
 
+target_compile_options(recognize PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
+
 # ---------------------- SAMPLES ---------------------- #
 if(RECO_BUILD_SAMPLES)
     add_executable(recognize_sample ${CMAKE_CURRENT_LIST_DIR}/Observer/Samples/Recognizer.cpp)
@@ -75,6 +78,8 @@ if(RECO_BUILD_SAMPLES)
         target_link_libraries(contoursShow recognize)
         target_link_libraries(camerasTest recognize)
         target_link_libraries(masksTests recognize)
+
+        target_compile_options(videoBlobDetection PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
 endif()
 

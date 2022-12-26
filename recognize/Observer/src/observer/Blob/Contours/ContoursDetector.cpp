@@ -3,9 +3,9 @@
 namespace Observer {
     ContoursDetector::ContoursDetector(const ThresholdParams& thresholdParams,
                                        const ContoursFilter& filterContours)
-        : contextBuilder(thresholdParams),
-          params(thresholdParams),
-          filters(filterContours) {}
+        : params(thresholdParams),
+          filters(filterContours),
+          contextBuilder(thresholdParams) {}
 
     FrameContours ContoursDetector::FindContours(Frame& frame) {
         // 1. Complete diff frames
@@ -29,12 +29,34 @@ namespace Observer {
     }
 
     VideoContours ContoursDetector::FindContoursFromDiffFrames(
-        const std::vector<Frame>& pDiffFrames) {
+        std::vector<Frame>& diffFrames) {
+        VideoContours contours(diffFrames.size());
+
+        for (size_t i = 0; i < diffFrames.size(); i++) {
+            ImageProcessing::Get().FindContours(
+                diffFrames[i], contours[i],
+                ContourRetrievalMode::CONTOUR_RETR_LIST,
+                ContourApproximationMode::CONTOUR_CHAIN_APPROX_SIMPLE);
+        }
+
+        if (contoursSpace.width == 0) {
+            contoursSpace = diffFrames[0].GetSize();
+        }
+
+        contours = this->FilterContours(contours);
+
+        this->ScaleContours(contours);
+
+        return contours;
+    }
+
+    VideoContours ContoursDetector::FindContoursFromDiffFrames(
+        std::vector<Frame>&& pDiffFrames) {
         std::vector<Frame> diffFrames = std::move(pDiffFrames);
 
         VideoContours contours(diffFrames.size());
 
-        for (int i = 0; i < diffFrames.size(); i++) {
+        for (size_t i = 0; i < diffFrames.size(); i++) {
             ImageProcessing::Get().FindContours(
                 diffFrames[i], contours[i],
                 ContourRetrievalMode::CONTOUR_RETR_LIST,
@@ -63,12 +85,11 @@ namespace Observer {
         FrameContours filtered;
 
         double avgArea = 0;
-        int contours_size = 0;
         std::vector<double> contours_areas(contours.size());
         std::vector<bool> contour_overlap(contours.size(), false);
 
         // Get the area of each contour and calculate the average
-        for (int i = 0; i < contours.size(); i++) {
+        for (size_t i = 0; i < contours.size(); i++) {
             Rect rect = BoundingRect(contours[i]);
             double area = rect.area();
             avgArea += area;
@@ -91,7 +112,7 @@ namespace Observer {
 
         // Delete all the contours that doesn't comply with the filters
         auto sz = contours.size();
-        for (int i = 0; i < sz; i++) {
+        for (size_t i = 0; i < sz; i++) {
             const bool areaFilter = (contours_areas[i] >= avgArea ||
                                      !filters.FilterByAverageArea) &&
                                     contours_areas[i] >= filters.MinimumArea;
@@ -114,7 +135,7 @@ namespace Observer {
         VideoContours& videoContours) {
         VideoContours filtered(videoContours.size());
 
-        for (int j = 0; j < videoContours.size(); j++) {
+        for (size_t j = 0; j < videoContours.size(); j++) {
             filtered[j] = this->FilterContours(videoContours[j]);
         }
 

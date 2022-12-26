@@ -4,12 +4,12 @@ namespace Observer {
     void ImageDraw::FillConvexPoly(Frame& image,
                                    const std::vector<Point>& points,
                                    const ScalarVector& color) {
-        cv::Point cvPoints[points.size()];
-        for (int i = 0; i < points.size(); i++) {
+        std::vector<cv::Point> cvPoints(points.size());
+        for (size_t i = 0; i < points.size(); i++) {
             cvPoints[i] = points[i];
         }
 
-        cv::fillConvexPoly(image.GetInternalFrame(), cvPoints,
+        cv::fillConvexPoly(image.GetInternalFrame(), &cvPoints[0],
                            (int)points.size(),
                            cv::Scalar(color.b, color.g, color.r));
     }
@@ -26,7 +26,7 @@ namespace Observer {
             std::vector<std::vector<cv::Point>> cvFrameContours(
                 frameContours.size());
 
-            for (int c = 0; c < frameContours.size(); c++) {
+            for (size_t c = 0; c < frameContours.size(); c++) {
                 cvFrameContours[c].assign(frameContours[c].begin(),
                                           frameContours[c].end());
             }

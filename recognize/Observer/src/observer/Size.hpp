@@ -16,9 +16,5 @@ namespace Observer {
         bool empty();
     };
 
-    static Size operator*(const Size& sz, const double factor) {
-        return Size(sz.width * factor, sz.height * factor);
-    }
-
     std::ostream& operator<<(std::ostream& os, const Size& rt);
 }  // namespace Observer

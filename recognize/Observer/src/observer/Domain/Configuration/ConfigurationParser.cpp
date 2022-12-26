@@ -38,7 +38,7 @@ namespace Observer::ConfigurationParser {
             return TrySetNodeValue(obj[keys[0]], &keys[1], keysCount - 1,
                                    value);
         } else if (keysCount > 1 && obj.is_array() &&
-                   obj.size() > std::stoi(keys[0])) {
+                   (int)obj.size() > std::stoi(keys[0])) {
             return TrySetNodeValue(obj[std::stoi(keys[0])], &keys[1],
                                    keysCount - 1, value);
         }
@@ -104,7 +104,7 @@ namespace Observer::ConfigurationParser {
                 // if didn't found / just add what is left as a key
                 pos = pos == std::string::npos ? path.length() : pos;
 
-                if (keys_count >= keys.max_size()) {
+                if (keys_count >= (int)keys.max_size()) {
                     OBSERVER_WARN(
                         "UNEXPECTED high number of keys while setting Node "
                         "value");

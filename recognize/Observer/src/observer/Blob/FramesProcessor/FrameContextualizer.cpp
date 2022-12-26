@@ -17,7 +17,7 @@ namespace Observer {
         Frame diff;
 
         // 1. Get the diff between two frames
-        for (int i = 1; i < frames.size(); i++) {
+        for (size_t i = 1; i < frames.size(); i++) {
             // do not modify the frames that were given to us
             Frame current;
             Frame previous;
@@ -46,14 +46,13 @@ namespace Observer {
         // 2. Get the diff frames
         Frame lastFrame = formattedFrames[0];
 
-        Size size = lastFrame.GetSize();
         // fill the firsts diff frames that we are going to skip...
         for (int w = 0; w < params.FramesBetweenDiffFrames; w++) {
             diffs[w] = lastFrame.GetBlackImage();
         }
 
         int diffSize = diffs.size();
-        for (int i = params.FramesBetweenDiffFrames; i < frames.size();
+        for (size_t i = params.FramesBetweenDiffFrames; i < frames.size();
              i += params.FramesBetweenDiffFrames) {
             // diff between the last 2 frames
             diff = lastFrame.AbsoluteDifference(formattedFrames[i]);
@@ -64,7 +63,8 @@ namespace Observer {
             // FramesBetweenDiffFrames following frames, just use this one for
             // all of them
             for (int j = i;
-                 j < std::min(i + params.FramesBetweenDiffFrames, diffSize);
+                 j <
+                 std::min((int)i + params.FramesBetweenDiffFrames, diffSize);
                  j++) {
                 diff.CopyTo(diffs[j]);
             }
@@ -110,7 +110,8 @@ namespace Observer {
         this->AddContextToFrame(this->lastDiffFrameContext);
 
         // TODO: BENCHMARK THIS
-        if (this->contextDiffFrames.size() >= this->params.ContextFrames) {
+        if (this->contextDiffFrames.size() >=
+            (size_t)this->params.ContextFrames) {
             this->contextDiffFrames.erase(this->contextDiffFrames.begin());
         }
 
@@ -128,7 +129,7 @@ namespace Observer {
     }
 
     void FrameContextualizer::AddContextToFrame(Frame& frame) {
-        for (int k = 0; k < this->contextDiffFrames.size(); k++) {
+        for (size_t k = 0; k < this->contextDiffFrames.size(); k++) {
             if (!this->contextDiffFrames[k].IsEmpty()) {
                 frame.Add(this->contextDiffFrames[k]);
             }

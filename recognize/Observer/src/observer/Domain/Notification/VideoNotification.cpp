@@ -7,9 +7,9 @@ namespace Observer {
     VideoNotification::VideoNotification(int pGroupID, Event pEvent,
                                          std::vector<Frame>&& pFrames,
                                          std::string pOutputFolder)
-        : frames(std::move(pFrames)),
-          Notification(pGroupID, std::move(pEvent),
+        : Notification(pGroupID, std::move(pEvent),
                        VideoNotification::CreatePath(pOutputFolder)),
+          frames(std::move(pFrames)),
           codec(-418) {}
 
     std::vector<Frame>& VideoNotification::GetFrames() { return this->frames; }

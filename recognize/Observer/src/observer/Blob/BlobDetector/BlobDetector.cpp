@@ -32,8 +32,8 @@ namespace Observer {
     }
 
     std::vector<Blob> BlobDetector::FindBlobs(VideoContours& videoContours) {
-        std::vector<Blob> blobs;
-        blobs = this->InternalFindBlobs(videoContours, 0, videoContours.size());
+        std::vector<Blob> blobs =
+            this->InternalFindBlobs(videoContours, 0, videoContours.size());
 
         this->FilterBlobs(blobs);
 
@@ -81,14 +81,14 @@ namespace Observer {
             std::unordered_map<int, std::vector<Finding>> matches;
             // 1. for every persistent blob compute the probability to each
             // temporal blob
-            for (int i = 0; i < this->pastTrackedBlobs.size(); i++) {
+            for (size_t i = 0; i < this->pastTrackedBlobs.size(); i++) {
                 matches[i] = {};
             }
 
             for (auto& temporal : currentBlobs) {
                 int mostSimilar = -1;
                 double max_similarity = std::numeric_limits<double>::min();
-                for (int i = 0; i < this->pastTrackedBlobs.size(); i++) {
+                for (size_t i = 0; i < this->pastTrackedBlobs.size(); i++) {
                     auto& persistent = this->pastTrackedBlobs[i];
                     double similarity;
                     if (!persistent.Died()) {
@@ -127,7 +127,7 @@ namespace Observer {
 
                     int last_p = 0;
                     for (auto blob : blobs) {
-                        auto bp = std::move(blob.TakePoints());
+                        auto bp = blob.TakePoints();
                         int n = bp.size();
                         std::swap_ranges(points.begin() + last_p,
                                          points.begin() + last_p + bp.size(),
@@ -186,11 +186,11 @@ namespace Observer {
     }
 
     void BlobDetector::FilterBlobs(std::vector<Blob>& blobs) {
-        std::vector<Blob> filtered;
-        for (int i = 0; i < blobs.size(); i++) {
+        std::vector<Blob> filtered = {};
+        for (size_t i = 0; i < blobs.size(); i++) {
             auto& blob = blobs[i];
 
-            bool passAppearancesTest = blob.GetAppearances().size() >=
+            bool passAppearancesTest = (int)blob.GetAppearances().size() >=
                                        this->blobFilters.MinimumOccurrences;
 
             bool passDiagonalTest =

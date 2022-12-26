@@ -13,7 +13,7 @@ namespace Observer {
     bool CircularFrameBuffer::AddFrame(Frame& frame) {
         frame.CopyTo(this->frames[this->framesPosition]);
 
-        const int next = this->framesPosition + 1;
+        const unsigned long next = this->framesPosition + 1;
 
         const bool isFull = next >= this->frames.capacity();
         this->framesPosition = isFull ? 0 : next;

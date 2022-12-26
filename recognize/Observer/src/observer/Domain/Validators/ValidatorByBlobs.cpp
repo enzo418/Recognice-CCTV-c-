@@ -4,11 +4,11 @@
 namespace Observer {
     ValidatorByBlobs::ValidatorByBlobs(
         const BlobDetectionConfiguration& pDetectorCfg)
-        : contoursDetector(pDetectorCfg.thresholdParams,
+        : ValidatorHandler(),
+          contoursDetector(pDetectorCfg.thresholdParams,
                            pDetectorCfg.contoursFilters),
           blobDetector(pDetectorCfg.blobDetectorParams,
-                       pDetectorCfg.blobFilters, this->contoursDetector),
-          ValidatorHandler() {}
+                       pDetectorCfg.blobFilters, this->contoursDetector) {}
 
     ValidationResult ValidatorByBlobs::isValid(CameraEvent& request) {
         auto frames = request.GetFrames();

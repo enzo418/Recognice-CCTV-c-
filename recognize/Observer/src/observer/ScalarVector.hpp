@@ -9,7 +9,7 @@ namespace Observer {
         // double a {1};
 
         // BGR A (as opencv)
-        ScalarVector(double pB, double pG, double pR) : b(pB), g(pG), r(pR) {}
+        ScalarVector(double pB, double pG, double pR) : r(pR), g(pG), b(pB) {}
 
         // color for single channel image, 1 = white and 0 = black
         static ScalarVector Black() { return ScalarVector(0, 0, 0); }

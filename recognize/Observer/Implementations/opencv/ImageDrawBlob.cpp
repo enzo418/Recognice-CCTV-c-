@@ -46,10 +46,10 @@ namespace Observer {
     void ImageDrawBlob::DrawBlobs(std::vector<Frame>& frames,
                                   std::vector<Blob>& blobs, double scaleX,
                                   double scaleY) {
-        for (int fi = 0; fi < frames.size(); fi++) {
+        for (size_t fi = 0; fi < frames.size(); fi++) {
             for (auto& blob : blobs) {
-                if (fi >= blob.GetFirstAppearance() &&
-                    fi <= blob.GetLastAppearance()) {
+                if ((int)fi >= blob.GetFirstAppearance() &&
+                    (int)fi <= blob.GetLastAppearance()) {
                     DrawBlob(frames[fi], blob, fi, scaleX, scaleY);
                 }
             }

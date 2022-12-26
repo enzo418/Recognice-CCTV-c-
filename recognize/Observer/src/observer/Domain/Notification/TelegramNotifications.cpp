@@ -5,7 +5,7 @@ namespace Observer {
 
     TelegramNotifications::TelegramNotifications(
         TelegramNotificationsConfiguration* pCfg)
-        : cfg(pCfg), MessagingService(*pCfg) {
+        : MessagingService(*pCfg), cfg(pCfg) {
         this->apiEndPoint = "https://api.telegram.org/bot" + this->cfg->apiKey;
     }
 

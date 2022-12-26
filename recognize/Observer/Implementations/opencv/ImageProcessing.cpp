@@ -60,7 +60,7 @@ namespace Observer {
         // convert to Observer Point
         pOutContours.resize(contours.size());
 
-        for (int i = 0; i < contours.size(); i++) {
+        for (size_t i = 0; i < contours.size(); i++) {
             pOutContours[i].reserve(contours[i].size());
 
             pOutContours[i].insert(pOutContours[i].end(), contours[i].begin(),

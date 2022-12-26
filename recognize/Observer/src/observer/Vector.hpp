@@ -15,16 +15,4 @@ namespace Observer {
         bool isNull();
     };
 
-    static Vec& operator+=(Vec& a, const Vec& b);
-
-    static Vec operator+(const Vec& a, const Vec& b);
-    static Vec operator/(const Vec& a, const int& b);
-    static Vec operator/(const Vec& a, const double& b);
-
-    static Vec& operator/=(Vec& a, const int& b);
-    static Vec& operator/=(Vec& a, const double& b);
-
-    static Vec& operator*=(Vec& a, const int& b);
-    static Vec& operator*=(Vec& a, const double& b);
-
 }  // namespace Observer

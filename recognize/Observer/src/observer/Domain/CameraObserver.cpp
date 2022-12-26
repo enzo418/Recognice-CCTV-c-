@@ -34,12 +34,6 @@ namespace Observer {
         // Timer to not waste cpu time
         Timer<std::chrono::milliseconds> timerRealFPS(true);
 
-        // wait accumulative stores the duration of each frame sent and
-        // processed, if it's < 0 we are ahead so we need to sleep the thread to
-        // save cpu work, else we took to much time processing the frames so no
-        // sleep is required.
-        int waitAccumulative = 0;
-
         this->SetupDependencies();
 
         Frame frame;

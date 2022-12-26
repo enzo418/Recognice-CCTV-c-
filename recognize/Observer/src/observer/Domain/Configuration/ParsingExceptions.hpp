@@ -14,8 +14,8 @@ namespace Observer::ConfigurationParser {
     struct MissingKey : public std::runtime_error {
        public:
         MissingKey(const std::string& pKeyMissing)
-            : mKeyMissing(std::move(pKeyMissing)),
-              std::runtime_error("Missing Key '" + pKeyMissing + "'") {}
+            : std::runtime_error("Missing Key '" + pKeyMissing + "'"),
+              mKeyMissing(std::move(pKeyMissing)) {}
 
         std::string keyMissing() const { return this->mKeyMissing; }
 
@@ -27,16 +27,16 @@ namespace Observer::ConfigurationParser {
     struct WrongType : public std::runtime_error {
        public:
         WrongType(int pLine, int pColumn, int pPosition)
-            : mLine(pLine),
+            : std::runtime_error("Bad conversion."),
+              mLine(pLine),
               mCol(pColumn),
-              mPos(pPosition),
-              std::runtime_error("Bad conversion.") {}
+              mPos(pPosition) {}
 
         WrongType(std::string pGot, std::string pExpected, std::string pValue)
-            : mGot(std::move(pGot)),
+            : std::runtime_error("Bad conversion."),
+              mGot(std::move(pGot)),
               mExpected(std::move(pExpected)),
-              mValue(std::move(pValue)),
-              std::runtime_error("Bad conversion.") {}
+              mValue(std::move(pValue)) {}
 
         int line() const { return this->mLine; }
 

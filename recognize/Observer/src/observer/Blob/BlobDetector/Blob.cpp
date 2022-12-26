@@ -58,7 +58,7 @@ namespace Observer {
 
         double distance = 0;
         Point lastPoint = centers[appearsOnFrames[0]];
-        for (int i = 1; i < appearsOnFrames.size(); i++) {
+        for (size_t i = 1; i < appearsOnFrames.size(); i++) {
             Point center = centers[appearsOnFrames[i]];
             distance += lastPoint.DistanceTo(center);
             lastPoint = center;

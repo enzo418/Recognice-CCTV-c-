@@ -4,13 +4,12 @@ namespace Observer {
     PassiveCamera::PassiveCamera(CameraConfiguration* pConfiguration)
         : CameraObserver(pConfiguration) {}
 
-    void PassiveCamera::ProcessFrame(Frame& frame) {}
+    void PassiveCamera::ProcessFrame(Frame&) {}
 
-    void PassiveCamera::SubscribeToCameraEvents(
-        ICameraEventSubscriber* subscriber) {}
+    void PassiveCamera::SubscribeToCameraEvents(ICameraEventSubscriber*) {}
 
-    void PassiveCamera::SubscribeToThresholdUpdate(
-        IThresholdEventSubscriber* subscriber) {}
+    void PassiveCamera::SubscribeToThresholdUpdate(IThresholdEventSubscriber*) {
+    }
 
     void PassiveCamera::SetupDependencies() {}
 }  // namespace Observer

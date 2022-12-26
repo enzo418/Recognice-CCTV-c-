@@ -70,7 +70,7 @@ namespace Observer {
                 // Build missing centers
                 auto missingCenters =
                     Interpolate(oldCenterBR, newCenterBR, notSeenFor);
-                for (int i = 0; i < missingCenters.size(); i++) {
+                for (size_t i = 0; i < missingCenters.size(); i++) {
                     const int fi = lastFrameDetected + i + 1;
                     this->centers[fi] = missingCenters[i];
                 }
@@ -96,7 +96,7 @@ namespace Observer {
                 Interpolate(oldBR.tl(), this->boundingRect.tl(), notSeenFor);
             auto interpolatedBR =
                 Interpolate(oldBR.br(), this->boundingRect.br(), notSeenFor);
-            for (int i = 0; i < interpolatedTL.size(); i++) {
+            for (size_t i = 0; i < interpolatedTL.size(); i++) {
                 const int fi = lastFrameDetected + i + 1;
                 auto rect = Rect(interpolatedTL[i], interpolatedBR[i]);
                 this->boundingRects[fi] = rect;

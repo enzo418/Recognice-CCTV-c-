@@ -24,7 +24,10 @@ namespace Observer {
          * @return VideoContours
          */
         VideoContours FindContoursFromDiffFrames(
-            const std::vector<Frame>& diffFrames);
+            std::vector<Frame>& diffFrames);
+
+        VideoContours FindContoursFromDiffFrames(
+            std::vector<Frame>&& diffFrames);
 
         int GetFrameCounter();
 

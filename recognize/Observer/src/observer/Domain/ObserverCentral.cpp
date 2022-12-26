@@ -3,6 +3,12 @@
 #include "Configuration/CameraConfiguration.hpp"
 
 namespace Observer {
+    struct {
+        bool operator()(const CameraConfiguration& struct1,
+                        const CameraConfiguration& struct2) {
+            return (struct1.positionOnOutput < struct2.positionOnOutput);
+        }
+    } CompareCameraConfigurationsByPreviewOrder;
 
     ObserverCentral::ObserverCentral(Configuration pConfig)
         : config(std::move(pConfig)),
@@ -61,11 +67,11 @@ namespace Observer {
         }
     }
 
-    void ObserverCentral::StopCamera(std::string id) {
+    void ObserverCentral::StopCamera(std::string) {
         // TODO:
     }
 
-    void ObserverCentral::StartCamera(std::string id) {
+    void ObserverCentral::StartCamera(std::string) {
         // TODO:
         // get camera config based on id
         // call this->internalStartCamera(camcfg);
@@ -146,7 +152,7 @@ namespace Observer {
 
         // 2. remove disabled cameras
         auto& camsConfig = this->config.cameras;
-        auto size = camsConfig.size();
+        int size = camsConfig.size();
         for (int i = 0; i < size; i++) {
             if (camsConfig[i].type == ECameraType::DISABLED) {
                 camsConfig.erase(camsConfig.begin() + i);

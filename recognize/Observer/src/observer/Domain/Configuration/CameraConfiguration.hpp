@@ -95,11 +95,4 @@ namespace Observer {
         bool operator==(const CameraConfiguration&) const = default;
     };
 
-    struct {
-        bool operator()(const CameraConfiguration& struct1,
-                        const CameraConfiguration& struct2) {
-            return (struct1.positionOnOutput < struct2.positionOnOutput);
-        }
-    } CompareCameraConfigurationsByPreviewOrder;
-
 }  // namespace Observer

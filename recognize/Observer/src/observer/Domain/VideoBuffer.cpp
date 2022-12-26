@@ -49,7 +49,7 @@ namespace Observer {
         std::swap_ranges(merged.begin() + before.size(), merged.end(),
                          after.begin());
 
-        return std::move(merged);
+        return merged;
     }
 
     int VideoBuffer::GetState() { return this->bufferState; }
