@@ -176,11 +176,11 @@ namespace Observer {
                 /// TODO: Improve quality with a unordered_map with the queues,
                 /// like drawable
                 if (this->textQueue.size() > 0) {
-                    this->Send(std::move(this->textQueue.pop()));
+                    this->Send(this->textQueue.pop());
                 } else if (this->imageQueue.size() > 0) {
-                    this->Send(std::move(this->imageQueue.pop()));
+                    this->Send(this->imageQueue.pop());
                 } else if (this->videoQueue.size() > 0) {
-                    this->Send(std::move(this->videoQueue.pop()));
+                    this->Send(this->videoQueue.pop());
                 }
             }
         }
@@ -245,9 +245,9 @@ namespace Observer {
             this->config->mediaFolderPath);
 
         // 3. Create a video notification using the frames
-        VideoNotification videoNotification(
-            this->groupID, event, std::move(rawCameraEvent.PopFrames()),
-            this->config->mediaFolderPath);
+        VideoNotification videoNotification(this->groupID, event,
+                                            rawCameraEvent.PopFrames(),
+                                            this->config->mediaFolderPath);
 
         videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
         videoNotification.SetFrameSize(rawCameraEvent.GetFramesSize());
