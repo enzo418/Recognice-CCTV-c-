@@ -161,6 +161,10 @@ namespace Web {
 
     template <bool SSL>
     bool LiveViewsManager<SSL>::CreateCameraView(const std::string& uri) {
+        if (mapUriToFeed.find(uri) != mapUriToFeed.end()) {
+            return true;
+        }
+
         std::string feedId = std::to_string(camerasLiveView.size());
 
         auto camera = new CameraLiveVideo<SSL>(uri, this->compressionQuality);

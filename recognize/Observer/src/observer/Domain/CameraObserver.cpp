@@ -6,6 +6,8 @@ namespace Observer {
     }
 
     void CameraObserver::InternalStart() {
+        this->source.Start();
+
         OBSERVER_ASSERT(cfg->fps != 0, "FPS cannot be 0.");
 
         this->running = true;

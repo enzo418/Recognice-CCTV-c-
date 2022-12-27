@@ -71,6 +71,8 @@ void Cameras(Observer::Configuration* cfg, bool useCompression) {
         OBSERVER_ERROR("Couldn't open the camera");
     }
 
+    source.Start();
+
     OBSERVER_INFO("Get");
     Frame frame;
     std::vector<unsigned char> buffer;

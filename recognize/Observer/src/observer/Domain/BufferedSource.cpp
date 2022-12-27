@@ -12,10 +12,6 @@ namespace Observer {
 
         bool opened = this->TryOpenConnection(sourceUri);
 
-        if (opened) {
-            Functionality::Start();
-        }
-
         return opened;
     }
 

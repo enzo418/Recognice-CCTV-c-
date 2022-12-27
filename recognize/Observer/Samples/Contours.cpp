@@ -68,6 +68,8 @@ void Start(Observer::Configuration* cfg, int pSeconds) {
         return;
     }
 
+    source.Start();
+
     std::vector<Frame> frames;
     frames.reserve(source.GetFPS() * pSeconds);
 

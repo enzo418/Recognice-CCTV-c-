@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <chrono>
 #include <mutex>
 #include <string_view>
 
@@ -7,10 +9,11 @@
 #include "LiveViewExceptions.hpp"
 #include "observer/Domain/BufferedSource.hpp"
 #include "observer/Implementation.hpp"
+#include "observer/Timer.hpp"
 
 namespace Web {
     template <bool SSL>
-    class CameraLiveVideo : public LiveVideo<SSL> {
+    class CameraLiveVideo final : public LiveVideo<SSL> {
        public:
         CameraLiveVideo(const std::string& pCameraUri, int quality);
         virtual ~CameraLiveVideo() {}
@@ -27,7 +30,7 @@ namespace Web {
        private:
         /**
          * @brief Open the camera. Also sets and clear the flags open/closed, or
-         * error in case it couldn't open a connectoin with the camera.
+         * error in case it couldn't open a connection with the camera.
          *
          * @return true could open
          * @return false
@@ -55,13 +58,15 @@ namespace Web {
 
     template <bool SSL>
     void CameraLiveVideo<SSL>::GetNextFrame() {
-        /**
-         * There is no need to lock the frame mutex since it's the only
-         * way to get the frames and its called from the main loop.
-         */
-        this->frame = source.GetFrame();
+        if (source.IsFrameAvailable()) {
+            /**
+             * There is no need to lock the frame mutex since it's the only
+             * way to get the frames and its called from the main loop.
+             */
+            this->frame = source.GetFrame();
 
-        this->NewValidFrameReceived();
+            this->NewValidFrameReceived();
+        }
     }
 
     template <bool SSL>
@@ -77,13 +82,12 @@ namespace Web {
     template <bool SSL>
     void CameraLiveVideo<SSL>::PreStart() {
         this->OpenCamera();
+        this->source.Start();
     }
 
     template <bool SSL>
     void CameraLiveVideo<SSL>::OpenCamera() {
-        source.TryOpen(cameraUri);
-
-        if (source.IsOk()) {
+        if (source.TryOpen(cameraUri)) {
             Observer::clear_flag(this->status, Status::CLOSED);
             Observer::clear_flag(this->status, Status::ERROR);
 
@@ -92,4 +96,5 @@ namespace Web {
             Observer::set_flag(this->status, Status::ERROR);
         }
     }
+
 }  // namespace Web

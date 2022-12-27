@@ -11,6 +11,7 @@
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Pattern/Camera/IFrameSubscriber.hpp"
+#include "observer/Timer.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
 
 namespace Web {
@@ -30,6 +31,8 @@ struct enable_bitmask_operators<Web::LiveViewStatus> {
     static constexpr bool enable = true;
 };
 
+constexpr double SECONDS_TO_ZOMBIE = 1 * 30;
+
 namespace Web {
     template <bool SSL>
     class LiveVideo : public Observer::Functionality,
@@ -38,6 +41,16 @@ namespace Web {
         LiveVideo(int fps, int quality);
 
         LiveViewStatus GetStatus();
+
+        virtual ~LiveVideo() = default;
+
+        /**
+         * @brief If it went live and nobody is using its frame
+         *
+         * @return true
+         * @return false
+         */
+        bool IsZombie();
 
        private:
         void InternalStart();
@@ -70,6 +83,7 @@ namespace Web {
         Observer::Frame frame;
         std::mutex mtxFrame;
         LiveViewStatus status;
+        Observer::Timer<std::chrono::seconds> timerZombie;
 
        private:
         bool encoded {false};
@@ -111,6 +125,18 @@ namespace Web {
             this->GetNextFrame();
 
             this->mtxFrame.lock();
+
+            if (this->GetTotalClients() > 0) this->timerZombie.Restart();
+
+            if (this->IsZombie()) {
+                OBSERVER_TRACE(
+                    "Live view was stopped because it had no clients after {} "
+                    "seconds",
+                    SECONDS_TO_ZOMBIE);
+
+                this->Stop();
+            }
+
             if (!this->encoded && this->imageReady && !this->frame.IsEmpty()) {
                 this->frame.EncodeImage(".jpg", this->quality, buffer);
                 this->encoded = true;
@@ -145,5 +171,10 @@ namespace Web {
     template <bool SSL>
     LiveViewStatus LiveVideo<SSL>::GetStatus() {
         return status;
+    }
+
+    template <bool SSL>
+    bool LiveVideo<SSL>::IsZombie() {
+        return this->timerZombie.GetDuration() >= SECONDS_TO_ZOMBIE;
     }
 }  // namespace Web

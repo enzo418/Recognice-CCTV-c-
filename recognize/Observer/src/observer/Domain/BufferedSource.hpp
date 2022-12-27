@@ -11,11 +11,14 @@ namespace Observer {
      * read all frames to create a buffer, from which frames can be requested
      * without worrying about timing.
      *
+     * BE SURE TO CALL START after opening the camera and BEFORE CONSUMING the
+     * frame
+     *
      * Use only to a single consumer.
      *
      * @tparam TFrame
      */
-    class BufferedSource : private Functionality {
+    class BufferedSource : public Functionality {
        public:
         BufferedSource() = default;
 
@@ -23,6 +26,7 @@ namespace Observer {
          * @brief Tries to open a connection with given source.
          * If we could open it a thread will be created and will return true,
          * else we just return false.
+         * Doesn't start getting frames, call Start for that.
          *
          * @param sourceUri
          * @return true
