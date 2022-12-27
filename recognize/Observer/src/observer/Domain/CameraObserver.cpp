@@ -24,11 +24,16 @@ namespace Observer {
         const int fps = source.GetFPS();
         OBSERVER_INFO("FPS: {}", fps);
 
+        const double cfgFps = cfg->fps == 0 ? fps : cfg->fps;
+
         // number of ms that the cameras waits to send a new frame
         const double realTimeBetweenFrames = 1000.0 / fps;
 
-        // this is the milliseconds expected by the user betweem two frames
-        const auto minTimeBetweenFrames = 1000.0 / this->cfg->fps;
+        // this is the milliseconds expected by the user between two frames
+        const auto minTimeBetweenFrames = 1000.0 / cfgFps;
+
+        this->fps =
+            1000.0 / std::max(realTimeBetweenFrames, minTimeBetweenFrames);
 
         // Timer to only process frames between some time
         Timer<std::chrono::milliseconds> timerFakeFPS(true);
@@ -55,7 +60,7 @@ namespace Observer {
                 }
             }
 
-            auto duration = timerRealFPS.GetDuration();
+            double duration = timerRealFPS.GetDuration();
 
             int sleepExactly = realTimeBetweenFrames - duration;
 
@@ -76,4 +81,6 @@ namespace Observer {
     void CameraObserver::SubscribeToFramesUpdate(IFrameSubscriber* subscriber) {
         this->framePublisher.subscribe(subscriber);
     }
+
+    int CameraObserver::GetFPS() { return this->fps; }
 }  // namespace Observer

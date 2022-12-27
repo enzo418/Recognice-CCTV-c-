@@ -51,6 +51,16 @@ namespace Observer {
         virtual void SubscribeToThresholdUpdate(
             IThresholdEventSubscriber* subscriber) = 0;
 
+        /**
+         * @brief Get the calculated FPS. This values is the minimum between the
+         * the configurations fps and the source (camera) fps.
+         *
+         * Note: This value is 0 until you Start this functionality.
+         *
+         * @return int
+         */
+        int GetFPS();
+
        protected:
         virtual void ProcessFrame(Frame& frame) = 0;
 
@@ -69,5 +79,8 @@ namespace Observer {
         VideoWriter writer;
 
         Publisher<int, Frame> framePublisher;
+
+        // final calculated fps
+        int fps {0};
     };
 }  // namespace Observer

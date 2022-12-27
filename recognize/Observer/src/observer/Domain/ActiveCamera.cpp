@@ -25,7 +25,7 @@ namespace Observer {
                 std::move(frames),
                 this->videoBufferForValidation->GetIndexMiddleFrame());
 
-            event.SetFrameRate(this->source.GetFPS());
+            event.SetFrameRate(this->GetFPS());
             event.SetFrameSize(frame.GetSize());
 
             OBSERVER_TRACE(
