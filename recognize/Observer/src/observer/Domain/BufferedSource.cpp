@@ -1,5 +1,7 @@
 #include "BufferedSource.hpp"
 
+constexpr double MAX_FRAMES_IN_QUEUE = 100;
+
 namespace Observer {
     bool BufferedSource::TryOpen(const std::string& sourceUri) {
         // Close all
@@ -42,6 +44,8 @@ namespace Observer {
         while (running) {
             // do stuff
             if (source.GetNextFrame(frame)) {
+                if (queue.size() >= MAX_FRAMES_IN_QUEUE) queue.pop();
+
                 if (!frame.IsEmpty()) {
                     queue.push(frame.Clone());
                 }
@@ -65,10 +69,7 @@ namespace Observer {
         return source.isOpened();
     }
 
-    Frame BufferedSource::GetFrame() {
-        // Don't worry it's (supposedly) a Single consumer buffer
-        return std::move(queue.pop());
-    }
+    Frame BufferedSource::GetFrame() { return queue.pop(); }
 
     bool BufferedSource::IsFrameAvailable() { return queue.size() > 0; }
 
