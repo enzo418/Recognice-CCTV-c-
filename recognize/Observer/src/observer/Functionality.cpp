@@ -1,6 +1,9 @@
 #include "Functionality.hpp"
 
+#include <atomic>
 #include <thread>
+
+#include "observer/Log/log.hpp"
 
 namespace Observer {
 
@@ -13,11 +16,11 @@ namespace Observer {
     }
 
     void Functionality::Start() {
-        if (running) {
-            this->Stop();
-        }
+        OBSERVER_ASSERT(!running,
+                        "Logic error on functionality, it's already running");
 
-        running = true;
+        // running = true;
+        running.store(true, std::memory_order_release);
         thread = std::thread(&Functionality::InternalStart, this);
     }
 

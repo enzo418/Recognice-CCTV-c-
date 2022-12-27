@@ -1,15 +1,13 @@
 #include "CameraObserver.hpp"
 
+#include <chrono>
+
 namespace Observer {
     CameraObserver::CameraObserver(CameraConfiguration* pCfg) : cfg(pCfg) {
         this->running = false;
     }
 
     void CameraObserver::InternalStart() {
-        this->source.Start();
-
-        OBSERVER_ASSERT(cfg->fps != 0, "FPS cannot be 0.");
-
         this->running = true;
 
         const bool processFrames = cfg->type != ECameraType::VIEW;
@@ -20,6 +18,8 @@ namespace Observer {
             this->source.Close();
             return;
         }
+
+        this->source.Start();
 
         const int fps = source.GetFPS();
         OBSERVER_INFO("FPS: {}", fps);

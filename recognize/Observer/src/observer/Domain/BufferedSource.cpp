@@ -1,5 +1,7 @@
 #include "BufferedSource.hpp"
 
+#include <atomic>
+
 constexpr double MAX_FRAMES_IN_QUEUE = 100;
 
 namespace Observer {
@@ -26,18 +28,15 @@ namespace Observer {
     double BufferedSource::GetFPS() { return source.GetFPS(); }
 
     void BufferedSource::InternalStart() {
-        if (!this->IsOk()) {
-            OBSERVER_WARN(
-                "Connection to source couldn't be stabilized. URI: {}",
-                sourceUri);
-
-            this->Stop();
-            return;
-        }
+        OBSERVER_ASSERT(running.load(std::memory_order_acquire),
+                        "Logic error: Buffer wasn't started");
+        OBSERVER_ASSERT(
+            source.isOpened(),
+            "Logic error: Buffer was started without a valid connection.");
 
         Frame frame;
 
-        while (running) {
+        while (running.load(std::memory_order_relaxed)) {
             // do stuff
             if (source.GetNextFrame(frame)) {
                 if (queue.size() >= MAX_FRAMES_IN_QUEUE) queue.pop();
