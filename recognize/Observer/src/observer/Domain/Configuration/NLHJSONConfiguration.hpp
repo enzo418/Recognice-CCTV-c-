@@ -67,15 +67,12 @@ namespace Observer {
                                        MinimumUnitsTraveled, VelocityFilter);
 
     /* ------------ ContoursFilter::IgnoredAreas ------------ */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContoursFilter::IgnoredAreas, areas,
-                                       minAreaPercentageToIgnore, reference);
-
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContoursFilter::IgnoredSets, sets,
                                        reference, minPercentageToIgnore);
 
     /* --------------------- ContoursFilter -------------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContoursFilter, FilterByAverageArea,
-                                       MinimumArea, ignoredAreas, ignoredSets);
+                                       MinimumArea, ignoredSets);
 
     /* ----------- ThresholdingParams::ResizeParam ---------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ThresholdParams::ResizeParam, size,

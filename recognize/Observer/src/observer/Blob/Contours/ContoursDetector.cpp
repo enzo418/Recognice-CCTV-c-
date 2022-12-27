@@ -86,7 +86,6 @@ namespace Observer {
 
         double avgArea = 0;
         std::vector<double> contours_areas(contours.size());
-        std::vector<bool> contour_overlap(contours.size(), false);
 
         // Get the area of each contour and calculate the average
         for (size_t i = 0; i < contours.size(); i++) {
@@ -94,18 +93,6 @@ namespace Observer {
             double area = rect.area();
             avgArea += area;
             contours_areas[i] = area;
-
-            // check for intersection with ignored areas
-            if (!filters.ignoredAreas.areas.empty()) {
-                for (auto&& j : filters.ignoredAreas.areas) {
-                    Rect inters = rect.Intersection(j);
-                    if (inters.area() >=
-                        rect.area() *
-                            filters.ignoredAreas.minAreaPercentageToIgnore) {
-                        contour_overlap[i] = true;
-                    }
-                }
-            }
         }
 
         avgArea /= contours.size();
@@ -117,9 +104,7 @@ namespace Observer {
                                      !filters.FilterByAverageArea) &&
                                     contours_areas[i] >= filters.MinimumArea;
 
-            const bool overlapFilter = !contour_overlap[i];
-
-            const bool didPassFilter = areaFilter && overlapFilter;
+            const bool didPassFilter = areaFilter;
 
             if (didPassFilter) {
                 // if seems valid do the expensive checking
@@ -172,22 +157,10 @@ namespace Observer {
 
     void ContoursDetector::ProcessFilters() {
         if (!filtersProcessed) {
-            // scale ignored areas
-            auto ref = filters.ignoredAreas.reference;
+            // scale ignored sets
+            auto ref = filters.ignoredSets.reference;
             double scaleX = (double)contoursSpace.width / ref.width;
             double scaleY = (double)contoursSpace.height / ref.height;
-
-            for (auto& rect : filters.ignoredAreas.areas) {
-                rect.x *= scaleX;
-                rect.y *= scaleY;
-                rect.width *= scaleX;
-                rect.height *= scaleY;
-            }
-
-            // scale ignored sets
-            ref = filters.ignoredSets.reference;
-            scaleX = (double)contoursSpace.width / ref.width;
-            scaleY = (double)contoursSpace.height / ref.height;
 
             for (auto& set : filters.ignoredSets.sets) {
                 for (auto& point : set) {

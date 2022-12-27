@@ -140,11 +140,6 @@ void Start(Observer::Configuration* cfg, int pSeconds) {
         //     cv::rectangle(frame, rect, cv::Scalar(255, 0, 255));
         // }
 
-        for (auto& rect : contoursDetector.filters.ignoredAreas.areas) {
-            cv::rectangle(frame.GetInternalFrame(), rect,
-                          cv::Scalar(20, 255, 255));
-        }
-
         /*for (auto& set : contoursDetector.filters.ignoredSets.sets) {
             Point first = set[0];
             Point last = set[0];

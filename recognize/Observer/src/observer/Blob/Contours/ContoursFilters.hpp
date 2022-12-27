@@ -6,16 +6,6 @@
 
 namespace Observer {
     struct ContoursFilter {
-        struct IgnoredAreas {
-            std::vector<Rect> areas;
-            double minAreaPercentageToIgnore;
-
-            // since the areas are points in some space, tell me its w/h.
-            Size reference;
-
-            bool operator==(const IgnoredAreas&) const = default;
-        };
-
         struct IgnoredSets {
             std::vector<std::vector<Point>> sets;
 
@@ -36,7 +26,6 @@ namespace Observer {
         // parameters
         int MinimumArea {40};
 
-        IgnoredAreas ignoredAreas;
         IgnoredSets ignoredSets;
 
         bool operator==(const ContoursFilter&) const = default;
