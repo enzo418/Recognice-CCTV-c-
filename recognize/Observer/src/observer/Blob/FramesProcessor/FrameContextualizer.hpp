@@ -11,8 +11,8 @@ namespace Observer {
      * @brief Generates a frame with all the context requested in the parameters
      * based on previous frames.
      *
-     * it's a incomplete templated class, that means a specialization is needed
-     * for some of its methods.
+     * it's a incomplete templated class, that means a specialization (e.g. on
+     * opencv) is needed for some of its methods.
      */
     class FrameContextualizer {
        public:

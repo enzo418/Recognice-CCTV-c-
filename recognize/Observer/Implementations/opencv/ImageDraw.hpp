@@ -16,6 +16,9 @@ namespace Observer {
         void FillConvexPoly(Frame& image, const std::vector<Point>& points,
                             const ScalarVector& color) override;
 
+        void FillAnyPoly(Frame& image, const std::vector<Point>& points,
+                         const ScalarVector& color) override;
+
         void DrawContours(
             std::vector<Frame>& frames,
             const std::vector<std::vector<std::vector<Point>>>& videoContours,

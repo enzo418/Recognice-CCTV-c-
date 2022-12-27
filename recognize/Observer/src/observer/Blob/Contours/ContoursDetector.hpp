@@ -64,6 +64,14 @@ namespace Observer {
         bool ContourIsInsideIgnoredSet(std::vector<Point>& contour);
 
        public:
+        /**
+         * @brief Initialize external (e.g. opencv) components
+         * This function is ONLY defined in a unit inside the implementation
+         * folder.
+         */
+        void InitializeComponentsImplementation();
+
+       public:
         ThresholdParams params;
         ContoursFilter filters;
         FrameContextualizer contextBuilder;
@@ -74,5 +82,8 @@ namespace Observer {
 
         // filters are processed one time.
         bool filtersProcessed {false};
+
+        // has the ignored sets drawn, more on ContourIsInsideIgnored
+        Frame ignoredSetsFrame;
     };
 }  // namespace Observer

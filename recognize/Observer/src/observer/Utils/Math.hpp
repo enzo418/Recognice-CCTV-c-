@@ -53,4 +53,13 @@ namespace Observer {
      * @return double
      */
     double PointPolygonTest(std::vector<Point>& points, Point& point);
+
+    /**
+     * @brief Calculates the area of a polygon
+     * source: http://alienryderflex.com/polygon_area/
+     *
+     * @param points
+     * @return double
+     */
+    double PolygonArea(const std::vector<Point>& points);
 }  // namespace Observer

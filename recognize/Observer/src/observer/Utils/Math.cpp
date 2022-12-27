@@ -77,4 +77,16 @@ namespace Observer {
         result = counter % 2 == 0 ? -1 : 1;
         return result;
     }
+
+    double PolygonArea(const std::vector<Point>& points) {
+        double area = 0.;
+        size_t i, j = points.size() - 1;
+
+        for (i = 0; i < points.size(); i++) {
+            area += (points[j].x + points[i].x) * (points[j].y - points[i].y);
+            j = i;
+        }
+
+        return std::abs(area * .5);
+    };
 }  // namespace Observer

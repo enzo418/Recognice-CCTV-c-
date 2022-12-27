@@ -46,6 +46,7 @@ namespace Observer {
         Rect roi;
 
         // Mask parts of the image out at the processing/detection stage
+        // relative to the camera resolution
         std::vector<Mask> masks;
 
         bool operator==(const ProcessingConfiguration&) const = default;

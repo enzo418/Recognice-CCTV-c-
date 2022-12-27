@@ -14,6 +14,17 @@ namespace Observer {
                            cv::Scalar(color.b, color.g, color.r));
     }
 
+    void ImageDraw::FillAnyPoly(Frame& image, const std::vector<Point>& points,
+                                const ScalarVector& color) {
+        std::vector<cv::Point> cvPoints(points.size());
+        for (size_t i = 0; i < points.size(); i++) {
+            cvPoints[i] = points[i];
+        }
+
+        cv::fillPoly(image.GetInternalFrame(), cvPoints,
+                     cv::Scalar(color.b, color.g, color.r));
+    }
+
     void ImageDraw::DrawContours(
         std::vector<Frame>& frames,
         const std::vector<std::vector<std::vector<Point>>>& videoContours,

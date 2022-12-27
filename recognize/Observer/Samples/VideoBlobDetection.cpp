@@ -400,3 +400,59 @@ void TestThatBlobDetectionIsDeterministic(
         "Delta time between the buffers:\tcontours = {}ms\tblobs = {}ms",
         delta_contours, delta_blob);
 }
+
+void TestPolyFrame() {
+    // ImageDisplay::Get().CreateWindow("polyFrame");
+
+    // Timer<std::chrono::microseconds> timerPoly(true);
+
+    // Frame polyFrame(Size(640, 360), 1);
+
+    // for (auto& set : camera.blobDetection.contoursFilters.ignoredSets.sets) {
+    //     ImageDraw::Get().FillAnyPoly(polyFrame, set, ScalarVector::White());
+    // }
+
+    // std::cout << "time " << timerPoly.GetDuration() << " us\n";
+
+    // ImageDisplay::Get().ShowImage("polyFrame", polyFrame);
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // const auto polygonArea = [](const std::vector<Point>& points) -> double {
+    //     double area = 0.;
+    //     size_t i, j = points.size() - 1;
+
+    //     for (i = 0; i < points.size(); i++) {
+    //         area += (points[j].x + points[i].x) * (points[j].y -
+    //         points[i].y); j = i;
+    //     }
+
+    //     return abs(area * .5);
+    // };
+
+    // Frame diff;
+    // Frame polyWithMask;
+    // for (int i = 0; i < 100; i++) {
+    //     polyWithMask = polyFrame.Clone();
+
+    //     std::vector<Point> contour = {
+    //         {185, 85}, {179, 106}, {215, 120}, {219, 86}, {185, 85}};
+
+    //     ImageDraw::Get().FillConvexPoly(polyWithMask, contour,
+    //                                     ScalarVector::Black());
+
+    //     ImageDisplay::Get().ShowImage("polyFrame", polyWithMask);
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+    //     diff = polyFrame.AbsoluteDifference(polyWithMask);
+
+    //     std::cout << "Non zero: " << diff.CountNonZero()
+    //               << " poly area: " << polygonArea(contour) << std::endl;
+    // }
+
+    // std::cout << "total time " << timerPoly.GetDuration() / 1000 << " ms\n";
+
+    // ImageDisplay::Get().ShowImage("polyFrame", diff);
+    // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+    // ImageDisplay::Get().DestroyWindow("polyFrame");
+}

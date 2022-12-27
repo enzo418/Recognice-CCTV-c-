@@ -196,6 +196,13 @@ namespace Observer {
                 }
             }
 
+            // Draw ignored sets on frame
+            this->ignoredSetsFrame = Frame(contoursSpace, 1);
+            for (auto& set : filters.ignoredSets.sets) {
+                ImageDraw::Get().FillAnyPoly(this->ignoredSetsFrame, set,
+                                             ScalarVector::White());
+            }
+
             filtersProcessed = true;
         }
     }
@@ -203,23 +210,31 @@ namespace Observer {
     bool ContoursDetector::ContourIsInsideIgnoredSet(
         std::vector<Point>& contour) {
         // if for some set the contour has all of its point inside it, then
-        // return true, else keep searching. Hopefully is the first one.
+        // return true, else keep searching.
+
+        // On how we calculate the area of intersection:
+        // ---
+        // To check if it's inside the ignored sets first we draw all the
+        // ignored sets in a frame as white polygons, at "ProcessFilters".
+        // Then we draw the contour as black over those polygons, if it's inside
+        // some ignored sets it will remove white pixels from the image and the
+        // difference between those images will be the area of the contour that
+        // intersects with those sets, otherwise it will not affect the sets and
+        // the difference will be 0.
+
+        Frame diff;
+        Frame polyWithMask;
 
         const double percentage =
             filters.ignoredSets.minPercentageToIgnore / 100.0;
-        for (auto& set : filters.ignoredSets.sets) {
-            int contourSize = contour.size();
-            int total = 0;
 
-            for (auto& point : contour) {
-                total += PointPolygonTest(set, point) > 0;
-            }
+        polyWithMask = this->ignoredSetsFrame.Clone();
 
-            if (total >= contourSize * percentage) {
-                return true;
-            }
-        }
+        ImageDraw::Get().FillConvexPoly(polyWithMask, contour,
+                                        ScalarVector::Black());
 
-        return false;
+        diff = this->ignoredSetsFrame.AbsoluteDifference(polyWithMask);
+
+        return diff.CountNonZero() >= PolygonArea(contour) * percentage;
     }
 }  // namespace Observer
