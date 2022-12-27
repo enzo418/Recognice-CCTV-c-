@@ -40,21 +40,21 @@ namespace Observer {
          *
          * @param notification
          */
-        void AddNotification(TextNotification textNotf);
+        void AddNotification(TextNotification textN);
 
         /**
          * @brief Adds a notification to the notifications queue
          *
          * @param notification
          */
-        void AddNotification(ImageNotification imageNotf);
+        void AddNotification(ImageNotification imageN);
 
         /**
          * @brief Adds a notification to the notifications queue
          *
          * @param notification
          */
-        void AddNotification(VideoNotification videoNotf);
+        void AddNotification(VideoNotification videoN);
 
         void update(Event event, CameraEvent rawCameraEvent) override;
 

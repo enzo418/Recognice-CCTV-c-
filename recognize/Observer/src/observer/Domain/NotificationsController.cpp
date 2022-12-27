@@ -72,7 +72,7 @@ namespace Observer {
         }
 
         auto& servD = this->drawableServices[flag_to_int(ETrazable::IMAGE)];
-        // guard: if there is at leat 1 service that need the trace
+        // guard: if there is at least 1 service that need the trace
         if (!servD.empty()) {
             // 3. Draw trace on image
             ImageDrawBlob::Get().DrawBlobs(
@@ -98,7 +98,7 @@ namespace Observer {
 
         if (frames.empty()) {
             OBSERVER_CRITICAL(
-                "Empty frames while sendind a video notification. Video error "
+                "Empty frames while sending a video notification. Video error "
                 "data: GID={0}, CAM_NAME={1}, N_BLOBS={2}",
                 notification.GetGroupID(),
                 notification.GetEvent().GetCameraName(),
@@ -115,7 +115,7 @@ namespace Observer {
             notification.BuildNotification();
 
             // 2. For each service that doesn't need the trace call
-            // SendVideo(videopath)
+            // SendVideo(video path)
             for (auto&& service :
                  this->notDrawableServices[flag_to_int(ETrazable::VIDEO)]) {
                 service->SendVideo(DTONotification(
@@ -125,7 +125,7 @@ namespace Observer {
             }
         }
 
-        // guard: if there is at leat 1 service that need the trace
+        // guard: if there is at least 1 service that need the trace
         if (!this->drawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 3. Draw trace on video
 
@@ -148,22 +148,22 @@ namespace Observer {
         }
     }
 
-    void NotificationsController::AddNotification(TextNotification textNotf) {
-        this->textQueue.push(textNotf);
+    void NotificationsController::AddNotification(TextNotification textN) {
+        this->textQueue.push(textN);
 
         // Semaphore - Added 1 notification
         this->smpQueue.release();
     }
 
-    void NotificationsController::AddNotification(ImageNotification imageNotf) {
-        this->imageQueue.push(imageNotf);
+    void NotificationsController::AddNotification(ImageNotification imageN) {
+        this->imageQueue.push(imageN);
 
         // Semaphore - Added 1 notification
         this->smpQueue.release();
     }
 
-    void NotificationsController::AddNotification(VideoNotification videoNotf) {
-        this->videoQueue.push(videoNotf);
+    void NotificationsController::AddNotification(VideoNotification videoN) {
+        this->videoQueue.push(videoN);
 
         // Semaphore - Added 1 notification
         this->smpQueue.release();
