@@ -32,7 +32,7 @@ struct enable_bitmask_operators<Web::LiveViewStatus> {
 
 namespace Web {
     template <bool SSL>
-    class LiveVideo : public Functionality,
+    class LiveVideo : public Observer::Functionality,
                       public WebsocketService<SSL, PerSocketData> {
        public:
         LiveVideo(int fps, int quality);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Domain/Notification.hpp"
+#include "DTO/DTOBlob.hpp"
 #include "DTO/DTONotification.hpp"
 #include "DTO/ObserverStatusDTO.hpp"
 #include "nlohmann/json.hpp"
@@ -55,6 +56,9 @@ namespace nlohmann {
     /* ------------------- OBSERVER STATUS ------------------ */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::ObserverStatusDTO, running,
                                        config_id);
+
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::DTOBlob, first_appearance,
+                                       last_appearance, rects, internal_id);
 
     // void inline to_json(json& j, const Web::DTONotificationWithId& p) {
     //     j = json::parse(p.notification);

@@ -2,8 +2,12 @@
 #include <spdlog/fmt/bundled/format.h>
 
 // nolitedb
+#include "Controller/WebsocketVideoBufferController.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
+#include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "LiveVideo/LiveViewExceptions.hpp"
+#include "Pattern/VideoBufferSubscriberPublisher.hpp"
+#include "VideoBufferTasksManager.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
@@ -16,11 +20,15 @@
 #include "Serialization/JsonAvailableConfigurationDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "Utils/StringUtils.hpp"
+#include "Utils/VideoBuffer.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
+#include "observer/Blob/BlobDetector/Blob.hpp"
+#include "observer/Blob/BlobDetector/Finding.hpp"
 #include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/Log/log.hpp"
+#include "observer/Size.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileExtension.hpp"
@@ -31,6 +39,7 @@
 #include "uWebSockets/Multipart.h"
 
 // Selects a Region of interes from a camera fram
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <memory>
@@ -61,6 +70,20 @@ static const std::string liveViewWsRoute = liveViewPrefix + "*";
 constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
 int main() {
+    /**
+     * Basic guidelines/recommendation
+     *   - Don't take too long to send the response
+     *
+     *   - If the resource at /api/ is not found send the 404 but make sure to
+     *     set the cache control at a few seconds so the browser knows that the
+     *     resource is the one that doesn't exist, not the uri.
+     *     Note: some browser cache it and some don't.
+     *
+     *   - uWebsocket matches every /, so if you listen to /api/endpoint/ and
+     *     then you make a request to /api/endpoint it won't work but
+     *     /api/endpoint/ will work.
+     */
+
     // initialize logger
     Observer::LogManager::Initialize();
     nldb::LogManager::Initialize();
@@ -124,6 +147,29 @@ int main() {
     std::unordered_map<std::string, std::vector<unsigned char>>
         cachedCameraImage;
 
+    /* -------------------- VIDEO BUFFER -------------------- */
+    // TODO: Move to controller
+    // video buffer stores path to video buffer with the fps that it was
+    // captured. Used to easily modify the camera's blob parameters.
+    nldb::DBSL3 videoBufferDB;
+    if (!videoBufferDB.open("video_buffer.db")) {
+        OBSERVER_ERROR("Could not open the database!");
+        videoBufferDB.throwLastError();
+    }
+
+    Web::WebsocketVideoBufferController<SSL> bufferWebSocket;
+    Web::DAL::VideoBufferRepositoryNLDB videoBufferRepository(&videoBufferDB);
+    Web::VideoBufferTasksManager videoBufferTasksManager(&videoBufferRepository,
+                                                         &configurationDAO);
+
+    videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
+
+    videoBufferTasksManager.Start();
+    bufferWebSocket.Start();
+
+    threads.push_back(&videoBufferTasksManager);
+    threads.push_back(&bufferWebSocket);
+
     /* ------------------- CREATE OBSERVER ------------------ */
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
                                  &notificationController,
@@ -160,15 +206,247 @@ int main() {
                            serverCtx.rootFolder, serverCtx.port);
                    }
                })
-        .get("/",
-             [](auto* res, auto* req) {
-                 std::cout << "Index!" << std::endl;
 
+        .put(
+            "/api/buffer/",
+            [&configurationDAO, &videoBufferRepository,
+             &videoBufferTasksManager](auto* res, auto* req) {
+                /**
+                 * {
+                 *      duration <double>: buffer duration in seconds
+                 *
+                 *      delay <double>: seconds to wait before starting the
+                 *
+                 *      resize <{width, height}>:
+                 *          size to which resize the frames, set to 0,0 to use
+                 *          the camera resolution
+                 *
+                 *      camera_id <string>:
+                 *          Will use this camera configuration url to get the
+                 *          buffer
+                 * }
+                 *
+                 */
+                std::string buffer;
+
+                // get it before we attach the reader
+                auto ct = std::string(req->getHeader("content-type"));
+
+                res->onAborted([]() {});
+
+                res->onData([&configurationDAO, &videoBufferRepository,
+                             &videoBufferTasksManager, res, req, ct,
+                             buffer = std::move(buffer)](std::string_view data,
+                                                         bool last) mutable {
+                    buffer.append(data.data(), data.length());
+
+                    if (last) {
+                        if (ct != "application/json") {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->end("Expected a json body");
+                            return;
+                        }
+
+                        nldb::json bufferAsJson;
+                        try {
+                            bufferAsJson = nlohmann::json::parse(buffer);
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title", "body isn't a valid json"}})
+                                        .dump());
+                            return;
+                        }
+
+                        // TODO: this->ensureJson(duration, Type::Number)
+
+                        double duration;
+
+                        try {
+                            duration = bufferAsJson["duration"].get<double>();
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title",
+                                          "required json "
+                                          "numeric field 'duration'"}})
+                                        .dump());
+                            return;
+                        }
+
+                        double delay;
+
+                        try {
+                            delay = bufferAsJson["delay"].get<double>();
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {{"title",
+                                                      "required json "
+                                                      "numeric field 'delay'"}})
+                                        .dump());
+                            return;
+                        }
+
+                        Observer::Size resize;
+
+                        try {
+                            resize =
+                                bufferAsJson["resize"].get<Observer::Size>();
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {{"title",
+                                                      "required json "
+                                                      "field 'resize' of type "
+                                                      "{width, height}"}})
+                                        .dump());
+                            return;
+                        }
+
+                        std::string cameraID;
+                        try {
+                            cameraID =
+                                bufferAsJson["camera_id"].get<std::string>();
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_400_BAD_REQUEST)
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title",
+                                          "required json "
+                                          "field 'camera_id' of type string"}})
+                                        .dump());
+                            return;
+                        }
+
+                        std::string cameraUri;
+                        try {
+                            nldb::json camera =
+                                configurationDAO.GetCamera(cameraID);
+                            cameraUri = camera["url"];
+                        } catch (const std::exception& e) {
+                            res->writeStatus(HTTP_404_NOT_FOUND)
+                                ->writeHeader("Cache-Control", "max-age=5")
+                                ->endProblemJson(
+                                    (nlohmann::json {
+                                         {"title",
+                                          "camera with the specified id "
+                                          "doesn't exists"}})
+                                        .dump());
+                            return;
+                        }
+
+                        nlohmann::json initial = {{"camera_id", cameraID},
+                                                  {"duration", duration},
+                                                  {"date_unix", time(0)},
+                                                  {"state", "without_buffer"}};
+
+                        // instead of using random number I prefer to use the
+                        // db id, add a new object with the fps to get the an id
+                        std::string id = videoBufferRepository.Add(initial);
+
+                        // async -> create the buffer task
+                        videoBufferTasksManager.AddTask(
+                            Web::GenerateVideoBufferTask {
+                                .videoBufferTaskID = id,
+                                .cameraID = cameraID,
+                                .uri = cameraUri,
+                                .duration = duration,
+                                .delay = delay,
+                                .resizeTo = resize});
+
+                        initial["id"] = id;
+
+                        res->writeStatus(HTTP_202_Accepted)
+                            ->endJson(initial.dump());
+                    }
+                });
+            })
+
+        .get("/api/buffer/",
+             [&videoBufferRepository](auto* res, auto* req) {
+                 std::string cameraID(req->getQuery("camera_id"));
+
+                 /**
+                  * state:
+                  *     - without_buffer: has id, camera_id, date_unix and
+                  *       duration
+                  *     - with_buffer: has previous and fps
+                  *     - detected: has previous and contours, blobs
+                  */
+                 res->endJson((cameraID.empty()
+                                   ? videoBufferRepository.GetAll()
+                                   : videoBufferRepository.GetAll(cameraID))
+                                  .dump());
+             })
+
+        .del("/api/buffer/:id",
+             [&videoBufferRepository](auto* res, auto* req) {
+                 std::string id(req->getParameter(0));
+
+                 if (auto buffer = videoBufferRepository.GetInternal(id)) {
+                     if (buffer->contains("path")) {
+                         const std::string cameraFramesPath =
+                             buffer->at("path");
+                         remove(cameraFramesPath.c_str());
+                     }
+
+                     if (buffer->contains("diffFramesPath")) {
+                         const std::string diffFramesPath =
+                             buffer->at("diffFramesPath");
+                         remove(diffFramesPath.c_str());
+                     }
+
+                     videoBufferRepository.Remove(id);
+
+                     res->end();
+                 } else {
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=10")
+                         ->endProblemJson(
+                             (nldb::json {{"title", "buffer not found"}})
+                                 .dump());
+                     return;
+                 }
+             })
+
+        .get("/stream/buffer/:id",
+             [&videoBufferRepository](auto* res, auto* req) {
+                 std::string id(req->getParameter(0));
                  std::string rangeHeader(req->getHeader("range"));
 
-                 FileStreamer::GetInstance().streamFile(res, "/web/index.html",
-                                                        rangeHeader);
+                 // type = raw | diff
+                 std::string streamType(req->getQuery("type"));
+
+                 if (videoBufferRepository.Exists(id)) {
+                     std::optional<std::string> filename;
+
+                     if (streamType == "raw") {
+                         filename = videoBufferRepository.GetRawBufferPath(id);
+                     } else {
+                         filename = videoBufferRepository.GetDiffBufferPath(id);
+                     }
+
+                     if (!filename.has_value()) {
+                         res->writeStatus(HTTP_400_BAD_REQUEST)
+                             ->endProblemJson(
+                                 (nldb::json {{"title",
+                                               "buffer still doesn't have the "
+                                               "frames requested"}})
+                                     .dump());
+                         return;
+                     }
+
+                     FileStreamer::GetInstance().streamFile(
+                         res, filename.value(), rangeHeader);
+                 } else {
+                     res->writeStatus(HTTP_404_NOT_FOUND);
+                     res->end();
+                 }
              })
+
         /**
          * @brief Request a live view of the camera. If successfully
          * generated the live view it returns a json with the ws_feed_path,
@@ -189,6 +467,7 @@ int main() {
                              {"title", "Invalid camera uri"}};
 
                          res->writeStatus(HTTP_404_NOT_FOUND)
+                             ->writeHeader("Cache-Control", "max-age=10")
                              ->endProblemJson(error.dump());
                      } catch (...) {
                          res->writeStatus(HTTP_400_BAD_REQUEST)->end();
@@ -309,6 +588,8 @@ int main() {
                                                 bufferAsJson["clone_id"]);
                                     } catch (const std::exception& e) {
                                         res->writeStatus(HTTP_404_NOT_FOUND)
+                                            ->writeHeader("Cache-Control",
+                                                          "max-age=5")
                                             ->endProblemJson(
                                                 (nlohmann::json {
                                                      {"title",
@@ -594,6 +875,7 @@ int main() {
                      obj = configurationDAO.GetConfiguration(std::string(id));
                  } catch (const std::exception& e) {
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->end("Configuration not found");
                      return;
                  }
@@ -610,6 +892,7 @@ int main() {
                              obj = configurationDAO.GetCamera(cameraID);
                          } catch (const std::exception& e) {
                              res->writeStatus(HTTP_404_NOT_FOUND)
+                                 ->writeHeader("Cache-Control", "max-age=5")
                                  ->end("Camera not found");
                              return;
                          }
@@ -632,7 +915,9 @@ int main() {
                  }
 
                  if (value.is_null()) {
-                     res->writeStatus(HTTP_404_NOT_FOUND)->end();
+                     res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
+                         ->end();
                      return;
                  }
 
@@ -776,6 +1061,7 @@ int main() {
                              {"title", "Camera not found"}};
 
                          res->writeStatus(HTTP_404_NOT_FOUND)
+                             ->writeHeader("Cache-Control", "max-age=5")
                              ->endProblemJson(response.dump());
                      }
                  }
@@ -797,6 +1083,7 @@ int main() {
                          {"title", "Camera not avilable"}};
 
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->endProblemJson(response.dump());
                  }
              })
@@ -823,6 +1110,7 @@ int main() {
                             {"title", "Camera not found"}};
 
                         res->writeStatus(HTTP_404_NOT_FOUND)
+                            ->writeHeader("Cache-Control", "max-age=5")
                             ->endProblemJson(response.dump());
                     }
                 }
@@ -871,6 +1159,7 @@ int main() {
                  } catch (const std::exception& e) {
                      nlohmann::json response = {{"title", "camera not found"}};
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->endProblemJson(response.dump());
                  }
              })
@@ -882,6 +1171,7 @@ int main() {
                      nlohmann::json response = {
                          {"title", "Observer is already running"}};
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->endProblemJson(response.dump());
                      return;
                  }
@@ -896,6 +1186,7 @@ int main() {
                      nlohmann::json response = {
                          {"title", "Configuration not found"}};
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->endProblemJson(response.dump());
                      return;
                  }
@@ -907,6 +1198,7 @@ int main() {
                      nlohmann::json response = {
                          {"title", "Not a valid configuration"}};
                      res->writeStatus(HTTP_404_NOT_FOUND)
+                         ->writeHeader("Cache-Control", "max-age=5")
                          ->endProblemJson(response.dump());
                      return;
                  }
@@ -943,6 +1235,16 @@ int main() {
                               Web::ObserverStatusDTO {.running = running,
                                                       .config_id = cfg_id})
                               .dump());
+             })
+
+        .get("/",
+             [](auto* res, auto* req) {
+                 std::cout << "Index!" << std::endl;
+
+                 std::string rangeHeader(req->getHeader("range"));
+
+                 FileStreamer::GetInstance().streamFile(res, "/web/index.html",
+                                                        rangeHeader);
              })
 
         .get("/*.*",
@@ -1046,6 +1348,54 @@ int main() {
 
                      serverCtx.liveViewsManager->RemoveClient(ws);
                  }})
+
+        .ws<VideoBufferSocketData>(
+            "/buffer/*",
+            {
+                .compression = uWS::DISABLED,
+                .maxPayloadLength = 16 * 1024 * 1024,
+                .idleTimeout = 16,
+                .maxBackpressure = 1 * 1024 * 1024,
+                .closeOnBackpressureLimit = false,
+                .resetIdleTimeoutOnSend = false,
+                .sendPingsAutomatically = true,
+                .upgrade = nullptr,
+                .open =
+                    [&bufferWebSocket, &videoBufferRepository](
+                        auto* ws, const std::list<std::string_view>& paths) {
+                        // 1° is buffer, 2° is *
+                        std::string bufferID(*std::next(paths.begin()));
+
+                        if (videoBufferRepository.Exists(bufferID)) {
+                            ws->getUserData()->bufferID = bufferID;
+
+                            bufferWebSocket.AddClient(ws);
+
+                            bufferWebSocket.SendInitialBuffer(
+                                ws, videoBufferRepository.Get(bufferID).dump());
+                        } else {
+                            ws->end();
+                        }
+                    },
+                .message =
+                    [&videoBufferTasksManager](auto* ws,
+                                               std::string_view message,
+                                               uWS::OpCode opCode) {
+                        if (uWS::OpCode::TEXT) {
+                            if (message == "do_detection") {
+                                videoBufferTasksManager.AddTask(
+                                    Web::DoDetectionVideoBufferTask {
+                                        .bufferID = ws->getUserData()->bufferID,
+                                    });
+                            }
+                        }
+                    },
+                .close =
+                    [&bufferWebSocket](auto* ws, int /*code*/,
+                                       std::string_view /*message*/) {
+                        bufferWebSocket.RemoveClient(ws);
+                    },
+            })
 
         .run();
 

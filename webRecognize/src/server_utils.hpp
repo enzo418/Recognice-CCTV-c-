@@ -16,11 +16,26 @@
 
 extern const std::string HTTP_MULTIPART;
 extern const std::string HTTP_FORM_URLENCODED;
+
+// 500
 extern const char* HTTP_500_INTERNAL_SERVER_ERROR;
+
+// 400
 extern const char* HTTP_400_BAD_REQUEST;
 extern const char* HTTP_404_NOT_FOUND;
+
+// 300
 extern const char* HTTP_301_MOVED_PERMANENTLY;
+
+// 200
 extern const char* HTTP_204_NO_CONTENT;
+extern const char* HTTP_202_Accepted;
+extern const char* HTTP_200_OK;
+
+// 100
+
+// 102 is part of the HTTP extension
+extern const char* HTTP_102_Processing;
 
 std::string GetJsonString(const std::string& key, const std::string& value);
 

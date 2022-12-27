@@ -72,6 +72,9 @@
 # Utils
 !src/Utils
 
+# Pattern impl
+!src/Pattern
+
 !CMakeLists.txt
 
 package-lock.json

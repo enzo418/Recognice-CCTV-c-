@@ -12,11 +12,11 @@
 #include "DTO/DTONotification.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "nlohmann/json.hpp"
+#include "observer/BlockingFIFO.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
-#include "observer/SimpleBlockingQueue.hpp"
 
 namespace Web {
     template <bool SSL>
@@ -31,7 +31,7 @@ namespace Web {
 
        private:
         Semaphore smpQueue;
-        Observer::SimpleBlockingQueue<Web::API::DTONotification> notifications;
+        Observer::BlockingFIFO<Web::API::DTONotification> notifications;
     };
 
     template <bool SSL>
@@ -45,7 +45,7 @@ namespace Web {
                 nlohmann::json json_obj = nlohmann::json::array();
 
                 while (notifications.size() > 0) {
-                    json_obj.push_back(notifications.pop());
+                    json_obj.push_back(notifications.pop_front());
                 }
 
                 const std::string json = json_obj.dump();
@@ -57,7 +57,7 @@ namespace Web {
 
     template <bool SSL>
     void WebsocketNotificator<SSL>::update(Web::API::DTONotification ev) {
-        notifications.push(ev);
+        notifications.push_back(ev);
         smpQueue.release();
     }
 }  // namespace Web

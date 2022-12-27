@@ -24,6 +24,17 @@ namespace Web {
        protected:
         virtual void SendToClients(const char* data, int size);
 
+        /**
+         * @brief
+         *
+         * @tparam F
+         * @param data
+         * @param size
+         * @param shouldSend std::function<bool(WebSocketClient*)>
+         */
+        template <typename F>
+        void SendToSomeClients(const char* data, int size, F shouldSend);
+
        private:
         std::vector<WebSocketClient*> clients;
         std::mutex mtxClients;
@@ -55,6 +66,33 @@ namespace Web {
         for (int i = 0; i < clientsCount; i++) {
             // ¿should execute this on a separate thread?
             if (clients[i]->send(std::string_view(data, size),
+                                 uWS::OpCode::BINARY,
+                                 true) != uWS::WsSendStatus::SUCCESS) {
+                // frame was not sent, maybe next will
+                OBSERVER_WARN("Websocket video back-pressure!");
+            }
+        }
+    }
+
+    template <bool SSL, typename SocketData>
+    template <typename F>
+    void WebsocketService<SSL, SocketData>::SendToSomeClients(const char* data,
+                                                              int size,
+                                                              F shouldSend) {
+        std::lock_guard<std::mutex> guard_c(this->mtxClients);
+
+        if (size == 0) {
+            OBSERVER_WARN(
+                "Trying to send a 0 size packet. This would cause a TCP "
+                "error!!");
+            return;
+        }
+
+        int clientsCount = this->clients.size();
+        for (int i = 0; i < clientsCount; i++) {
+            // ¿should execute this on a separate thread?
+            if (shouldSend(clients[i]) &&
+                clients[i]->send(std::string_view(data, size),
                                  uWS::OpCode::BINARY,
                                  true) != uWS::WsSendStatus::SUCCESS) {
                 // frame was not sent, maybe next will
