@@ -32,8 +32,7 @@ namespace Observer {
                 CameraConfiguration* cfg;
 
                 // get next pool item
-                std::tie(cfg, rawCameraEvent) =
-                    std::move(this->validationPool.pop());
+                std::tie(cfg, rawCameraEvent) = this->validationPool.pop();
 
                 OBSERVER_TRACE(
                     "New event from camera '{}' received, analyzing it.",
