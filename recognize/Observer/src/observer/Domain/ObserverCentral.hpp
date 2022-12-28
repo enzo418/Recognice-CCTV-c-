@@ -21,6 +21,7 @@
 #include "NotificationsController.hpp"
 #include "PasiveCamera.hpp"
 #include "observer/Functionality.hpp"
+#include "observer/Pattern/ObserverBasics.hpp"
 
 namespace Observer {
     class ObserverCentral : public Functionality {
@@ -42,6 +43,17 @@ namespace Observer {
 
         void SubscribeToNewNotifications(
             INotificationEventSubscriber* subscriber);
+
+        /**
+         * @brief If a camera event is triggered and event validator says it's
+         * valid, then `subscriber` will be invoked.
+         *
+         * Note: NotificationController uses this publisher with LOW priority.
+         *
+         * @param subscriber
+         */
+        void SubscribeToValidCameraEvents(IEventValidatorSubscriber* subscriber,
+                                          Priority priority);
 
        protected:
         void InternalStart() override;

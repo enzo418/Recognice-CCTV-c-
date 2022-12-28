@@ -81,8 +81,8 @@ namespace Observer {
         this->smpQueue.release();
     }
 
-    void EventValidator::SubscribeToEventValidationDone(
-        IEventSubscriber* subscriber) {
-        this->eventPublisher.subscribe(subscriber);
+    void EventValidator::SubscribeToValidEvent(IEventSubscriber* subscriber,
+                                               Priority priority) {
+        this->eventPublisher.subscribe(subscriber, priority);
     }
 }  // namespace Observer

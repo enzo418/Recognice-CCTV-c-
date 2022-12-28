@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 }
 
 void StartObserver(Observer::Configuration* cfg) {
-    Observer::ObserverCentral observer(*cfg);
+    Observer::ObserverCentral observer(*cfg, 0);
     observer.Start();
 
     std::this_thread::sleep_for(std::chrono::hours(30));

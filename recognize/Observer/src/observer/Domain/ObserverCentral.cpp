@@ -1,6 +1,7 @@
 #include "ObserverCentral.hpp"
 
 #include "Configuration/CameraConfiguration.hpp"
+#include "observer/Pattern/ObserverBasics.hpp"
 
 namespace Observer {
     struct {
@@ -91,8 +92,8 @@ namespace Observer {
                     camera.eventValidator.get());
 
                 // subscribe notification controller to validated events
-                camera.eventValidator->SubscribeToEventValidationDone(
-                    &this->notificationController);
+                camera.eventValidator->SubscribeToValidEvent(
+                    &this->notificationController, Priority::LOW);
             }
         }
     }
@@ -181,5 +182,12 @@ namespace Observer {
     void ObserverCentral::SubscribeToNewNotifications(
         INotificationEventSubscriber* subscriber) {
         this->notificationController.SubscribeToNewNotifications(subscriber);
+    }
+
+    void ObserverCentral::SubscribeToValidCameraEvents(
+        IEventValidatorSubscriber* subscriber, Priority priority) {
+        for (auto& camera : this->cameras) {
+            camera.eventValidator->SubscribeToValidEvent(subscriber, priority);
+        }
     }
 }  // namespace Observer

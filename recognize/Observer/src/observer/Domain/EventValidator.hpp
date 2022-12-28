@@ -11,17 +11,22 @@
 #include "observer/Log/log.hpp"
 #include "observer/Pattern/Camera/ICameraEventSubscriber.hpp"
 #include "observer/Pattern/Event/IEventSubscriber.hpp"
+#include "observer/Pattern/ObserverBasics.hpp"
 #include "observer/Pattern/Validation/IValidatorHandler.hpp"
 #include "observer/Semaphore.hpp"
 #include "observer/SimpleBlockingQueue.hpp"
 
 namespace Observer {
+
+    typedef IEventSubscriber IEventValidatorSubscriber;
+
     class EventValidator : public ICameraEventSubscriber, public Functionality {
        public:
         EventValidator(CameraConfiguration* cfg,
                        SynchronizedIDProvider* groupIdProvider);
 
-        void SubscribeToEventValidationDone(IEventSubscriber* subscriber);
+        void SubscribeToValidEvent(IEventSubscriber* subscriber,
+                                   Priority priority);
 
         void update(CameraConfiguration* cfg, CameraEvent ev) override;
 
