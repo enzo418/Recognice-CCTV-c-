@@ -70,15 +70,11 @@ namespace Observer {
         }
     }
 
-    void EventValidator::Add(CameraConfiguration* cfg, CameraEvent ev) {
-        this->validationPool.push(std::make_pair(cfg, std::move(ev)));
+    void EventValidator::update(CameraConfiguration* cam, CameraEvent ev) {
+        this->validationPool.push(std::make_pair(cam, std::move(ev)));
 
         // add 1 item to poll
         this->smpQueue.release();
-    }
-
-    void EventValidator::update(CameraConfiguration* cam, CameraEvent ev) {
-        this->Add(cam, std::move(ev));
     }
 
     void EventValidator::SubscribeToEventValidationDone(

@@ -19,8 +19,6 @@ namespace Observer {
        public:
         EventValidator(CameraConfiguration* cfg);
 
-        void Add(CameraConfiguration* cfg, CameraEvent ev);
-
         void SubscribeToEventValidationDone(IEventSubscriber* subscriber);
 
         void update(CameraConfiguration* cfg, CameraEvent ev) override;
