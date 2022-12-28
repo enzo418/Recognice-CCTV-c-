@@ -49,7 +49,7 @@ namespace Observer {
                 frame = source.GetFrame();
                 if (!frame.IsEmpty()) {
                     this->framePublisher.notifySubscribers(
-                        this->cfg->positionOnOutput, frame);
+                        this->cfg->positionOnOutput, frame.Clone());
 
                     if (processFrames &&
                         timerFakeFPS.GetDuration() > minTimeBetweenFrames) {
