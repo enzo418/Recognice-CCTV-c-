@@ -7,8 +7,8 @@
 
 namespace Observer {
     /**
-     * @brief Holds all the frames and the
-     * first frame where a change was found.
+     * @brief Holds all the event frames and the first frame where a change was
+     * found.
      */
     struct CameraEvent {
        public:
