@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "observer/Blob/BlobDetector/Blob.hpp"
-#include "observer/Domain/Event/Event.hpp"
+#include "observer/Domain/Event/EventDescriptor.hpp"
 #include "observer/IFrame.hpp"
 
 namespace Observer {
@@ -21,7 +21,7 @@ namespace Observer {
                          const std::vector<std::string>& pMessages,
                          std::vector<Blob>&& blobs);
 
-        Event& GetEvent() &;
+        EventDescriptor& GetEvent() &;
 
         bool IsValid();
 
@@ -32,6 +32,6 @@ namespace Observer {
        private:
         bool valid = false;
         std::vector<std::string> messages;
-        Event event;
+        EventDescriptor event;
     };
 }  // namespace Observer

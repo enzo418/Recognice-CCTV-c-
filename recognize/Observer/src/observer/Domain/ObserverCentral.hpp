@@ -25,7 +25,7 @@
 namespace Observer {
     class ObserverCentral : public Functionality {
        public:
-        explicit ObserverCentral(Configuration pConfig);
+        explicit ObserverCentral(Configuration pConfig, int initialGroupID);
 
         void StopCamera(std::string id);
         void StopAllCameras();
@@ -64,6 +64,8 @@ namespace Observer {
         FrameDisplay frameDisplay;
 
         CamerasFramesBlender framesBlender;
+
+        SynchronizedIDProvider groupIDProvider;
 
         void CreateCameras(std::vector<CameraConfiguration>& camsCfg);
 

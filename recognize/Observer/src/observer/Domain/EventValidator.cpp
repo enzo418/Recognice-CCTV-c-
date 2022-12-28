@@ -2,8 +2,10 @@
 
 namespace Observer {
 
-    EventValidator::EventValidator(CameraConfiguration* pCameraCfg) {
+    EventValidator::EventValidator(CameraConfiguration* pCameraCfg,
+                                   SynchronizedIDProvider* pIdProvider) {
         this->cameraCfg = pCameraCfg;
+        this->groupIdProvider = pIdProvider;
 
         auto validatorByBlobs =
             new ValidatorByBlobs(this->cameraCfg->blobDetection);
@@ -46,14 +48,16 @@ namespace Observer {
                     OBSERVER_TRACE("Event from camera '{}' was valid",
                                    cfg->name);
 
-                    Event& event = result.GetEvent();
+                    rawCameraEvent.SetGroupID(this->groupIdProvider->GetNext());
+
+                    EventDescriptor& eventDescriptor = result.GetEvent();
 
                     // set camera name
-                    event.SetCameraName(cfg->name);
+                    eventDescriptor.SetCameraName(cfg->name);
 
                     // notify all the subscribers with the event
                     this->eventPublisher.notifySubscribers(
-                        std::move(event), std::move(rawCameraEvent));
+                        std::move(eventDescriptor), std::move(rawCameraEvent));
                 } else {
                     OBSERVER_TRACE(
                         "Event from camera '{0}' was not valid due to {1}.",

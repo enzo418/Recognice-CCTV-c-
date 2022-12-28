@@ -2,9 +2,10 @@
 
 #include <numeric>
 
-#include "Event/Event.hpp"
+#include "Event/EventDescriptor.hpp"
 #include "Validators/ValidatorByBlobs.hpp"
 #include "Validators/ValidatorHandler.hpp"
+#include "observer/Domain/SynchronizedIDProvider.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/IFrame.hpp"
 #include "observer/Log/log.hpp"
@@ -17,7 +18,8 @@
 namespace Observer {
     class EventValidator : public ICameraEventSubscriber, public Functionality {
        public:
-        EventValidator(CameraConfiguration* cfg);
+        EventValidator(CameraConfiguration* cfg,
+                       SynchronizedIDProvider* groupIdProvider);
 
         void SubscribeToEventValidationDone(IEventSubscriber* subscriber);
 
@@ -40,6 +42,8 @@ namespace Observer {
         SimpleBlockingQueue<std::pair<CameraConfiguration*, CameraEvent>>
             validationPool;
 
-        Publisher<Event, CameraEvent> eventPublisher;
+        Publisher<EventDescriptor, CameraEvent> eventPublisher;
+
+        SynchronizedIDProvider* groupIdProvider;
     };
 }  // namespace Observer

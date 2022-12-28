@@ -10,10 +10,11 @@ namespace Observer {
         }
     } CompareCameraConfigurationsByPreviewOrder;
 
-    ObserverCentral::ObserverCentral(Configuration pConfig)
+    ObserverCentral::ObserverCentral(Configuration pConfig, int initialGroupID)
         : config(std::move(pConfig)),
           notificationController(&this->config),
-          framesBlender(&this->config.outputConfiguration) {
+          framesBlender(&this->config.outputConfiguration),
+          groupIDProvider(initialGroupID) {
         this->ProcessConfiguration();
 
         this->framesBlender.SetNumberCameras(
@@ -139,7 +140,8 @@ namespace Observer {
         }
 
         // event validator
-        ct.eventValidator = std::make_shared<EventValidator>(&cfg);
+        ct.eventValidator =
+            std::make_shared<EventValidator>(&cfg, &this->groupIDProvider);
 
         return ct;
     }

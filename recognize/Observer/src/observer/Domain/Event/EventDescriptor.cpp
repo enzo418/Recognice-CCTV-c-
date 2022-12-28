@@ -1,4 +1,4 @@
-#include "Event.hpp"
+#include "EventDescriptor.hpp"
 
 #include <utility>
 
@@ -15,27 +15,29 @@ namespace Observer {
         return this->points;
     }
 
-    Event::Event() = default;
+    EventDescriptor::EventDescriptor() = default;
 
-    Event::Event(std::vector<Blob>&& blobs) : blobsFound(std::move(blobs)) {}
+    EventDescriptor::EventDescriptor(std::vector<Blob>&& blobs)
+        : blobsFound(std::move(blobs)) {}
 
-    void Event::SetBlobs(std::vector<Blob>&& findings) {
+    void EventDescriptor::SetBlobs(std::vector<Blob>&& findings) {
         this->blobsFound = std::move(findings);
     }
 
-    void Event::AddClassifierFinding(ClassifierFindingEvent&& finding) {
+    void EventDescriptor::AddClassifierFinding(
+        ClassifierFindingEvent&& finding) {
         this->classifierFindings.push_back(std::move(finding));
     }
 
-    void Event::SetCameraName(std::string pCameraName) {
+    void EventDescriptor::SetCameraName(std::string pCameraName) {
         this->cameraName = pCameraName;
     }
 
-    std::string Event::GetCameraName() { return this->cameraName; }
+    std::string EventDescriptor::GetCameraName() { return this->cameraName; }
 
-    std::vector<Blob>& Event::GetBlobs() { return this->blobsFound; }
+    std::vector<Blob>& EventDescriptor::GetBlobs() { return this->blobsFound; }
 
-    int Event::GetFirstFrameWhereFindingWasFound() {
+    int EventDescriptor::GetFirstFrameWhereFindingWasFound() {
         const int max_int = std::numeric_limits<int>::max();
 
         int index = max_int;

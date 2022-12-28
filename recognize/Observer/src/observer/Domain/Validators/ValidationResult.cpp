@@ -20,7 +20,7 @@ namespace Observer {
     ValidationResult::ValidationResult(const ValidationResult& r)
         : valid(r.valid), messages(r.messages), event(r.event) {};
 
-    Event& ValidationResult::GetEvent() & { return this->event; }
+    EventDescriptor& ValidationResult::GetEvent() & { return this->event; }
 
     bool ValidationResult::IsValid() { return this->valid; }
 

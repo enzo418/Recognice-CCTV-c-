@@ -4,7 +4,7 @@ namespace Observer {
 
     namespace fs = std::filesystem;
 
-    ImageNotification::ImageNotification(int pGroupID, Event pEvent,
+    ImageNotification::ImageNotification(int pGroupID, EventDescriptor pEvent,
                                          Frame& frame,
                                          std::string pOutputFolder)
         : Notification(

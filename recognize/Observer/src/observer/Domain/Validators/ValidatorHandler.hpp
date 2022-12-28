@@ -2,7 +2,7 @@
 
 #include "ValidationResult.hpp"
 #include "observer/Domain/Event/CameraEvent.hpp"
-#include "observer/Domain/Event/Event.hpp"
+#include "observer/Domain/Event/EventDescriptor.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Pattern/ChainOfResponsibilityBasics.hpp"
 

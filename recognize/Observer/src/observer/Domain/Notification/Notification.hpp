@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 
-#include "observer/Domain/Event/Event.hpp"
+#include "observer/Domain/Event/EventDescriptor.hpp"
 
 namespace Observer {
     /**
@@ -12,7 +12,7 @@ namespace Observer {
      */
     class Notification {
        public:
-        Notification(int groupID, Event event, std::string content);
+        Notification(int groupID, EventDescriptor event, std::string content);
 
         int GetGroupID();
 
@@ -25,11 +25,11 @@ namespace Observer {
          */
         virtual std::string& GetContent();
 
-        Event& GetEvent() &;
+        EventDescriptor& GetEvent() &;
 
        protected:
         int groupID;
-        Event event;
+        EventDescriptor event;
         std::string content;
     };
 

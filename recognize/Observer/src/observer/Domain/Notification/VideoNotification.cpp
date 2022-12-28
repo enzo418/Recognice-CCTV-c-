@@ -4,7 +4,7 @@ namespace Observer {
 
     namespace fs = std::filesystem;
 
-    VideoNotification::VideoNotification(int pGroupID, Event pEvent,
+    VideoNotification::VideoNotification(int pGroupID, EventDescriptor pEvent,
                                          std::vector<Frame>&& pFrames,
                                          std::string pOutputFolder)
         : Notification(pGroupID, std::move(pEvent),

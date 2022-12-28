@@ -8,7 +8,7 @@
 #include "Configuration/Configuration.hpp"
 #include "Configuration/NotificationsServiceConfiguration.hpp"
 #include "Event/CameraEvent.hpp"
-#include "Event/Event.hpp"
+#include "Event/EventDescriptor.hpp"
 #include "Notification/DTONotification.hpp"
 #include "Notification/IMessagingService.hpp"
 #include "Notification/LocalNotifications.hpp"
@@ -56,7 +56,7 @@ namespace Observer {
          */
         void AddNotification(VideoNotification videoN);
 
-        void update(Event event, CameraEvent rawCameraEvent) override;
+        void update(EventDescriptor event, CameraEvent rawCameraEvent) override;
 
         void SubscribeToNewNotifications(
             INotificationEventSubscriber* subscriber);
@@ -110,7 +110,5 @@ namespace Observer {
 
         // non-owning ptr
         LocalNotifications* localNotifications {nullptr};
-
-        int groupID;
     };
 }  // namespace Observer

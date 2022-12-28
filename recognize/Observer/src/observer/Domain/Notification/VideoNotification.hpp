@@ -21,7 +21,8 @@ namespace Observer {
      */
     class VideoNotification : public Notification {
        public:
-        VideoNotification(int groupID, Event ev, std::vector<Frame>&& frames,
+        VideoNotification(int groupID, EventDescriptor ev,
+                          std::vector<Frame>&& frames,
                           std::string outputFolder);
 
         std::vector<Frame>& GetFrames();

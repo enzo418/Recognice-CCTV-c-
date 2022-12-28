@@ -4,7 +4,6 @@ namespace Observer {
 
     NotificationsController::NotificationsController(Configuration* cfg) {
         this->config = cfg;
-        this->groupID = 0;
 
         if (cfg->localWebConfiguration.enabled) {
             auto ptrLocal = new LocalNotifications(cfg->localWebConfiguration);
@@ -224,8 +223,10 @@ namespace Observer {
         }
     }
 
-    void NotificationsController::update(Event event,
+    void NotificationsController::update(EventDescriptor event,
                                          CameraEvent rawCameraEvent) {
+        const int groupID = rawCameraEvent.GetGroupID();
+
         // 1. Create a text notification
         // 1. a. Get camera name
         std::string cameraName = event.GetCameraName();
@@ -235,17 +236,17 @@ namespace Observer {
             this->config->notificationTextTemplate, cameraName);
 
         // 1. c. Create the notification
-        TextNotification textNotification(this->groupID, event, text);
+        TextNotification textNotification(groupID, event, text);
 
         // 2. Create an image notification using the first frame where the event
         // happen
         int indexFirst = event.GetFirstFrameWhereFindingWasFound();
         ImageNotification imageNotification(
-            this->groupID, event, rawCameraEvent.GetFrameAt(indexFirst),
+            groupID, event, rawCameraEvent.GetFrameAt(indexFirst),
             this->config->mediaFolderPath);
 
         // 3. Create a video notification using the frames
-        VideoNotification videoNotification(this->groupID, event,
+        VideoNotification videoNotification(groupID, event,
                                             rawCameraEvent.PopFrames(),
                                             this->config->mediaFolderPath);
 
@@ -256,9 +257,6 @@ namespace Observer {
         this->AddNotification(textNotification);
         this->AddNotification(imageNotification);
         this->AddNotification(videoNotification);
-
-        // 5. increment group id
-        this->groupID++;
 
         Size size = rawCameraEvent.GetFramesSize();
         double maxDiagonalDist =

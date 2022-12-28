@@ -24,6 +24,8 @@ set(SRC_
         src/observer/Functionality.hpp src/observer/Functionality.cpp
         src/observer/IFunctionality.hpp
         
+        src/observer/Domain/SynchronizedIDProvider.hpp src/observer/Domain/SynchronizedIDProvider.cpp
+
         # Interfaces for library dependant impl
         src/observer/IImageDisplay.hpp
         src/observer/IImageIO.hpp
@@ -47,7 +49,7 @@ set(SRC_
         src/observer/Domain/Validators/ValidatorByBlobs.hpp src/observer/Domain/Validators/ValidatorByBlobs.cpp
 
         # domain
-        src/observer/Domain/Event/Event.cpp src/observer/Domain/Event/Event.hpp
+        src/observer/Domain/Event/EventDescriptor.cpp src/observer/Domain/Event/EventDescriptor.hpp
         src/observer/Domain/Event/CameraEvent.hpp src/observer/Domain/Event/CameraEvent.cpp
         src/observer/Domain/BufferedSource.hpp src/observer/Domain/BufferedSource.cpp
         src/observer/Domain/EventValidator.hpp src/observer/Domain/EventValidator.cpp

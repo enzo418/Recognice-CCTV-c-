@@ -21,7 +21,7 @@ namespace Observer {
          * @param text caption
          * @param frame frame, as reference but copied on ctor.
          */
-        ImageNotification(int groupID, Event ev, Frame& frame,
+        ImageNotification(int groupID, EventDescriptor ev, Frame& frame,
                           std::string pOutputFolder);
 
         Frame& GetImage();

@@ -25,9 +25,18 @@ namespace Observer {
 
         double GetFrameRate();
         Size GetFramesSize();
+        int GetGroupID();
 
         void SetFrameRate(double pFrameRate);
         void SetFrameSize(Size pFrameSize);
+
+        /**
+         * @brief Sets the group id.
+         * Once it's a valid event we set the group id.
+         *
+         * @param groupID
+         */
+        void SetGroupID(int groupID);
 
         /**
          * Returns a move instructor of the frames,
@@ -44,5 +53,8 @@ namespace Observer {
         double frameRate;
 
         Size framesSize;
+
+        // unique value in the program execution
+        int groupID {-1};
     };
 }  // namespace Observer

@@ -22,11 +22,11 @@ namespace Observer {
         std::vector<Point> points;
     };
 
-    class Event {
+    class EventDescriptor {
        public:
-        Event();
+        EventDescriptor();
 
-        Event(std::vector<Blob>&& blobs);
+        EventDescriptor(std::vector<Blob>&& blobs);
 
         void SetBlobs(std::vector<Blob>&& findings);
         std::vector<Blob>& GetBlobs();

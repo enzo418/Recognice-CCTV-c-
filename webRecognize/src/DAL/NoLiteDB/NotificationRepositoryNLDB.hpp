@@ -31,6 +31,11 @@ namespace Web::DAL {
 
         std::string GetFilename(const std::string& id) override;
 
+        /**
+         * @brief Get the last group id stored, defaults to 0.
+         *
+         * @return int last group id or 0
+         */
         int GetLastGroupID() override;
 
        private:

@@ -173,11 +173,13 @@ int main() {
     /* ------------------- CREATE OBSERVER ------------------ */
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
                                  &notificationController,
+                                 &notificationRepository,
                                  &threads](const Observer::Configuration& cfg) {
         if (observerCtx.observer)
             OBSERVER_WARN("Observer wasn't null at start");
 
-        observerCtx.observer = std::make_unique<Observer::ObserverCentral>(cfg);
+        observerCtx.observer = std::make_unique<Observer::ObserverCentral>(
+            cfg, notificationRepository.GetLastGroupID());
 
         observerCtx.observer->SubscribeToNewNotifications(
             (Observer::INotificationEventSubscriber*)&notificationController);

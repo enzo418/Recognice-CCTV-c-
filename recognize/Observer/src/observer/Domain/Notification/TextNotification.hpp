@@ -7,7 +7,7 @@
 namespace Observer {
     class TextNotification : public Notification {
        public:
-        TextNotification(int groupID, Event ev, std::string text);
+        TextNotification(int groupID, EventDescriptor ev, std::string text);
     };
 
 }  // namespace Observer
