@@ -3,6 +3,7 @@
 #include "../Domain/Notification.hpp"
 #include "DTO/DTOBlob.hpp"
 #include "DTO/DTONotification.hpp"
+#include "DTO/DTONotificationDebugVideo.hpp"
 #include "DTO/ObserverStatusDTO.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Configuration/NLHJSONConfiguration.hpp"
@@ -44,14 +45,15 @@ namespace nlohmann {
         Web::API::DTONotification::DTONotificationCamera, id, name);
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::API::DTONotification, id, content,
-                                       groupID, type, datetime, camera);
+                                       groupID, type, datetime, camera,
+                                       configurationID);
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Observer::DTONotification, content,
                                        groupID, type);
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::Domain::Notification,
                                        notificationID, content, groupID, type,
-                                       datetime, camera);
+                                       datetime, camera, configurationID);
 
     /* ------------------- OBSERVER STATUS ------------------ */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::ObserverStatusDTO, running,
@@ -60,14 +62,23 @@ namespace nlohmann {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::DTOBlob, first_appearance,
                                        last_appearance, rects, internal_id);
 
-    // void inline to_json(json& j, const Web::DTONotificationWithId& p) {
+    /* -------------- TEMP NOTIFICATION BUFFER -------------- */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::DTONotificationDebugVideo, id, fps,
+                                       duration, date_unix, filePath, groupID,
+                                       videoBufferID, camera_id);
+
+    // void inline to_json(json& j, const
+    // Web::DTONotificationWithId& p) {
     //     j = json::parse(p.notification);
     //     j = j["id"] = p.id;
     // }
 
-    // void inline from_json(const json& j, Web::DTONotificationWithId& p) {
-    //     j.contains("_id") ? j.at("_id").get_to(p.id) :
-    //     j.at("id").get_to(p.id); j.get_to(p.notification);
+    // void inline from_json(const json& j,
+    // Web::DTONotificationWithId& p) {
+    //     j.contains("_id") ?
+    //     j.at("_id").get_to(p.id) :
+    //     j.at("id").get_to(p.id);
+    //     j.get_to(p.notification);
     // }
 
 }  // namespace nlohmann

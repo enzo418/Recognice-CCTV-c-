@@ -23,9 +23,9 @@ namespace Observer {
 
         std::vector<Frame>& GetFrames() &;
 
-        double GetFrameRate();
-        Size GetFramesSize();
-        int GetGroupID();
+        double GetFrameRate() const;
+        Size GetFramesSize() const;
+        int GetGroupID() const;
 
         void SetFrameRate(double pFrameRate);
         void SetFrameSize(Size pFrameSize);

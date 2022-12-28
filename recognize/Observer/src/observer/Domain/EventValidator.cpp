@@ -56,8 +56,8 @@ namespace Observer {
                     eventDescriptor.SetCameraName(cfg->name);
 
                     // notify all the subscribers with the event
-                    this->eventPublisher.notifySubscribers(
-                        std::move(eventDescriptor), std::move(rawCameraEvent));
+                    this->eventPublisher.notifySubscribers(eventDescriptor,
+                                                           rawCameraEvent);
                 } else {
                     OBSERVER_TRACE(
                         "Event from camera '{0}' was not valid due to {1}.",
@@ -81,8 +81,8 @@ namespace Observer {
         this->smpQueue.release();
     }
 
-    void EventValidator::SubscribeToValidEvent(IEventSubscriber* subscriber,
-                                               Priority priority) {
+    void EventValidator::SubscribeToValidEvent(
+        IEventValidatorSubscriber* subscriber, Priority priority) {
         this->eventPublisher.subscribe(subscriber, priority);
     }
 }  // namespace Observer

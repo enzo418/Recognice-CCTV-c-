@@ -12,11 +12,11 @@ namespace Observer {
         return std::move(this->frames);
     }
 
-    Size CameraEvent::GetFramesSize() { return this->framesSize; }
+    Size CameraEvent::GetFramesSize() const { return this->framesSize; }
 
-    double CameraEvent::GetFrameRate() { return this->frameRate; }
+    double CameraEvent::GetFrameRate() const { return this->frameRate; }
 
-    int CameraEvent::GetGroupID() {
+    int CameraEvent::GetGroupID() const {
         OBSERVER_ASSERT(this->groupID != -1, "Logic error: group id not set.");
         return this->groupID;
     }

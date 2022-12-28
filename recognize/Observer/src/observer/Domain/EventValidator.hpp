@@ -18,14 +18,12 @@
 
 namespace Observer {
 
-    typedef IEventSubscriber IEventValidatorSubscriber;
-
     class EventValidator : public ICameraEventSubscriber, public Functionality {
        public:
         EventValidator(CameraConfiguration* cfg,
                        SynchronizedIDProvider* groupIdProvider);
 
-        void SubscribeToValidEvent(IEventSubscriber* subscriber,
+        void SubscribeToValidEvent(IEventValidatorSubscriber* subscriber,
                                    Priority priority);
 
         void update(CameraConfiguration* cfg, CameraEvent ev) override;
@@ -47,7 +45,7 @@ namespace Observer {
         SimpleBlockingQueue<std::pair<CameraConfiguration*, CameraEvent>>
             validationPool;
 
-        Publisher<EventDescriptor, CameraEvent> eventPublisher;
+        EventValidatorPublisher eventPublisher;
 
         SynchronizedIDProvider* groupIdProvider;
     };

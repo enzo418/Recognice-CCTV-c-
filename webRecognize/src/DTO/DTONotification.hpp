@@ -27,7 +27,8 @@ namespace Web::API {
               type(notification.type),
               datetime(notification.datetime),
               groupID(notification.groupID),
-              content(notification.content) {}
+              content(notification.content),
+              configurationID(notification.configurationID) {}
 
         std::string id;
         std::time_t datetime;
@@ -35,5 +36,8 @@ namespace Web::API {
         DTONotificationCamera camera;
         std::string type;
         std::string content;
+
+        // the configuration that generated this notification
+        std::string configurationID;
     };
 };  // namespace Web::API

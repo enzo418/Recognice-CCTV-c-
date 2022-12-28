@@ -3,8 +3,10 @@
 
 // nolitedb
 #include "Controller/WebsocketVideoBufferController.hpp"
+#include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
+#include "DTO/DTONotificationDebugVideo.hpp"
 #include "LiveVideo/LiveViewExceptions.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "VideoBufferTasksManager.hpp"
@@ -26,8 +28,10 @@
 #include "observer/Blob/BlobDetector/Finding.hpp"
 #include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
+#include "observer/Domain/EventValidator.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/Log/log.hpp"
+#include "observer/Pattern/ObserverBasics.hpp"
 #include "observer/Size.hpp"
 #include "server_types.hpp"
 #include "server_utils.hpp"
@@ -120,33 +124,6 @@ int main() {
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
 
-    /* -------------- NOTIFICATIONS REPOSITORY -------------- */
-    nldb::DBSL3 notificationsDB;
-    if (!notificationsDB.open("notifications.db")) {
-        OBSERVER_ERROR("Could not open the database!");
-        notificationsDB.throwLastError();
-    }
-
-    Web::DAL::NotificationRepositoryNLDB notificationRepository(
-        &notificationsDB);
-    Web::CL::NotificationCL notificationCache(&notificationRepository);
-    Web::Controller::NotificationController<SSL> notificationController(
-        &app, &notificationRepository, &notificationCache, &configurationDAO,
-        &serverCtx);
-
-    /* ----------------- CAMERAS REPOSITORY ----------------- */
-    Web::DAL::CameraRepositoryMemory cameraRepository;
-
-    // for (auto&& cam : cfg.cameras) {
-    //     auto camera = Web::Domain::Camera(cam.name, cam.url);
-    //     cameraRepository.Add(camera);
-    // }
-
-    /* ---------------- CACHED CAMERA IMAGES ---------------- */
-    // url -> image
-    std::unordered_map<std::string, std::vector<unsigned char>>
-        cachedCameraImage;
-
     /* -------------------- VIDEO BUFFER -------------------- */
     // TODO: Move to controller
     // video buffer stores path to video buffer with the fps that it was
@@ -161,6 +138,33 @@ int main() {
     Web::DAL::VideoBufferRepositoryNLDB videoBufferRepository(&videoBufferDB);
     Web::VideoBufferTasksManager videoBufferTasksManager(&videoBufferRepository,
                                                          &configurationDAO);
+
+    /* -------------- NOTIFICATIONS REPOSITORY -------------- */
+    nldb::DBSL3 notificationsDB;
+    if (!notificationsDB.open("notifications.db")) {
+        OBSERVER_ERROR("Could not open the database!");
+        notificationsDB.throwLastError();
+    }
+
+    Web::DAL::NotificationRepositoryNLDB notificationRepository(
+        &notificationsDB);
+    Web::CL::NotificationCL notificationCache(&notificationRepository);
+    Web::Controller::NotificationController<SSL> notificationController(
+        &app, &notificationRepository, &videoBufferRepository,
+        &notificationCache, &configurationDAO, &serverCtx);
+
+    /* ----------------- CAMERAS REPOSITORY ----------------- */
+    Web::DAL::CameraRepositoryMemory cameraRepository;
+
+    // for (auto&& cam : cfg.cameras) {
+    //     auto camera = Web::Domain::Camera(cam.name, cam.url);
+    //     cameraRepository.Add(camera);
+    // }
+
+    /* ---------------- CACHED CAMERA IMAGES ---------------- */
+    // url -> image
+    std::unordered_map<std::string, std::vector<unsigned char>>
+        cachedCameraImage;
 
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
 
@@ -183,6 +187,14 @@ int main() {
 
         observerCtx.observer->SubscribeToNewNotifications(
             (Observer::INotificationEventSubscriber*)&notificationController);
+
+        // call it after it started or we will be subscribing to nothing
+        observerCtx.observer->OnStartFinished([&notificationController,
+                                               &observerCtx]() {
+            observerCtx.observer->SubscribeToValidCameraEvents(
+                (Observer::IEventValidatorSubscriber*)&notificationController,
+                Observer::Priority::HIGH);
+        });
 
         observerCtx.observer->Start();
 

@@ -223,8 +223,8 @@ namespace Observer {
         }
     }
 
-    void NotificationsController::update(EventDescriptor event,
-                                         CameraEvent rawCameraEvent) {
+    void NotificationsController::update(EventDescriptor& event,
+                                         CameraEvent& rawCameraEvent) {
         const int groupID = rawCameraEvent.GetGroupID();
 
         // 1. Create a text notification

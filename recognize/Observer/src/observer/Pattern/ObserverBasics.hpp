@@ -26,12 +26,15 @@ namespace Observer {
 // Publisher base class
 template <typename... Ctx>
 class Publisher {
+   public:
+    typedef ISubscriber<Ctx...> Subscriber;
+
    private:
-    typedef ISubscriber<Ctx...>* Subscriber;
+    typedef Subscriber* SubscriberPtr;
 
     struct PrioritySubscriber {
         Observer::Priority priority;
-        Subscriber subscriber;
+        SubscriberPtr subscriber;
     };
 
     struct PrioritySubscriberCmp {
@@ -52,12 +55,12 @@ class Publisher {
      * called first. If two subscribers have the same priority, the first that
      * subscribed will be called first.
      */
-    void subscribe(Subscriber subscriber,
+    void subscribe(SubscriberPtr subscriber,
                    Observer::Priority priority = Observer::Priority::LOW) {
         subscribers.insert(PrioritySubscriber {priority, subscriber});
     }
 
-    void unsubscribe(Subscriber subscriber) {
+    void unsubscribe(SubscriberPtr subscriber) {
         auto find = std::find(subscribers.begin(), subscribers.end(),
                               [&subscriber](PrioritySubscriber& prioritySub) {
                                   return prioritySub.subscriber == subscriber;

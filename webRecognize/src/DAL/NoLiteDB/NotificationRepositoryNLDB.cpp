@@ -16,7 +16,10 @@ namespace Web::DAL {
     }
 
     NotificationRepositoryNLDB::NotificationRepositoryNLDB(nldb::DBSL3* pDb)
-        : db(pDb), query(db), colNotifications("notifications") {}
+        : db(pDb),
+          query(db),
+          colNotifications("notifications"),
+          colNotificationDebugVideo("debugNotificationVideo") {}
 
     std::string NotificationRepositoryNLDB::Add(Notification& element) {
         nldb::json elementAsJson = element;
@@ -88,5 +91,38 @@ namespace Web::DAL {
         if (result.empty()) return 0;
 
         return result[0]["groupID"];
+    }
+
+    std::string NotificationRepositoryNLDB::AddNotificationDebugVideo(
+        const Web::DTONotificationDebugVideo& element) {
+        nldb::json elementAsJson = element;
+
+        elementAsJson.erase("id");
+
+        auto ids = query.from(colNotificationDebugVideo).insert(elementAsJson);
+
+        return ids[0];
+    }
+
+    std::optional<Web::DTONotificationDebugVideo>
+    NotificationRepositoryNLDB::GetNotificationDebugVideo(int groupID) {
+        nldb::json res =
+            query.from(colNotificationDebugVideo)
+                .select()
+                .where(colNotificationDebugVideo["groupID"] == groupID)
+                .execute();
+
+        if (res.size() > 0) {
+            res[0]["id"] = res[0]["_id"];
+            return res[0];
+        }
+
+        return std::nullopt;
+    }
+
+    void NotificationRepositoryNLDB::UpdateNotificationDebugVideo(
+        const std::string& id, const std::string& videoBufferID) {
+        query.from(colNotificationDebugVideo)
+            .update(id, nldb::json {{"videoBufferID", videoBufferID}});
     }
 }  // namespace Web::DAL

@@ -55,9 +55,14 @@ namespace Observer {
         void SubscribeToValidCameraEvents(IEventValidatorSubscriber* subscriber,
                                           Priority priority);
 
+        void OnStartFinished(std::function<void()>&& F);
+
        protected:
         void InternalStart() override;
         void PostStop() override;
+
+       private:
+        std::function<void()> onStartFinished;
 
        private:
         struct Camera {

@@ -17,6 +17,9 @@ namespace Web::Domain {
         std::time_t datetime;
         Camera camera;
 
+        // the configuration that generated this notification
+        std::string configurationID;
+
         // use default operators
         auto operator<=>(const Notification&) const = default;
 

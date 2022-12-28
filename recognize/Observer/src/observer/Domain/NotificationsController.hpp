@@ -29,7 +29,7 @@ namespace Observer {
      * To push a notification use AddNotification, do not use
      * Send unless you do not mind thread locking.
      */
-    class NotificationsController : public IEventSubscriber,
+    class NotificationsController : public IEventValidatorSubscriber,
                                     public Functionality {
        public:
         explicit NotificationsController(Configuration* cfg);
@@ -56,7 +56,8 @@ namespace Observer {
          */
         void AddNotification(VideoNotification videoN);
 
-        void update(EventDescriptor event, CameraEvent rawCameraEvent) override;
+        void update(EventDescriptor& event,
+                    CameraEvent& rawCameraEvent) override;
 
         void SubscribeToNewNotifications(
             INotificationEventSubscriber* subscriber);

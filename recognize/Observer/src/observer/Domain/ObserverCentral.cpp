@@ -53,6 +53,8 @@ namespace Observer {
             OBSERVER_TRACE("Starting notification controller");
             this->notificationController.Start();
         }
+
+        this->onStartFinished();
     }
 
     void ObserverCentral::PostStop() {
@@ -92,6 +94,9 @@ namespace Observer {
                     camera.eventValidator.get());
 
                 // subscribe notification controller to validated events
+                // use low priority so hopefully is the last one. That's
+                // important because it takes ownership of all the frames from
+                // event.
                 camera.eventValidator->SubscribeToValidEvent(
                     &this->notificationController, Priority::LOW);
             }
@@ -190,4 +195,9 @@ namespace Observer {
             camera.eventValidator->SubscribeToValidEvent(subscriber, priority);
         }
     }
+
+    void ObserverCentral::OnStartFinished(std::function<void()>&& F) {
+        this->onStartFinished = std::move(F);
+    }
+
 }  // namespace Observer

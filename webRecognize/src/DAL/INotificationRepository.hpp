@@ -1,9 +1,11 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "../Domain/Notification.hpp"
+#include "DTO/DTONotificationDebugVideo.hpp"
 
 namespace Web::DAL {
 
@@ -29,5 +31,14 @@ namespace Web::DAL {
         virtual std::string GetFilename(const std::string& id) = 0;
 
         virtual int GetLastGroupID() = 0;
+
+        virtual std::string AddNotificationDebugVideo(
+            const Web::DTONotificationDebugVideo&) = 0;
+
+        virtual std::optional<Web::DTONotificationDebugVideo>
+        GetNotificationDebugVideo(int groupID) = 0;
+
+        virtual void UpdateNotificationDebugVideo(
+            const std::string& id, const std::string& videoBufferID) = 0;
     };
 }  // namespace Web::DAL
