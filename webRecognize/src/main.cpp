@@ -2,6 +2,7 @@
 #include <spdlog/fmt/bundled/format.h>
 
 // nolitedb
+#include "Controller/CameraController.hpp"
 #include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
@@ -13,6 +14,7 @@
 #include "nldb/SQL3Implementation.hpp"
 
 //
+#include "Controller/CameraController.hpp"
 #include "Controller/ConfigurationController.hpp"
 #include "Controller/NotificationController.hpp"
 #include "Controller/VideoBufferController.hpp"
@@ -163,16 +165,10 @@ int main() {
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
-    // for (auto&& cam : cfg.cameras) {
-    //     auto camera = Web::Domain::Camera(cam.name, cam.url);
-    //     cameraRepository.Add(camera);
-    // }
+    Web::Controller::CameraController<SSL> cameraController(&app,
+                                                            &configurationDAO);
 
-    /* ---------------- CACHED CAMERA IMAGES ---------------- */
-    // url -> image
-    std::unordered_map<std::string, std::vector<unsigned char>>
-        cachedCameraImage;
-
+    /* ----------------- START FUNCTIONALITY ---------------- */
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
 
     videoBufferTasksManager.Start();
@@ -297,130 +293,6 @@ int main() {
 
                      res->writeStatus(HTTP_400_BAD_REQUEST)
                          ->endProblemJson(error.dump());
-                 }
-             })
-
-        .get("/api/getCameraDefaults",
-             [&configurationDAO](auto* res, auto* req) {
-                 std::string uri(req->getQuery("uri"));
-
-                 if (uri.empty()) {
-                     // then try to get it from the database with:
-                     std::string camera_id(req->getQuery("camera_id"));
-
-                     if (camera_id.empty()) {
-                         res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-                         return;
-                     }
-
-                     try {
-                         auto camera = configurationDAO.GetCamera(camera_id);
-                         uri = camera["url"];
-                     } catch (const std::exception& e) {
-                         nlohmann::json response = {
-                             {"title", "Camera not found"}};
-
-                         res->writeStatus(HTTP_404_NOT_FOUND)
-                             ->writeHeader("Cache-Control", "max-age=5")
-                             ->endProblemJson(response.dump());
-                     }
-                 }
-
-                 Observer::VideoSource cap;
-                 cap.Open(uri);
-
-                 if (cap.isOpened()) {
-                     double fps = cap.GetFPS();
-                     Observer::Size size = cap.GetSize();
-
-                     nlohmann::json response = {{"fps", fps}, {"size", size}};
-
-                     res->endJson(response.dump());
-
-                     cap.Close();
-                 } else {
-                     nlohmann::json response = {
-                         {"title", "Camera not avilable"}};
-
-                     res->writeStatus(HTTP_404_NOT_FOUND)
-                         ->writeHeader("Cache-Control", "max-age=5")
-                         ->endProblemJson(response.dump());
-                 }
-             })
-
-        .get(
-            "/api/getCameraFrame",
-            [&configurationDAO, &cachedCameraImage](auto* res, auto* req) {
-                std::string uri(req->getQuery("uri"));
-
-                if (uri.empty()) {
-                    // then try to get it from the database with:
-                    std::string camera_id(req->getQuery("camera_id"));
-
-                    if (camera_id.empty()) {
-                        res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-                        return;
-                    }
-
-                    try {
-                        auto camera = configurationDAO.GetCamera(camera_id);
-                        uri = camera["url"];
-                    } catch (const std::exception& e) {
-                        nlohmann::json response = {
-                            {"title", "Camera not found"}};
-
-                        res->writeStatus(HTTP_404_NOT_FOUND)
-                            ->writeHeader("Cache-Control", "max-age=5")
-                            ->endProblemJson(response.dump());
-                    }
-                }
-
-                if (!cachedCameraImage.contains(uri)) {
-                    Observer::VideoSource cap;
-                    Observer::Frame frame;
-
-                    cap.Open(uri);
-                    cap.GetNextFrame(frame);
-
-                    int tries = 100;
-                    while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
-
-                    if (tries <= 0) {
-                        nlohmann::json response = {
-                            {"title", "Camera didn't return any valid frames"}};
-
-                        res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
-                            ->endProblemJson(response.dump());
-                        return;
-                    }
-
-                    std::vector<unsigned char> buffer;
-                    frame.EncodeImage(".jpg", 90, buffer);
-
-                    cachedCameraImage[uri] = std::move(buffer);
-                }
-
-                auto& buffer = cachedCameraImage[uri];
-                res->writeHeader("content-type", "image/jpeg")
-                    ->end(
-                        std::string_view((char*)buffer.data(), buffer.size()));
-            })
-
-        .get("/api/camera/:id",
-             [&configurationDAO](auto* res, auto* req) {
-                 auto id = std::string(req->getParameter(0));
-
-                 try {
-                     nldb::json camera = configurationDAO.GetCamera(id);
-
-                     //  TODO: We need to respond only with {name, id, url}
-                     //  for that we should use camera repository
-                     res->endJson(camera.dump());
-                 } catch (const std::exception& e) {
-                     nlohmann::json response = {{"title", "camera not found"}};
-                     res->writeStatus(HTTP_404_NOT_FOUND)
-                         ->writeHeader("Cache-Control", "max-age=5")
-                         ->endProblemJson(response.dump());
                  }
              })
 

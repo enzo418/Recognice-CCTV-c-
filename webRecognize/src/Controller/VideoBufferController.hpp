@@ -1,3 +1,5 @@
+#pragma once
+
 #include "DAL/ConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "SocketData.hpp"
