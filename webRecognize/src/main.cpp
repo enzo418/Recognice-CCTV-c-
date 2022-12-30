@@ -17,6 +17,7 @@
 #include "Controller/CameraController.hpp"
 #include "Controller/ConfigurationController.hpp"
 #include "Controller/NotificationController.hpp"
+#include "Controller/ObserverController.hpp"
 #include "Controller/VideoBufferController.hpp"
 #include "Controller/WebsocketVideoBufferController.hpp"
 #include "DAL/ConfigurationDAO.hpp"
@@ -213,6 +214,10 @@ int main() {
         observerCtx.observer = nullptr;
     };
 
+    Web::Controller::ObserverController<SSL> observerController(
+        &app, &serverCtx.recognizeContext, &configurationDAO,
+        std::move(startRecognize), std::move(stopRecognize));
+
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
@@ -294,79 +299,6 @@ int main() {
                      res->writeStatus(HTTP_400_BAD_REQUEST)
                          ->endProblemJson(error.dump());
                  }
-             })
-
-        .get("/api/start/:config_id",
-             [&configurationDAO, &observerCtx = serverCtx.recognizeContext,
-              &startRecognize](auto* res, auto* req) {
-                 if (observerCtx.running) {
-                     nlohmann::json response = {
-                         {"title", "Observer is already running"}};
-                     res->writeStatus(HTTP_404_NOT_FOUND)
-                         ->writeHeader("Cache-Control", "max-age=5")
-                         ->endProblemJson(response.dump());
-                     return;
-                 }
-
-                 auto id = req->getParameter(0);
-                 observerCtx.running_config_id = std::string(id);
-
-                 nldb::json obj;
-                 try {
-                     obj = configurationDAO.GetConfiguration(std::string(id));
-                 } catch (const std::exception& e) {
-                     nlohmann::json response = {
-                         {"title", "Configuration not found"}};
-                     res->writeStatus(HTTP_404_NOT_FOUND)
-                         ->writeHeader("Cache-Control", "max-age=5")
-                         ->endProblemJson(response.dump());
-                     return;
-                 }
-
-                 Observer::Configuration cfg;
-                 try {
-                     cfg = obj;
-                 } catch (const std::exception& e) {
-                     nlohmann::json response = {
-                         {"title", "Not a valid configuration"}};
-                     res->writeStatus(HTTP_404_NOT_FOUND)
-                         ->writeHeader("Cache-Control", "max-age=5")
-                         ->endProblemJson(response.dump());
-                     return;
-                 }
-
-                 startRecognize(cfg);
-
-                 res->end(nlohmann::json(
-                              Web::ObserverStatusDTO {
-                                  .running = true,
-                                  .config_id = observerCtx.running_config_id})
-                              .dump());
-             })
-
-        .get("/api/stop",
-             [&observerCtx = serverCtx.recognizeContext, &stopRecognize](
-                 auto* res, auto* req) {
-                 if (observerCtx.running) {
-                     stopRecognize();
-                 }
-
-                 res->end(nlohmann::json(
-                              Web::ObserverStatusDTO {
-                                  .running = false, .config_id = std::nullopt})
-                              .dump());
-             })
-
-        .get("/api/observerStatus",
-             [&observerCtx = serverCtx.recognizeContext](auto* res, auto* req) {
-                 bool running = observerCtx.running;
-                 std::optional<std::string> cfg_id;
-                 if (running) cfg_id = observerCtx.running_config_id;
-
-                 res->end(nlohmann::json(
-                              Web::ObserverStatusDTO {.running = running,
-                                                      .config_id = cfg_id})
-                              .dump());
              })
 
         .get("/",
