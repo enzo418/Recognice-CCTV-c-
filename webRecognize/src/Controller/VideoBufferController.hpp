@@ -1,6 +1,8 @@
 #include "DAL/ConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
+#include "SocketData.hpp"
 #include "VideoBufferTasksManager.hpp"
+#include "WebsocketVideoBufferController.hpp"
 #include "server_utils.hpp"
 #include "stream_content/FileStreamer.hpp"
 #include "uWebSockets/App.h"
@@ -12,46 +14,13 @@ namespace Web::Controller {
         VideoBufferController(
             uWS::App* app, VideoBufferTasksManager* videoBufferTasksManager,
             Web::DAL::VideoBufferRepositoryNLDB* videoBufferRepository,
-            Web::DAL::ConfigurationDAO* configurationDAO);
+            Web::DAL::ConfigurationDAO* configurationDAO,
+            Web::WebsocketVideoBufferController<SSL>* bufferWebSocket);
 
-        void CreateBuffer(auto* res, auto* req);
-        void GetAllBuffer(auto* res, auto* req);
-        void DeleteBuffer(auto* res, auto* req);
-        void SteamBuffer(auto* res, auto* req);
-
-       private:
-        Web::DAL::VideoBufferRepositoryNLDB* videoBufferRepository;
-        Web::DAL::ConfigurationDAO* configurationDAO;
-        VideoBufferTasksManager* videoBufferTasksManager;
-    };
-
-    template <bool SSL>
-    VideoBufferController<SSL>::VideoBufferController(
-        uWS::App* app, VideoBufferTasksManager* pVideoBufferTasksManager,
-        Web::DAL::VideoBufferRepositoryNLDB* pVideoBufferRepository,
-        Web::DAL::ConfigurationDAO* pConfigurationDAO)
-        : videoBufferRepository(pVideoBufferRepository),
-          configurationDAO(pConfigurationDAO),
-          videoBufferTasksManager(pVideoBufferTasksManager) {
-        app->put("/api/buffer/", [this](auto* res, auto* req) {
-            this->CreateBuffer(res, req);
-        });
-
-        app->get("/api/buffer/", [this](auto* res, auto* req) {
-            this->GetAllBuffer(res, req);
-        });
-
-        app->del("/api/buffer/:id", [this](auto* res, auto* req) {
-            this->DeleteBuffer(res, req);
-        });
-
-        app->get("/stream/buffer/:id",
-                 [this](auto* res, auto* req) { this->SteamBuffer(res, req); });
-    }
-
-    template <bool SSL>
-    void VideoBufferController<SSL>::CreateBuffer(auto* res, auto* req) {
         /**
+         * @brief Create a video buffer
+         * As the body request it expects a json with the following required
+         * properties
          * {
          *      duration <double>: buffer duration in seconds
          *
@@ -66,7 +35,112 @@ namespace Web::Controller {
          *          buffer
          * }
          *
+         *
+         * @param res
+         * @param req
          */
+        void Create(auto* res, auto* req);
+
+        /**
+         * @brief Get the All
+         *
+         * buffer state:
+         *     - without_buffer: has id, camera_id, date_unix and duration
+         *     - with_buffer: has previous and fps
+         *     - detected: has previous and contours, blobs
+         * @param res
+         * @param req
+         */
+        void GetAll(auto* res, auto* req);
+
+        void Delete(auto* res, auto* req);
+
+        /**
+         * @brief Stream a buffer
+         * Sends the stored tiff image
+         * Requires a 'type' query parameter with the value 'diff' or 'raw',
+         * diff will stream the difference frames stored and raw the stored
+         * camera frames.
+         *
+         * @param res
+         * @param req
+         */
+        void Stream(auto* res, auto* req);
+
+        void OnWsOpen(auto* ws, const std::list<std::string_view>& paths);
+
+        /**
+         * @brief Listen to websocket messages
+         * Expected messages:
+         *  - "do_detection": creates a task that will run the detection
+         *                    algorithm and, when done will message back.
+         *
+         * @param ws
+         * @param message
+         * @param opCode
+         */
+        void OnWsMessage(auto* ws, std::string_view message, auto opCode);
+
+        void OnWsClosed(auto* ws, int /*code*/, std::string_view /*message*/);
+
+       private:
+        Web::DAL::VideoBufferRepositoryNLDB* videoBufferRepository;
+        Web::DAL::ConfigurationDAO* configurationDAO;
+        VideoBufferTasksManager* videoBufferTasksManager;
+        Web::WebsocketVideoBufferController<SSL>* bufferWebSocket;
+    };
+
+    template <bool SSL>
+    VideoBufferController<SSL>::VideoBufferController(
+        uWS::App* app, VideoBufferTasksManager* pVideoBufferTasksManager,
+        Web::DAL::VideoBufferRepositoryNLDB* pVideoBufferRepository,
+        Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::WebsocketVideoBufferController<SSL>* pBufferWebSocket)
+        : videoBufferRepository(pVideoBufferRepository),
+          configurationDAO(pConfigurationDAO),
+          videoBufferTasksManager(pVideoBufferTasksManager),
+          bufferWebSocket(pBufferWebSocket) {
+        app->put("/api/buffer/",
+                 [this](auto* res, auto* req) { this->Create(res, req); });
+
+        app->get("/api/buffer/",
+                 [this](auto* res, auto* req) { this->GetAll(res, req); });
+
+        app->del("/api/buffer/:id",
+                 [this](auto* res, auto* req) { this->Delete(res, req); });
+
+        app->get("/stream/buffer/:id",
+                 [this](auto* res, auto* req) { this->Stream(res, req); });
+
+        app->ws<VideoBufferSocketData>(
+            "/buffer/*",
+            {
+                .compression = uWS::DISABLED,
+                .maxPayloadLength = 16 * 1024 * 1024,
+                .idleTimeout = 16,
+                .maxBackpressure = 1 * 1024 * 1024,
+                .closeOnBackpressureLimit = false,
+                .resetIdleTimeoutOnSend = false,
+                .sendPingsAutomatically = true,
+                .upgrade = nullptr,
+                .open =
+                    [this](auto* ws, const std::list<std::string_view>& paths) {
+                        this->OnWsOpen(ws, paths);
+                    },
+                .message =
+                    [this](auto* ws, std::string_view message,
+                           uWS::OpCode opCode) {
+                        this->OnWsMessage(ws, message, opCode);
+                    },
+                .close =
+                    [this](auto* ws, int code, std::string_view message) {
+                        this->OnWsClosed(ws, code, message);
+                    },
+            });
+    }
+
+    template <bool SSL>
+    void VideoBufferController<SSL>::Create(auto* res, auto* req) {
         std::string buffer;
 
         // get it before we attach the reader
@@ -198,16 +272,9 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    void VideoBufferController<SSL>::GetAllBuffer(auto* res, auto* req) {
+    void VideoBufferController<SSL>::GetAll(auto* res, auto* req) {
         std::string cameraID(req->getQuery("camera_id"));
 
-        /**
-         * state:
-         *     - without_buffer: has id, camera_id, date_unix
-         * and duration
-         *     - with_buffer: has previous and fps
-         *     - detected: has previous and contours, blobs
-         */
         res->endJson((cameraID.empty()
                           ? videoBufferRepository->GetAll()
                           : videoBufferRepository->GetAll(cameraID))
@@ -215,7 +282,7 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    void VideoBufferController<SSL>::DeleteBuffer(auto* res, auto* req) {
+    void VideoBufferController<SSL>::Delete(auto* res, auto* req) {
         std::string id(req->getParameter(0));
 
         if (auto buffer = videoBufferRepository->GetInternal(id)) {
@@ -242,7 +309,7 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    void VideoBufferController<SSL>::SteamBuffer(auto* res, auto* req) {
+    void VideoBufferController<SSL>::Stream(auto* res, auto* req) {
         std::string id(req->getParameter(0));
         std::string rangeHeader(req->getHeader("range"));
 
@@ -274,5 +341,43 @@ namespace Web::Controller {
             res->writeStatus(HTTP_404_NOT_FOUND);
             res->end();
         }
+    }
+
+    template <bool SSL>
+    void VideoBufferController<SSL>::OnWsOpen(
+        auto* ws, const std::list<std::string_view>& paths) {
+        // 1° is buffer, 2° is *
+        std::string bufferID(*std::next(paths.begin()));
+
+        if (videoBufferRepository->Exists(bufferID)) {
+            ws->getUserData()->bufferID = bufferID;
+
+            bufferWebSocket->AddClient(ws);
+
+            bufferWebSocket->SendInitialBuffer(
+                ws, videoBufferRepository->Get(bufferID).dump());
+        } else {
+            ws->end();
+        }
+    }
+
+    template <bool SSL>
+    void VideoBufferController<SSL>::OnWsMessage(auto* ws,
+                                                 std::string_view message,
+                                                 auto opCode) {
+        if (opCode == uWS::OpCode::TEXT) {
+            if (message == "do_detection") {
+                videoBufferTasksManager->AddTask(
+                    Web::DoDetectionVideoBufferTask {
+                        .bufferID = ws->getUserData()->bufferID,
+                    });
+            }
+        }
+    }
+
+    template <bool SSL>
+    void VideoBufferController<SSL>::OnWsClosed(auto* ws, int /*code*/,
+                                                std::string_view /*message*/) {
+        bufferWebSocket->RemoveClient(ws);
     }
 };  // namespace Web::Controller

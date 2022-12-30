@@ -144,7 +144,7 @@ int main() {
                                                          &configurationDAO);
     Web::Controller::VideoBufferController<SSL> videoBufferController(
         &app, &videoBufferTasksManager, &videoBufferRepository,
-        &configurationDAO);
+        &configurationDAO, &bufferWebSocket);
 
     /* -------------- NOTIFICATIONS REPOSITORY -------------- */
     nldb::DBSL3 notificationsDB;
@@ -608,54 +608,6 @@ int main() {
 
                      serverCtx.liveViewsManager->RemoveClient(ws);
                  }})
-
-        .ws<VideoBufferSocketData>(
-            "/buffer/*",
-            {
-                .compression = uWS::DISABLED,
-                .maxPayloadLength = 16 * 1024 * 1024,
-                .idleTimeout = 16,
-                .maxBackpressure = 1 * 1024 * 1024,
-                .closeOnBackpressureLimit = false,
-                .resetIdleTimeoutOnSend = false,
-                .sendPingsAutomatically = true,
-                .upgrade = nullptr,
-                .open =
-                    [&bufferWebSocket, &videoBufferRepository](
-                        auto* ws, const std::list<std::string_view>& paths) {
-                        // 1° is buffer, 2° is *
-                        std::string bufferID(*std::next(paths.begin()));
-
-                        if (videoBufferRepository.Exists(bufferID)) {
-                            ws->getUserData()->bufferID = bufferID;
-
-                            bufferWebSocket.AddClient(ws);
-
-                            bufferWebSocket.SendInitialBuffer(
-                                ws, videoBufferRepository.Get(bufferID).dump());
-                        } else {
-                            ws->end();
-                        }
-                    },
-                .message =
-                    [&videoBufferTasksManager](auto* ws,
-                                               std::string_view message,
-                                               uWS::OpCode opCode) {
-                        if (uWS::OpCode::TEXT) {
-                            if (message == "do_detection") {
-                                videoBufferTasksManager.AddTask(
-                                    Web::DoDetectionVideoBufferTask {
-                                        .bufferID = ws->getUserData()->bufferID,
-                                    });
-                            }
-                        }
-                    },
-                .close =
-                    [&bufferWebSocket](auto* ws, int /*code*/,
-                                       std::string_view /*message*/) {
-                        bufferWebSocket.RemoveClient(ws);
-                    },
-            })
 
         .run();
 
