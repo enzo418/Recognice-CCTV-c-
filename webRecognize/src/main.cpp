@@ -3,6 +3,7 @@
 
 // nolitedb
 #include "Controller/CameraController.hpp"
+#include "Controller/LiveViewController.hpp"
 #include "DAL/File/ServerConfigurationPersistanceFile.hpp"
 #include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
@@ -76,9 +77,6 @@ const bool SSL = false;
 namespace fs = std::filesystem;
 namespace rc = Observer;
 typedef cv::Mat TFrame;
-
-static const std::string liveViewPrefix = "/live/";
-static const std::string liveViewWsRoute = liveViewPrefix + "*";
 
 constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
@@ -176,8 +174,8 @@ int main() {
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
-    Web::Controller::CameraController<SSL> cameraController(&app,
-                                                            &configurationDAO);
+    Web::Controller::CameraController<SSL> cameraController(
+        &app, &configurationDAO, &serverCtx);
 
     /* ----------------- START FUNCTIONALITY ---------------- */
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
@@ -187,6 +185,10 @@ int main() {
 
     threads.push_back(&videoBufferTasksManager);
     threads.push_back(&bufferWebSocket);
+
+    /* ---------------------- LIVE VIEW --------------------- */
+    Web::Controller::LiveViewController<SSL> liveViewController(&app,
+                                                                &serverCtx);
 
     /* ------------------- CREATE OBSERVER ------------------ */
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
@@ -229,8 +231,8 @@ int main() {
     };
 
     Web::Controller::ObserverController<SSL> observerController(
-        &app, &serverCtx.recognizeContext, &configurationDAO,
-        std::move(startRecognize), std::move(stopRecognize));
+        &app, &serverCtx, &configurationDAO, std::move(startRecognize),
+        std::move(stopRecognize));
 
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
@@ -242,78 +244,6 @@ int main() {
                            serverCtx.rootFolder, serverCtx.port);
                    }
                })
-
-        /**
-         * @brief Request a live view of the camera. If successfully
-         * generated the live view it returns a json with the ws_feed_path,
-         * to which the client can request a WebSocket connection and we will
-         * provide the images through it
-         */
-        .get("/api/requestCameraStream",
-             [&serverCtx](auto* res, auto* req) {
-                 std::string uri(req->getQuery("uri"));
-
-                 if (serverCtx.liveViewsManager->CreateCameraView(uri)) {
-                     std::string feed_id;
-
-                     try {
-                         feed_id = serverCtx.liveViewsManager->GetFeedId(uri);
-                     } catch (const Web::InvalidCameraUriException& e) {
-                         nlohmann::json error = {
-                             {"title", "Invalid camera uri"}};
-
-                         res->writeStatus(HTTP_404_NOT_FOUND)
-                             ->writeHeader("Cache-Control", "max-age=10")
-                             ->endProblemJson(error.dump());
-                     } catch (...) {
-                         res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-                         return;
-                     }
-
-                     nlohmann::json response = {{"ws_feed_id", feed_id}};
-
-                     res->endJson(response.dump());
-
-                     OBSERVER_TRACE(
-                         "Opened camera connection in live view '{0}' as "
-                         "'{1}' ",
-                         uri, feed_id);
-                 } else {
-                     nlohmann::json error = {
-                         {"title",
-                          "Couldn't open a connection with the camera."}};
-
-                     res->writeStatus(HTTP_400_BAD_REQUEST)
-                         ->endProblemJson(error.dump());
-                     OBSERVER_ERROR(
-                         "Couldn't open live camera view, uri: '{0}'", uri);
-                 }
-             })
-        /**
-         * @brief does the same thing as requestCameraStream but providing
-         * a path to the observer live view.
-         */
-        .get("/api/requestObserverStream",
-             [&serverCtx, &observerCtx = serverCtx.recognizeContext](
-                 auto* res, auto* req) {
-                 auto uri = Web::LiveViewsManager<SSL>::observerUri;
-
-                 if (observerCtx.running &&
-                     serverCtx.liveViewsManager->CreateObserverView(uri)) {
-                     std::string feed_id(
-                         serverCtx.liveViewsManager->GetFeedId(uri));
-
-                     nlohmann::json response = {{"ws_feed_id", feed_id}};
-
-                     res->endJson(response.dump());
-                 } else {
-                     nlohmann::json error = {
-                         {"title", "Observer is not running."}};
-
-                     res->writeStatus(HTTP_400_BAD_REQUEST)
-                         ->endProblemJson(error.dump());
-                 }
-             })
 
         .get("/",
              [](auto* res, auto* req) {
@@ -369,63 +299,6 @@ int main() {
                      ->writeHeader("Content-Type", "text/html")
                      ->end();
              })
-        // .ws<PerSocketData>(
-        //     "/notifications",
-        //     {.compression = uWS::CompressOptions::SHARED_COMPRESSOR,
-        //      .open =
-        //          [&serverCtx](auto* ws,
-        //                       const std::list<std::string_view>& paths) {
-        //              serverCtx.notificatorWS->AddClient(ws);
-        //          },
-        //      .close =
-        //          [&serverCtx](auto* ws, int /*code*/,
-        //                       std::string_view /*message*/) {
-        //              serverCtx.notificatorWS->RemoveClient(ws);
-        //          }})
-        .ws<PerSocketData>(
-            liveViewWsRoute,
-            {.compression = uWS::DISABLED,
-             .maxPayloadLength = 16 * 1024 * 1024,
-             .idleTimeout = 16,
-             .maxBackpressure = 1 * 1024 * 1024,
-             .closeOnBackpressureLimit = false,
-             .resetIdleTimeoutOnSend = false,
-             .sendPingsAutomatically = true,
-             .upgrade = nullptr,
-             .open =
-                 [&serverCtx](auto* ws,
-                              const std::list<std::string_view>& paths) {
-                     for (auto it = paths.begin(); it != paths.end(); it++)
-                         std::cout << *it << ' ';
-                     std::cout << '\n';
-                     // 1° is live, 2° is *
-                     std::string feedID(*std::next(paths.begin()));
-                     ws->getUserData()->pathSubscribed = feedID;
-
-                     OBSERVER_INFO("Client connected to live '{0}'", feedID);
-
-                     if (serverCtx.liveViewsManager->Exists(feedID)) {
-                         serverCtx.liveViewsManager->AddClient(ws);
-                     } else {
-                         OBSERVER_ERROR(
-                             "Live feed wasn't initialized yet! path: {0}",
-                             feedID);
-
-                         ws->send(
-                             "Wrong feed id, this one doesn't exists! "
-                             "Closing "
-                             "connection.");
-                         ws->end();
-                     }
-                 },
-             .close =
-                 [&serverCtx](auto* ws, int /*code*/,
-                              std::string_view /*message*/) {
-                     OBSERVER_TRACE("Client disconnected from '{0}' !",
-                                    ws->getUserData()->pathSubscribed);
-
-                     serverCtx.liveViewsManager->RemoveClient(ws);
-                 }})
 
         .run();
 

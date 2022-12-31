@@ -44,7 +44,8 @@ class Publisher {
         }
     };
 
-    typedef std::set<PrioritySubscriber, PrioritySubscriberCmp> SubscriberList;
+    typedef std::multiset<PrioritySubscriber, PrioritySubscriberCmp>
+        SubscriberList;
 
    public:
     /**

@@ -64,7 +64,7 @@ namespace Web {
         /**
          * @brief Create a observer View object. Returns true if success.
          *
-         * @param uri some random string, rembember it to ask for the live view
+         * @param uri some random string, remember it to ask for the live view
          * later.
          * @return true
          * @return false

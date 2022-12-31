@@ -6,6 +6,7 @@
 #include "DTO/ObserverStatusDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/RecognizeContext.hpp"
+#include "Server/ServerContext.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
 
@@ -14,7 +15,7 @@ namespace Web::Controller {
     class ObserverController {
        public:
         ObserverController(
-            uWS::App* app, Web::RecognizeContext* observerCtx,
+            uWS::App* app, Web::ServerContext<SSL>* serverCtx,
             Web::DAL::ConfigurationDAO* configurationDAO,
             std::function<void(const Observer::Configuration& cfg)>&&
                 startRecognizeFunction,
@@ -23,9 +24,10 @@ namespace Web::Controller {
         void Start(auto* res, auto* req);
         void Stop(auto* res, auto* req);
         void Status(auto* res, auto* req);
+        void RequestStream(auto* res, auto* req);
 
        private:
-        Web::RecognizeContext* observerCtx;
+        Web::ServerContext<SSL>* serverCtx;
         Web::DAL::ConfigurationDAO* configurationDAO;
 
         std::function<void(const Observer::Configuration& cfg)> startRecognize;
@@ -34,28 +36,32 @@ namespace Web::Controller {
 
     template <bool SSL>
     ObserverController<SSL>::ObserverController(
-        uWS::App* app, Web::RecognizeContext* pObserverCtx,
+        uWS::App* app, Web::ServerContext<SSL>* pServerCtx,
         Web::DAL::ConfigurationDAO* pConfigurationDAO,
         std::function<void(const Observer::Configuration& cfg)>&&
             pStartRecognizeFunction,
         std::function<void()>&& pStopRecognizeFunction)
-        : observerCtx(pObserverCtx),
+        : serverCtx(pServerCtx),
           configurationDAO(pConfigurationDAO),
           startRecognize(std::move(pStartRecognizeFunction)),
           stopRecognize(std::move(pStopRecognizeFunction)) {
-        app->get("/api/start/:config_id",
+        app->get("/api/observer/start/:config_id",
                  [this](auto* res, auto* req) { this->Start(res, req); });
 
-        app->get("/api/stop",
+        app->get("/api/observer/stop",
                  [this](auto* res, auto* req) { this->Stop(res, req); });
 
-        app->get("/api/observerStatus",
+        app->get("/api/observer/status",
                  [this](auto* res, auto* req) { this->Status(res, req); });
+
+        app->get("/api/observer/stream", [this](auto* res, auto* req) {
+            this->RequestStream(res, req);
+        });
     }
 
     template <bool SSL>
     void ObserverController<SSL>::Start(auto* res, auto* req) {
-        if (observerCtx->running) {
+        if (serverCtx->recognizeContext.running) {
             nlohmann::json response = {
                 {"title", "Observer is already running"}};
             res->writeStatus(HTTP_404_NOT_FOUND)
@@ -65,7 +71,7 @@ namespace Web::Controller {
         }
 
         auto id = req->getParameter(0);
-        observerCtx->running_config_id = std::string(id);
+        serverCtx->recognizeContext.running_config_id = std::string(id);
 
         nldb::json obj;
         try {
@@ -92,15 +98,16 @@ namespace Web::Controller {
         startRecognize(cfg);
 
         res->end(
-            nlohmann::json(Web::ObserverStatusDTO {
-                               .running = true,
-                               .config_id = observerCtx->running_config_id})
+            nlohmann::json(
+                Web::ObserverStatusDTO {
+                    .running = true,
+                    .config_id = serverCtx->recognizeContext.running_config_id})
                 .dump());
     }
 
     template <bool SSL>
     void ObserverController<SSL>::Stop(auto* res, auto* req) {
-        if (observerCtx->running) {
+        if (serverCtx->recognizeContext.running) {
             stopRecognize();
         }
 
@@ -112,13 +119,31 @@ namespace Web::Controller {
 
     template <bool SSL>
     void ObserverController<SSL>::Status(auto* res, auto* req) {
-        bool running = observerCtx->running;
+        bool running = serverCtx->recognizeContext.running;
         std::optional<std::string> cfg_id;
-        if (running) cfg_id = observerCtx->running_config_id;
+        if (running) cfg_id = serverCtx->recognizeContext.running_config_id;
 
         res->end(nlohmann::json(Web::ObserverStatusDTO {.running = running,
                                                         .config_id = cfg_id})
                      .dump());
     }
 
+    template <bool SSL>
+    void ObserverController<SSL>::RequestStream(auto* res, auto* req) {
+        auto uri = Web::LiveViewsManager<SSL>::observerUri;
+
+        if (serverCtx->recognizeContext.running &&
+            serverCtx->liveViewsManager->CreateObserverView(uri)) {
+            std::string feed_id(serverCtx->liveViewsManager->GetFeedId(uri));
+
+            nlohmann::json response = {{"ws_feed_id", feed_id}};
+
+            res->endJson(response.dump());
+        } else {
+            nlohmann::json error = {{"title", "Observer is not running."}};
+
+            res->writeStatus(HTTP_400_BAD_REQUEST)
+                ->endProblemJson(error.dump());
+        }
+    }
 }  // namespace Web::Controller

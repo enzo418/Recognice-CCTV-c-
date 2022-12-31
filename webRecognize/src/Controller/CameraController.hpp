@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DAL/ConfigurationDAO.hpp"
+#include "Server/ServerContext.hpp"
 #include "observer/Implementation.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
@@ -10,14 +11,24 @@ namespace Web::Controller {
     class CameraController {
        public:
         CameraController(uWS::App* app,
-                         Web::DAL::ConfigurationDAO* configurationDAO);
+                         Web::DAL::ConfigurationDAO* configurationDAO,
+                         Web::ServerContext<SSL>* serverCtx);
 
         void Get(auto* res, auto* req);
         void GetInfo(auto* res, auto* req);
         void GetFrame(auto* res, auto* req);
 
+        /**
+         * @brief Request a live view of the camera. If successfully
+         * generated the live view it returns a json with the ws_feed_path,
+         * to which the client can request a WebSocket connection and we will
+         * provide the images through it
+         */
+        void RequestStream(auto* res, auto* req);
+
        private:
         Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::ServerContext<SSL>* serverCtx;
 
         // url -> image
         std::unordered_map<std::string, std::vector<unsigned char>>
@@ -26,8 +37,9 @@ namespace Web::Controller {
 
     template <bool SSL>
     CameraController<SSL>::CameraController(
-        uWS::App* app, Web::DAL::ConfigurationDAO* pConfigurationDAO)
-        : configurationDAO(pConfigurationDAO) {
+        uWS::App* app, Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::ServerContext<SSL>* pServerCtx)
+        : configurationDAO(pConfigurationDAO), serverCtx(pServerCtx) {
         app->get("/api/camera/:id",
                  [this](auto* res, auto* req) { this->Get(res, req); });
 
@@ -36,6 +48,10 @@ namespace Web::Controller {
 
         app->get("/api/camera/:id/frame",
                  [this](auto* res, auto* req) { this->GetFrame(res, req); });
+
+        app->get("/api/camera/:id/stream", [this](auto* res, auto* req) {
+            this->RequestStream(res, req);
+        });
     }
 
     template <bool SSL>
@@ -77,6 +93,7 @@ namespace Web::Controller {
             res->writeStatus(HTTP_404_NOT_FOUND)
                 ->writeHeader("Cache-Control", "max-age=5")
                 ->endProblemJson(response.dump());
+            return;
         }
 
         Observer::VideoSource cap;
@@ -121,6 +138,7 @@ namespace Web::Controller {
             res->writeStatus(HTTP_404_NOT_FOUND)
                 ->writeHeader("Cache-Control", "max-age=5")
                 ->endProblemJson(response.dump());
+            return;
         }
 
         if (!cachedCameraImage.contains(uri)) {
@@ -151,6 +169,55 @@ namespace Web::Controller {
         auto& buffer = cachedCameraImage[uri];
         res->writeHeader("content-type", "image/jpeg")
             ->end(std::string_view((char*)buffer.data(), buffer.size()));
+    }
+
+    template <bool SSL>
+    void CameraController<SSL>::RequestStream(auto* res, auto* req) {
+        std::string uri;
+        std::string camera_id(req->getParameter(0));
+
+        try {
+            uri = configurationDAO->GetCamera(camera_id)["url"];
+        } catch (const std::exception& e) {
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(
+                    (nlohmann::json {{"title", "Camera not found"}}).dump());
+            return;
+        }
+
+        if (serverCtx->liveViewsManager->CreateCameraView(uri)) {
+            std::string feed_id;
+
+            try {
+                feed_id = serverCtx->liveViewsManager->GetFeedId(uri);
+            } catch (const Web::InvalidCameraUriException& e) {
+                res->writeStatus(HTTP_404_NOT_FOUND)
+                    ->writeHeader("Cache-Control", "max-age=10")
+                    ->endProblemJson(
+                        (nlohmann::json {{"title", "Invalid camera uri"}})
+                            .dump());
+                return;
+            } catch (...) {
+                res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                return;
+            }
+
+            nlohmann::json response = {{"ws_feed_id", feed_id}};
+
+            res->endJson(response.dump());
+
+            OBSERVER_TRACE(
+                "Opened camera connection in live view '{0}' as '{1}' ", uri,
+                feed_id);
+        } else {
+            nlohmann::json error = {
+                {"title", "Couldn't open a connection with the camera."}};
+
+            res->writeStatus(HTTP_400_BAD_REQUEST)
+                ->endProblemJson(error.dump());
+            OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'", uri);
+        }
     }
 
 }  // namespace Web::Controller
