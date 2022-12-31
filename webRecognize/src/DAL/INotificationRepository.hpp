@@ -19,6 +19,13 @@ namespace Web::DAL {
 
         virtual Domain::Notification Get(const std::string& id) = 0;
 
+        /**
+         * @brief Get the all the notifications sorted by date, first as the
+         * most recent.
+         *
+         * @param limit
+         * @return const std::vector<Domain::Notification>
+         */
         virtual const std::vector<Domain::Notification> GetAll(
             int limit = 100) = 0;
 
