@@ -307,7 +307,6 @@ namespace Web::Controller {
         std::string url(req->getUrl());
         auto id = req->getParameter(0);
         std::string fieldPath(req->getQuery("field"));
-        fieldPath = fieldPath;
 
         nldb::json obj;
         try {

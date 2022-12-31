@@ -3,12 +3,14 @@
 
 // nolitedb
 #include "Controller/CameraController.hpp"
+#include "DAL/File/ServerConfigurationPersistanceFile.hpp"
 #include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "DTO/DTONotificationDebugVideo.hpp"
 #include "LiveVideo/LiveViewExceptions.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
+#include "Server/ServerConfiguration.hpp"
 #include "VideoBufferTasksManager.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
 #include "nldb/SQL3Implementation.hpp"
@@ -18,6 +20,7 @@
 #include "Controller/ConfigurationController.hpp"
 #include "Controller/NotificationController.hpp"
 #include "Controller/ObserverController.hpp"
+#include "Controller/ServerConfigurationController.hpp"
 #include "Controller/VideoBufferController.hpp"
 #include "Controller/WebsocketVideoBufferController.hpp"
 #include "DAL/ConfigurationDAO.hpp"
@@ -26,6 +29,7 @@
 #include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Serialization/JsonAvailableConfigurationDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
+#include "Server/ServerConfigurationProvider.hpp"
 #include "Utils/StringUtils.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
@@ -149,6 +153,12 @@ int main() {
         &app, &videoBufferTasksManager, &videoBufferRepository,
         &configurationDAO, &bufferWebSocket);
 
+    /* ---------------- SERVER CONFIGURATION ---------------- */
+    Web::DAL::ServerConfigurationPersistanceFile serverConfigPers(
+        "server_configuration.json");
+    Web::ServerConfigurationProvider::Initialize(&serverConfigPers);
+    Web::Controller::ServerConfigurationController<SSL> serverCfgCntrl(&app);
+
     /* -------------- NOTIFICATIONS REPOSITORY -------------- */
     nldb::DBSL3 notificationsDB;
     if (!notificationsDB.open("notifications.db")) {
@@ -193,12 +203,16 @@ int main() {
             (Observer::INotificationEventSubscriber*)&notificationController);
 
         // call it after it started or we will be subscribing to nothing
-        observerCtx.observer->OnStartFinished([&notificationController,
-                                               &observerCtx]() {
-            observerCtx.observer->SubscribeToValidCameraEvents(
-                (Observer::IEventValidatorSubscriber*)&notificationController,
-                Observer::Priority::HIGH);
-        });
+        observerCtx.observer->OnStartFinished(
+            [&notificationController, &observerCtx]() {
+                if (Web::ServerConfigurationProvider::Get()
+                        .SaveNotificationDebugVideo) {
+                    observerCtx.observer->SubscribeToValidCameraEvents(
+                        (Observer::
+                             IEventValidatorSubscriber*)&notificationController,
+                        Observer::Priority::HIGH);
+                }
+            });
 
         observerCtx.observer->Start();
 

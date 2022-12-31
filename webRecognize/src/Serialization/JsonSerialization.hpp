@@ -5,6 +5,7 @@
 #include "DTO/DTONotification.hpp"
 #include "DTO/DTONotificationDebugVideo.hpp"
 #include "DTO/ObserverStatusDTO.hpp"
+#include "Server/ServerConfiguration.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Configuration/NLHJSONConfiguration.hpp"
 
@@ -67,18 +68,8 @@ namespace nlohmann {
                                        duration, date_unix, filePath, groupID,
                                        videoBufferID, camera_id);
 
-    // void inline to_json(json& j, const
-    // Web::DTONotificationWithId& p) {
-    //     j = json::parse(p.notification);
-    //     j = j["id"] = p.id;
-    // }
-
-    // void inline from_json(const json& j,
-    // Web::DTONotificationWithId& p) {
-    //     j.contains("_id") ?
-    //     j.at("_id").get_to(p.id) :
-    //     j.at("id").get_to(p.id);
-    //     j.get_to(p.notification);
-    // }
+    /* ---------------- SERVER CONFIGURATION ---------------- */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::ServerConfiguration,
+                                       SaveNotificationDebugVideo);
 
 }  // namespace nlohmann
