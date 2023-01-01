@@ -274,8 +274,8 @@ int main() {
         });
 
     cronJobs.Add(
-        "remove non reclaimed notification debug video", 60 * 30 /*30min*/,
-        true, [&notificationRepository]() {
+        "remove non reclaimed notification debug video", 60 * 2 /*2min*/, true,
+        [&notificationRepository]() {
             const auto videoBufferFolder =
                 std::filesystem::path(
                     Web::ServerConfigurationProvider::Get().mediaFolder) /

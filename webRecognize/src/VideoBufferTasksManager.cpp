@@ -2,9 +2,11 @@
 
 #include <utility>
 
+#include "Constans.hpp"
 #include "DTO/DTOBlob.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Serialization/JsonSerialization.hpp"
+#include "Server/ServerConfigurationProvider.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "observer/Domain/Configuration/CameraConfiguration.hpp"
 
@@ -41,7 +43,19 @@ namespace Web {
         Web::Utils::BufferData bufferData = Web::Utils::ReadBufferFromCamera(
             task.uri, task.delay, task.duration, task.resizeTo);
 
-        std::string storedBufferPath = task.videoBufferTaskID + "_buffer.tiff";
+        std::filesystem::path folder =
+            // root is the media folder
+            std::filesystem::path(
+                Web::ServerConfigurationProvider::Get().mediaFolder)
+            // append video buffer folder
+            / Constants::NOTIF_CAMERA_VIDEO_BUFFER_FOLDER;
+
+        if (!std::filesystem::exists(folder)) {
+            std::filesystem::create_directories(folder);
+        }
+
+        std::string storedBufferPath =
+            folder / (task.videoBufferTaskID + "_buffer.tiff");
 
         Web::Utils::SaveBuffer(bufferData.buffer, storedBufferPath);
 
@@ -100,7 +114,19 @@ namespace Web {
         Utils::DetectionResults result =
             Web::Utils::DetectBlobs(camera, frames);
 
-        std::string diffFramesPath = task.bufferID + "_buffer_diff.tiff";
+        std::filesystem::path folder =
+            // root is the media folder
+            std::filesystem::path(
+                Web::ServerConfigurationProvider::Get().mediaFolder)
+            // append video buffer folder
+            / Constants::NOTIF_CAMERA_VIDEO_BUFFER_FOLDER;
+
+        if (!std::filesystem::exists(folder)) {
+            std::filesystem::create_directories(folder);
+        }
+
+        std::string diffFramesPath =
+            folder / (task.bufferID + "_buffer_diff.tiff");
 
         Web::Utils::SaveBuffer(result.diffFrames, diffFramesPath);
 

@@ -259,20 +259,25 @@ namespace Web::Controller {
         // the stored raw video
 
         // but first we need to move the path to the video buffer folder
-        const std::filesystem::path toPath =
+        std::filesystem::path toPath =
             // root is the media folder
             std::filesystem::path(
                 ServerConfigurationProvider::Get().mediaFolder)
             // append video buffer folder
-            / Constants::NOTIF_CAMERA_VIDEO_BUFFER_FOLDER
-            //  append current filename
-            / std::filesystem::path(tempVB->filePath).filename();
+            / Constants::NOTIF_CAMERA_VIDEO_BUFFER_FOLDER;
+
+        if (!std::filesystem::exists(toPath)) {
+            std::filesystem::create_directories(toPath);
+        }
+
+        //  append current filename
+        toPath = toPath / std::filesystem::path(tempVB->filePath).filename();
 
         std::filesystem::rename(tempVB->filePath, toPath);
 
         // TODO: Use a IRepository with DTO pls...
         std::string id =
-            vbRepo->Add(nlohmann::json {{"path", tempVB->filePath},
+            vbRepo->Add(nlohmann::json {{"path", toPath},
                                         {"fps", tempVB->fps},
                                         {"camera_id", tempVB->camera_id},
                                         {"duration", tempVB->duration},
@@ -386,6 +391,9 @@ namespace Web::Controller {
         Observer::EventDescriptor& event,
         Observer::CameraEvent& rawCameraEvent) {
         // Block the caller thread so we record the raw frames
+        // In a period of time you might see more calls to this function that
+        // notifications sent to the client, that is because the notification
+        // sender has some minimum time between notifications.
 
         std::string cameraID;
         try {

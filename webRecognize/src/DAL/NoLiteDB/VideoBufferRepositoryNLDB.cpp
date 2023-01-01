@@ -133,7 +133,8 @@ namespace Web::DAL {
     std::optional<nldb::json> VideoBufferRepositoryNLDB::GetInternal(
         const std::string& id) {
         auto result = query.from(colVideoBuffer)
-                          .select(colVideoBuffer["diffFramesPath"],
+                          .select(colVideoBuffer["path"],
+                                  colVideoBuffer["diffFramesPath"],
                                   colVideoBuffer["state"])
                           .where(colVideoBuffer["_id"] == id)
                           .execute();

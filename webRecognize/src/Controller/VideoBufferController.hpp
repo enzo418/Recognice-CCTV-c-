@@ -290,12 +290,12 @@ namespace Web::Controller {
         if (auto buffer = videoBufferRepository->GetInternal(id)) {
             if (buffer->contains("path")) {
                 const std::string cameraFramesPath = buffer->at("path");
-                remove(cameraFramesPath.c_str());
+                std::filesystem::remove(cameraFramesPath);
             }
 
             if (buffer->contains("diffFramesPath")) {
                 const std::string diffFramesPath = buffer->at("diffFramesPath");
-                remove(diffFramesPath.c_str());
+                std::filesystem::remove(diffFramesPath);
             }
 
             videoBufferRepository->Remove(id);
