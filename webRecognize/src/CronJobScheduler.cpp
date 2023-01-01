@@ -9,13 +9,14 @@
 
 namespace Web {
     void CronJobScheduler::Add(const std::string& name,
-                               uint32_t intervalInSeconds,
+                               uint32_t intervalInSeconds, bool executeNow,
                                Callback&& callback) {
         Guard g(this->jobsMutex);
         this->jobs.push_back(CronJob {.run = std::move(callback),
                                       .name = name,
                                       .intervalSeconds = intervalInSeconds,
-                                      .timer = Timer(true)});
+                                      .timer = Timer(true),
+                                      .runNow = executeNow});
     }
 
     void CronJobScheduler::InternalStart() {
@@ -33,11 +34,12 @@ namespace Web {
                 for (auto& job : jobs) {
                     const double d = job.timer.GetDuration();
                     left = job.intervalSeconds - d;
-                    if (left <= 0) {
+                    if (left <= 0 || job.runNow) {
                         OBSERVER_TRACE("Running cron job '{}'", job.name);
 
                         job.run();
                         job.timer.Restart();
+                        job.runNow = false;
                     } else {
                         if (sleepUntilNext != 0 &&
                             sleepUntilNext - timerSinceSetLeft.GetDuration() <

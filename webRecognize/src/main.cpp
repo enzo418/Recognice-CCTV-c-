@@ -245,35 +245,37 @@ int main() {
     /* ---------------------- CRON JOBS --------------------- */
     Web::CronJobScheduler cronJobs;
 
-    cronJobs.Add("remove old notifications", 20, [&notificationRepository]() {
-        const double days =
-            Web::ServerConfigurationProvider::Get()
-                .notificationCleanupFilter.deleteIfOlderThanDays;
+    cronJobs.Add(
+        "remove old notifications", 60 * 60 * 8 /*8hs*/, true,
+        [&notificationRepository]() {
+            const double days =
+                Web::ServerConfigurationProvider::Get()
+                    .notificationCleanupFilter.deleteIfOlderThanDays;
 
-        const double d90 = days * 24 /*hours*/ * 60 /*min*/ * 60 /*sec*/;
+            const double d90 = days * 24 /*hours*/ * 60 /*min*/ * 60 /*sec*/;
 
-        // older than 90 is date < now - 90 days
-        const auto older =
-            notificationRepository.GetBetweenDates(0, time(0) - d90, 100, true);
+            // older than 90 is date < now - 90 days
+            const auto older = notificationRepository.GetBetweenDates(
+                0, time(0) - d90, 100, true);
 
-        for (auto& old : older) {
-            std::tm* ptm = std::localtime(&old.datetime);
-            char buffer[32];
-            // Format: Mo, 15.06.2009 20:20:00
-            std::strftime(buffer, 32, "%a, %d.%m.%Y %H:%M:%S", ptm);
+            for (auto& old : older) {
+                std::tm* ptm = std::localtime(&old.datetime);
+                char buffer[32];
+                // Format: Mo, 15.06.2009 20:20:00
+                std::strftime(buffer, 32, "%a, %d.%m.%Y %H:%M:%S", ptm);
 
-            OBSERVER_TRACE("Removed old notification, date: {}", buffer);
+                OBSERVER_TRACE("Removed old notification, date: {}", buffer);
 
-            if (old.type == "image" || old.type == "video")
-                std::filesystem::remove(old.content);
+                if (old.type == "image" || old.type == "video")
+                    std::filesystem::remove(old.content);
 
-            notificationRepository.Remove(old.notificationID);
-        }
-    });
+                notificationRepository.Remove(old.notificationID);
+            }
+        });
 
     cronJobs.Add(
-        "remove non reclaimed notification debug video", 20,
-        [&notificationRepository]() {
+        "remove non reclaimed notification debug video", 60 * 30 /*30min*/,
+        true, [&notificationRepository]() {
             const auto videoBufferFolder =
                 std::filesystem::path(
                     Web::ServerConfigurationProvider::Get().mediaFolder) /

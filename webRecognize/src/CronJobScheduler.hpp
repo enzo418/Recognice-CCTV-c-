@@ -22,6 +22,9 @@ namespace Web {
         const std::string name;
         const TimeType intervalSeconds;
         Timer timer;
+
+        // will be true until it's executed for the first time
+        bool runNow;
     };
 
     /**
@@ -32,8 +35,17 @@ namespace Web {
        public:
         CronJobScheduler() = default;
 
+        /**
+         * @brief Adds a cron job
+         *
+         * @param name name of the job
+         * @param intervalInSeconds
+         * @param executeNow if true will be execute as soon as possible (once
+         * the scheduler started and after)
+         * @param callback
+         */
         void Add(const std::string& name, uint32_t intervalInSeconds,
-                 Callback&& callback);
+                 bool executeNow, Callback&& callback);
 
        private:
         void InternalStart() override;
