@@ -10,10 +10,12 @@
 #include "../DAL/INotificationRepository.hpp"
 #include "../Domain/Camera.hpp"
 #include "../stream_content/FileStreamer.hpp"
+#include "Constans.hpp"
 #include "DAL/ConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "DTO/DTONotification.hpp"
 #include "Domain/Notification.hpp"
+#include "Server/ServerConfigurationProvider.hpp"
 #include "Server/ServerContext.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "WebsocketNotificatorController.hpp"
@@ -255,6 +257,19 @@ namespace Web::Controller {
 
         // Create a new entry in the VideoBuffer collection with the data from
         // the stored raw video
+
+        // but first we need to move the path to the video buffer folder
+        const std::filesystem::path toPath =
+            // root is the media folder
+            std::filesystem::path(
+                ServerConfigurationProvider::Get().mediaFolder)
+            // append video buffer folder
+            / Constants::NOTIF_CAMERA_VIDEO_BUFFER_FOLDER
+            //  append current filename
+            / std::filesystem::path(tempVB->filePath).filename();
+
+        std::filesystem::rename(tempVB->filePath, toPath);
+
         // TODO: Use a IRepository with DTO pls...
         std::string id =
             vbRepo->Add(nlohmann::json {{"path", tempVB->filePath},
@@ -385,8 +400,19 @@ namespace Web::Controller {
             return;
         }
 
+        // convert to native
+        const auto folder = std::filesystem::path(
+                                ServerConfigurationProvider::Get().mediaFolder +
+                                Constants::NOTIF_DEBUG_VIDEO_FOLDER)
+                                .string();
+
+        if (!std::filesystem::exists(folder)) {
+            std::filesystem::create_directories(folder);
+        }
+
         std::string storedBufferPath =
-            std::to_string(rawCameraEvent.GetGroupID()) + "_temp_buffer.tiff";
+            folder + std::to_string(rawCameraEvent.GetGroupID()) +
+            "_temp_buffer.tiff";
 
         auto& frames = rawCameraEvent.GetFrames();
         const double duration = frames.size() / rawCameraEvent.GetFrameRate();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,10 +25,24 @@ namespace Web::DAL {
          * most recent.
          *
          * @param limit
+         * @param olderFirst
          * @return const std::vector<Domain::Notification>
          */
         virtual const std::vector<Domain::Notification> GetAll(
-            int limit = 100) = 0;
+            int limit = 100, bool olderFirst = false) = 0;
+
+        /**
+         * @brief Get notification between those dates
+         *
+         * @param start start time in unix time
+         * @param end end time in unix time
+         * @param limit
+         * @param olderFirst
+         * @return const std::vector<Domain::Notification>
+         */
+        virtual const std::vector<Domain::Notification> GetBetweenDates(
+            std::time_t start, std::time_t end, int limit = 100,
+            bool olderFirst = false) = 0;
 
         /**
          * @brief Get the filename of a notification
@@ -39,6 +54,8 @@ namespace Web::DAL {
 
         virtual int GetLastGroupID() = 0;
 
+        // I might later move all of debug video... might
+
         virtual std::string AddNotificationDebugVideo(
             const Web::DTONotificationDebugVideo&) = 0;
 
@@ -47,5 +64,11 @@ namespace Web::DAL {
 
         virtual void UpdateNotificationDebugVideo(
             const std::string& id, const std::string& videoBufferID) = 0;
+
+        virtual std::vector<Web::DTONotificationDebugVideo>
+        GetNonReclaimedDebugVideos(int limit = 100,
+                                   bool olderFirst = false) = 0;
+
+        virtual void RemoveDebugVideoEntry(const std::string& id) = 0;
     };
 }  // namespace Web::DAL

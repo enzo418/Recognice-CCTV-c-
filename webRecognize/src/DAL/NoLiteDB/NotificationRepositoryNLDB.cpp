@@ -62,12 +62,15 @@ namespace Web::DAL {
     }
 
     const std::vector<Domain::Notification> NotificationRepositoryNLDB::GetAll(
-        int limit) {
+        int limit, bool olderFirst) {
         if (limit < 0) OBSERVER_ERROR("Limit is out of bounds");
+
+        const auto sortProp = olderFirst ? colNotifications["datetime"].asc()
+                                         : colNotifications["datetime"].desc();
 
         nldb::json result = query.from(colNotifications)
                                 .select()
-                                .sortBy(colNotifications["datetime"].desc())
+                                .sortBy(sortProp)
                                 .limit(limit)
                                 .execute();
 
@@ -75,7 +78,28 @@ namespace Web::DAL {
             r["notificationID"] = r["_id"];
         }
 
-        std::cout << "result: " << result << std::endl;
+        return result;
+    }
+
+    const std::vector<Domain::Notification>
+    NotificationRepositoryNLDB::GetBetweenDates(std::time_t start,
+                                                std::time_t end, int limit,
+                                                bool olderFirst) {
+        const auto sortProp = olderFirst ? colNotifications["datetime"].asc()
+                                         : colNotifications["datetime"].desc();
+
+        nldb::json result =
+            query.from(colNotifications)
+                .select()
+                .where(colNotifications["datetime"] >= (long)start &&
+                       colNotifications["datetime"] <= (long)end)
+                .sortBy(sortProp)
+                .limit(limit)
+                .execute();
+
+        for (auto& r : result) {
+            r["notificationID"] = r["_id"];
+        }
 
         return result;
     }
@@ -127,5 +151,31 @@ namespace Web::DAL {
         const std::string& id, const std::string& videoBufferID) {
         query.from(colNotificationDebugVideo)
             .update(id, nldb::json {{"videoBufferID", videoBufferID}});
+    }
+
+    std::vector<Web::DTONotificationDebugVideo>
+    NotificationRepositoryNLDB::GetNonReclaimedDebugVideos(int limit,
+                                                           bool olderFirst) {
+        const auto sortProp =
+            olderFirst ? colNotificationDebugVideo["date_unix"].asc()
+                       : colNotificationDebugVideo["date_unix"].desc();
+
+        nldb::json res =
+            query.from(colNotificationDebugVideo)
+                .select()
+                .where(colNotificationDebugVideo["videoBufferID"] == "")
+                .sortBy(sortProp)
+                .execute();
+
+        for (auto& v : res) {
+            v["id"] = v["_id"];
+        }
+
+        return res;
+    }
+
+    void NotificationRepositoryNLDB::RemoveDebugVideoEntry(
+        const std::string& id) {
+        query.from(colNotificationDebugVideo).remove(id);
     }
 }  // namespace Web::DAL

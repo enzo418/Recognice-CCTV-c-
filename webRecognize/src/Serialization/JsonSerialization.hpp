@@ -69,7 +69,16 @@ namespace nlohmann {
                                        videoBufferID, camera_id);
 
     /* ---------------- SERVER CONFIGURATION ---------------- */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+        Web::ServerConfiguration::NotificationFilter, deleteIfOlderThanDays);
+
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+        Web::ServerConfiguration::NotificationDebugVideoFilter,
+        keepTotalNotReclaimedBelowMB);
+
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::ServerConfiguration,
-                                       SaveNotificationDebugVideo);
+                                       SaveNotificationDebugVideo, mediaFolder,
+                                       notificationDebugVideoFilter,
+                                       notificationCleanupFilter);
 
 }  // namespace nlohmann

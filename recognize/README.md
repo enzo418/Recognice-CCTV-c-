@@ -21,3 +21,6 @@
     2. `cd spdlog && mkdir build && cd build`
     3. `cmake .. && make -j`
     4. `sudo make install`
+
+# Notes:
+- Notifications media will be stored in the configured path + image or video folder

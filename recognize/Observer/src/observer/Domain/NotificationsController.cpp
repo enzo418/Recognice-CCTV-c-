@@ -227,6 +227,22 @@ namespace Observer {
                                          CameraEvent& rawCameraEvent) {
         const int groupID = rawCameraEvent.GetGroupID();
 
+        // create destination folders
+        const auto imagesFolder =
+            (std::filesystem::path(this->config->mediaFolderPath) / "images")
+                .string();
+        if (!std::filesystem::exists(imagesFolder)) {
+            std::filesystem::create_directories(imagesFolder);
+        }
+
+        const auto videosFolder =
+            (std::filesystem::path(this->config->mediaFolderPath) / "videos")
+                .string();
+
+        if (!std::filesystem::exists(videosFolder)) {
+            std::filesystem::create_directories(videosFolder);
+        }
+
         // 1. Create a text notification
         // 1. a. Get camera name
         std::string cameraName = event.GetCameraName();
@@ -240,15 +256,15 @@ namespace Observer {
 
         // 2. Create an image notification using the first frame where the event
         // happen
+
         int indexFirst = event.GetFirstFrameWhereFindingWasFound();
         ImageNotification imageNotification(
             groupID, event, rawCameraEvent.GetFrameAt(indexFirst),
-            this->config->mediaFolderPath);
+            imagesFolder);
 
         // 3. Create a video notification using the frames
-        VideoNotification videoNotification(groupID, event,
-                                            rawCameraEvent.PopFrames(),
-                                            this->config->mediaFolderPath);
+        VideoNotification videoNotification(
+            groupID, event, rawCameraEvent.PopFrames(), videosFolder);
 
         videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
         videoNotification.SetFrameSize(rawCameraEvent.GetFramesSize());

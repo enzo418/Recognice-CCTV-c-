@@ -14,12 +14,11 @@ namespace Web::Controller {
     template <bool SSL>
     class ObserverController {
        public:
-        ObserverController(
-            uWS::App* app, Web::ServerContext<SSL>* serverCtx,
-            Web::DAL::ConfigurationDAO* configurationDAO,
-            std::function<void(const Observer::Configuration& cfg)>&&
-                startRecognizeFunction,
-            std::function<void()>&& stopRecognizeFunction);
+        ObserverController(uWS::App* app, Web::ServerContext<SSL>* serverCtx,
+                           Web::DAL::ConfigurationDAO* configurationDAO,
+                           std::function<void(Observer::Configuration& cfg)>&&
+                               startRecognizeFunction,
+                           std::function<void()>&& stopRecognizeFunction);
 
         void Start(auto* res, auto* req);
         void Stop(auto* res, auto* req);
@@ -30,7 +29,7 @@ namespace Web::Controller {
         Web::ServerContext<SSL>* serverCtx;
         Web::DAL::ConfigurationDAO* configurationDAO;
 
-        std::function<void(const Observer::Configuration& cfg)> startRecognize;
+        std::function<void(Observer::Configuration& cfg)> startRecognize;
         std::function<void()> stopRecognize;
     };
 
@@ -38,7 +37,7 @@ namespace Web::Controller {
     ObserverController<SSL>::ObserverController(
         uWS::App* app, Web::ServerContext<SSL>* pServerCtx,
         Web::DAL::ConfigurationDAO* pConfigurationDAO,
-        std::function<void(const Observer::Configuration& cfg)>&&
+        std::function<void(Observer::Configuration& cfg)>&&
             pStartRecognizeFunction,
         std::function<void()>&& pStopRecognizeFunction)
         : serverCtx(pServerCtx),

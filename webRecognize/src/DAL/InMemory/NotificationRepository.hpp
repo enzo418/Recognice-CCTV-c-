@@ -21,7 +21,7 @@ namespace Web::DAL {
         Domain::Notification Get(const std::string& element) override;
 
         const std::vector<Domain::Notification> GetAll(
-            int limit = 100) override;
+            int limit = 100, bool olderFirst = false) override;
 
         std::string GetFilename(const std::string& id) override;
 

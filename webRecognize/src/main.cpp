@@ -2,8 +2,10 @@
 #include <spdlog/fmt/bundled/format.h>
 
 // nolitedb
+#include "Constans.hpp"
 #include "Controller/CameraController.hpp"
 #include "Controller/LiveViewController.hpp"
+#include "CronJobScheduler.hpp"
 #include "DAL/File/ServerConfigurationPersistanceFile.hpp"
 #include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
@@ -12,6 +14,7 @@
 #include "LiveVideo/LiveViewExceptions.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Server/ServerConfiguration.hpp"
+#include "Utils/Filesystem.hpp"
 #include "VideoBufferTasksManager.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
 #include "nldb/SQL3Implementation.hpp"
@@ -97,6 +100,7 @@ int main() {
 
     // initialize logger
     Observer::LogManager::Initialize();
+
     nldb::LogManager::Initialize();
     nldb::LogManager::SetLevel(nldb::log_level::warn);
 
@@ -194,7 +198,11 @@ int main() {
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
                                  &notificationController,
                                  &notificationRepository,
-                                 &threads](const Observer::Configuration& cfg) {
+                                 &threads](Observer::Configuration& cfg) {
+        // modify it so all the configurations use the same folder
+        cfg.mediaFolderPath =
+            Web::ServerConfigurationProvider::Get().mediaFolder;
+
         if (observerCtx.observer)
             OBSERVER_WARN("Observer wasn't null at start");
 
@@ -234,6 +242,75 @@ int main() {
         &app, &serverCtx, &configurationDAO, std::move(startRecognize),
         std::move(stopRecognize));
 
+    /* ---------------------- CRON JOBS --------------------- */
+    Web::CronJobScheduler cronJobs;
+
+    cronJobs.Add("remove old notifications", 20, [&notificationRepository]() {
+        const double days =
+            Web::ServerConfigurationProvider::Get()
+                .notificationCleanupFilter.deleteIfOlderThanDays;
+
+        const double d90 = days * 24 /*hours*/ * 60 /*min*/ * 60 /*sec*/;
+
+        // older than 90 is date < now - 90 days
+        const auto older =
+            notificationRepository.GetBetweenDates(0, time(0) - d90, 100, true);
+
+        for (auto& old : older) {
+            std::tm* ptm = std::localtime(&old.datetime);
+            char buffer[32];
+            // Format: Mo, 15.06.2009 20:20:00
+            std::strftime(buffer, 32, "%a, %d.%m.%Y %H:%M:%S", ptm);
+
+            OBSERVER_TRACE("Removed old notification, date: {}", buffer);
+
+            if (old.type == "image" || old.type == "video")
+                std::filesystem::remove(old.content);
+
+            notificationRepository.Remove(old.notificationID);
+        }
+    });
+
+    cronJobs.Add(
+        "remove non reclaimed notification debug video", 20,
+        [&notificationRepository]() {
+            const auto videoBufferFolder =
+                std::filesystem::path(
+                    Web::ServerConfigurationProvider::Get().mediaFolder) /
+                Web::Constants::NOTIF_DEBUG_VIDEO_FOLDER;
+
+            const auto size =
+                Web::Filesystem::getDirectorySize(videoBufferFolder);
+
+            OBSERVER_TRACE("Directory size: {} MB", size / 1000 / 1000);
+
+            const auto maxSize =
+                Web::ServerConfigurationProvider::Get()
+                    .notificationDebugVideoFilter.keepTotalNotReclaimedBelowMB *
+                1000 * 1000;
+
+            if (size > maxSize) {
+                const auto nonReclaimed =
+                    notificationRepository.GetNonReclaimedDebugVideos(100,
+                                                                      true);
+                size_t lastDeleted = 0;
+
+                while (lastDeleted < nonReclaimed.size() &&
+                       Web::Filesystem::getDirectorySize(videoBufferFolder) >
+                           maxSize) {
+                    const auto current = nonReclaimed[lastDeleted++];
+
+                    std::filesystem::remove(current.filePath);
+
+                    OBSERVER_TRACE("Removed a debug video");
+
+                    notificationRepository.RemoveDebugVideoEntry(current.id);
+                }
+            }
+        });
+
+    cronJobs.Start();
+
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
@@ -267,7 +344,8 @@ int main() {
                      req->setYield(true);  // mark as not handled
                  } else if (FileStreamer::GetInstance().streamFile(
                                 res, url, rangeHeader)) {
-                     // std::cout << "Successfully sended file" << std::endl;
+                     // std::cout << "Successfully sended file" <<
+                     // std::endl;
                  } else {
                      res->end();
                  }

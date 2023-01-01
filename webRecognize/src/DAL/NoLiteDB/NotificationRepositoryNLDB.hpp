@@ -28,15 +28,14 @@ namespace Web::DAL {
         Domain::Notification Get(const std::string& id) override;
 
         const std::vector<Domain::Notification> GetAll(
-            int limit = 100) override;
+            int limit = 100, bool olderFirst = false) override;
+
+        const std::vector<Domain::Notification> GetBetweenDates(
+            std::time_t start, std::time_t end, int limit = 100,
+            bool olderFirst = false) override;
 
         std::string GetFilename(const std::string& id) override;
 
-        /**
-         * @brief Get the last group id stored, defaults to 0.
-         *
-         * @return int last group id or 0
-         */
         int GetLastGroupID() override;
 
         std::string AddNotificationDebugVideo(
@@ -47,6 +46,11 @@ namespace Web::DAL {
 
         void UpdateNotificationDebugVideo(
             const std::string& id, const std::string& videoBufferID) override;
+
+        std::vector<Web::DTONotificationDebugVideo> GetNonReclaimedDebugVideos(
+            int limit = 100, bool olderFirst = false) override;
+
+        void RemoveDebugVideoEntry(const std::string& id) override;
 
        private:
         nldb::DBSL3* db;
