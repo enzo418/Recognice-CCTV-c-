@@ -18,6 +18,9 @@ option(USE_OPENCV "Use opencv as the computer vision and processing library." ON
 
 option(RECO_TEST "Build tests" OFF)
 
+# disabled by default, compilers change warnings over time
+option(WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
+
 # -------------- COMPILATION CONFIGURATION ------------- #
 set (CMAKE_CXX_STANDARD 20)
 
@@ -56,8 +59,11 @@ endif()
 
 target_link_libraries(recognize ${DEPENDENCY_LIBS})
 
-target_compile_options(recognize PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(recognize PRIVATE -Wall -Wextra -Wpedantic)
 
+if(WARNINGS_AS_ERRORS)
+  target_compile_options(recognize PRIVATE -Werror)
+endif()
 
 # ---------------------- SAMPLES ---------------------- #
 if(RECO_BUILD_SAMPLES)
