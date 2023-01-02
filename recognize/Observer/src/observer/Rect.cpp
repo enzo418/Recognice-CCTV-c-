@@ -7,16 +7,16 @@ namespace Observer {
         : x(tl.x), y(tl.y), width(br.x - tl.x), height(br.y - tl.y) {}
 
     Rect::Rect(int pX, int pY, int pWidth, int pHeight)
-        : x(pX), y(pY), width(pWidth), height(pHeight) {};
+        : x(pX), y(pY), width(pWidth), height(pHeight) {}
 
     Rect::Rect(int pX, int pY, const Size& size)
-        : x(pX), y(pY), width(size.width), height(size.height) {};
+        : x(pX), y(pY), width(size.width), height(size.height) {}
 
     Rect::Rect(const Point& pPoint, const Size& size)
-        : x(pPoint.x), y(pPoint.y), width(size.width), height(size.height) {};
+        : x(pPoint.x), y(pPoint.y), width(size.width), height(size.height) {}
 
     Rect::Rect(const Point& pPoint, int pWidth, int pHeight)
-        : x(pPoint.x), y(pPoint.y), width(pWidth), height(pHeight) {};
+        : x(pPoint.x), y(pPoint.y), width(pWidth), height(pHeight) {}
 
     Rect Rect::Intersection(const Rect& other) {
         Rect inter;

@@ -2,7 +2,7 @@
 
 namespace Observer {
     Point::Point() : x(0), y(0) {}
-    Point::Point(int pX, int pY) : x(pX), y(pY) {};
+    Point::Point(int pX, int pY) : x(pX), y(pY) {}
 
     bool Point::operator==(const Point& other) const {
         return std::tie(x, y) == std::tie(other.x, other.y);
