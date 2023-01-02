@@ -57,13 +57,6 @@ if(BUILD_FRONTEND)
 	message(STATUS "Web source directory: " ${WebDirectory})
 	message(STATUS "Web output directory: " ${WebOutputDirectory})
 
-	if(NOT SKIP_INSTALL_FRONTEND_PACKAGES)
-		add_custom_target (npm-target-install ALL
-			COMMAND npm install -s
-			WORKING_DIRECTORY ${WebDirectory}
-			COMMENT "Installing packges of the frontend"
-		)
-	endif()
 
 	# WebRecognize npm target
 	add_custom_target (npm-target ALL
@@ -72,5 +65,13 @@ if(BUILD_FRONTEND)
 		COMMENT "Building the frontend"
 	)
 
-	add_dependencies(npm-target npm-target-install)
+	if(NOT SKIP_INSTALL_FRONTEND_PACKAGES)
+		add_custom_target (npm-target-install ALL
+			COMMAND npm install -s
+			WORKING_DIRECTORY ${WebDirectory}
+			COMMENT "Installing packges of the frontend"
+		)
+		
+		add_dependencies(npm-target npm-target-install)
+	endif()
 endif()
