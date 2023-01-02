@@ -1,0 +1,46 @@
+*.*
+## Ignore all dirs
+*/ 
+
+## Unignore files
+!*.cpp
+!*.hpp
+!*.h
+!*.md
+!.clang-format
+!*.cmake
+!.gitignore
+
+!Observer/
+!Observer/**
+!src/
+!src/vendor/
+!src/Utils/
+!src/extensions/
+!src/extensions/**
+!src/implementations/
+!src/implementations/**
+!src/Log/
+!src/Log/**
+
+!sample/
+
+!tests/
+
+Makefile
+
+
+!CMakeLists.txt
+
+!Diagrams
+!*.jpg
+
+# tools
+!tools/
+!tools/**/*.py
+!tools/Perfomance
+!tools/Perfomance/profile.txt
+
+## Ignore the backup files
+*.~
+*~

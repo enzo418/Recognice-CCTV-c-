@@ -1,114 +1,123 @@
 #include "server_utils.hpp"
 
+#include "observer/Domain/Configuration/ConfigurationParser.hpp"
+
 const std::string HTTP_MULTIPART = "multipart/form-data";
 const std::string HTTP_FORM_URLENCODED = "application/x-www-form-urlencoded";
-const char *HTTP_404_NOT_FOUND = "404 Not Found";
-const char *HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
+const char* HTTP_500_INTERNAL_SERVER_ERROR = "500 Internal Server Error";
+const char* HTTP_400_BAD_REQUEST = "400 Bad request";
+const char* HTTP_404_NOT_FOUND = "404 Not Found";
+const char* HTTP_301_MOVED_PERMANENTLY = "301 Moved Permanently";
+const char* HTTP_200_OK = "200 OK";
+const char* HTTP_204_NO_CONTENT = "204 No Content";
+const char* HTTP_202_Accepted = "202 Accepted";
+const char* HTTP_102_Processing = "102 Processing";
 
 std::string GetJsonString(const std::string& key, const std::string& value) {
-	return fmt::format("{{\"{0}\": {1}}}", key, value);
+    return fmt::format("{{\"{0}\": {1}}}", key, value);
 }
 
-/** Transform
- * { {"key1", "val1"}, {"key2", "val2"}, ...} => 
- * => {"key1": "val1", "key2": "val2", ...]
- * 
-*/
-std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v) {
-	std::string res = "{";
-	for (auto &&i : v) {
-		res += fmt::format("\"{}\": \"{}\",", i.first, i.second);
-	}
-	
-	res.pop_back(); // pop last ,
-	res += "}";
+/*
+void inline GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                            const std::string& value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
+}*/
 
-	return res;
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const std::string& value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
 }
 
-std::string GetJsonString(const std::vector<std::pair<std::string, std::string>>& v, bool whitoutQuote) {
-	std::string res = "{";
-	for (auto &&i : v) {
-		res += fmt::format("\"{}\": {},", i.first, i.second);
-	}
-	
-	res.pop_back(); // pop last ,
-	res += "}";
+void GetJsonKeyValue(std::ostringstream& ss, const char* key,
+                     const char* value) {
+    ss << "\"" << key << "\":\"" << value << "\"";
+}
 
-	return res;
+void GetJsonKeyValue(std::ostringstream& ss, const char* key, bool value) {
+    ss << "\"" << key << "\": " << (value ? "true" : "false");
+}
+
+std::string GetJsonString(
+    const std::vector<std::tuple<std::string_view, std::string_view, bool>>&
+        v) {
+    std::string res = "{";
+    for (auto& [key, value, quote] : v) {
+        if (quote) {
+            res += fmt::format("\"{}\": \"{}\",", key, value);
+        } else {
+            res += fmt::format("\"{}\": {},", key, value);
+        }
+    }
+
+    res.pop_back();  // pop last ,
+    res += "}";
+
+    return res;
 }
 
 /**
  * @brief Formats a alert message
  * @param status status of the alert, ok or error
  * @param message message of the alert
- * @param trigger_query query that triggered the alert, should be the same as the query received
+ * @param trigger_query query that triggered the alert, should be the same as
+ * the query received
  */
-std::string GetAlertMessage(const AlertStatus& status, const std::string& message, const std::string& extra) {
-	std::string st = AlertStatus::OK == status ? "ok" : "error";
+std::string GetErrorAlertReponse(const std::string& message,
+                                 const std::string& extra) {
+    static const std::string st = "error";
 
-	return GetJsonString("status", GetJsonString({{"status", st}, {"message", message}, {"extra", extra}}));
+    return GetJsonString({{"status", st, true},
+                          {"data", message, false},
+                          {"extra", extra, true}});
 }
 
-// datetime format is %d_%m_%Y_%H_%M_%S, that's the same as dd_mm_yyyy_hh_mm_ss
-void AppendNotification (Json::Value& root, const std::string& type, const std::string& content, const std::string& group_id, const std::string& datetime, const std::string& directory) {
-    Json::Value pnt;
-    pnt["type"] = type;
-    pnt["content"] = content;
-    pnt["group_id"] = group_id;
-    pnt["datetime"] = datetime;
-    pnt["directory"] = directory;
-    root.append(pnt);
+std::string GetSuccessAlertReponse(const std::string& message,
+                                   const std::string& extra) {
+    static const std::string st = "ok";
+
+    return GetJsonString({{"status", st, true},
+                          {"data", message, false},
+                          {"extra", extra, true}});
 }
 
-void ReadNotificationsFile(const std::string& fn, Json::Value& target) {
-	if (std::filesystem::exists(fn)) {
-        Json::Reader reader;
+AvailableConfigurationsDTO GetAvailableConfigurations(
+    const std::vector<std::string>& directoriesToSeach) {
+    AvailableConfigurationsDTO configsFiles;
 
-		std::ifstream file_source(fn, std::ifstream::binary);
+    for (const auto& directory : directoriesToSeach) {
+        if (std::filesystem::exists(directory)) {
+            for (const auto& entry :
+                 std::filesystem::directory_iterator(directory)) {
+                std::string path = entry.path().generic_string();
+                const auto ext = entry.path().extension();
+                if (ext == ".json") {
+                    AvailableConfigurationDTO avCfg;
 
-        if (!reader.parse(file_source, target, false)) {
-            std::cout << "couldn't read the notifications history: the file \"" << fn << "\" has a bad json format!\n";
+                    // open configuration
+                    try {
+                        auto cfg = Observer::ConfigurationParser::
+                            ConfigurationFromJsonFile(path);
+                        avCfg.name = cfg.name;
+                        avCfg.hash =
+                            std::to_string(std::hash<std::string> {}(path));
+                    } catch (...) {
+                        OBSERVER_TRACE(
+                            "File {0} is no a valid configuration but it's"
+                            "in a configuration directory !",
+                            path);
+                        continue;
+                    }
+
+                    configsFiles.names.push_back(avCfg);
+                }
+            }
         }
-        
-		file_source.close();
-	}
-}
+    }
 
-void WriteNotificationsFile(const std::string& fn, Json::Value& notifications, Json::FastWriter& writter) {
-	std::ofstream file(fn, std::ifstream::binary);
-	file << writter.write(notifications);
-    file.flush();
-    file.close();
-}
-
-std::string GetConfigurationsPaths(const std::vector<std::string>& directoriesToSeach) {
-	std::string configsFiles = "[";
-
-	size_t i = 0;
-	for (const auto& directory : directoriesToSeach) {
-		if (std::filesystem::exists(directory)) {
-			for (const auto & entry : std::filesystem::directory_iterator(directory)) {
-				std::string path = entry.path().generic_string();
-				if (entry.path().extension() == ".ini") {
-					if(i > 0) configsFiles += ",";
-
-					configsFiles += "\"" + path + "\"";
-					i++;
-				}
-			}
-		}
-	}
-
-	configsFiles += "]";
-	
-	return configsFiles;
-}
-
-std::string GetConfigurationsPathsJson(const std::vector<std::string>& directoriesToSeach) {
-	return GetJsonString("configuration_files", GetConfigurationsPaths(directoriesToSeach));
+    return configsFiles;
 }
 
 std::string GetRecognizeStateJson(const bool& recognize_running) {
-	return GetJsonString("recognize_state_changed", recognize_running ? "true" : "false");
+    return GetJsonString("recognize_state_changed",
+                         recognize_running ? "true" : "false");
 }

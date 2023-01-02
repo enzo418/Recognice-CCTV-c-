@@ -13,11 +13,17 @@
 !*.html
 !favicon.svg
 !.prettierrc
+!.clang-format
 !LICENSE
+!.clang-format
+!Dependency.cmake
 
 # server
 !src/stream_content
+!src/LiveVideo
 !uWebSockets/
+!Notifications
+!Server
 
 # web
 !src/
@@ -27,10 +33,47 @@
 !src/web/src/
 !src/web/src/modules/
 !src/web/src/modules/canvas/
+!src/web/src/modules/liveView/
 !src/web/src/utils/
 !src/web/src/components/
 !src/web/src/components/Inputs
 !src/web/src/styles
+
+# DAL - Data access layer
+!src/DAL/
+!src/DAL/*
+
+# Domain
+!src/Domain/
+
+# CL - Cache layer
+!src/CL
+!src/CL/*
+
+# vendor
+!vendor/
+!vendor/*
+!vendor/**
+
+# Serialization
+!Serialization/
+!Serialization/*
+
+# Controllers
+!src/Controller/
+
+# Submodule
+!WebRecognize
+!WebRecognize/*
+
+# DTO
+!src/DTO
+
+# Utils
+!src/Utils
+
+# Pattern impl
+!src/Pattern
 
 !CMakeLists.txt
 

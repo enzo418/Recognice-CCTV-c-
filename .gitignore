@@ -15,13 +15,4 @@
 
 # webRecognize
 !webRecognize
-!webRecognize/*.md
-!webRecognize/src/web
-!webRecognize/src/web/app.js
-!webRecognize/src/web/index.html
-!webRecognize/src/web/elements.json
-!webRecognize/src/web/translations.json
-!webRecognize/src/web/assets/
-!webRecognize/src/web/assets/*.css
-!webRecognize/src/web/assets/*.js
-!webRecognize/src/web/assets/*.svg
+!webRecognize/*

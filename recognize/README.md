@@ -1,7 +1,9 @@
 # Recognize people on CCTV
 
 # Requeriments	
-- Opencv >= 4.5 (was 3.0 before implementing yolov4 nn)
+- Opencv >= 4.5 (or 3.0 without yolov4 nn)
+- jsoncpp
+- curly.hpp
 
 ## Compiling
 - [jsoncpp](github.com/open-source-parsers/jsoncpp) (jsoncpp-devel) (To decode incoming messages from the telegram api)
@@ -12,9 +14,13 @@
         4. `make`
         5. `sudo make install`
 
+- [curly.hpp](https://github.com/BlackMATov/curly.hpp) used as a http client. Already included on the project.
 
-# Todo
-**1. Comment the code**
+- [spdlog](https://github.com/gabime/spdlog) logging
+    1. `git clone https://github.com/gabime/spdlog`
+    2. `cd spdlog && mkdir build && cd build`
+    3. `cmake .. && make -j`
+    4. `sudo make install`
 
-**2. Configuration:**
-- Allow the user to set a messaging service like dweet.io
+# Notes:
+- Notifications media will be stored in the configured path + image or video folder

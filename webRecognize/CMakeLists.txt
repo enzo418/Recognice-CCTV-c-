@@ -1,15 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(WebRecognize VERSION 1.0.0)
 
-# We don't support Windows or Apple platforms since seasocks doesn't.
-if(WIN32)
-    message(FATAL_ERROR "${PROJECT_NAME} does not support Windows")
-endif()
-if(APPLE)
-    message(FATAL_ERROR "${PROJECT_NAME} does not support Apple platforms")
-endif()
-
-option(WITH_CUDA "Use cuda DNN" ON)
+# ----------------------- OPTIONS ---------------------- #
+option(WITH_CUDA "Use cuda DNN" OFF)
+option(SKIP_INSTALL_FRONTEND_PACKAGES "Skip the installation of all the frontend packages before build" OFF)
+option(BUILD_FRONTEND "Should compile the frontend code" ON)
 
 if (WITH_CUDA)
 	MESSAGE(STATUS "WITH_CUDA")
@@ -18,41 +13,65 @@ else()
 	MESSAGE(STATUS "NO CUDA")
 endif()
 
-# Opencv package
-find_package(OpenCV REQUIRED)
+include(Dependency.cmake)
 
-find_package(fmt)
+# Include our own files
+include_directories(src/)
 
-# Curl package
-set(CURL_LIBRARY "-lcurl") 
-find_package(CURL REQUIRED) 
+# clangd:
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(source_dir "${PROJECT_SOURCE_DIR}")
+# -------------- COMPILATION CONFIGURATION ------------- #
+set (CMAKE_CXX_STANDARD 20)
 
-file(GLOB COMMON_SRC "${source_dir}/src/*.cpp")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lX11")
 
-file(GLOB STREAM_CONTENT_SRC "${source_dir}/src/stream_content/*.cpp")
+file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
-file(GLOB RECOG_SRC "${source_dir}/../recognize/src/*.cpp")
+add_executable(webRecognize ${SOURCES})
 
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/build/")
+add_dependencies(webRecognize ${DEPENDENCY_LIST})
 
-set(SOURCES ${COMMON_SRC} ${STREAM_CONTENT_SRC})
+target_link_directories(webRecognize PUBLIC ${DEPENDENCY_LIB_DIR})
+target_include_directories(webRecognize PUBLIC ${DEPENDENCY_INCLUDE_LIST})
 
-# Print sources
-message(${SOURCES})
-message(${RECOG_SRC})
-message(${STREAM_CONTENT_SRC})
+# Define build type
+target_compile_definitions(webRecognize PUBLIC
+							$<$<CONFIG:Debug>:BUILD_DEBUG>
+							$<$<CONFIG:RelWithDebInfo>:BUILD_DEBUG>
+							$<$<CONFIG:Release>:BUILD_RELEASE>
+							$<$<CONFIG:MinSizeRel>:BUILD_RELEASE>
+)
 
-# Include curl
-include_directories(${CURL_INCLUDE_DIR})
+# Link libraries
+# -----
+target_link_libraries(webRecognize PUBLIC ${DEPENDENCY_LIBS})
 
-# Set cmake cxx flags
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -lX11")
+# Build NPM Web Page
+# -----
+file(TO_CMAKE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/WebRecognize WebDirectory)
 
-add_executable(webRecognize ${SOURCES} ${RECOG_SRC})
+file(TO_CMAKE_PATH ${CMAKE_BINARY_DIR}/web WebOutputDirectory)
 
-# set -l of opencv and curl 
-# add -lssl if use ssl with uwebsocket
-# -lz is zlib
-target_link_libraries(webRecognize ${OpenCV_LIBS} ${CURL_LIBRARIES} jsoncpp fmt::fmt "-l:uSockets.a" "-lz")
+if(BUILD_FRONTEND)
+	message(STATUS "Web source directory: " ${WebDirectory})
+	message(STATUS "Web output directory: " ${WebOutputDirectory})
+
+
+	# WebRecognize npm target
+	add_custom_target (npm-target ALL
+		COMMAND npm run watch -q -- -b=${WebOutputDirectory} -c -v=0
+		WORKING_DIRECTORY ${WebDirectory}
+		COMMENT "Building the frontend"
+	)
+
+	if(NOT SKIP_INSTALL_FRONTEND_PACKAGES)
+		add_custom_target (npm-target-install ALL
+			COMMAND npm install -s
+			WORKING_DIRECTORY ${WebDirectory}
+			COMMENT "Installing packges of the frontend"
+		)
+		
+		add_dependencies(npm-target npm-target-install)
+	endif()
+endif()
