@@ -102,8 +102,7 @@ namespace Observer {
 
     /* ------------- OutputPreviewConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OutputPreviewConfiguration, showOutput,
-                                       resolution, scaleFactor,
-                                       showIgnoredAreas, showProcessedFrames);
+                                       resolution, scaleFactor);
 
     /* ------------------ ENotificationType ----------------- */
     inline void to_json(json& j, const ENotificationType& p) {
@@ -211,11 +210,12 @@ namespace Observer {
     }
 
     /* ---------- NotificationsServiceConfiguration --------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-        NotificationsServiceConfiguration, enabled,
-        secondsBetweenTextNotification, secondsBetweenImageNotification,
-        secondsBetweenVideoNotification, notificationsToSend,
-        onNotifSendExtraImageNotfWithAllTheCameras, drawTraceOfChangeOn);
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NotificationsServiceConfiguration,
+                                       enabled, secondsBetweenTextNotification,
+                                       secondsBetweenImageNotification,
+                                       secondsBetweenVideoNotification,
+                                       notificationsToSend,
+                                       drawTraceOfChangeOn);
 
     /* ---------- LocalWebNotificationsConfiguration --------- */
     inline void to_json(json& j, const LocalWebNotificationsConfiguration& p) {

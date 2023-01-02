@@ -9,8 +9,8 @@ namespace Observer {
     struct Configuration {
         struct ResizeNotification {
             // [1, 100], 100 is no resize
-            int image;
-            int video;
+            int image {100};
+            int video {100};
 
             bool operator==(const ResizeNotification&) const = default;
         };
@@ -19,7 +19,7 @@ namespace Observer {
         std::string name;
 
         // absolute path
-        std::string mediaFolderPath;
+        std::string mediaFolderPath {"./"};
 
         std::string notificationTextTemplate;
 

@@ -21,8 +21,6 @@ class ConfigurationTest : public ::testing::Test {
             .showOutput = true,
             .resolution = Size(205, 418),
             .scaleFactor = 1.02,
-            .showIgnoredAreas = true,
-            .showProcessedFrames = false,
         };
 
         TelegramNotificationsConfiguration telegramConfiguration = {
@@ -33,7 +31,6 @@ class ConfigurationTest : public ::testing::Test {
         telegramConfiguration.enabled = true;
         telegramConfiguration.drawTraceOfChangeOn =
             ETrazable::IMAGE | ETrazable::VIDEO;
-        telegramConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
         telegramConfiguration.secondsBetweenImageNotification = 5.1;
         telegramConfiguration.secondsBetweenTextNotification = 5.1;
         telegramConfiguration.secondsBetweenVideoNotification = 5.1;
@@ -45,7 +42,6 @@ class ConfigurationTest : public ::testing::Test {
 
         localWebConfiguration.enabled = true;
         localWebConfiguration.drawTraceOfChangeOn = ETrazable::NONE;
-        localWebConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
         localWebConfiguration.secondsBetweenImageNotification = 5.1;
         localWebConfiguration.secondsBetweenTextNotification = 5.1;
         localWebConfiguration.secondsBetweenVideoNotification = 5.1;

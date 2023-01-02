@@ -13,17 +13,15 @@ namespace Observer {
     enum class ETrazable { NONE = 0, IMAGE = 1, VIDEO = 2 };
 
     struct NotificationsServiceConfiguration {
-        bool enabled;
+        bool enabled {true};
 
-        double secondsBetweenTextNotification;
-        double secondsBetweenImageNotification;
-        double secondsBetweenVideoNotification;
+        double secondsBetweenTextNotification {15};
+        double secondsBetweenImageNotification {15};
+        double secondsBetweenVideoNotification {15};
 
-        ENotificationType notificationsToSend;
+        ENotificationType notificationsToSend {1 << 0 | 1 << 1 | 1 << 2};
 
-        bool onNotifSendExtraImageNotfWithAllTheCameras;
-
-        ETrazable drawTraceOfChangeOn;
+        ETrazable drawTraceOfChangeOn {ETrazable::NONE};
 
         bool operator==(const NotificationsServiceConfiguration&) const =
             default;
