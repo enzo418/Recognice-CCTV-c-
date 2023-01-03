@@ -1,9 +1,6 @@
 [submodule "webRecognize/WebRecognize"]
 	path = webRecognize/WebRecognize
 	url = https://github.com/enzo418/WebRecognize
-[submodule "webRecognize/vendor/uWebSockets"]
-	path = webRecognize/vendor/uWebSockets
-	url = https://github.com/enzo418/uWebSockets
 [submodule "webRecognize/vendor/nolitedb"]
 	path = webRecognize/vendor/nolitedb
 	url = https://github.com/enzo418/nolitedb
@@ -13,3 +10,6 @@
 [submodule "recognize/Observer/vendor/magic_enum"]
 	path = recognize/Observer/vendor/magic_enum
 	url = https://github.com/Neargye/magic_enum
+[submodule "webRecognize/vendor/uWebSockets"]
+	path = webRecognize/vendor/uWebSockets
+	url = https://github.com/enzo418/uWebSockets
