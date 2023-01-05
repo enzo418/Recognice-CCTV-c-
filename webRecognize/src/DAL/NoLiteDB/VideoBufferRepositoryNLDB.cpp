@@ -3,22 +3,6 @@
 #include <optional>
 
 namespace Web::DAL {
-    void inline __ReplaceIdKeyString(nldb::json& js) {
-        js["id"] = js["_id"];
-
-        js.erase("_id");
-    }
-
-    void inline ReplaceIdKeyString(nldb::json& js) {
-        if (js.is_array()) {
-            for (auto& n : js) {
-                __ReplaceIdKeyString(n);
-            }
-        } else {
-            __ReplaceIdKeyString(js);
-        }
-    }
-
     VideoBufferRepositoryNLDB::VideoBufferRepositoryNLDB(nldb::DBSL3* pDb)
         : db(pDb), query(db), colVideoBuffer("videoBuffer") {}
 
@@ -38,13 +22,12 @@ namespace Web::DAL {
                         colVideoBuffer["blobs"], colVideoBuffer["fps"],
                         colVideoBuffer["state"])
                 .where(colVideoBuffer["_id"] == id)
+                .rename(colVideoBuffer["_id"], "id")
                 .execute();
 
         if (result.size() < 1) {
             throw std::runtime_error("video buffer not found");
         }
-
-        ReplaceIdKeyString(result);
 
         return result[0];
     }
@@ -56,9 +39,8 @@ namespace Web::DAL {
                         colVideoBuffer["camera_id"], colVideoBuffer["duration"],
                         colVideoBuffer["contours"], colVideoBuffer["blobs"],
                         colVideoBuffer["fps"], colVideoBuffer["state"])
+                .rename(colVideoBuffer["_id"], "id")
                 .execute();
-
-        ReplaceIdKeyString(res);
 
         return res;
     }
@@ -71,9 +53,8 @@ namespace Web::DAL {
                         colVideoBuffer["contours"], colVideoBuffer["blobs"],
                         colVideoBuffer["fps"], colVideoBuffer["state"])
                 .where(colVideoBuffer["camera_id"] == cameraID)
+                .rename(colVideoBuffer["_id"], "id")
                 .execute();
-
-        ReplaceIdKeyString(res);
 
         return res;
     }

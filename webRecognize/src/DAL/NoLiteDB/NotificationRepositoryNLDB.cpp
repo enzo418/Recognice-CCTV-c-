@@ -45,17 +45,15 @@ namespace Web::DAL {
 
     Domain::Notification NotificationRepositoryNLDB::Get(
         const std::string& id) {
-        nldb::json result = query.from(colNotifications)
-                                .select()
-                                .where(colNotifications["_id"] == id)
-                                .execute();
+        nldb::json result =
+            query.from(colNotifications)
+                .select()
+                .where(colNotifications["_id"] == id)
+                .rename(colNotifications["_id"], "notificationID")
+                .execute();
 
         if (result.empty()) {
             throw std::runtime_error("Notification not found");
-        }
-
-        for (auto& r : result) {
-            r["notificationID"] = r["_id"];
         }
 
         return result[0];
@@ -68,15 +66,13 @@ namespace Web::DAL {
         const auto sortProp = olderFirst ? colNotifications["datetime"].asc()
                                          : colNotifications["datetime"].desc();
 
-        nldb::json result = query.from(colNotifications)
-                                .select()
-                                .sortBy(sortProp)
-                                .limit(limit)
-                                .execute();
-
-        for (auto& r : result) {
-            r["notificationID"] = r["_id"];
-        }
+        nldb::json result =
+            query.from(colNotifications)
+                .select()
+                .sortBy(sortProp)
+                .limit(limit)
+                .rename(colNotifications["_id"], "notificationID")
+                .execute();
 
         return result;
     }
@@ -95,11 +91,8 @@ namespace Web::DAL {
                        colNotifications["datetime"] <= (long)end)
                 .sortBy(sortProp)
                 .limit(limit)
+                .rename(colNotifications["_id"], "notificationID")
                 .execute();
-
-        for (auto& r : result) {
-            r["notificationID"] = r["_id"];
-        }
 
         return result;
     }
@@ -137,10 +130,10 @@ namespace Web::DAL {
             query.from(colNotificationDebugVideo)
                 .select()
                 .where(colNotificationDebugVideo["groupID"] == groupID)
+                .rename(colNotificationDebugVideo["_id"], "id")
                 .execute();
 
         if (res.size() > 0) {
-            res[0]["id"] = res[0]["_id"];
             return res[0];
         }
 
@@ -165,11 +158,8 @@ namespace Web::DAL {
                 .select()
                 .where(colNotificationDebugVideo["videoBufferID"] == "")
                 .sortBy(sortProp)
+                .rename(colNotificationDebugVideo["_id"], "id")
                 .execute();
-
-        for (auto& v : res) {
-            v["id"] = v["_id"];
-        }
 
         return res;
     }

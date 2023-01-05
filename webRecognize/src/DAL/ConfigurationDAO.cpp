@@ -13,23 +13,6 @@ namespace Web::DAL {
           colCamera("cameras") {}
 
     /* ----------- HELPERS TO REPLACE _id WITH id ----------- */
-    // could i just modify the internal id to "id"? Yes
-    void inline __ReplaceIdKeyString(nldb::json& js) {
-        js["id"] = js["_id"];
-
-        js.erase("_id");
-    }
-
-    void inline ReplaceIdKeyString(nldb::json& js) {
-        if (js.is_array()) {
-            for (auto& n : js) {
-                __ReplaceIdKeyString(n);
-            }
-        } else {
-            __ReplaceIdKeyString(js);
-        }
-    }
-
     void ConfigurationDAO::AddCamerasToConfiguration(nldb::json& cfg) {
         if (cfg.contains("cameras") && cfg["cameras"].size() > 0) {
             // Convert the id array from configuration to an array of
@@ -43,10 +26,11 @@ namespace Web::DAL {
                             colCamera["_id"] == (std::string)json_cameras[i];
             }
 
-            nldb::json cameras =
-                query.from(colCamera).select().where(condition).execute();
-
-            ReplaceIdKeyString(cameras);
+            nldb::json cameras = query.from(colCamera)
+                                     .select()
+                                     .where(condition)
+                                     .rename(colCamera["_id"], "id")
+                                     .execute();
 
             cfg["cameras"] = cameras;
         }
@@ -57,13 +41,12 @@ namespace Web::DAL {
             query.from(colConfiguration)
                 .select()
                 .where(colConfiguration["_id"] == id)
+                .rename(colConfiguration["_id"], "id")
                 .execute();
 
         if (configurationsFound.size() == 1) {
             nldb::json& cfg = configurationsFound[0];
             AddCamerasToConfiguration(cfg);
-
-            ReplaceIdKeyString(cfg);
 
             return cfg;
         }
@@ -75,14 +58,11 @@ namespace Web::DAL {
         nldb::json res = this->query.from(colCamera)
                              .select()
                              .where(colCamera["_id"] == id)
+                             .rename(colCamera["_id"], "id")
                              .execute();
 
         if (res.size() == 1) {
-            nldb::json& camera = res[0];
-
-            ReplaceIdKeyString(camera);
-
-            return camera;
+            return res[0];
         }
 
         throw std::runtime_error("Camera not found");
@@ -180,17 +160,14 @@ namespace Web::DAL {
             query.from(colCamera)
                 .select()
                 .where(condition && colCamera["name"] == cameraName)
+                .rename(colCamera["_id"], "id")
                 .execute();
 
         if (cameras.empty()) {
             throw std::runtime_error("Camera not found");
         }
 
-        nldb::json& camera = cameras[0];
-
-        ReplaceIdKeyString(camera);
-
-        return camera;
+        return cameras[0];
     }
 
     std::string ConfigurationDAO::InsertConfiguration(
@@ -225,9 +202,8 @@ namespace Web::DAL {
         auto result =
             query.from(colConfiguration)
                 .select(colConfiguration["_id"], colConfiguration["name"])
+                .rename(colConfiguration["_id"], "id")
                 .execute();
-
-        ReplaceIdKeyString(result);
 
         return result;
     }
