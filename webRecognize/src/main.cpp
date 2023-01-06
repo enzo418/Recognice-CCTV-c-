@@ -281,25 +281,26 @@ int main() {
                     Web::ServerConfigurationProvider::Get().mediaFolder) /
                 Web::Constants::NOTIF_DEBUG_VIDEO_FOLDER;
 
-            const auto size =
-                Web::Filesystem::getDirectorySize(videoBufferFolder);
+            const long long sizeMB =
+                Web::Filesystem::getDirectorySize(videoBufferFolder) / 1000 /
+                1000;
 
-            OBSERVER_TRACE("Directory size: {} MB", size / 1000 / 1000);
-
-            const auto maxSize =
+            const long long maxSizeMB =
                 Web::ServerConfigurationProvider::Get()
-                    .notificationDebugVideoFilter.keepTotalNotReclaimedBelowMB *
-                1000 * 1000;
+                    .notificationDebugVideoFilter.keepTotalNotReclaimedBelowMB;
 
-            if (size > maxSize) {
+            OBSERVER_TRACE("Directory size: {} MB of MAX {} MB", sizeMB,
+                           maxSizeMB);
+
+            if (sizeMB > maxSizeMB) {
                 const auto nonReclaimed =
                     notificationRepository.GetNonReclaimedDebugVideos(100,
                                                                       true);
                 size_t lastDeleted = 0;
 
                 while (lastDeleted < nonReclaimed.size() &&
-                       Web::Filesystem::getDirectorySize(videoBufferFolder) >
-                           maxSize) {
+                       (Web::Filesystem::getDirectorySize(videoBufferFolder) /
+                        1000 / 1000) > maxSizeMB) {
                     const auto current = nonReclaimed[lastDeleted++];
 
                     std::filesystem::remove(current.filePath);
