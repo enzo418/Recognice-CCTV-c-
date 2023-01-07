@@ -167,7 +167,9 @@ class FileStreamer {
         long fz = fileReader->getFileSize();
 
         res->writeHeader("Transfer-Encoding", "chunked")
-            ->writeHeader("Access-Control-Allow-Origin", "*");
+            ->writeHeader("Access-Control-Allow-Origin", "*")
+            ->writeHeader("Content-Type",
+                          getContentType(fileReader->getFileName()));
 
         res->onAborted(
             [url]() { std::cout << "[" << url << "] ABORTED!" << std::endl; });
