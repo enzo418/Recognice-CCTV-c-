@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "SocketData.hpp"
 #include "VideoBufferTasksManager.hpp"
@@ -16,7 +16,7 @@ namespace Web::Controller {
         VideoBufferController(
             uWS::App* app, VideoBufferTasksManager* videoBufferTasksManager,
             Web::DAL::VideoBufferRepositoryNLDB* videoBufferRepository,
-            Web::DAL::ConfigurationDAO* configurationDAO,
+            Web::DAL::IConfigurationDAO* configurationDAO,
             Web::WebsocketVideoBufferController<SSL>* bufferWebSocket);
 
         /**
@@ -87,7 +87,7 @@ namespace Web::Controller {
 
        private:
         Web::DAL::VideoBufferRepositoryNLDB* videoBufferRepository;
-        Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::DAL::IConfigurationDAO* configurationDAO;
         VideoBufferTasksManager* videoBufferTasksManager;
         Web::WebsocketVideoBufferController<SSL>* bufferWebSocket;
     };
@@ -96,7 +96,7 @@ namespace Web::Controller {
     VideoBufferController<SSL>::VideoBufferController(
         uWS::App* app, VideoBufferTasksManager* pVideoBufferTasksManager,
         Web::DAL::VideoBufferRepositoryNLDB* pVideoBufferRepository,
-        Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::DAL::IConfigurationDAO* pConfigurationDAO,
         Web::WebsocketVideoBufferController<SSL>* pBufferWebSocket)
         : videoBufferRepository(pVideoBufferRepository),
           configurationDAO(pConfigurationDAO),

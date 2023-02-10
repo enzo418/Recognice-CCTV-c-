@@ -3,15 +3,12 @@
 #include <stdexcept>
 #include <string>
 
-#include "DAL/IConfigurationDAO.hpp"
 #include "nldb/Collection.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
 namespace Web::DAL {
-    class ConfigurationDAO final : public IConfigurationDAO {
-       public:
-        ConfigurationDAO(nldb::DBSL3* db);
 
+    class IConfigurationDAO {
        public:
         /**
          * @brief Get a configuration (WEB).
@@ -23,7 +20,7 @@ namespace Web::DAL {
          * @return nldb::json
          * @throws std::runtime_error on config not found
          */
-        nldb::json GetConfiguration(const std::string& id) override;
+        virtual nldb::json GetConfiguration(const std::string& id) = 0;
 
         /**
          * @brief Get the Camera object
@@ -32,7 +29,7 @@ namespace Web::DAL {
          * @return nldb::json
          * @throws std::runtime_error on camera not found
          */
-        nldb::json GetCamera(const std::string& id) override;
+        virtual nldb::json GetCamera(const std::string& id) = 0;
 
         /**
          * @brief Adds a new camera to a configuration
@@ -40,9 +37,9 @@ namespace Web::DAL {
          * @param configurationID target configuration
          * @return std::string
          */
-        std::string AddCameraToConfiguration(
+        virtual std::string AddCameraToConfiguration(
             const std::string& configurationID,
-            const nldb::json& cameraConfiguration) override;
+            const nldb::json& cameraConfiguration) = 0;
 
         /**
          * @brief Deletes a camera from a configuration
@@ -51,9 +48,9 @@ namespace Web::DAL {
          * @param cameraID
          * @throws std::runtime_error on configuration not found
          */
-        void DeleteCameraFromConfiguration(
+        virtual void DeleteCameraFromConfiguration(
             const std::string& configurationID,
-            const std::string& cameraID) override;
+            const std::string& cameraID) = 0;
 
         /**
          * @brief Search for a camera in a configuration based on its name
@@ -64,8 +61,8 @@ namespace Web::DAL {
          * @throw std::runtime_error if configuration wasn't found
          * @throw std::runtime_error if camera wasn't found
          */
-        nldb::json FindCamera(const std::string& configuration_id,
-                              const std::string& cameraName) override;
+        virtual nldb::json FindCamera(const std::string& configuration_id,
+                                      const std::string& cameraName) = 0;
 
         /**
          * @brief Insert a new configuration.
@@ -73,25 +70,17 @@ namespace Web::DAL {
          * @param config
          * @return std::string id of the new configuration
          */
-        std::string InsertConfiguration(const nldb::json& config) override;
+        virtual std::string InsertConfiguration(const nldb::json& config) = 0;
 
-        void DeleteConfiguration(const std::string& id) override;
+        virtual void DeleteConfiguration(const std::string& id) = 0;
 
-        void UpdateConfiguration(const std::string& id,
-                                 const nldb::json& data) override;
+        virtual void UpdateConfiguration(const std::string& id,
+                                         const nldb::json& data) = 0;
 
-        void UpdateCamera(const std::string& id,
-                          const nldb::json& data) override;
+        virtual void UpdateCamera(const std::string& id,
+                                  const nldb::json& data) = 0;
 
         // Get all the ids and names of the configurations stored.
-        nldb::json GetAllNamesAndId() override;
-
-       private:
-        void AddCamerasToConfiguration(nldb::json& cfg);
-
-        nldb::DBSL3* db;
-        nldb::Query<nldb::DBSL3> query;
-        nldb::Collection colConfiguration;
-        nldb::Collection colCamera;
+        virtual nldb::json GetAllNamesAndId() = 0;
     };
 }  // namespace Web::DAL

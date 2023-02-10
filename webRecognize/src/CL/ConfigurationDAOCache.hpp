@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -7,10 +8,10 @@
 #include "nldb/Collection.hpp"
 #include "nldb/SQL3Implementation.hpp"
 
-namespace Web::DAL {
-    class ConfigurationDAO final : public IConfigurationDAO {
+namespace Web::CL {
+    class ConfigurationDAOCache final : public DAL::IConfigurationDAO {
        public:
-        ConfigurationDAO(nldb::DBSL3* db);
+        ConfigurationDAOCache(std::unique_ptr<IConfigurationDAO>&& repository);
 
        public:
         /**
@@ -87,11 +88,9 @@ namespace Web::DAL {
         nldb::json GetAllNamesAndId() override;
 
        private:
-        void AddCamerasToConfiguration(nldb::json& cfg);
+        std::unique_ptr<IConfigurationDAO> repository;
 
-        nldb::DBSL3* db;
-        nldb::Query<nldb::DBSL3> query;
-        nldb::Collection colConfiguration;
-        nldb::Collection colCamera;
+        lru11::Cache<std::string, nldb::json> configurationCache;
+        lru11::Cache<std::string, nldb::json> cameraCache;
     };
-}  // namespace Web::DAL
+}  // namespace Web::CL

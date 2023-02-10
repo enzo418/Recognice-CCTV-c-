@@ -73,6 +73,7 @@
 #include "DAL/InMemory/NotificationRepository.hpp"
 
 // CL
+#include "CL/ConfigurationDAOCache.hpp"
 #include "CL/NotificationCL.hpp"
 #include "Utils/JsonUtils.hpp"
 
@@ -119,9 +120,10 @@ int main() {
         configurationsDB.throwLastError();
     }
 
-    Web::DAL::ConfigurationDAO configurationDAO(&configurationsDB);
+    Web::CL::ConfigurationDAOCache configurationDAOCache(
+        std::make_unique<Web::DAL::ConfigurationDAO>(&configurationsDB));
     Web::Controller::ConfigurationController<SSL> configurationController(
-        &app, &configurationDAO);
+        &app, &configurationDAOCache);
 
     Web::ServerContext<SSL> serverCtx = {
         .rootFolder = fs::current_path(),
@@ -149,11 +151,11 @@ int main() {
 
     Web::WebsocketVideoBufferController<SSL> bufferWebSocket;
     Web::DAL::VideoBufferRepositoryNLDB videoBufferRepository(&videoBufferDB);
-    Web::VideoBufferTasksManager videoBufferTasksManager(&videoBufferRepository,
-                                                         &configurationDAO);
+    Web::VideoBufferTasksManager videoBufferTasksManager(
+        &videoBufferRepository, &configurationDAOCache);
     Web::Controller::VideoBufferController<SSL> videoBufferController(
         &app, &videoBufferTasksManager, &videoBufferRepository,
-        &configurationDAO, &bufferWebSocket);
+        &configurationDAOCache, &bufferWebSocket);
 
     /* ---------------- SERVER CONFIGURATION ---------------- */
     Web::DAL::ServerConfigurationPersistanceFile serverConfigPers(
@@ -173,13 +175,13 @@ int main() {
     Web::CL::NotificationCL notificationCache(&notificationRepository);
     Web::Controller::NotificationController<SSL> notificationController(
         &app, &notificationRepository, &videoBufferRepository,
-        &notificationCache, &configurationDAO, &serverCtx);
+        &notificationCache, &configurationDAOCache, &serverCtx);
 
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
     Web::Controller::CameraController<SSL> cameraController(
-        &app, &configurationDAO, &serverCtx);
+        &app, &configurationDAOCache, &serverCtx);
 
     /* ----------------- START FUNCTIONALITY ---------------- */
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
@@ -239,7 +241,7 @@ int main() {
     };
 
     Web::Controller::ObserverController<SSL> observerController(
-        &app, &serverCtx, &configurationDAO, std::move(startRecognize),
+        &app, &serverCtx, &configurationDAOCache, std::move(startRecognize),
         std::move(stopRecognize));
 
     /* ---------------------- CRON JOBS --------------------- */

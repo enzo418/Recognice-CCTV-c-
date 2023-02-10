@@ -1,4 +1,4 @@
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "Utils/JsonUtils.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
@@ -8,7 +8,7 @@ namespace Web::Controller {
     class ConfigurationController {
        public:
         ConfigurationController(uWS::App* app,
-                                Web::DAL::ConfigurationDAO* configurationDAO);
+                                Web::DAL::IConfigurationDAO* configurationDAO);
 
         void GetAllConfiguration(auto* res, auto* req);
         void CreateOrCloneConfiguration(auto* res, auto* req);
@@ -19,12 +19,12 @@ namespace Web::Controller {
         void UpdateConfigurationField(auto* res, auto* req);
 
        private:
-        Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::DAL::IConfigurationDAO* configurationDAO;
     };
 
     template <bool SSL>
     ConfigurationController<SSL>::ConfigurationController(
-        uWS::App* app, Web::DAL::ConfigurationDAO* pConfigurationDAO)
+        uWS::App* app, Web::DAL::IConfigurationDAO* pConfigurationDAO)
         : configurationDAO(pConfigurationDAO) {
         app->get("/api/configuration/", [this](auto* res, auto* req) {
             this->GetAllConfiguration(res, req);

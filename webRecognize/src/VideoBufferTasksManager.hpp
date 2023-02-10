@@ -2,7 +2,7 @@
 
 #include <queue>
 
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Utils/VideoBuffer.hpp"
@@ -29,7 +29,7 @@ namespace Web {
     class VideoBufferTasksManager final : public Observer::Functionality {
        public:
         VideoBufferTasksManager(DAL::VideoBufferRepositoryNLDB* pRepo,
-                                DAL::ConfigurationDAO* configurationsDAO);
+                                DAL::IConfigurationDAO* configurationsDAO);
 
         void AddTask(GenerateVideoBufferTask&& task);
         void AddTask(DoDetectionVideoBufferTask&& task);
@@ -48,7 +48,7 @@ namespace Web {
         Observer::BlockingFIFO<GenerateVideoBufferTask> tasksGenerateVideo;
         Observer::BlockingFIFO<DoDetectionVideoBufferTask> tasksDetection;
 
-        DAL::ConfigurationDAO* configurationsDAO;
+        DAL::IConfigurationDAO* configurationsDAO;
         DAL::VideoBufferRepositoryNLDB* videoBufferRepository;
 
         VideoBufferPublisher videoBufferEventPublisher;

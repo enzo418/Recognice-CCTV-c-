@@ -11,7 +11,7 @@
 #include "../Domain/Camera.hpp"
 #include "../stream_content/FileStreamer.hpp"
 #include "Constans.hpp"
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "DTO/DTONotification.hpp"
 #include "Domain/Notification.hpp"
@@ -37,7 +37,7 @@ namespace Web::Controller {
                                Web::DAL::INotificationRepository* nRepo,
                                Web::DAL::VideoBufferRepositoryNLDB* vbRepo,
                                Web::CL::NotificationCL* nCache,
-                               Web::DAL::ConfigurationDAO* configurationDAO,
+                               Web::DAL::IConfigurationDAO* configurationDAO,
                                Web::ServerContext<SSL>* serverCtx);
 
         void OnOpenWebsocket(auto* ws,
@@ -70,7 +70,7 @@ namespace Web::Controller {
         Web::DAL::INotificationRepository* notificationRepository;
         Web::DAL::VideoBufferRepositoryNLDB* vbRepo;
         Web::CL::NotificationCL* notificationCache;
-        Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::DAL::IConfigurationDAO* configurationDAO;
         Web::WebsocketNotificator<SSL> notificatorWS;
         Web::ServerContext<SSL>* serverCtx;
     };
@@ -80,7 +80,7 @@ namespace Web::Controller {
         uWS::App* app, Web::DAL::INotificationRepository* pNotRepo,
         Web::DAL::VideoBufferRepositoryNLDB* pVBRepo,
         Web::CL::NotificationCL* pNotCache,
-        Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::DAL::IConfigurationDAO* pConfigurationDAO,
         Web::ServerContext<SSL>* pServerCtx)
         : notificationRepository(pNotRepo),
           vbRepo(pVBRepo),

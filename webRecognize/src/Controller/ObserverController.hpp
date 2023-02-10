@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "DTO/ObserverStatusDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/RecognizeContext.hpp"
@@ -15,7 +15,7 @@ namespace Web::Controller {
     class ObserverController {
        public:
         ObserverController(uWS::App* app, Web::ServerContext<SSL>* serverCtx,
-                           Web::DAL::ConfigurationDAO* configurationDAO,
+                           Web::DAL::IConfigurationDAO* configurationDAO,
                            std::function<void(Observer::Configuration& cfg)>&&
                                startRecognizeFunction,
                            std::function<void()>&& stopRecognizeFunction);
@@ -27,7 +27,7 @@ namespace Web::Controller {
 
        private:
         Web::ServerContext<SSL>* serverCtx;
-        Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::DAL::IConfigurationDAO* configurationDAO;
 
         std::function<void(Observer::Configuration& cfg)> startRecognize;
         std::function<void()> stopRecognize;
@@ -36,7 +36,7 @@ namespace Web::Controller {
     template <bool SSL>
     ObserverController<SSL>::ObserverController(
         uWS::App* app, Web::ServerContext<SSL>* pServerCtx,
-        Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        Web::DAL::IConfigurationDAO* pConfigurationDAO,
         std::function<void(Observer::Configuration& cfg)>&&
             pStartRecognizeFunction,
         std::function<void()>&& pStopRecognizeFunction)

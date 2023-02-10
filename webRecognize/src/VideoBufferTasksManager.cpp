@@ -14,7 +14,7 @@ namespace Web {
 
     VideoBufferTasksManager::VideoBufferTasksManager(
         DAL::VideoBufferRepositoryNLDB* pRepo,
-        DAL::ConfigurationDAO* pConfigurationsDAO)
+        DAL::IConfigurationDAO* pConfigurationsDAO)
         : videoBufferRepository(pRepo), configurationsDAO(pConfigurationsDAO) {}
 
     void VideoBufferTasksManager::InternalStart() {

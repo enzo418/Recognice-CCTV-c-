@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DAL/ConfigurationDAO.hpp"
+#include "DAL/IConfigurationDAO.hpp"
 #include "Server/ServerContext.hpp"
 #include "observer/Implementation.hpp"
 #include "server_utils.hpp"
@@ -11,7 +11,7 @@ namespace Web::Controller {
     class CameraController {
        public:
         CameraController(uWS::App* app,
-                         Web::DAL::ConfigurationDAO* configurationDAO,
+                         Web::DAL::IConfigurationDAO* configurationDAO,
                          Web::ServerContext<SSL>* serverCtx);
 
         void Get(auto* res, auto* req);
@@ -27,7 +27,7 @@ namespace Web::Controller {
         void RequestStream(auto* res, auto* req);
 
        private:
-        Web::DAL::ConfigurationDAO* configurationDAO;
+        Web::DAL::IConfigurationDAO* configurationDAO;
         Web::ServerContext<SSL>* serverCtx;
 
         // url -> image
@@ -37,7 +37,7 @@ namespace Web::Controller {
 
     template <bool SSL>
     CameraController<SSL>::CameraController(
-        uWS::App* app, Web::DAL::ConfigurationDAO* pConfigurationDAO,
+        uWS::App* app, Web::DAL::IConfigurationDAO* pConfigurationDAO,
         Web::ServerContext<SSL>* pServerCtx)
         : configurationDAO(pConfigurationDAO), serverCtx(pServerCtx) {
         app->get("/api/camera/:id",
