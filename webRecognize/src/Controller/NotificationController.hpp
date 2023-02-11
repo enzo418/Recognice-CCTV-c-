@@ -17,6 +17,7 @@
 #include "Domain/Notification.hpp"
 #include "Server/ServerConfigurationProvider.hpp"
 #include "Server/ServerContext.hpp"
+#include "Utils/DateUtils.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "WebsocketNotificatorController.hpp"
 #include "nlohmann/json.hpp"
@@ -337,6 +338,10 @@ namespace Web::Controller {
     void NotificationController<SSL>::GetNotifications(auto* res, auto* req) {
         std::string limitStr(req->getQuery("limit"));
 
+        // expecting a datetime string as ISO_8601
+        std::string beforeStr(req->getQuery("before"));
+        std::string afterStr(req->getQuery("after"));
+
         constexpr int MAX_LIMIT = 100;
 
         int limit = MAX_LIMIT;
@@ -353,8 +358,30 @@ namespace Web::Controller {
             limit = limit > MAX_LIMIT || limit < 0 ? MAX_LIMIT : limit;
         }
 
-        std::vector<Domain::Notification> notifications =
-            notificationRepository->GetAll(limit);
+        std::vector<Domain::Notification> notifications;
+
+        if (beforeStr.empty() && afterStr.empty()) {
+            notifications = notificationRepository->GetAll(limit);
+        } else {
+            std::time_t before;
+            std::time_t after;
+
+            // parse the dates
+            if (!beforeStr.empty()) {
+                before = Utils::datetimeISO_8601ToTime(beforeStr.c_str());
+            } else {
+                before = std::numeric_limits<time_t>::max();
+            }
+
+            if (!afterStr.empty()) {
+                after = Utils::datetimeISO_8601ToTime(afterStr.c_str());
+            } else {
+                after = 0;
+            }
+
+            notifications =
+                notificationRepository->GetBetweenDates(after, before, limit);
+        }
 
         nlohmann::json jsonNotifications = NotificationsToDTO(notifications);
         res->endJson(jsonNotifications.dump());
