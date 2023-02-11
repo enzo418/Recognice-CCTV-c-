@@ -60,7 +60,7 @@ namespace Web::DAL {
     }
 
     const std::vector<Domain::Notification> NotificationRepositoryNLDB::GetAll(
-        int limit, bool olderFirst) {
+        int limit, bool olderFirst, int page) {
         if (limit < 0) OBSERVER_ERROR("Limit is out of bounds");
 
         const auto sortProp = olderFirst ? colNotifications["datetime"].asc()
@@ -72,6 +72,7 @@ namespace Web::DAL {
                 .sortBy(sortProp)
                 .limit(limit)
                 .rename(colNotifications["_id"], "notificationID")
+                .page(page)
                 .execute();
 
         return result;
@@ -80,7 +81,7 @@ namespace Web::DAL {
     const std::vector<Domain::Notification>
     NotificationRepositoryNLDB::GetBetweenDates(std::time_t start,
                                                 std::time_t end, int limit,
-                                                bool olderFirst) {
+                                                bool olderFirst, int page) {
         const auto sortProp = olderFirst ? colNotifications["datetime"].asc()
                                          : colNotifications["datetime"].desc();
 
@@ -92,6 +93,7 @@ namespace Web::DAL {
                 .sortBy(sortProp)
                 .limit(limit)
                 .rename(colNotifications["_id"], "notificationID")
+                .page(page)
                 .execute();
 
         return result;

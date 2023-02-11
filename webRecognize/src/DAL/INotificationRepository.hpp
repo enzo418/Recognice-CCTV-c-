@@ -26,10 +26,11 @@ namespace Web::DAL {
          *
          * @param limit
          * @param olderFirst
+         * @param page
          * @return const std::vector<Domain::Notification>
          */
         virtual const std::vector<Domain::Notification> GetAll(
-            int limit = 100, bool olderFirst = false) = 0;
+            int limit = 100, bool olderFirst = false, int page = 1) = 0;
 
         /**
          * @brief Get notification between those dates
@@ -38,11 +39,12 @@ namespace Web::DAL {
          * @param end end time in unix time
          * @param limit
          * @param olderFirst
+         * @param page
          * @return const std::vector<Domain::Notification>
          */
         virtual const std::vector<Domain::Notification> GetBetweenDates(
             std::time_t start, std::time_t end, int limit = 100,
-            bool olderFirst = false) = 0;
+            bool olderFirst = false, int page = 1) = 0;
 
         /**
          * @brief Get the filename of a notification

@@ -27,12 +27,13 @@ namespace Web::DAL {
 
         Domain::Notification Get(const std::string& id) override;
 
-        const std::vector<Domain::Notification> GetAll(
-            int limit = 100, bool olderFirst = false) override;
+        const std::vector<Domain::Notification> GetAll(int limit = 100,
+                                                       bool olderFirst = false,
+                                                       int page = 1) override;
 
         const std::vector<Domain::Notification> GetBetweenDates(
             std::time_t start, std::time_t end, int limit = 100,
-            bool olderFirst = false) override;
+            bool olderFirst = false, int page = 1) override;
 
         std::string GetFilename(const std::string& id) override;
 

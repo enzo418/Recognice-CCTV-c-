@@ -342,10 +342,15 @@ namespace Web::Controller {
         std::string beforeStr(req->getQuery("before"));
         std::string afterStr(req->getQuery("after"));
 
+        // first page = 1
+        std::string pageStr(req->getQuery("page"));
+
         constexpr int MAX_LIMIT = 100;
 
+        int page;
         int limit = MAX_LIMIT;
 
+        // parse limit
         if (!limitStr.empty()) {
             try {
                 limit = std::stoi(limitStr);
@@ -358,10 +363,17 @@ namespace Web::Controller {
             limit = limit > MAX_LIMIT || limit < 0 ? MAX_LIMIT : limit;
         }
 
+        // parse page
+        try {
+            page = std::stoi(pageStr);
+        } catch (...) {
+            page = 1;
+        }
+
         std::vector<Domain::Notification> notifications;
 
         if (beforeStr.empty() && afterStr.empty()) {
-            notifications = notificationRepository->GetAll(limit);
+            notifications = notificationRepository->GetAll(limit, false, page);
         } else {
             std::time_t before;
             std::time_t after;
@@ -379,8 +391,8 @@ namespace Web::Controller {
                 after = 0;
             }
 
-            notifications =
-                notificationRepository->GetBetweenDates(after, before, limit);
+            notifications = notificationRepository->GetBetweenDates(
+                after, before, limit, false, page);
         }
 
         nlohmann::json jsonNotifications = NotificationsToDTO(notifications);
