@@ -10,9 +10,9 @@ As said before, this repository contains 2 projects:
 - **Recognize**: Detection library. 
 	- It includes features such as showing cameras, detecting movement, blob tracking, and sending alerts to Telegram or a local server.
 	- Built with:
-		- [`opencv`](https://opencv.org/) (capture video and then process and show those images), 
-		- [`curl`](https://curl.se/) (to notifications)
-		- [`nlohmann/json`](https://github.com/nlohmann/json) (to read/parse a configuration in JSON format).
+		- [`opencv`](https://opencv.org/) capture video and then process and show those images
+		- [`curl`](https://curl.se/) to send notifications
+		- [`nlohmann/json`](https://github.com/nlohmann/json) to read/parse a configuration in JSON format
 
 - **webRecognize**: 
 	- A backend server that provides the frontend with a REST API.
