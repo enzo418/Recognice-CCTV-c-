@@ -1,18 +1,34 @@
 # Recognize
-## **What is this?**
-It started as a multi-platform program to alert about movement and people on cameras. And now it is the same but with several configurations to achieve that goal. These settings are made from a configuration file or from the graphical interface (wx app or web app).
+An application software that detects objects and alerts the users for specific cameras. Cameras are added and configured from the [Web application](https://github.com/enzo418/WebRecognize).
 
 ## **Content**
-The repository includes both the program that performs the recognition alerts and others, which is located in the folder "recognize". But it also has in the /src folder the files for the graphics configuration program.
-You can compile "recognize" alone and run it with its parameters and it will work, that folder includes a CMakeLists.txt for that purpose. Although you can also compile the whole repository with the CMakeLists.txt from the root folder and use it from there.
+The repository includes the detection library that performs the recognition and the backend server, located in the folders "recognize" and "webRecognize", respectively. 
+Those projects can be compiled separately by using Cmake.
 
-This repository contains the 3 projects related to the recognize.
-- **Recognize**: main program, shows the cameras, detects things and send alerts. Built with [`opencv`](https://opencv.org/) (capture video and then process and show those images), [`curl`](https://curl.se/) (send telegram notifications) and [`jsoncpp`](https://github.com/open-source-parsers/jsoncpp) (decode json from telegram bot messages).
+As said before, this repository contains 2 projects:
 
-	- **webRecognize**: Web-GUI program to make it easier to configure the main program, can start it, stop it and show notifications. Client side built with pure js and html with `bulma` (style), `moment` (dates) and `jquery` (js to html helper). Server side uses [`uWebSockets`](https://github.com/uNetworking/uWebSockets/) to serve the files in a http server and provide WebSockets connections, the server also uses fmt.
+- **Recognize**: Detection library. 
+	- It includes features such as showing cameras, detecting movement, blob tracking, and sending alerts to Telegram or a local server.
+	- Built with:
+		- [`opencv`](https://opencv.org/) (capture video and then process and show those images), 
+		- [`curl`](https://curl.se/) (to notifications)
+		- [`nlohmann/json`](https://github.com/nlohmann/json) (to read/parse a configuration in JSON format).
 
-	- **wxRecognize**: First GUI made, then replaced with webRecognize so they have the same purpose. Built with [`wxWidgets`](wxwidgets.org).
+- **webRecognize**: 
+	- A backend server that provides the frontend with a REST API.
+	- Provides WebSocket endpoints  for subscribing to notifications and buffer events.
+	- One of the marvelous things it's able to do is provide single-field configuration with automatic type validation.
+	- Uses [`uWebSockets`](https://github.com/uNetworking/uWebSockets/) with a Controller pattern to provide the REST API.
 
-# Libs/headers requerired	
-- The ones described above.
-- Check the README.md of each project folder.
+The Web interface is stored in its own repository [here](https://github.com/enzo418/WebRecognize)
+- **WebRecognize (GUI)**
+	- Uses Typescript, React, and MUI (Material UI).
+	- Uses a Service Layer to communicate with the backend.
+	- Supports single-field configuration and automatic validation.
+	- Real-time cameras view
+
+There is another folder that has the wxWidgets implementation of the User Interface.
+- **wxRecognize**: The first GUI created, which was later replaced by webRecognize. Built with [`wxWidgets`](wxwidgets.org).
+
+## Note
+Check the README.md of each project folder.
