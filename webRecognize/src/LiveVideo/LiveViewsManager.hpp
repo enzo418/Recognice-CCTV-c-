@@ -116,8 +116,11 @@ namespace Web {
         auto feed = camerasLiveView[feedId];
         feed->AddClient(client);
 
+        // check if it's running because it ONLY will change its status once the
+        // thread is spawned.
         if (Observer::has_flag(feed->GetStatus(),
-                               Web::LiveViewStatus::STOPPED)) {
+                               Web::LiveViewStatus::STOPPED) &&
+            !feed->IsRunning()) {
             OBSERVER_TRACE("Starting a live feed: {}", feedId);
             feed->Start();
         }
