@@ -9,6 +9,7 @@
 #include "LiveViewExceptions.hpp"
 #include "observer/Domain/BufferedSource.hpp"
 #include "observer/Implementation.hpp"
+#include "observer/Log/log.hpp"
 #include "observer/Timer.hpp"
 
 namespace Web {
@@ -81,7 +82,14 @@ namespace Web {
 
     template <bool SSL>
     void CameraLiveVideo<SSL>::PreStart() {
-        this->OpenCamera();
+        if (!Observer::has_flag(this->status, Status::OPEN) ||
+            Observer::has_flag(this->status, Status::STOPPED)) {
+            OBSERVER_TRACE("Opening camera source: {}", cameraUri);
+            this->OpenCamera();
+        } else {
+            OBSERVER_TRACE("Source was running: {}", cameraUri);
+        }
+
         this->source.Start();
     }
 

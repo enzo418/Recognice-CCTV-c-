@@ -135,8 +135,8 @@ namespace Web {
             feed->RemoveClient(client);
 
             if (feed->GetTotalClients() == 0) {
-                feed->Stop();
                 OBSERVER_TRACE("Stopping live view since there are no clients");
+                feed->Stop();
             }
         }
     }

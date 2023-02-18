@@ -28,11 +28,11 @@ namespace Observer {
     double BufferedSource::GetFPS() { return source.GetFPS(); }
 
     void BufferedSource::InternalStart() {
-        OBSERVER_ASSERT(running.load(std::memory_order_acquire),
-                        "Logic error: Buffer wasn't started");
-        OBSERVER_ASSERT(
-            source.isOpened(),
-            "Logic error: Buffer was started without a valid connection.");
+        if (!source.isOpened()) {
+            OBSERVER_WARN(
+                "Unexpected: Buffer was started without a valid connection.");
+            this->Close();
+        }
 
         Frame frame;
 
