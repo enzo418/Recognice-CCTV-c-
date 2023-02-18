@@ -33,12 +33,20 @@ namespace Web::CL {
     std::string ConfigurationDAOCache::AddCameraToConfiguration(
         const std::string& configurationID,
         const nldb::json& cameraConfiguration) {
+        if (configurationCache.contains(configurationID)) {
+            configurationCache.remove(configurationID);
+        }
+
         return repository->AddCameraToConfiguration(configurationID,
                                                     cameraConfiguration);
     }
 
     void ConfigurationDAOCache::DeleteCameraFromConfiguration(
         const std::string& configurationID, const std::string& cameraID) {
+        if (configurationCache.contains(configurationID)) {
+            configurationCache.remove(configurationID);
+        }
+
         repository->DeleteCameraFromConfiguration(configurationID, cameraID);
     }
 
