@@ -1,5 +1,9 @@
 #include "ImageDrawBlob.hpp"
 
+#include <opencv2/imgproc.hpp>
+
+#include "observer/Domain/Classification/BlobClassification.hpp"
+
 namespace Observer {
 
     namespace {
@@ -9,8 +13,12 @@ namespace Observer {
         }
     }  // namespace
 
-    void ImageDrawBlob::DrawBlob(Frame& frame, Blob& blob, int frameNumber,
-                                 double scaleX, double scaleY) {
+    void ImageDrawBlob::DrawBlob(Frame& frame, Blob& blob,
+                                 const BlobClassification* classification,
+                                 int frameNumber, double scaleX,
+                                 double scaleY) {
+        static const int padding = 6;
+
         auto rect = blob.GetBoundingRect(frameNumber);
         rect.width *= scaleX;
         rect.height *= scaleY;
@@ -21,17 +29,30 @@ namespace Observer {
 
         cv::rectangle(frame.GetInternalFrame(), rect, color, 2);
 
-        const std::string text = std::to_string(blob.GetId());
+        const std::string text =
+            classification == nullptr
+                ? std::to_string(blob.GetId())
+                : classification->label + " " +
+                      std::to_string((int)(classification->confidence * 100)) +
+                      "% (" + std::to_string((int)(classification->IoU * 100)) +
+                      " % IoU)";
 
-        cv::putText(frame.GetInternalFrame(), text, cv::Point(rect.x, rect.y),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.69, color, 2);
+        cv::putText(frame.GetInternalFrame(), text,
+                    cv::Point(rect.x, rect.y - padding),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.69, color, 2, cv::LINE_AA);
     }
 
     void ImageDrawBlob::DrawBlobs(Frame& frame, std::vector<Blob>& blobs,
+                                  const BlobClassifications& classifications,
                                   int positionIndex, double scaleX,
                                   double scaleY) {
         for (auto& blob : blobs) {
-            DrawBlob(frame, blob, positionIndex, scaleX, scaleY);
+            const BlobClassification* classification =
+                classifications.contains(blob.GetId())
+                    ? &classifications.at(blob.GetId())
+                    : nullptr;
+            DrawBlob(frame, blob, classification, positionIndex, scaleX,
+                     scaleY);
         }
     }
 
@@ -44,13 +65,19 @@ namespace Observer {
      * @param scaleY scales y axis
      */
     void ImageDrawBlob::DrawBlobs(std::vector<Frame>& frames,
-                                  std::vector<Blob>& blobs, double scaleX,
-                                  double scaleY) {
+                                  std::vector<Blob>& blobs,
+                                  const BlobClassifications& classifications,
+                                  double scaleX, double scaleY) {
         for (size_t fi = 0; fi < frames.size(); fi++) {
             for (auto& blob : blobs) {
                 if ((int)fi >= blob.GetFirstAppearance() &&
                     (int)fi <= blob.GetLastAppearance()) {
-                    DrawBlob(frames[fi], blob, fi, scaleX, scaleY);
+                    const BlobClassification* classification =
+                        classifications.contains(blob.GetId())
+                            ? &classifications.at(blob.GetId())
+                            : nullptr;
+                    DrawBlob(frames[fi], blob, classification, fi, scaleX,
+                             scaleY);
                 }
             }
         }

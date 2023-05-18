@@ -110,6 +110,13 @@ set(SRC_
         src/observer/Blob/Contours/ContoursDetector.hpp src/observer/Blob/Contours/ContoursDetector.cpp
         src/observer/Blob/BlobDetector/BlobDetector.hpp src/observer/Blob/BlobDetector/BlobDetector.cpp
         src/observer/Blob/ImageDrawBlob.hpp
+
+        # Async infenrece
+        src/observer/AsyncInference/DetectorClient.cpp
+
+        # Classification
+        src/observer/Domain/Classification/BlobClassification.cpp src/observer/Domain/Classification/BlobClassification.hpp
+        
 )
 
 # ¿? USE PREMAKE PLS

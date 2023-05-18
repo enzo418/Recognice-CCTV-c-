@@ -12,7 +12,9 @@
 #include <string>
 #include <thread>
 
+#include "observer/AsyncInference/DetectorClient.hpp"
 #include "observer/Blob/Contours/ContoursTypes.hpp"
+#include "observer/Domain/Classification/BlobClassification.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/IFrame.hpp"
@@ -76,13 +78,15 @@ struct DetectionResults {
     VideoContours contours;
     std::vector<Blob> blobs;
     std::vector<Frame> diffFrames;
+    BlobClassifications classifications;
 
     double contours_detection_time_us;
     double blob_detection_time_us;
 };
 
 DetectionResults DetectBlobs(Observer::CameraConfiguration& cameraCfg,
-                             std::vector<Frame>& buffer);
+                             std::vector<Frame>& buffer,
+                             AsyncInference::DetectorClient* detectionClient);
 
 void DisplayResults(DetectionResults& results, std::vector<Frame>& buffer);
 
@@ -99,7 +103,8 @@ int main(int argc, char** argv) {
         "{start |   0   | blob: skips seconds from the start of the video}"
         "{end |   0   | blob: stop processing video until this seconds}"
         "{save-frames | true | save the captured frames into a tiff file}"
-        "{use-file-as-buffer | | use tiff image as the buffer (.tiff path) }";
+        "{use-file-as-buffer | | use tiff image as the buffer (.tiff path) }"
+        "{classify | false | classify the blobs using the inference server}";
 
     cv::CommandLineParser parser(argc, argv, keys);
 
@@ -150,6 +155,13 @@ int main(int argc, char** argv) {
 
     auto& camera = cfg.cameras[0];
 
+    AsyncInference::DetectorClient* detectionClient = nullptr;
+
+    if (parser.has("classify") && parser.get<bool>("classify")) {
+        detectionClient =
+            new AsyncInference::DetectorClient(cfg.inferenceServerEndpoint);
+    }
+
     std::vector<Frame> buffer;
     if (useImagesFileAsBuffer.empty()) {
         buffer = ReadBufferFromCamera(camera, start, end, saveIntoFile);
@@ -159,7 +171,7 @@ int main(int argc, char** argv) {
         buffer = ReadBufferFromFile(useImagesFileAsBuffer);
     }
 
-    auto result = DetectBlobs(camera, buffer);
+    auto result = DetectBlobs(camera, buffer, detectionClient);
 
     OBSERVER_TRACE(
         "Contours detection took: {0} μs ({1} ms) - Total contours {2}",
@@ -262,7 +274,8 @@ std::vector<Frame> ReadBufferFromFile(const std::string& tiffFilePath) {
 }
 
 DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
-                             std::vector<Frame>& frames) {
+                             std::vector<Frame>& frames,
+                             AsyncInference::DetectorClient* detectionClient) {
     ThresholdParams threshParams = camera.blobDetection.thresholdParams;
 
     ContoursFilter filter = camera.blobDetection.contoursFilters;
@@ -289,13 +302,60 @@ DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
 
     blobs = detector.FindBlobs(contours);
 
+    BlobClassifications classifications;
+    if (detectionClient) {
+        std::cout << "Detecting...\n";
+        // send 1 frame per second (will skip > 15 frames)
+        AsyncInference::SendEveryNthFrame sendStrategy(fileBufferData.fps);
+
+        auto detections = detectionClient->Detect(
+            frames,
+            [](auto& result) {
+                for (const auto& detection : result.detections) {
+                    std::cout << "\t[" << result.image_index
+                              << "] Label: " << detection.label << std::endl;
+                }
+                std::cout << std::endl;
+            },
+            &sendStrategy);
+
+#if 0  // show detections
+        for (auto& detection : detections) {
+            cv::Mat frame = frames[detection.image_index].GetInternalFrame();
+
+            for (const auto& detection : detection.detections) {
+                std::cout << "\t[" << detection.label
+                          << "] Rect: " << detection.x << ", " << detection.y
+                          << ", " << detection.width << ", " << detection.height
+                          << std::endl;
+
+                cv::rectangle(frame,
+                              cv::Rect(detection.x, detection.y,
+                                       detection.width, detection.height),
+                              cv::Scalar(0, 255, 0), 2);
+                cv::putText(
+                    frame, detection.label, cv::Point(detection.x, detection.y),
+                    cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+            }
+
+            cv::imshow("detections", frame);
+            cv::waitKey(0);
+        }
+#endif
+
+        classifications = AssignObjectToBlob(blobs, detections);
+    }
+
     auto took_detection = timer.GetDurationAndRestart();
 
-    return {.contours = std::move(contours),
-            .blobs = std::move(blobs),
-            .diffFrames = std::move(diffFrames),
-            .contours_detection_time_us = took_contours,
-            .blob_detection_time_us = took_detection};
+    return {
+        .contours = std::move(contours),
+        .blobs = std::move(blobs),
+        .diffFrames = std::move(diffFrames),
+        .classifications = std::move(classifications),
+        .contours_detection_time_us = took_contours,
+        .blob_detection_time_us = took_detection,
+    };
 }
 
 void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
@@ -316,7 +376,7 @@ void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
     ImageDraw::Get().DrawContours(contoursFrames, contours,
                                   ScalarVector(80, 80, 255));
 
-    ImageDrawBlob::Get().DrawBlobs(blobsFrames, blobs);
+    ImageDrawBlob::Get().DrawBlobs(blobsFrames, blobs, results.classifications);
 
     std::array<Frame, 4> framesToStack;
 
@@ -357,12 +417,12 @@ void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
 void TestThatBlobDetectionIsDeterministic(
     Observer::CameraConfiguration& camera,
     std::vector<Frame>& bufferFromCamera) {
-    auto result1 = DetectBlobs(camera, bufferFromCamera);
+    auto result1 = DetectBlobs(camera, bufferFromCamera, nullptr);
     SaveBuffer(bufferFromCamera, "deterministic_test");
 
     auto bufferFromFile = ReadBufferFromFile("deterministic_test.tiff");
 
-    auto result2 = DetectBlobs(camera, bufferFromFile);
+    auto result2 = DetectBlobs(camera, bufferFromFile, nullptr);
 
     bool deterministic = true;
 
@@ -399,60 +459,4 @@ void TestThatBlobDetectionIsDeterministic(
     OBSERVER_INFO(
         "Delta time between the buffers:\tcontours = {}ms\tblobs = {}ms",
         delta_contours, delta_blob);
-}
-
-void TestPolyFrame() {
-    // ImageDisplay::Get().CreateWindow("polyFrame");
-
-    // Timer<std::chrono::microseconds> timerPoly(true);
-
-    // Frame polyFrame(Size(640, 360), 1);
-
-    // for (auto& set : camera.blobDetection.contoursFilters.ignoredSets.sets) {
-    //     ImageDraw::Get().FillAnyPoly(polyFrame, set, ScalarVector::White());
-    // }
-
-    // std::cout << "time " << timerPoly.GetDuration() << " us\n";
-
-    // ImageDisplay::Get().ShowImage("polyFrame", polyFrame);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    // const auto polygonArea = [](const std::vector<Point>& points) -> double {
-    //     double area = 0.;
-    //     size_t i, j = points.size() - 1;
-
-    //     for (i = 0; i < points.size(); i++) {
-    //         area += (points[j].x + points[i].x) * (points[j].y -
-    //         points[i].y); j = i;
-    //     }
-
-    //     return abs(area * .5);
-    // };
-
-    // Frame diff;
-    // Frame polyWithMask;
-    // for (int i = 0; i < 100; i++) {
-    //     polyWithMask = polyFrame.Clone();
-
-    //     std::vector<Point> contour = {
-    //         {185, 85}, {179, 106}, {215, 120}, {219, 86}, {185, 85}};
-
-    //     ImageDraw::Get().FillConvexPoly(polyWithMask, contour,
-    //                                     ScalarVector::Black());
-
-    //     ImageDisplay::Get().ShowImage("polyFrame", polyWithMask);
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-    //     diff = polyFrame.AbsoluteDifference(polyWithMask);
-
-    //     std::cout << "Non zero: " << diff.CountNonZero()
-    //               << " poly area: " << polygonArea(contour) << std::endl;
-    // }
-
-    // std::cout << "total time " << timerPoly.GetDuration() / 1000 << " ms\n";
-
-    // ImageDisplay::Get().ShowImage("polyFrame", diff);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-
-    // ImageDisplay::Get().DestroyWindow("polyFrame");
 }

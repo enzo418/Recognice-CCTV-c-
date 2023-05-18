@@ -23,6 +23,8 @@ namespace Observer {
 
         std::string notificationTextTemplate;
 
+        std::string inferenceServerEndpoint;  // ip + port
+
         TelegramNotificationsConfiguration telegramConfiguration;
 
         LocalWebNotificationsConfiguration localWebConfiguration;

@@ -5,6 +5,7 @@
 #include "Event/EventDescriptor.hpp"
 #include "Validators/ValidatorByBlobs.hpp"
 #include "Validators/ValidatorHandler.hpp"
+#include "observer/Domain/Classification/BlobClassification.hpp"
 #include "observer/Domain/SynchronizedIDProvider.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/IFrame.hpp"

@@ -9,12 +9,12 @@
 #include "observer/Blob/Contours/ContoursDetector.hpp"
 
 namespace Observer {
-    class ValidatorByBlobs : public ValidatorHandler {
+    class ValidatorByBlobs final : public ValidatorHandler {
        public:
         ValidatorByBlobs(const BlobDetectionConfiguration& pDetectorCfg);
 
        public:
-        ValidationResult isValid(CameraEvent& request) override;
+        void isValid(CameraEvent& request, Result& result) override;
 
        private:
         ContoursDetector contoursDetector;

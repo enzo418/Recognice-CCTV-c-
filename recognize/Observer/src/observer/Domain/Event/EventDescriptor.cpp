@@ -3,6 +3,9 @@
 #include <utility>
 
 namespace Observer {
+    /* ------------------------------------------------------ */
+    /*                 ClassifierFindingEvent                 */
+    /* ------------------------------------------------------ */
     ClassifierFindingEvent::ClassifierFindingEvent(int pFrameIndex,
                                                    std::vector<Point> pPoints)
         : findingFrameIndex(pFrameIndex), points(std::move(pPoints)) {}
@@ -15,10 +18,18 @@ namespace Observer {
         return this->points;
     }
 
+    /* ------------------------------------------------------ */
+    /*                     EventDescriptor                    */
+    /* ------------------------------------------------------ */
     EventDescriptor::EventDescriptor() = default;
 
     EventDescriptor::EventDescriptor(std::vector<Blob>&& blobs)
         : blobsFound(std::move(blobs)) {}
+
+    EventDescriptor::EventDescriptor(
+        std::vector<Blob>&& blobs,
+        std::vector<AsyncInference::ImageDetections>&& detections)
+        : blobsFound(std::move(blobs)), detections(std::move(detections)) {}
 
     void EventDescriptor::SetBlobs(std::vector<Blob>&& findings) {
         this->blobsFound = std::move(findings);
@@ -36,6 +47,25 @@ namespace Observer {
     std::string EventDescriptor::GetCameraName() { return this->cameraName; }
 
     std::vector<Blob>& EventDescriptor::GetBlobs() { return this->blobsFound; }
+
+    void EventDescriptor::SetDetections(
+        std::vector<AsyncInference::ImageDetections>&& detections) {
+        this->detections = std::move(detections);
+    }
+
+    std::vector<AsyncInference::ImageDetections>&
+    EventDescriptor::GetDetections() {
+        return this->detections;
+    }
+
+    void EventDescriptor::SetClassifications(
+        BlobClassifications&& classifications) {
+        this->classifications = std::move(classifications);
+    }
+
+    BlobClassifications& EventDescriptor::GetClassifications() {
+        return this->classifications;
+    }
 
     int EventDescriptor::GetFirstFrameWhereFindingWasFound() {
         const int max_int = std::numeric_limits<int>::max();

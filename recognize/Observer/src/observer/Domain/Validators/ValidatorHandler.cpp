@@ -1,16 +1,14 @@
 #include "ValidatorHandler.hpp"
 
 namespace Observer {
-    ValidatorHandler::Result ValidatorHandler::Handle(CameraEvent& request) {
-        auto res = this->isValid(request);
-        if (res.IsValid()) {
-            return res;
+    void ValidatorHandler::Handle(CameraEvent& request, Result& result) {
+        // will return when all handlers are valid
+        this->isValid(request, result);
+        if (!result.IsValid() || !this->nextHandler) {
+            return;
         } else {
-            if (this->nextHandler) {
-                return AbstractHandler<Result, CameraEvent&>::Handle(request);
-            } else {
-                return res;
-            }
+            AbstractHandler<void, CameraEvent&, Result&>::Handle(request,
+                                                                 result);
         }
     }
 }  // namespace Observer

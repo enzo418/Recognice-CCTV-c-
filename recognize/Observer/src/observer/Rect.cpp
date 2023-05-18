@@ -56,4 +56,28 @@ namespace Observer {
 
         return os;
     }
+
+    Rect Rect::Union(const Rect& other) {
+        Rect union_;
+
+        int x1 = std::min(this->x, other.x);
+        int y1 = std::min(this->y, other.y);
+
+        union_.width =
+            std::max(this->x + this->width, other.x + other.width) - x1;
+        union_.height =
+            std::max(this->y + this->height, other.y + other.height) - y1;
+
+        union_.x = x1;
+        union_.y = y1;
+
+        return union_;
+    }
+
+    float Rect::IntersectionOverUnion(const Rect& other) {
+        auto inter = this->Intersection(other);
+        auto union_ = this->Union(other);
+
+        return (float)inter.area() / union_.area();
+    }
 }  // namespace Observer

@@ -20,10 +20,11 @@ endfunction()
 
 function(add_lib lib)
     set(DEPENDENCY_LIBS ${DEPENDENCY_LIBS} ${lib} PARENT_SCOPE)
-
-    # list(APPEND DEPENDENCY_LIBS ${lib})
-    # set(DEPENDENCY_LIBS ${DEPENDENCY_LIBS} PARENT_SCOPE) # allow use in parent scope
 endfunction(add_lib)
+
+function(add_compilation_option option)
+    set(IFC_DEPENDENCY_COMPILATION_OPTIONS ${IFC_DEPENDENCY_COMPILATION_OPTIONS} ${option} PARENT_SCOPE)
+endfunction(add_compilation_option)
 
 # ----------------------- OPENCV ----------------------- #
 find_package(OpenCV REQUIRED)
@@ -61,3 +62,10 @@ add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/json/include)
 
 # --------------------- MAGIC ENUM --------------------- #
 add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/magic_enum/include)
+
+# ------------------- ASYNC INFERENCE ------------------ #
+include(${CMAKE_CURRENT_LIST_DIR}/Observer/src/observer/AsyncInference/module.cmake)
+
+add_dep("${AsyncInference_DEPENDENCIES}")
+add_lib("${AsyncInference_LIBS}")
+add_include("${AsyncInference_INCLUDE_DIRS}")

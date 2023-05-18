@@ -222,11 +222,12 @@ namespace Observer {
      * @param quality Quality of the resulting image, 0-100, 100 is best
      * quality.
      * @param buffer Output buffer.
+     * @return true if the image was encoded successfully
      */
-    void Frame::EncodeImage(const std::string& ext, int quality,
+    bool Frame::EncodeImage(const std::string& ext, int quality,
                             std::vector<uchar>& buffer) {
         std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, quality};
-        cv::imencode(ext, m_frame, buffer, params);
+        return cv::imencode(ext, m_frame, buffer, params);
     }
 
     void Frame::BitwiseNot() { cv::bitwise_not(this->m_frame, this->m_frame); }

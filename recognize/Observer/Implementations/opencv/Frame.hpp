@@ -169,8 +169,9 @@ namespace Observer {
          * @param quality Quality of the resulting image, 0-100, 100 is best
          * quality.
          * @param buffer Output buffer.
+         * @return true if the image was encoded successfully
          */
-        void EncodeImage(const std::string& ext, int quality,
+        bool EncodeImage(const std::string& ext, int quality,
                          std::vector<uchar>& buffer) override;
 
         /**

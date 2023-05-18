@@ -1,5 +1,7 @@
 #include "NotificationsController.hpp"
 
+#include "observer/Domain/Classification/BlobClassification.hpp"
+
 namespace Observer {
 
     NotificationsController::NotificationsController(Configuration* cfg) {
@@ -76,6 +78,7 @@ namespace Observer {
             // 3. Draw trace on image
             ImageDrawBlob::Get().DrawBlobs(
                 notification.GetImage(), notification.GetEvent().GetBlobs(),
+                notification.GetEvent().GetClassifications(),
                 notification.GetEvent().GetFirstFrameWhereFindingWasFound(),
                 factor, factor);
 
@@ -128,10 +131,13 @@ namespace Observer {
         if (!this->drawableServices[flag_to_int(ETrazable::VIDEO)].empty()) {
             // 3. Draw trace on video
 
+            BlobClassifications classifications =
+                notification.GetEvent().GetClassifications();
+
             OBSERVER_INFO("Drawing blobs on notification");
             ImageDrawBlob::Get().DrawBlobs(notification.GetFrames(),
                                            notification.GetEvent().GetBlobs(),
-                                           factor, factor);
+                                           classifications, factor, factor);
 
             notification.BuildNotification();
 

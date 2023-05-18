@@ -4,7 +4,9 @@
 #include <utility>
 #include <vector>
 
+#include "observer/AsyncInference/types.hpp"
 #include "observer/Blob/BlobDetector/Blob.hpp"
+#include "observer/Domain/Classification/BlobClassification.hpp"
 #include "observer/Point.hpp"
 #include "observer/Rect.hpp"
 
@@ -27,15 +29,28 @@ namespace Observer {
         EventDescriptor();
 
         EventDescriptor(std::vector<Blob>&& blobs);
+        EventDescriptor(
+            std::vector<Blob>&& blobs,
+            std::vector<AsyncInference::ImageDetections>&& detections);
 
+        /* ------------------------ Blobs ----------------------- */
         void SetBlobs(std::vector<Blob>&& findings);
         std::vector<Blob>& GetBlobs();
 
-        void AddClassifierFinding(ClassifierFindingEvent&& finding);
+        /* ---------------------- Detections -------------------- */
+        void SetDetections(
+            std::vector<AsyncInference::ImageDetections>&& detections);
+        std::vector<AsyncInference::ImageDetections>& GetDetections();
 
+        /* --------------------- Classifications ---------------- */
+        void SetClassifications(BlobClassifications&& classifications);
+        BlobClassifications& GetClassifications();
+
+        /* --------------------- Camera Name -------------------- */
         void SetCameraName(std::string cameraName);
-
         std::string GetCameraName();
+
+        void AddClassifierFinding(ClassifierFindingEvent&& finding);
 
         int GetFirstFrameWhereFindingWasFound();
 
@@ -45,7 +60,9 @@ namespace Observer {
 
         // frames/findings
         std::vector<Blob> blobsFound;
+        std::vector<AsyncInference::ImageDetections> detections;
         std::vector<ClassifierFindingEvent> classifierFindings;
+        BlobClassifications classifications;
     };
 
 }  // namespace Observer

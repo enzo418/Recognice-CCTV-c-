@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 
+#include "observer/Domain/Classification/BlobClassification.hpp"
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
 
@@ -118,7 +119,8 @@ void LiveTestBlobDetection(Observer::Configuration* cfg, int camera_number) {
             auto blobs = detector.FindBlobs(contours);
             double duration_blob = timer.GetDurationAndRestart();
 
-            ImageDrawBlob::Get().DrawBlobs(frame, blobs, 0);
+            BlobClassifications classifications;
+            ImageDrawBlob::Get().DrawBlobs(frame, blobs, classifications, 0);
 
             double wait =
                 (1000.0 / fps) - (duration_contours + duration_blob) / 1000;

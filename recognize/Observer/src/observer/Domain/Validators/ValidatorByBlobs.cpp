@@ -10,7 +10,7 @@ namespace Observer {
           blobDetector(pDetectorCfg.blobDetectorParams,
                        pDetectorCfg.blobFilters, this->contoursDetector) {}
 
-    ValidationResult ValidatorByBlobs::isValid(CameraEvent& request) {
+    void ValidatorByBlobs::isValid(CameraEvent& request, Result& result) {
         auto frames = request.GetFrames();
         const Size targetSize = frames[0].GetSize();
         contoursDetector.SetScale(targetSize);
@@ -24,14 +24,15 @@ namespace Observer {
             if (blobs.size() > 0) {
                 OBSERVER_INFO("Valid notification, blobs size: {0}",
                               blobs.size());
-
-                return ValidationResult(true, {}, std::move(blobs));
+                result.SetValid(true);
+                result.SetBlobs(std::move(blobs));
             } else {
-                return ValidationResult(false,
-                                        {"Couldn't find significant blobs."});
+                result.SetValid(false);
+                result.AddMessages({"Couldn't find significant blobs."});
             }
         } else {
-            return ValidationResult(false, {"Not enough contours"});
+            result.SetValid(false);
+            result.AddMessages({"Couldn't find contours."});
         }
     }
 }  // namespace Observer

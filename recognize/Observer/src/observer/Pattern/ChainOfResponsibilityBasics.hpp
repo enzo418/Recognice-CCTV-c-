@@ -18,11 +18,11 @@
  * @tparam T
  * @tparam R
  */
-template <typename T, typename R>
+template <typename T, typename... R>
 class Handler {
    public:
     virtual Handler* SetNext(Handler* handler) = 0;
-    virtual T Handle(R request) = 0;
+    virtual T Handle(R... args) = 0;
 
     virtual ~Handler() = default;
 };
@@ -33,25 +33,27 @@ class Handler {
  * @tparam T
  * @tparam R
  */
-template <typename T, typename R>
-class AbstractHandler : public Handler<T, R> {
+template <typename T, typename... Args>
+class AbstractHandler : public Handler<T, Args...> {
    protected:
-    Handler<T, R>* nextHandler;
+    Handler<T, Args...>* nextHandler;
 
    public:
     AbstractHandler() : nextHandler(nullptr) {}
 
-    Handler<T, R>* SetNext(Handler<T, R>* handler) override {
+    Handler<T, Args...>* SetNext(Handler<T, Args...>* handler) override {
         this->nextHandler = handler;
 
         return handler;
     }
 
-    T Handle(R request) override {
+    T Handle(Args... args) override {
         if (this->nextHandler) {
-            return this->nextHandler->Handle(request);
+            return this->nextHandler->Handle(args...);
         }
 
-        return {};
+        if constexpr (!std::is_void<T>::value) {
+            return {};
+        }
     }
 };

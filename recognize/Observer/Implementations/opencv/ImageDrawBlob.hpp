@@ -12,11 +12,14 @@ namespace Observer {
      */
     class ImageDrawBlob final : public IImageDrawBlob {
        public:
-        void DrawBlob(Frame& frame, Blob& blob, int frameNumber,
+        void DrawBlob(Frame& frame, Blob& blob,
+                      const BlobClassification* classification, int frameNumber,
                       double scaleX = 1, double scaleY = 1) override;
 
-        void DrawBlobs(Frame& frame, std::vector<Blob>& blobs, int frameNumber,
-                       double scaleX = 1, double scaleY = 1) override;
+        void DrawBlobs(Frame& frame, std::vector<Blob>& blobs,
+                       const BlobClassifications& classifications,
+                       int frameNumber, double scaleX = 1,
+                       double scaleY = 1) override;
 
         /**
          * @brief Draws all the blobs that appear in each frame.
@@ -27,6 +30,7 @@ namespace Observer {
          * @param scaleY scales y axis
          */
         void DrawBlobs(std::vector<Frame>& frames, std::vector<Blob>& blobs,
+                       const BlobClassifications& classifications,
                        double scaleX = 1, double scaleY = 1) override;
 
         /**

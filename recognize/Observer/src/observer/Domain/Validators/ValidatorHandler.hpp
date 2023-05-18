@@ -8,12 +8,12 @@
 
 namespace Observer {
     class ValidatorHandler
-        : public AbstractHandler<ValidationResult, CameraEvent&> {
+        : public AbstractHandler<void, CameraEvent&, ValidationResult&> {
        public:
         typedef ValidationResult Result;
 
-        Result Handle(CameraEvent& request) override;
+        void Handle(CameraEvent& request, ValidationResult& result) override;
 
-        virtual Result isValid(CameraEvent& request) = 0;
+        virtual void isValid(CameraEvent& request, Result& result) = 0;
     };
 }  // namespace Observer

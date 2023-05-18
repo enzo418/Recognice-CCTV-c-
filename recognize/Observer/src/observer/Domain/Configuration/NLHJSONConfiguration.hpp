@@ -250,10 +250,8 @@ namespace Observer {
                                        video);
 
     /* -------------------- CONFIGURATION ------------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Configuration, name, mediaFolderPath,
-                                       notificationTextTemplate,
-                                       resizeNotifications,
-                                       telegramConfiguration,
-                                       localWebConfiguration,
-                                       outputConfiguration, cameras);
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+        Configuration, name, mediaFolderPath, notificationTextTemplate,
+        resizeNotifications, telegramConfiguration, localWebConfiguration,
+        inferenceServerEndpoint, outputConfiguration, cameras);
 }  // namespace Observer

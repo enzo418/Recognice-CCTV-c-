@@ -59,6 +59,16 @@ namespace Observer {
          */
         Rect Intersection(const Rect& other);
 
+        /**
+         * @brief Calculates the union with other rect.
+         *
+         * @param other
+         * @return Rect
+         */
+        Rect Union(const Rect& other);
+
+        float IntersectionOverUnion(const Rect& other);
+
         // We know how to convert from some rect of some library to this one
         template <RectType Rect_>
         Rect(const Rect_&);

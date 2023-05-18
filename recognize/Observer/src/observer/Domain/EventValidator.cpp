@@ -1,5 +1,9 @@
 #include "EventValidator.hpp"
 
+#include <unordered_map>
+
+#include "observer/AsyncInference/types.hpp"
+
 namespace Observer {
 
     EventValidator::EventValidator(CameraConfiguration* pCameraCfg,
@@ -41,12 +45,21 @@ namespace Observer {
                     cfg->name);
 
                 // validate the event
-                ValidationResult result = this->handler->Handle(rawCameraEvent);
+                ValidationResult result;
+                this->handler->Handle(rawCameraEvent, result);
 
                 // send the event
                 if (result.IsValid()) {
                     OBSERVER_TRACE("Event from camera '{}' was valid",
                                    cfg->name);
+
+                    /* ------------------- Classify blobs ------------------- */
+                    auto& blobs = result.GetBlobs();
+                    auto& objectDetections = result.GetDetections();
+
+                    auto blobToClassProb =
+                        AssignObjectToBlob(blobs, objectDetections);
+                    // -----------------------
 
                     rawCameraEvent.SetGroupID(this->groupIdProvider->GetNext());
 

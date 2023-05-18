@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package inference;
+
+service InferenceService {
+    // The Detect function performs object detection on a stream of images,
+    // returning a stream of DetectionResponse messages.
+    // The function also uses gRPC metadata to include additional information
+    // with the request.
+    //
+    // @param request The imges
+    // @metadata model_type The type of model to use for detection: "fast" or "accurate"
+    // @return A stream of DetectionResponse messages
+    rpc Detect(stream Image) returns (stream DetectionResponse) {}
+
+    rpc GetModelNames(Empty) returns (ModelList);
+}
+
+message Image {
+    int32 image_id = 1;
+    int32 rows = 2;
+    int32 cols = 3;
+    bytes data = 4; // C-order (row major)
+}
+
+// ???
+// enum ObjectName {
+//     ObjectName_PERSON = 0;
+// }
+
+message DetectionResponse {
+    int32 image_id = 1; // The image ID of the image that was processed
+    repeated Detection detections = 2; // The list of detections
+}
+
+message Detection {
+    Rectangle bounding_box = 2; // The bounding box of the detected object
+    float confidence = 3; // The confidence of the detection
+    string label = 4; // The label of the detected object (ObjectName???)
+}
+
+// A rectangle is a rectangle
+message Rectangle {
+    int32 x = 1; // x coordinate of top left corner
+    int32 y = 2; // y coordinate of top left corner
+    int32 width = 3;
+    int32 height = 4;
+}
+
+message ModelList {
+  repeated string model_names = 1;
+}
+
+message Empty {}
