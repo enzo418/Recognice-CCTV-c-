@@ -9,12 +9,19 @@
 namespace Observer {
 
     struct ValidatorConfig {
+        bool enabled {false};
+
         std::string serverAddress;
-        std::string cocoNamesFilePath;
 
         // detection
-        float confidenceThreshold;
-        std::unordered_map<std::string, int> minObjectCount;  // coco names
+        float confidenceThreshold {0.4};
+        std::unordered_map<std::string, int> minObjectCount {
+            {"person", 2}};  // coco names
+
+        // send strategy
+        float maxFramesPerSecond {1};  // 1 = 1 fps
+
+        bool operator==(const ValidatorConfig&) const = default;
     };
 
     class ValidatorByNN final : public ValidatorHandler {

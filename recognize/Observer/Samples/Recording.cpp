@@ -8,6 +8,7 @@
 
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
+#include "observer/ScalarVector.hpp"
 
 void RecordCamera(Observer::Configuration* cfg, int minutes);
 

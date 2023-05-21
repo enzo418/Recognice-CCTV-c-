@@ -47,6 +47,7 @@ set(SRC_
         src/observer/Domain/Validators/ValidatorHandler.hpp src/observer/Domain/Validators/ValidatorHandler.cpp
         src/observer/Domain/Validators/ValidationResult.hpp src/observer/Domain/Validators/ValidationResult.cpp
         src/observer/Domain/Validators/ValidatorByBlobs.hpp src/observer/Domain/Validators/ValidatorByBlobs.cpp
+        src/observer/Domain/Validators/ValidatorByNN.hpp src/observer/Domain/Validators/ValidatorByNN.cpp
 
         # domain
         src/observer/Domain/Event/EventDescriptor.cpp src/observer/Domain/Event/EventDescriptor.hpp
@@ -116,10 +117,16 @@ set(SRC_
 
         # Classification
         src/observer/Domain/Classification/BlobClassification.cpp src/observer/Domain/Classification/BlobClassification.hpp
+
+        # Instrumentation
+        src/observer/Instrumentation/palanteer_impl.cpp
         
 )
 
-# ¿? USE PREMAKE PLS
 foreach(source_ IN LISTS SRC_)
     LIST(APPEND COMMON_SOURCES "${CMAKE_CURRENT_LIST_DIR}/${source_}")
 endforeach()
+
+
+# Copy assets folders to build directory
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

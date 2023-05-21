@@ -13,6 +13,7 @@
 #include "inference.grpc.pb.h"
 #include "inference.pb.h"
 #include "observer/Implementation.hpp"
+#include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Semaphore.hpp"
 #include "types.hpp"
 
@@ -20,7 +21,13 @@ namespace AsyncInference {
     /* ------------------------------------------------------ */
     /*               SendEveryNthFrame Strategy               */
     /* ------------------------------------------------------ */
-    SendEveryNthFrame::SendEveryNthFrame(int n) { this->n = n; }
+    SendEveryNthFrame::SendEveryNthFrame(int n) {
+        if (n <= 0) {
+            throw std::invalid_argument("n must be greater than 0");
+        }
+
+        this->n = n;
+    }
 
     bool SendEveryNthFrame::ShouldSend(Observer::Frame&, int index) {
         return index % n == 0;
@@ -84,6 +91,8 @@ namespace AsyncInference {
 
        private:
         void OnWriteDone(bool ok) override {
+            OBSERVER_SCOPE_END("Detector Write Image");
+
             if (ok) {
                 NextWrite();
             } else {
@@ -94,6 +103,8 @@ namespace AsyncInference {
         }
 
         void OnReadDone(bool ok) override {
+            OBSERVER_SCOPE("Detector Read Response");
+
             if (ok) {
                 ImageDetections image_detections;
                 image_detections.image_index = response.image_id();
@@ -164,6 +175,8 @@ namespace AsyncInference {
                           << std::endl;
                 return;
             }
+
+            OBSERVER_SCOPE_BEGIN("Detector Write Image");
 
             request.set_image_id(currentImage);
             auto imSz = image.GetSize();

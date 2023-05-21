@@ -5,6 +5,7 @@
 
 #include "../../../../vendor/bitmask_operators.hpp"
 #include "observer/Blob/BlobDetectionConfiguration.hpp"
+#include "observer/Domain/Validators/ValidatorByNN.hpp"
 #include "observer/Point.hpp"
 #include "observer/Rect.hpp"
 
@@ -85,13 +86,11 @@ namespace Observer {
         // How much frames to use to validate the change
         int videoValidatorBufferSize = 30;
 
-        // Method to detect the objects
-        EObjectDetectionMethod objectDetectionMethod {
-            EObjectDetectionMethod::NONE};
-
         BlobDetectionConfiguration blobDetection;
 
         ProcessingConfiguration processingConfiguration;
+
+        ValidatorConfig objectDetectionValidatorConfig;
 
         bool operator==(const CameraConfiguration&) const = default;
     };

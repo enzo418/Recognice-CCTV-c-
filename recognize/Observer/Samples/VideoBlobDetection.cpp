@@ -19,6 +19,7 @@
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/IFrame.hpp"
 #include "observer/IImageIO.hpp"
+#include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/ScalarVector.hpp"
 
@@ -140,6 +141,9 @@ int main(int argc, char** argv) {
         useImagesFileAsBuffer = parser.get<std::string>("use-file-as-buffer");
     }
 
+    OBSERVER_INIT_INSTRUMENTATION();
+    OBSERVER_DECLARE_THREAD("Main");
+
     // initialize logger
     Observer::LogManager::Initialize();
     OBSERVER_INFO("Hi");
@@ -158,8 +162,8 @@ int main(int argc, char** argv) {
     AsyncInference::DetectorClient* detectionClient = nullptr;
 
     if (parser.has("classify") && parser.get<bool>("classify")) {
-        detectionClient =
-            new AsyncInference::DetectorClient(cfg.inferenceServerEndpoint);
+        detectionClient = new AsyncInference::DetectorClient(
+            camera.objectDetectionValidatorConfig.serverAddress);
     }
 
     std::vector<Frame> buffer;
@@ -183,6 +187,8 @@ int main(int argc, char** argv) {
                    result.blob_detection_time_us / 1000, result.blobs.size());
 
     DisplayResults(result, buffer);
+
+    OBSERVER_STOP_INSTRUMENTATION();
 }
 
 std::vector<Frame> ReadBufferFromCamera(
@@ -300,7 +306,10 @@ DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
 
     auto took_contours = timer.GetDurationAndRestart();
 
-    blobs = detector.FindBlobs(contours);
+    {
+        OBSERVER_SCOPE("Find blobs");
+        blobs = detector.FindBlobs(contours);
+    }
 
     BlobClassifications classifications;
     if (detectionClient) {
@@ -308,16 +317,23 @@ DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
         // send 1 frame per second (will skip > 15 frames)
         AsyncInference::SendEveryNthFrame sendStrategy(fileBufferData.fps);
 
-        auto detections = detectionClient->Detect(
-            frames,
-            [](auto& result) {
-                for (const auto& detection : result.detections) {
-                    std::cout << "\t[" << result.image_index
-                              << "] Label: " << detection.label << std::endl;
-                }
-                std::cout << std::endl;
-            },
-            &sendStrategy);
+        std::vector<AsyncInference::ImageDetections> detections;
+
+        {
+            OBSERVER_SCOPE("Detect objects");
+
+            detections = detectionClient->Detect(
+                frames,
+                [](auto& result) {
+                    for (const auto& detection : result.detections) {
+                        std::cout << "\t[" << result.image_index
+                                  << "] Label: " << detection.label
+                                  << std::endl;
+                    }
+                    std::cout << std::endl;
+                },
+                &sendStrategy);
+        }
 
 #if 0  // show detections
         for (auto& detection : detections) {
@@ -409,6 +425,7 @@ void DisplayResults(DetectionResults& results, std::vector<Frame>& frames) {
             std::this_thread::sleep_for(std::chrono::seconds(2));
             i = 0;
         }
+        break;
     }
 
     ImageDisplay::Get().DestroyWindow("image");

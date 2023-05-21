@@ -1,9 +1,13 @@
 #include "BlobClassification.hpp"
 
+#include "observer/Instrumentation/Instrumentation.hpp"
+
 namespace Observer {
     BlobClassifications AssignObjectToBlob(
         std::vector<Blob>& blobs,
         std::vector<AsyncInference::ImageDetections>& sequenceDetections) {
+        OBSERVER_SCOPE("Assign detected object to blob");
+
         BlobClassifications blobToClassProb;
 
         if (blobs.empty() || sequenceDetections.empty()) {

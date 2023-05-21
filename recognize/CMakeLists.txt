@@ -15,8 +15,8 @@ CMAKE_DEPENDENT_OPTION(
 )
 
 option(USE_OPENCV "Use opencv as the computer vision and processing library." ON)
-
 option(RECO_TEST "Build tests" OFF)
+option(OBSERVER_ENABLE_INSTRUMENTATION "Enable instrumentation in the observer library" OFF)
 
 # disabled by default, compilers change warnings over time
 option(WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
@@ -57,6 +57,10 @@ if(USE_OPENCV)
     target_compile_definitions(recognize PUBLIC USE_OPENCV)
 endif()
 
+if(OBSERVER_ENABLE_INSTRUMENTATION)
+    target_compile_definitions(recognize PUBLIC OBSERVER_ENABLE_INSTRUMENTATION)
+endif()
+
 target_link_libraries(recognize ${DEPENDENCY_LIBS})
 
 target_compile_options(recognize PRIVATE -Wall -Wextra -Wpedantic)
@@ -64,6 +68,8 @@ target_compile_options(recognize PRIVATE -Wall -Wextra -Wpedantic)
 if(WARNINGS_AS_ERRORS)
   target_compile_options(recognize PRIVATE -Werror)
 endif()
+
+target_compile_definitions(recognize PUBLIC ${OBSERVER_DEPENDENCY_COMPILATION_OPTIONS})
 
 # ---------------------- SAMPLES ---------------------- #
 if(RECO_BUILD_SAMPLES)

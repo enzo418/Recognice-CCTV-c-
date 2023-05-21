@@ -1,7 +1,8 @@
 #pragma once
 
-#include <chrono>   // for system_clock
-#include <ctime>    // for std::time_t
+#include <chrono>  // for system_clock
+#include <ctime>   // for std::time_t
+#include <filesystem>
 #include <iomanip>  // for put_time
 #include <sstream>  // ostringstream
 #include <vector>
@@ -26,4 +27,9 @@ namespace Observer::SpecialFunctions {
      */
     std::string JsonStringGenerator(
         const std::vector<std::pair<std::string, std::string>>& pairs);
+
+    namespace Paths {
+        std::filesystem::path GetExecutablePath();
+        std::filesystem::path GetExecutableDirectory();
+    }  // namespace Paths
 }  // namespace Observer::SpecialFunctions

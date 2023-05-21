@@ -91,7 +91,6 @@ class ConfigurationTest : public ::testing::Test {
             .increaseThresholdFactor = 1.03,
             .secondsBetweenThresholdUpdate = 5,
             .videoValidatorBufferSize = 60,
-            .objectDetectionMethod = EObjectDetectionMethod::HOG_DESCRIPTOR,
             .blobDetection = blobConfiguration,
             .processingConfiguration =
                 {// resize
@@ -103,6 +102,14 @@ class ConfigurationTest : public ::testing::Test {
                  // masks
                  {{{0, 1}, {1, 1}, {2, 2}, {3, 3}},
                   {{4, 600}, {200, 660}, {99, 23}, {333, 423}}}},
+            .objectDetectionValidatorConfig =
+                {
+                    .enabled = true,
+                    .serverAddress = "http://localhost:5000",
+                    .confidenceThreshold = 0.5,
+                    .minObjectCount = {{"person", 2}, {"car", 1}},
+                    .maxFramesPerSecond = 1,
+                },
         };
 
         CameraConfiguration camera2 = {
@@ -117,9 +124,18 @@ class ConfigurationTest : public ::testing::Test {
             .increaseThresholdFactor = 5.002,
             .secondsBetweenThresholdUpdate = 7,
             .videoValidatorBufferSize = 10,
-            .objectDetectionMethod = EObjectDetectionMethod::NONE,
             .processingConfiguration = {Size(640, 360), 15,
-                                        Rect(1, 1, 233, 233)}};
+                                        Rect(1, 1, 233, 233)},
+
+            .objectDetectionValidatorConfig =
+                {
+                    .enabled = true,
+                    .serverAddress = "http://localhost:5000",
+                    .confidenceThreshold = 0.5,
+                    .minObjectCount = {{"person", 2}, {"car", 1}},
+                    .maxFramesPerSecond = 1,
+                },
+        };
 
         this->config = {.name = "configuration test",
                         .mediaFolderPath = "../web/media",
@@ -154,8 +170,8 @@ void checkConfiguration(Configuration& cfg1, Configuration& cfg2) {
             if (cam1.url == cam2.url) {
                 EXPECT_TRUE(cam1.name == cam2.name);
                 EXPECT_TRUE(cam1.blobDetection == cam2.blobDetection);
-                EXPECT_TRUE(cam1.objectDetectionMethod ==
-                            cam2.objectDetectionMethod);
+                EXPECT_TRUE(cam1.objectDetectionValidatorConfig ==
+                            cam2.objectDetectionValidatorConfig);
                 EXPECT_TRUE(cam1.processingConfiguration ==
                             cam2.processingConfiguration);
                 EXPECT_TRUE(cam1.resizeTo == cam2.resizeTo);

@@ -35,7 +35,6 @@ int main(int argc, char** argv) {
 
     localWebConfiguration.enabled = true;
     localWebConfiguration.drawTraceOfChangeOn = ETrazable::NONE;
-    localWebConfiguration.onNotifSendExtraImageNotfWithAllTheCameras = true;
     localWebConfiguration.secondsBetweenImageNotification = 5.1;
     localWebConfiguration.secondsBetweenTextNotification = 5.1;
     localWebConfiguration.secondsBetweenVideoNotification = 5.1;

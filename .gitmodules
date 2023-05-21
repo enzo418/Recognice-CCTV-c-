@@ -13,3 +13,6 @@
 [submodule "webRecognize/vendor/uWebSockets"]
 	path = webRecognize/vendor/uWebSockets
 	url = https://github.com/enzo418/uWebSockets
+[submodule "recognize/Observer/vendor/palanteer"]
+	path = recognize/Observer/vendor/palanteer
+	url = https://github.com/dfeneyrou/palanteer

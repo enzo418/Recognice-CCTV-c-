@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "observer/AsyncInference/types.hpp"
+#include "observer/Domain/Validators/ValidatorByNN.hpp"
 
 namespace Observer {
 
@@ -11,11 +12,21 @@ namespace Observer {
         this->cameraCfg = pCameraCfg;
         this->groupIdProvider = pIdProvider;
 
-        auto validatorByBlobs =
+        /* ----------------- Validator by blobs ----------------- */
+        ValidatorByBlobs* validatorByBlobs =
             new ValidatorByBlobs(this->cameraCfg->blobDetection);
-        //        validatorByBlobs.SetNext()
+
         handlers.push_back(validatorByBlobs);
 
+        /* ----------------- Validator by NN ----------------- */
+        if (this->cameraCfg->objectDetectionValidatorConfig.enabled) {
+            auto validatorByNN = new ValidatorByNN(
+                this->cameraCfg->objectDetectionValidatorConfig);
+            validatorByBlobs->SetNext(validatorByNN);
+            handlers.push_back(validatorByNN);
+        }
+
+        /* ------------------- set first handler ---------------- */
         this->handler = handlers[0];
     }
 
@@ -53,22 +64,22 @@ namespace Observer {
                     OBSERVER_TRACE("Event from camera '{}' was valid",
                                    cfg->name);
 
-                    /* ------------------- Classify blobs ------------------- */
-                    auto& blobs = result.GetBlobs();
-                    auto& objectDetections = result.GetDetections();
-
-                    auto blobToClassProb =
-                        AssignObjectToBlob(blobs, objectDetections);
-                    // -----------------------
-
                     rawCameraEvent.SetGroupID(this->groupIdProvider->GetNext());
 
                     EventDescriptor& eventDescriptor = result.GetEvent();
 
+                    /* ------------------- Classify blobs ------------------- */
+                    auto& blobs = result.GetBlobs();
+                    auto& objectDetections = result.GetDetections();
+
+                    eventDescriptor.SetClassifications(
+                        AssignObjectToBlob(blobs, objectDetections));
+                    // -----------------------
+
                     // set camera name
                     eventDescriptor.SetCameraName(cfg->name);
 
-                    // notify all the subscribers with the event
+                    // notify all subscribers
                     this->eventPublisher.notifySubscribers(eventDescriptor,
                                                            rawCameraEvent);
                 } else {

@@ -93,12 +93,17 @@ namespace Observer {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessingConfiguration, resize, masks,
                                        noiseThreshold, roi);
 
+    /* --------------- ObjectDetectionValidatorConfig -------------- */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ValidatorConfig, enabled, serverAddress,
+                                       confidenceThreshold, minObjectCount,
+                                       maxFramesPerSecond);
+
     /* ----------------- CameraConfiguration ---------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
         CameraConfiguration, name, url, resizeTo, fps, positionOnOutput,
         rotation, type, minimumChangeThreshold, increaseThresholdFactor,
         secondsBetweenThresholdUpdate, videoValidatorBufferSize,
-        objectDetectionMethod, processingConfiguration, blobDetection);
+        processingConfiguration, blobDetection, objectDetectionValidatorConfig);
 
     /* ------------- OutputPreviewConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OutputPreviewConfiguration, showOutput,
@@ -250,8 +255,10 @@ namespace Observer {
                                        video);
 
     /* -------------------- CONFIGURATION ------------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-        Configuration, name, mediaFolderPath, notificationTextTemplate,
-        resizeNotifications, telegramConfiguration, localWebConfiguration,
-        inferenceServerEndpoint, outputConfiguration, cameras);
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Configuration, name, mediaFolderPath,
+                                       notificationTextTemplate,
+                                       resizeNotifications,
+                                       telegramConfiguration,
+                                       localWebConfiguration,
+                                       outputConfiguration, cameras);
 }  // namespace Observer

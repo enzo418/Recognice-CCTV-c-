@@ -19,11 +19,19 @@ namespace Observer {
                                  double scaleY) {
         static const int padding = 6;
 
+        // if (classification == nullptr) {
+        //     return;
+        // }
+
         auto rect = blob.GetBoundingRect(frameNumber);
         rect.width *= scaleX;
         rect.height *= scaleY;
         rect.x *= scaleX;
         rect.y *= scaleY;
+
+        if (rect.x < 0 || rect.y < 0 || rect.area() == 0) {
+            return;
+        }
 
         const auto color = GetPseudoRandomColor(blob.GetId());
 
@@ -37,8 +45,16 @@ namespace Observer {
                       "% (" + std::to_string((int)(classification->IoU * 100)) +
                       " % IoU)";
 
-        cv::putText(frame.GetInternalFrame(), text,
-                    cv::Point(rect.x, rect.y - padding),
+        int bl;
+        cv::Size txtSize =
+            cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.69, 2, &bl);
+
+        cv::Point txtPos =
+            rect.y < txtSize.height + padding
+                ? cv::Point(rect.x, rect.y + rect.height + txtSize.height)
+                : cv::Point(rect.x, rect.y - padding);
+
+        cv::putText(frame.GetInternalFrame(), text, txtPos,
                     cv::FONT_HERSHEY_SIMPLEX, 0.69, color, 2, cv::LINE_AA);
     }
 

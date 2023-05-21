@@ -1,5 +1,26 @@
 #include "SpecialFunctions.hpp"
 
+#include <cstring>
+
+#ifdef _WIN32
+#include <Shlwapi.h>
+#include <io.h>
+#include <windows.h>
+
+#define access _access_s
+#elif defined(__linux__)
+#include <libgen.h>
+#include <limits.h>
+#include <unistd.h>
+
+#if defined(__sun)
+#define PROC_SELF_EXE "/proc/self/path/a.out"
+#else
+#define PROC_SELF_EXE "/proc/self/exe"
+#endif
+
+#endif
+
 namespace Observer::SpecialFunctions {
     // output: 29_01_1900_23_41_13
     std::string GetCurrentTime(const std::string& format) {
@@ -52,4 +73,41 @@ namespace Observer::SpecialFunctions {
 
         return res;
     }
+
+    namespace Paths {
+#ifdef _WIN32
+        std::filesystem::path GetExecutablePath() {
+            char rawPathName[MAX_PATH];
+            GetModuleFileNameA(NULL, rawPathName, MAX_PATH);
+            return std::filesystem::path(rawPathName);
+        }
+
+        std::filesystem::path GetExecutableDirectory() {
+            std::string executablePath = getExecutablePath();
+            char* exePath = new char[executablePath.length()];
+            strcpy_s(exePath, executablePath.length() + 1,
+                     executablePath.c_str());
+            PathRemoveFileSpecA(exePath);
+            std::string directory = std::string(exePath);
+            delete[] exePath;
+            return directory;
+        }
+
+#elif defined(__linux__)
+        std::filesystem::path GetExecutablePath() {
+            char rawPathName[PATH_MAX];
+            realpath(PROC_SELF_EXE, rawPathName);
+            return std::filesystem::path(rawPathName);
+        }
+
+        std::filesystem::path GetExecutableDirectory() {
+            std::string executablePath = GetExecutablePath();
+            char* executablePathStr = new char[executablePath.length() + 1];
+            strcpy(executablePathStr, executablePath.c_str());
+            char* executableDir = dirname(executablePathStr);
+            delete[] executablePathStr;
+            return std::filesystem::path(executableDir);
+        }
+#endif
+    }  // namespace Paths
 }  // namespace Observer::SpecialFunctions

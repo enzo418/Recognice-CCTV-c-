@@ -1,6 +1,8 @@
 
 #include "ValidatorByBlobs.hpp"
 
+#include "observer/Instrumentation/Instrumentation.hpp"
+
 namespace Observer {
     ValidatorByBlobs::ValidatorByBlobs(
         const BlobDetectionConfiguration& pDetectorCfg)
@@ -11,6 +13,8 @@ namespace Observer {
                        pDetectorCfg.blobFilters, this->contoursDetector) {}
 
     void ValidatorByBlobs::isValid(CameraEvent& request, Result& result) {
+        OBSERVER_SCOPE("Validate event by blobs");
+
         auto frames = request.GetFrames();
         const Size targetSize = frames[0].GetSize();
         contoursDetector.SetScale(targetSize);

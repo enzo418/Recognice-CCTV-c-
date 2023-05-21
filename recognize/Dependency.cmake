@@ -23,7 +23,7 @@ function(add_lib lib)
 endfunction(add_lib)
 
 function(add_compilation_option option)
-    set(IFC_DEPENDENCY_COMPILATION_OPTIONS ${IFC_DEPENDENCY_COMPILATION_OPTIONS} ${option} PARENT_SCOPE)
+    set(OBSERVER_DEPENDENCY_COMPILATION_OPTIONS ${OBSERVER_DEPENDENCY_COMPILATION_OPTIONS} ${option} PARENT_SCOPE)
 endfunction(add_compilation_option)
 
 # ----------------------- OPENCV ----------------------- #
@@ -69,3 +69,51 @@ include(${CMAKE_CURRENT_LIST_DIR}/Observer/src/observer/AsyncInference/module.cm
 add_dep("${AsyncInference_DEPENDENCIES}")
 add_lib("${AsyncInference_LIBS}")
 add_include("${AsyncInference_INCLUDE_DIRS}")
+
+# ---------------------- PALANTEER --------------------- #
+ExternalProject_Add(
+    palanteer
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/palanteer
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS
+        -DPALANTEER_BUILD_VIEWER=ON
+        -DPALANTEER_BUILD_CPP_EXAMPLE=OFF
+        -DPALANTEER_BUILD_PYTHON_INSTRUMENTATION=OFF
+        -DPALANTEER_BUILD_SERVER_SCRIPTING=OFF
+        -DCMAKE_BUILD_TYPE="Release"
+    TEST_COMMAND ""
+    INSTALL_COMMAND cmake -E echo "Skipping install step."
+)
+
+add_dep(palanteer)
+add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/palanteer/c++)
+add_compilation_option(-DUSE_PL=1)
+
+
+# if stacktrace:
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/Observer/vendor/palanteer/cmake") # palanteer custom cmake modules
+
+if(WIN32)
+    add_compilation_option(-DPL_IMPL_STACKTRACE=1)
+else()
+    find_package(LibUnwind)
+    find_package(LibDw)
+    if (LIBUNWIND_FOUND AND LIBDW_FOUND)
+        add_compilation_option(-DPL_IMPL_STACKTRACE=1)
+        add_lib(${LIBUNWIND_LIBRARY})
+        add_lib(${LIBDW_LIBRARY})
+    else()
+        message(WARNING "LibUnwind or LibDw not found. Stacktrace will not be available.")
+    endif()
+endif(WIN32)
+# endif stacktrace
+
+# copy gui tool
+add_custom_command(
+    TARGET palanteer
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_BINARY_DIR}/palanteer-prefix/src/palanteer-build/bin/palanteer
+            ${CMAKE_CURRENT_BINARY_DIR}/gui-instrumentation
+)
