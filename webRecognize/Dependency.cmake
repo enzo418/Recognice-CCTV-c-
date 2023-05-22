@@ -5,11 +5,11 @@ set(DEPENDENCY_INCLUDE_DIR ${DEPENDENCY_INSTALL_DIR}/include)
 set(DEPENDENCY_LIB_DIR ${DEPENDENCY_INSTALL_DIR}/lib)
 
 # ------------------ HELPER FUNCTIONS ------------------ #
-function(add_dep dep)
+function(web_add_dep dep)
     set(DEPENDENCY_LIST ${DEPENDENCY_LIST} ${dep} PARENT_SCOPE)
 endfunction()
 
-function(add_include include_dir)
+function(web_add_include include_dir)
     # add / at the end or else cmake will think that we want to copy the parent folder
     if (NOT (${include_dir} MATCHES ".*/$"))
         set(include_dir "${include_dir}/")
@@ -18,26 +18,27 @@ function(add_include include_dir)
     set(DEPENDENCY_INCLUDE_LIST ${DEPENDENCY_INCLUDE_LIST} ${include_dir} PARENT_SCOPE)
 endfunction()
 
-function(add_lib lib)
+function(web_add_lib lib)
     set(DEPENDENCY_LIBS ${DEPENDENCY_LIBS} ${lib} PARENT_SCOPE)
-endfunction(add_lib)
+endfunction(web_add_lib)
 
 # -------------- OBSERVER LIB / RECOGNIZE -------------- #
 include(../recognize/CMakeLists.txt)
-add_lib(recognize)
+web_add_lib(recognize)
+# web_add_include(${OBSERVER_INCLUDE_DIRS})
 
 # --------------------- uWebSockets -------------------- #
 # TODO: Include it as an external project
 add_subdirectory(vendor/uWebSockets)
 
-add_include(vendor/uWebSockets/src)
-add_include(vendor/uWebSockets/uSockets/src)
+web_add_include(vendor/uWebSockets/src)
+web_add_include(vendor/uWebSockets/uSockets/src)
 
-add_lib(usocketslib)
+web_add_lib(usocketslib)
 
 # it requires zlib
 find_package(ZLIB REQUIRED)
-add_lib("${ZLIB_LIBRARIES}") # -lz
+web_add_lib("${ZLIB_LIBRARIES}") # -lz
 
 # ---------------------- NOLITEDB ---------------------- #
 set(__BUILD_NOLITE_SHARED ON)
@@ -58,10 +59,10 @@ ExternalProject_Add(
     TEST_COMMAND ""
 )
 
-add_include(${DEPENDENCY_INSTALL_DIR}/include/)
-add_dep(nolitedb-dep)
-add_lib(nolitedb)
+web_add_include(${DEPENDENCY_INSTALL_DIR}/include/)
+web_add_dep(nolitedb-dep)
+web_add_lib(nolitedb)
 
 if (NOT ${__BUILD_NOLITE_SHARED})
-    add_lib(xsqllite3)
+    web_add_lib(xsqllite3)
 endif()

@@ -105,8 +105,9 @@ namespace Observer::SpecialFunctions {
             char* executablePathStr = new char[executablePath.length() + 1];
             strcpy(executablePathStr, executablePath.c_str());
             char* executableDir = dirname(executablePathStr);
+            auto path = std::filesystem::path(executableDir);
             delete[] executablePathStr;
-            return std::filesystem::path(executableDir);
+            return path;
         }
 #endif
     }  // namespace Paths

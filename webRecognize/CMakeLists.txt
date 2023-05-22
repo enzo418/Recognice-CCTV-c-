@@ -43,6 +43,8 @@ target_compile_definitions(webRecognize PUBLIC
 							$<$<CONFIG:MinSizeRel>:BUILD_RELEASE>
 )
 
+target_compile_definitions(webRecognize PUBLIC ${OBSERVER_DEPENDENCY_COMPILATION_OPTIONS})
+
 # Link libraries
 # -----
 target_link_libraries(webRecognize PUBLIC ${DEPENDENCY_LIBS})

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <map>
 #include <vector>
 
 #include "ValidatorHandler.hpp"
@@ -15,7 +16,7 @@ namespace Observer {
 
         // detection
         float confidenceThreshold {0.4};
-        std::unordered_map<std::string, int> minObjectCount {
+        std::map<std::string, int> minObjectCount {
             {"person", 2}};  // coco names
 
         // send strategy

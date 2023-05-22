@@ -48,6 +48,8 @@ add_library(ifc_grpc_proto
   ${ifc_proto_srcs}
   ${ifc_proto_hdrs})
 
+target_include_directories(ifc_grpc_proto PUBLIC ${gRPC_INSTALL_INCLUDEDIR})
+
 # ------------------- Link libraries ------------------- #
 set(AsyncInference_DEPENDENCIES "" ${IFC_DEPENDENCY_LIST})
 set(AsyncInference_INCLUDE_DIRS ${IFC_DEPENDENCY_INCLUDE_LIST})

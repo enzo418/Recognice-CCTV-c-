@@ -16,6 +16,13 @@ namespace Observer {
             throw std::invalid_argument(
                 "maxFramesPerSecond must be greater than 0");
         }
+
+        if (config.minObjectCount.empty()) {
+            // throw std::invalid_argument("minObjectCount must be non-empty");
+            config.minObjectCount.insert({"person", 2});
+        }
+
+        this->ReadCocoNames();
     }
 
     void ValidatorByNN::isValid(CameraEvent& request, Result& result) {
@@ -37,12 +44,21 @@ namespace Observer {
                         continue;
                     }
 
+                    if (!config.minObjectCount.contains(result.label)) {
+                        OBSERVER_TRACE("Skipping unwanted object: {}",
+                                       result.label);
+                        continue;
+                    }
+
                     if (result.confidence > config.confidenceThreshold) {
                         objectCount[result.label] += 1;
                     }
 
                     if (objectCount[result.label] >
                         config.minObjectCount[result.label]) {
+                        OBSERVER_TRACE("Found enough ({}) {}s",
+                                       objectCount[result.label], result.label);
+
                         client.Stop();
                         valid = true;
                         validationResult.AddMessages(
@@ -69,11 +85,12 @@ namespace Observer {
     }
 
     void ValidatorByNN::ReadCocoNames() {
-        std::ifstream file(
+        std::string filePath =
             Observer::SpecialFunctions::Paths::GetExecutableDirectory() /
-            "assets/coco.names");
+            "assets/coco.names";
+        std::ifstream file(filePath);
         if (!file.is_open()) {
-            throw std::runtime_error("Couldn't open assets/coco.names");
+            throw std::runtime_error("Couldn't open " + filePath);
         }
 
         std::string line;

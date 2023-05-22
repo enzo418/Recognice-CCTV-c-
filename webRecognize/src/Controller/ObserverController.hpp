@@ -7,6 +7,7 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/RecognizeContext.hpp"
 #include "Server/ServerContext.hpp"
+#include "observer/Log/log.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
 
@@ -87,6 +88,8 @@ namespace Web::Controller {
         try {
             cfg = obj;
         } catch (const std::exception& e) {
+            OBSERVER_WARN("Invalid configuration: {}", e.what());
+
             nlohmann::json response = {{"title", "Not a valid configuration"}};
             res->writeStatus(HTTP_404_NOT_FOUND)
                 ->writeHeader("Cache-Control", "max-age=5")

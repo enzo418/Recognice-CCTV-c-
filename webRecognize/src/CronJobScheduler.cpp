@@ -52,6 +52,7 @@ namespace Web {
                         if (!runAgain) {
                             sleepUntilNext = left;
                             timerSinceSetLeft.Restart();
+                            runAgain = false;
                         }
                     }
                 }

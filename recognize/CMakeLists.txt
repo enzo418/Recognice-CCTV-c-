@@ -46,7 +46,9 @@ add_library(recognize ${COMMON_SOURCES})
 # ------------- INCLUDES / LIBS DIRECTORIES ------------ #
 add_include(${CMAKE_CURRENT_LIST_DIR}/Observer/src)
 
-target_include_directories(recognize PUBLIC ${DEPENDENCY_INCLUDE_DIR} ${DEPENDENCY_INCLUDE_LIST})
+set(OBSERVER_INCLUDE_DIRS ${DEPENDENCY_INCLUDE_DIR} ${DEPENDENCY_INCLUDE_LIST})
+
+target_include_directories(recognize PUBLIC ${OBSERVER_INCLUDE_DIRS})
 
 target_link_directories(recognize PUBLIC ${DEPENDENCY_LIB_DIR})
 

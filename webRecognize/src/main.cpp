@@ -43,6 +43,7 @@
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/EventValidator.hpp"
 #include "observer/Domain/ObserverCentral.hpp"
+#include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
 #include "observer/Size.hpp"
@@ -104,6 +105,8 @@ int main() {
 
     nldb::LogManager::Initialize();
     nldb::LogManager::SetLevel(nldb::log_level::warn);
+
+    OBSERVER_INIT_INSTRUMENTATION();
 
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral> recognizer;
@@ -391,4 +394,6 @@ int main() {
 
     notificationsDB.close();
     configurationsDB.close();
+
+    OBSERVER_STOP_INSTRUMENTATION();
 }
