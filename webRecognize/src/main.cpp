@@ -200,6 +200,7 @@ int main() {
                                                                 &serverCtx);
 
     /* ------------------- CREATE OBSERVER ------------------ */
+    // this might throw
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
                                  &notificationController,
                                  &notificationRepository,

@@ -14,6 +14,9 @@ namespace Observer {
             this->maxFrames != -1,
             "SetNumberCameras should be called before calling start");
 
+        OBSERVER_ASSERT(this->maxFrames > 0,
+                        "SetNumberCameras should be called with a number > 0");
+
         std::vector<Frame> framesToShow(maxFrames);
         std::vector<bool> cameraFirstFrameReaded(maxFrames);
 

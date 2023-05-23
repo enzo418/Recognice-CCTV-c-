@@ -18,6 +18,10 @@ namespace Observer {
           groupIDProvider(initialGroupID) {
         this->ProcessConfiguration();
 
+        if (this->config.cameras.empty()) {
+            throw std::runtime_error("No cameras configured");
+        }
+
         this->framesBlender.SetNumberCameras(
             static_cast<int>(this->config.cameras.size()));
 

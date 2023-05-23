@@ -97,7 +97,17 @@ namespace Web::Controller {
             return;
         }
 
-        startRecognize(cfg);
+        try {
+            startRecognize(cfg);
+        } catch (const std::exception& e) {
+            OBSERVER_WARN("Error starting observer: {}", e.what());
+
+            nlohmann::json response = {{"title", "Error starting observer"}};
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+            return;
+        }
 
         res->end(
             nlohmann::json(
