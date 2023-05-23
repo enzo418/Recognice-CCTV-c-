@@ -77,12 +77,31 @@ namespace Web::CL {
         }
     }
 
+    void RemoveConfigurationFromCacheIfContainsCamera() {}
+
     void ConfigurationDAOCache::UpdateCamera(const std::string& id,
                                              const nldb::json& data) {
         repository->UpdateCamera(id, data);
 
         if (cameraCache.contains(id)) {
             cameraCache.remove(id);
+        }
+
+        std::vector<std::string> toPrune;
+
+        auto verify = [&](const ConfigCache::node_type& kv) {
+            for (auto& camera : kv.value["cameras"]) {
+                if (camera["id"] == id) {
+                    toPrune.push_back(kv.key);
+                    return;
+                }
+            }
+        };
+
+        configurationCache.cwalk(verify);
+
+        for (auto& key : toPrune) {
+            configurationCache.remove(key);
         }
     }
 

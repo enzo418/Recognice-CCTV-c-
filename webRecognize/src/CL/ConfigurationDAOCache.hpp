@@ -90,7 +90,9 @@ namespace Web::CL {
        private:
         std::unique_ptr<IConfigurationDAO> repository;
 
-        lru11::Cache<std::string, nldb::json> configurationCache;
+        typedef lru11::Cache<std::string, nldb::json> ConfigCache;
+
+        ConfigCache configurationCache;
         lru11::Cache<std::string, nldb::json> cameraCache;
     };
 }  // namespace Web::CL
