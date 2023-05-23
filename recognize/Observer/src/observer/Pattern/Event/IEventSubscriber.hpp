@@ -6,7 +6,8 @@
 
 namespace Observer {
 
-    typedef Publisher<EventDescriptor&, CameraEvent&> EventValidatorPublisher;
+    typedef Publisher<EventDescriptor&, std::shared_ptr<CameraEvent>>
+        EventValidatorPublisher;
 
     typedef EventValidatorPublisher::Subscriber IEventValidatorSubscriber;
 }  // namespace Observer

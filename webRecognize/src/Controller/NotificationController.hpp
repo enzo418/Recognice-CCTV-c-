@@ -57,8 +57,9 @@ namespace Web::Controller {
 
         void update(Observer::DTONotification ev) override;
 
-        void update(Observer::EventDescriptor& event,
-                    Observer::CameraEvent& rawCameraEvent) override;
+        void update(
+            Observer::EventDescriptor& event,
+            std::shared_ptr<Observer::CameraEvent> rawCameraEvent) override;
 
        private:
         std::vector<Web::API::DTONotification> NotificationsToDTO(
@@ -428,7 +429,7 @@ namespace Web::Controller {
     template <bool SSL>
     void NotificationController<SSL>::update(
         Observer::EventDescriptor& event,
-        Observer::CameraEvent& rawCameraEvent) {
+        std::shared_ptr<Observer::CameraEvent> rawCameraEvent) {
         // Block the caller thread so we record the raw frames
         // In a period of time you might see more calls to this function that
         // notifications sent to the client, that is because the notification
@@ -458,19 +459,19 @@ namespace Web::Controller {
         }
 
         std::string storedBufferPath =
-            folder + std::to_string(rawCameraEvent.GetGroupID()) +
+            folder + std::to_string(rawCameraEvent->GetGroupID()) +
             "_temp_buffer.tiff";
 
-        auto& frames = rawCameraEvent.GetFrames();
-        const double duration = frames.size() / rawCameraEvent.GetFrameRate();
+        auto& frames = rawCameraEvent->GetFrames();
+        const double duration = frames.size() / rawCameraEvent->GetFrameRate();
         Web::Utils::SaveBuffer(frames, storedBufferPath);
 
         notificationRepository->AddNotificationDebugVideo(
             Web::DTONotificationDebugVideo {
                 .filePath = storedBufferPath,
-                .groupID = rawCameraEvent.GetGroupID(),
+                .groupID = rawCameraEvent->GetGroupID(),
                 .videoBufferID = "",
-                .fps = static_cast<int>(rawCameraEvent.GetFrameRate()),
+                .fps = static_cast<int>(rawCameraEvent->GetFrameRate()),
                 .duration = duration,
                 .date_unix = time(0),
                 .camera_id = cameraID});

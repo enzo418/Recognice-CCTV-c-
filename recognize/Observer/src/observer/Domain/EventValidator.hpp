@@ -27,7 +27,8 @@ namespace Observer {
         void SubscribeToValidEvent(IEventValidatorSubscriber* subscriber,
                                    Priority priority);
 
-        void update(CameraConfiguration* cfg, CameraEvent ev) override;
+        void update(CameraConfiguration* cfg,
+                    std::shared_ptr<CameraEvent> ev) override;
 
         ~EventValidator();
 
@@ -43,7 +44,8 @@ namespace Observer {
 
         std::vector<IValidatorHandler*> handlers;
 
-        SimpleBlockingQueue<std::pair<CameraConfiguration*, CameraEvent>>
+        SimpleBlockingQueue<
+            std::pair<CameraConfiguration*, std::shared_ptr<CameraEvent>>>
             validationPool;
 
         EventValidatorPublisher eventPublisher;

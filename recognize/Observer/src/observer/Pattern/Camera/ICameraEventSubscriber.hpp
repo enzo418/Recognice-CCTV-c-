@@ -7,7 +7,9 @@
 
 namespace Observer {
     class ICameraEventSubscriber
-        : public ISubscriber<CameraConfiguration*, CameraEvent> {
-        void update(CameraConfiguration* cam, CameraEvent ev) override = 0;
+        : public ISubscriber<CameraConfiguration*,
+                             std::shared_ptr<CameraEvent>> {
+        void update(CameraConfiguration* cam,
+                    std::shared_ptr<CameraEvent> ev) override = 0;
     };
 };  // namespace Observer

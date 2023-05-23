@@ -229,9 +229,9 @@ namespace Observer {
         }
     }
 
-    void NotificationsController::update(EventDescriptor& event,
-                                         CameraEvent& rawCameraEvent) {
-        const int groupID = rawCameraEvent.GetGroupID();
+    void NotificationsController::update(
+        EventDescriptor& event, std::shared_ptr<CameraEvent> rawCameraEvent) {
+        const int groupID = rawCameraEvent->GetGroupID();
 
         // create destination folders
         const auto imagesFolder =
@@ -265,22 +265,22 @@ namespace Observer {
 
         int indexFirst = event.GetFirstFrameWhereFindingWasFound();
         ImageNotification imageNotification(
-            groupID, event, rawCameraEvent.GetFrameAt(indexFirst),
+            groupID, event, rawCameraEvent->GetFrameAt(indexFirst),
             imagesFolder);
 
         // 3. Create a video notification using the frames
         VideoNotification videoNotification(
-            groupID, event, rawCameraEvent.PopFrames(), videosFolder);
+            groupID, event, rawCameraEvent->PopFrames(), videosFolder);
 
-        videoNotification.SetFrameRate(rawCameraEvent.GetFrameRate());
-        videoNotification.SetFrameSize(rawCameraEvent.GetFramesSize());
+        videoNotification.SetFrameRate(rawCameraEvent->GetFrameRate());
+        videoNotification.SetFrameSize(rawCameraEvent->GetFramesSize());
 
         // 4. call AddNotification for each one
         this->AddNotification(textNotification);
         this->AddNotification(imageNotification);
         this->AddNotification(videoNotification);
 
-        Size size = rawCameraEvent.GetFramesSize();
+        Size size = rawCameraEvent->GetFramesSize();
         double maxDiagonalDist =
             sqrt(size.width * size.width + size.height * size.height) * 0.01;
         OBSERVER_TRACE("Blobs data: Max={0}", maxDiagonalDist);

@@ -31,7 +31,8 @@ namespace Observer {
 
         std::unique_ptr<VideoBuffer> videoBufferForValidation;
 
-        Publisher<CameraConfiguration*, CameraEvent> cameraEventsPublisher;
+        Publisher<CameraConfiguration*, std::shared_ptr<CameraEvent>>
+            cameraEventsPublisher;
 
         ThresholdManager thresholdManager;
 

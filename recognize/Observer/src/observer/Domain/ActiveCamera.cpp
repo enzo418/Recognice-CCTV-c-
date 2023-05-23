@@ -21,12 +21,12 @@ namespace Observer {
             auto frames = this->videoBufferForValidation->PopAllFrames();
 
             // build the event
-            CameraEvent event(
+            std::shared_ptr<CameraEvent> event = std::make_shared<CameraEvent>(
                 std::move(frames),
                 this->videoBufferForValidation->GetIndexMiddleFrame());
 
-            event.SetFrameRate(this->GetFPS());
-            event.SetFrameSize(frame.GetSize());
+            event->SetFrameRate(this->GetFPS());
+            event->SetFrameSize(frame.GetSize());
 
             OBSERVER_TRACE(
                 "Change detected on camera '{}', notifying subscribers",

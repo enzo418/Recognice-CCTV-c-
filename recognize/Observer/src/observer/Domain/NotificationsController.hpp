@@ -57,7 +57,7 @@ namespace Observer {
         void AddNotification(VideoNotification videoN);
 
         void update(EventDescriptor& event,
-                    CameraEvent& rawCameraEvent) override;
+                    std::shared_ptr<CameraEvent> rawCameraEvent) override;
 
         void SubscribeToNewNotifications(
             INotificationEventSubscriber* subscriber);

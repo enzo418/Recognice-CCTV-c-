@@ -16,6 +16,15 @@ namespace Observer {
         OBSERVER_SCOPE("Validate event by blobs");
 
         auto frames = request.GetFrames();
+
+        OBSERVER_TRACE("Validation frames count: {0}", frames.size());
+
+        if (frames.size() == 0) {
+            result.SetValid(false);
+            result.AddMessages({"No frames to validate."});
+            return;
+        }
+
         const Size targetSize = frames[0].GetSize();
         contoursDetector.SetScale(targetSize);
         blobDetector.SetScale(targetSize);

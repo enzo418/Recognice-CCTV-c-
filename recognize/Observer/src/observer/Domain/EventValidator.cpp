@@ -45,7 +45,7 @@ namespace Observer {
             // were stopped
             if (this->smpQueue.acquire_timeout<250>()) {
                 // declare event and configuration
-                CameraEvent rawCameraEvent;
+                std::shared_ptr<CameraEvent> rawCameraEvent;
                 CameraConfiguration* cfg;
 
                 // get next pool item
@@ -57,14 +57,15 @@ namespace Observer {
 
                 // validate the event
                 ValidationResult result;
-                this->handler->Handle(rawCameraEvent, result);
+                this->handler->Handle(*rawCameraEvent, result);
 
                 // send the event
                 if (result.IsValid()) {
                     OBSERVER_TRACE("Event from camera '{}' was valid",
                                    cfg->name);
 
-                    rawCameraEvent.SetGroupID(this->groupIdProvider->GetNext());
+                    rawCameraEvent->SetGroupID(
+                        this->groupIdProvider->GetNext());
 
                     EventDescriptor& eventDescriptor = result.GetEvent();
 
@@ -98,7 +99,8 @@ namespace Observer {
         }
     }
 
-    void EventValidator::update(CameraConfiguration* cam, CameraEvent ev) {
+    void EventValidator::update(CameraConfiguration* cam,
+                                std::shared_ptr<CameraEvent> ev) {
         this->validationPool.push(std::make_pair(cam, std::move(ev)));
 
         // add 1 item to poll
