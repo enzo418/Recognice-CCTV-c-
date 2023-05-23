@@ -64,6 +64,8 @@ namespace Observer {
        private:
         bool TryOpenConnection(const std::string& sourceUri);
 
+        bool CheckCanStart() override;
+
        protected:
         void InternalStart() override;
 

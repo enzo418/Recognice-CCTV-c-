@@ -27,6 +27,8 @@ namespace Observer {
 
     double BufferedSource::GetFPS() { return source.GetFPS(); }
 
+    bool BufferedSource::CheckCanStart() { return source.isOpened(); }
+
     void BufferedSource::InternalStart() {
         if (!source.isOpened()) {
             OBSERVER_WARN(

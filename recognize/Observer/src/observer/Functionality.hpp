@@ -34,6 +34,8 @@ namespace Observer {
         bool IsRunning();
 
        protected:
+        virtual bool CheckCanStart() { return true; }
+
         /**
          * @brief Once Start is called a thread will be created with this
          * method. You need to assure that it will only stop from two ways:

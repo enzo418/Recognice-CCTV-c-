@@ -1,5 +1,7 @@
 #pragma once
 
+#include <future>
+
 #include "DAL/IConfigurationDAO.hpp"
 #include "Server/ServerContext.hpp"
 #include "observer/Implementation.hpp"
@@ -186,38 +188,43 @@ namespace Web::Controller {
             return;
         }
 
-        if (serverCtx->liveViewsManager->CreateCameraView(uri)) {
-            std::string feed_id;
+        (void)std::async(std::launch::async, [&]() {
+            if (serverCtx->liveViewsManager->CreateCameraView(uri)) {
+                std::string feed_id;
+                bool success {false};
 
-            try {
-                feed_id = serverCtx->liveViewsManager->GetFeedId(uri);
-            } catch (const Web::InvalidCameraUriException& e) {
-                res->writeStatus(HTTP_404_NOT_FOUND)
-                    ->writeHeader("Cache-Control", "max-age=10")
-                    ->endProblemJson(
-                        (nlohmann::json {{"title", "Invalid camera uri"}})
-                            .dump());
-                return;
-            } catch (...) {
-                res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-                return;
+                try {
+                    feed_id = serverCtx->liveViewsManager->GetFeedId(uri);
+                    success = true;
+                } catch (const Web::InvalidCameraUriException& e) {
+                    res->writeStatus(HTTP_404_NOT_FOUND)
+                        ->writeHeader("Cache-Control", "max-age=10")
+                        ->endProblemJson(
+                            (nlohmann::json {{"title", "Invalid camera uri"}})
+                                .dump());
+                } catch (...) {
+                    res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+                }
+
+                if (success) {
+                    nlohmann::json response = {{"ws_feed_id", feed_id}};
+
+                    res->endJson(response.dump());
+
+                    OBSERVER_TRACE(
+                        "Opened camera connection in live view '{0}' as '{1}' ",
+                        uri, feed_id);
+                }
+            } else {
+                nlohmann::json error = {
+                    {"title", "Couldn't open a connection with the camera."}};
+
+                res->writeStatus(HTTP_400_BAD_REQUEST)
+                    ->endProblemJson(error.dump());
+                OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'",
+                               uri);
             }
-
-            nlohmann::json response = {{"ws_feed_id", feed_id}};
-
-            res->endJson(response.dump());
-
-            OBSERVER_TRACE(
-                "Opened camera connection in live view '{0}' as '{1}' ", uri,
-                feed_id);
-        } else {
-            nlohmann::json error = {
-                {"title", "Couldn't open a connection with the camera."}};
-
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->endProblemJson(error.dump());
-            OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'", uri);
-        }
+        });
     }
 
 }  // namespace Web::Controller

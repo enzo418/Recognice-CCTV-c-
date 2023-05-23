@@ -19,6 +19,11 @@ namespace Observer {
         OBSERVER_ASSERT(!running,
                         "Logic error on functionality, it's already running");
 
+        if (!CheckCanStart()) {
+            OBSERVER_WARN("Functionality can't start.");
+            return;
+        }
+
         // running = true;
         running.store(true, std::memory_order_release);
         thread = std::thread(&Functionality::InternalStart, this);
