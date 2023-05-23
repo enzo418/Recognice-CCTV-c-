@@ -94,6 +94,8 @@ namespace Observer {
                                const std::string& b) -> std::string {
                                 return a + (a.length() > 0 ? "," : "") + b;
                             }));
+
+                    // notify ?
                 }
             }
         }

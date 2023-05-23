@@ -45,19 +45,22 @@ namespace Observer {
                     }
 
                     if (!config.minObjectCount.contains(result.label)) {
-                        OBSERVER_TRACE("Skipping unwanted object: {}",
-                                       result.label);
+                        OBSERVER_TRACE("Skipping unwanted object: {} ({})",
+                                       result.label, result.confidence);
                         continue;
                     }
 
                     if (result.confidence > config.confidenceThreshold) {
                         objectCount[result.label] += 1;
+                    } else {
+                        OBSERVER_INFO("Skipping low confidence object: {} ({})",
+                                      result.label, result.confidence);
                     }
 
                     if (objectCount[result.label] >
                         config.minObjectCount[result.label]) {
-                        OBSERVER_TRACE("Found enough ({}) {}s",
-                                       objectCount[result.label], result.label);
+                        OBSERVER_INFO("Found enough ({}) {}s",
+                                      objectCount[result.label], result.label);
 
                         client.Stop();
                         valid = true;
@@ -96,6 +99,11 @@ namespace Observer {
         std::string line;
         while (std::getline(file, line)) {
             this->objectCount[line] = 0;
+        }
+
+        if (this->objectCount.empty()) {
+            throw std::runtime_error("Couldn't read any object from " +
+                                     filePath);
         }
     }
 }  // namespace Observer
