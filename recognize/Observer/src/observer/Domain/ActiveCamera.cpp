@@ -12,7 +12,7 @@ namespace Observer {
     }
 
     void ActiveCamera::ProcessFrame(Frame& frame) {
-        frame.Resize(cfg->resizeTo);
+        if (!cfg->resizeTo.empty()) frame.Resize(cfg->resizeTo);
 
         // buffer ready means that both sub-buffer have been filled
         if (this->videoBufferForValidation->AddFrame(frame) ==

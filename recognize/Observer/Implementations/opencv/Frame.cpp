@@ -61,6 +61,14 @@ namespace Observer {
      * @param size
      */
     void Frame::Resize(const Size& size) {
+        /**
+         * NOTE 1 Same resize size as original
+         * ---
+         * Minor performance hit. Opencv won't make a resize, nor a copy.
+         * ref  modules/imgproc/src/resize.cpp#L4092
+         *      modules/core/src/copy.cpp#L375
+         */
+
         cv::Size sz(size.width, size.height);
         cv::resize(m_frame, m_frame, sz);
     }

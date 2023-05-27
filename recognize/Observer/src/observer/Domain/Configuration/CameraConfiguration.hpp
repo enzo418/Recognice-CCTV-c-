@@ -36,7 +36,7 @@ namespace Observer {
 
     struct ProcessingConfiguration {
         // resize all the frames before processing to save cpu/memory
-        Size resize {640, 360};
+        Size resize {0, 0};
 
         // value used to remove noise in the image
         double noiseThreshold = 45;
@@ -61,7 +61,7 @@ namespace Observer {
         // resize each frame received to this size.
         // If the camera send 1280x760 you can resize it to 640x360 or
         // 1920x1080.
-        Size resizeTo {1280, 360};
+        Size resizeTo {0, 0};
 
         // camera max fps to use. Lower fps lowers the CPU usage
         double fps {20};
@@ -72,7 +72,7 @@ namespace Observer {
         // rotation of the camera in degrees
         double rotation {0};
 
-        ECameraType type {ECameraType::VIEW};
+        ECameraType type {ECameraType::NOTIFICATOR};
 
         // minimum amount of pixel that changed to trigger a validator
         int minimumChangeThreshold = 100;
