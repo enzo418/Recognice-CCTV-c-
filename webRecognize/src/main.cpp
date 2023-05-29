@@ -11,9 +11,9 @@
 #include "DAL/NoLiteDB/NotificationRepositoryNLDB.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "DTO/DTONotificationDebugVideo.hpp"
-#include "LiveVideo/LiveViewExceptions.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Server/ServerConfiguration.hpp"
+#include "Streaming/Video/ws/LiveViewExceptions.hpp"
 #include "Utils/Filesystem.hpp"
 #include "VideoBufferTasksManager.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
@@ -28,12 +28,11 @@
 #include "Controller/VideoBufferController.hpp"
 #include "Controller/WebsocketVideoBufferController.hpp"
 #include "DAL/ConfigurationDAO.hpp"
-#include "LiveVideo/CameraLiveVideo.hpp"
-#include "LiveVideo/LiveVideo.hpp"
-#include "LiveVideo/ObserverLiveVideo.hpp"
 #include "Serialization/JsonAvailableConfigurationDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/ServerConfigurationProvider.hpp"
+#include "Streaming/Video/ws/CameraLiveVideo.hpp"
+#include "Streaming/Video/ws/ObserverLiveVideo.hpp"
 #include "Utils/StringUtils.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
@@ -137,8 +136,9 @@ int main() {
         // class that manages all of this, like App or Server. But for now it
         // will stay like this until more features are added and become stable.
 
-        .liveViewsManager = std::make_unique<Web::LiveViewsManager<SSL>>(
-            OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
+        .liveViewsManager =
+            std::make_unique<Web::Streaming::Video::Ws::LiveViewsManager<SSL>>(
+                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
 

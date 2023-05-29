@@ -5,14 +5,20 @@
 #include <string>
 #include <string_view>
 
-#include "../Server/RecognizeContext.hpp"
 #include "CameraLiveVideo.hpp"
-#include "LiveVideo.hpp"
 #include "ObserverLiveVideo.hpp"
+#include "Server/RecognizeContext.hpp"
+#include "SocketData.hpp"
+#include "Streaming/WebsocketService.hpp"
 
-namespace Web {
+namespace Web::Streaming::Video::Ws {
     template <bool SSL>
     class LiveViewsManager {
+       private:
+        typedef typename CameraLiveVideo<SSL>::WebSocketClient Client;
+        typedef StreamWriter<SSL, Client> SourceVideo;
+        typedef WebsocketService<SSL, PerSocketData> Service;
+
        public:
         constexpr static const char* observerUri = "observer";
         constexpr static const char* observerFeedId = "feed_observer";
@@ -22,9 +28,6 @@ namespace Web {
                          int compressionQuality = 90);
 
         ~LiveViewsManager();
-
-       private:
-        typedef typename LiveVideo<SSL>::WebSocketClient Client;
 
        public:
         void AddClient(Client* client);
@@ -71,7 +74,7 @@ namespace Web {
          */
         bool CreateObserverView(const std::string& uri);
 
-        LiveVideo<SSL>* GetLiveView(const std::string& feed_id);
+        SourceVideo* GetLiveView(const std::string& feed_id);
 
         LiveViewStatus GetStatus(const std::string& feed_id);
 
@@ -87,7 +90,13 @@ namespace Web {
 
        private:
         std::map<std::string, std::string> mapUriToFeed;
-        std::map<std::string, LiveVideo<SSL>*> camerasLiveView;
+        std::map<std::string, Service*> services;
+        std::map<std::string, SourceVideo*> camerasLiveView;
+
+        std::mutex mtxServices;
+        std::mutex mtxCamerasLiveView;
+
+        typedef std::lock_guard<std::mutex> LockGuard;
 
        private:
         RecognizeContext* recognizeCtx;
@@ -108,18 +117,25 @@ namespace Web {
         for (auto& [k, v] : camerasLiveView) {
             delete v;
         }
+
+        for (auto& [k, v] : services) {
+            delete v;
+        }
     }
 
     template <bool SSL>
     void LiveViewsManager<SSL>::AddClient(Client* client) {
+        LockGuard guard(mtxServices);
+        LockGuard guard2(mtxCamerasLiveView);
+
         std::string feedId(client->getUserData()->pathSubscribed);
+        auto service = services[feedId];
+        service->AddClient(client);
         auto feed = camerasLiveView[feedId];
-        feed->AddClient(client);
 
         // check if it's running because it ONLY will change its status once the
         // thread is spawned.
-        if (Observer::has_flag(feed->GetStatus(),
-                               Web::LiveViewStatus::STOPPED) &&
+        if (Observer::has_flag(feed->GetStatus(), LiveViewStatus::STOPPED) &&
             !feed->IsRunning()) {
             OBSERVER_TRACE("Starting a live feed: {}", feedId);
             feed->Start();
@@ -128,14 +144,17 @@ namespace Web {
 
     template <bool SSL>
     void LiveViewsManager<SSL>::RemoveClient(Client* client) {
+        LockGuard guard(mtxServices);
+        LockGuard guard2(mtxCamerasLiveView);
+
         std::string feedId(client->getUserData()->pathSubscribed);
         if (Exists(feedId)) {
-            auto feed = camerasLiveView[feedId];
+            auto service = services[feedId];
+            service->RemoveClient(client);
 
-            feed->RemoveClient(client);
-
-            if (feed->GetTotalClients() == 0) {
+            if (service->GetTotalClients() == 0) {
                 OBSERVER_TRACE("Stopping live view since there are no clients");
+                auto feed = camerasLiveView[feedId];
                 feed->Stop();
             }
         }
@@ -151,8 +170,8 @@ namespace Web {
     }
 
     template <bool SSL>
-    LiveVideo<SSL>* LiveViewsManager<SSL>::GetLiveView(
-        const std::string& feedId) {
+    typename LiveViewsManager<SSL>::SourceVideo*
+    LiveViewsManager<SSL>::GetLiveView(const std::string& feedId) {
         return camerasLiveView[feedId];
     }
 
@@ -170,17 +189,21 @@ namespace Web {
 
         std::string feedId = std::to_string(camerasLiveView.size());
 
-        auto camera = new CameraLiveVideo<SSL>(uri, this->compressionQuality);
+        auto service = new Service();
+        auto camera =
+            new CameraLiveVideo<SSL>(uri, this->compressionQuality, service);
 
         bool cameraDidOpen =
             !Observer::has_flag(camera->GetStatus(), LiveViewStatus::ERROR);
 
         if (cameraDidOpen) {
+            services[feedId] = service;
             camerasLiveView[feedId] = camera;
 
             mapUriToFeed[uri] = std::move(feedId);
         } else {
             delete camera;
+            delete service;
         }
 
         return cameraDidOpen;
@@ -192,8 +215,11 @@ namespace Web {
             return false;
         }
 
-        camerasLiveView[observerFeedId] =
-            new ObserverLiveVideo<SSL>(observerFPS, this->compressionQuality);
+        auto service = new Service();
+
+        services[observerFeedId] = service;
+        camerasLiveView[observerFeedId] = new ObserverLiveVideo<SSL>(
+            observerFPS, this->compressionQuality, service);
 
         recognizeCtx->observer->SubscribeToFrames(
             (ObserverLiveVideo<SSL>*)camerasLiveView[observerFeedId]);
@@ -208,4 +234,4 @@ namespace Web {
         const std::string& feed_id) {
         return camerasLiveView[feed_id]->GetStatus();
     }
-}  // namespace Web
+}  // namespace Web::Streaming::Video::Ws

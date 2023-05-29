@@ -5,18 +5,24 @@
 #include <mutex>
 #include <string_view>
 
-#include "LiveVideo.hpp"
 #include "LiveViewExceptions.hpp"
+#include "SocketData.hpp"
+#include "Streaming/Video/StreamWriter.hpp"
 #include "observer/Domain/BufferedSource.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Timer.hpp"
 
-namespace Web {
+namespace Web::Streaming::Video::Ws {
     template <bool SSL>
-    class CameraLiveVideo final : public LiveVideo<SSL> {
+    class CameraLiveVideo final
+        : public StreamWriter<SSL, uWS::WebSocket<SSL, true, PerSocketData>> {
        public:
-        CameraLiveVideo(const std::string& pCameraUri, int quality);
+        typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
+
+       public:
+        CameraLiveVideo(const std::string& pCameraUri, int quality,
+                        IStreamingService<SSL, WebSocketClient>* service);
         virtual ~CameraLiveVideo() {}
 
        public:
@@ -47,13 +53,15 @@ namespace Web {
     };
 
     template <bool SSL>
-    CameraLiveVideo<SSL>::CameraLiveVideo(const std::string& pCameraUri,
-                                          int pQuality)
-        : LiveVideo<SSL>(100, pQuality), cameraUri(pCameraUri) {
+    CameraLiveVideo<SSL>::CameraLiveVideo(
+        const std::string& pCameraUri, int pQuality,
+        IStreamingService<SSL, WebSocketClient>* service)
+        : StreamWriter<SSL, WebSocketClient>(100, pQuality, service),
+          cameraUri(pCameraUri) {
         this->OpenCamera();
 
         if (Observer::has_flag(this->status, Status::OPEN)) {
-            LiveVideo<SSL>::SetFPS(source.GetFPS());
+            StreamWriter<SSL, WebSocketClient>::SetFPS(source.GetFPS());
         }
     }
 
@@ -105,4 +113,4 @@ namespace Web {
         }
     }
 
-}  // namespace Web
+}  // namespace Web::Streaming::Video::Ws

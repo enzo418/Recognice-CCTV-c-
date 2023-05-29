@@ -142,7 +142,8 @@ namespace Web::Controller {
 
     template <bool SSL>
     void ObserverController<SSL>::RequestStream(auto* res, auto* req) {
-        auto uri = Web::LiveViewsManager<SSL>::observerUri;
+        auto uri =
+            Web::Streaming::Video::Ws::LiveViewsManager<SSL>::observerUri;
 
         if (serverCtx->recognizeContext.running &&
             serverCtx->liveViewsManager->CreateObserverView(uri)) {

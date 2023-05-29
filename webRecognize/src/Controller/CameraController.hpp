@@ -51,9 +51,9 @@ namespace Web::Controller {
         app->get("/api/camera/:id/frame",
                  [this](auto* res, auto* req) { this->GetFrame(res, req); });
 
-        app->get("/api/camera/:id/stream", [this](auto* res, auto* req) {
-            this->RequestStream(res, req);
-        });
+        app->get(
+            "/api/camera/:id/request_stream",
+            [this](auto* res, auto* req) { this->RequestStream(res, req); });
     }
 
     template <bool SSL>
@@ -196,7 +196,9 @@ namespace Web::Controller {
                 try {
                     feed_id = serverCtx->liveViewsManager->GetFeedId(uri);
                     success = true;
-                } catch (const Web::InvalidCameraUriException& e) {
+                } catch (
+                    const Web::Streaming::Video::Ws::InvalidCameraUriException&
+                        e) {
                     res->writeStatus(HTTP_404_NOT_FOUND)
                         ->writeHeader("Cache-Control", "max-age=10")
                         ->endProblemJson(

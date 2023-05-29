@@ -1,16 +1,20 @@
 #pragma once
 
-#include "LiveVideo.hpp"
+#include "SocketData.hpp"
+#include "Streaming/Video/StreamWriter.hpp"
+#include "uWebSockets/WebSocket.h"
 
-namespace Web {
+namespace Web::Streaming::Video::Ws {
     template <bool SSL>
-    class ObserverLiveVideo : public LiveVideo<SSL>,
-                              public ISubscriber<Observer::Frame> {
+    class ObserverLiveVideo final
+        : public StreamWriter<SSL, uWS::WebSocket<SSL, true, PerSocketData>>,
+          public ISubscriber<Observer::Frame> {
        public:
         typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
 
        public:
-        ObserverLiveVideo(int fps, int quality);
+        ObserverLiveVideo(int fps, int quality,
+                          IStreamingService<SSL, WebSocketClient>* service);
 
         virtual ~ObserverLiveVideo() {};
 
@@ -21,8 +25,11 @@ namespace Web {
     };
 
     template <bool SSL>
-    ObserverLiveVideo<SSL>::ObserverLiveVideo(int pFps, int pQuality)
-        : LiveVideo<SSL>(pFps, pQuality) {}
+    ObserverLiveVideo<SSL>::ObserverLiveVideo(
+        int pFps, int pQuality,
+        IStreamingService<SSL, WebSocketClient>* service)
+        : StreamWriter<SSL, uWS::WebSocket<SSL, true, PerSocketData>>(
+              pFps, pQuality, service) {}
 
     template <bool SSL>
     void ObserverLiveVideo<SSL>::update(Observer::Frame pFrame) {
@@ -44,4 +51,4 @@ namespace Web {
     void ObserverLiveVideo<SSL>::GetNextFrame() {
         // Do nothing, all frames are received from update calls
     }
-}  // namespace Web
+}  // namespace Web::Streaming::Video::Ws

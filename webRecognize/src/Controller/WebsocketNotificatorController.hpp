@@ -8,9 +8,9 @@
 
 #include "../Domain/Notification.hpp"
 #include "../SocketData.hpp"
-#include "../WebsocketService.hpp"
 #include "DTO/DTONotification.hpp"
 #include "Serialization/JsonSerialization.hpp"
+#include "Streaming/WebsocketService.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/BlockingFIFO.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
@@ -22,7 +22,7 @@ namespace Web {
     template <bool SSL>
     class WebsocketNotificator final
         : public Observer::Functionality,
-          public WebsocketService<SSL, PerSocketData> {
+          public Streaming::WebsocketService<SSL, PerSocketData> {
        public:
         void update(Web::API::DTONotification ev);
 

@@ -4,9 +4,8 @@
 #include <mutex>
 #include <thread>
 
-#include "../../../recognize/Observer/vendor/bitmask_operators.hpp"
-#include "../SocketData.hpp"
-#include "../WebsocketService.hpp"
+#include "Streaming/IStreamingService.hpp"
+#include "Streaming/Video/LiveViewStatus.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
@@ -14,35 +13,28 @@
 #include "observer/Timer.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
 
-namespace Web {
-    enum class LiveViewStatus {
-        OPEN = 1,
-        CLOSED = 2,
-        RUNNING = 4,
-        STOPPED = 8,
-        ERROR = 16
-    };
-}  // namespace Web
-
-// enable_bitmask_operators -- true -> enable our custom bitmask for our
-// enums
-template <>
-struct enable_bitmask_operators<Web::LiveViewStatus> {
-    static constexpr bool enable = true;
-};
-
 constexpr double SECONDS_TO_ZOMBIE = 1 * 30;
 
-namespace Web {
-    template <bool SSL>
-    class LiveVideo : public Observer::Functionality,
-                      public WebsocketService<SSL, PerSocketData> {
+namespace Web::Streaming::Video {
+    /**
+     * @brief This class is responsible for sending the frames to the clients.
+     * Note that it doesn't have any logic to get the frames. It is the
+     * responsibility of the derived class to implement it.
+     * For example you could have a class that gets the frames from a camera,
+     * and another class that generates random frames.
+     *
+     * @tparam SSL
+     * @tparam Client The type of the client.
+     */
+    template <bool SSL, typename Client>
+    class StreamWriter : public Observer::Functionality {
        public:
-        LiveVideo(int fps, int quality);
+        StreamWriter(int fps, int quality,
+                     IStreamingService<SSL, Client>* service);
 
         LiveViewStatus GetStatus();
 
-        virtual ~LiveVideo() = default;
+        virtual ~StreamWriter() = default;
 
         /**
          * @brief If it went live and nobody is using its frame
@@ -84,6 +76,7 @@ namespace Web {
         std::mutex mtxFrame;
         LiveViewStatus status;
         Observer::Timer<std::chrono::seconds> timerZombie;
+        IStreamingService<SSL, Client>* service;
 
        private:
         bool encoded {false};
@@ -95,23 +88,25 @@ namespace Web {
         int id;
     };
 
-    template <bool SSL>
-    LiveVideo<SSL>::LiveVideo(int pFps, int pQuality)
+    template <bool SSL, typename Client>
+    StreamWriter<SSL, Client>::StreamWriter(
+        int pFps, int pQuality, IStreamingService<SSL, Client>* pService)
         : waitMs(1000.0 / (double)pFps),
           quality(pQuality),
-          frame(Observer::Size(640, 360), 3) {
+          frame(Observer::Size(640, 360), 3),
+          service(pService) {
         Observer::set_flag(status, LiveViewStatus::CLOSED);
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
 
-    template <bool SSL>
-    void LiveVideo<SSL>::NewValidFrameReceived() {
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::NewValidFrameReceived() {
         this->imageReady = true;
         this->encoded = false;
     }
 
-    template <bool SSL>
-    void LiveVideo<SSL>::InternalStart() {
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::InternalStart() {
         std::vector<unsigned char> buffer;
         this->PreStart();
 
@@ -126,7 +121,8 @@ namespace Web {
 
             this->mtxFrame.lock();
 
-            if (this->GetTotalClients() > 0) this->timerZombie.Restart();
+            if (this->service->GetTotalClients() > 0)
+                this->timerZombie.Restart();
 
             if (this->IsZombie()) {
                 OBSERVER_TRACE(
@@ -143,7 +139,7 @@ namespace Web {
             }
             this->mtxFrame.unlock();
 
-            this->SendToClients((char*)buffer.data(), buffer.size());
+            this->service->SendToClients((char*)buffer.data(), buffer.size());
 
             std::this_thread::sleep_for(std::chrono::milliseconds((int)waitMs));
         }
@@ -152,29 +148,29 @@ namespace Web {
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
 
-    template <bool SSL>
-    void LiveVideo<SSL>::SetFPS(double fps) {
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::SetFPS(double fps) {
         this->waitMs = 1000.0 / fps;
     }
 
-    template <bool SSL>
-    void LiveVideo<SSL>::SetQuality(int pQuality) {
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::SetQuality(int pQuality) {
         this->quality = pQuality;
     }
 
-    template <bool SSL>
-    void LiveVideo<SSL>::PostStop() {}
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::PostStop() {}
 
-    template <bool SSL>
-    void LiveVideo<SSL>::PreStart() {}
+    template <bool SSL, typename Client>
+    void StreamWriter<SSL, Client>::PreStart() {}
 
-    template <bool SSL>
-    LiveViewStatus LiveVideo<SSL>::GetStatus() {
+    template <bool SSL, typename Client>
+    LiveViewStatus StreamWriter<SSL, Client>::GetStatus() {
         return status;
     }
 
-    template <bool SSL>
-    bool LiveVideo<SSL>::IsZombie() {
+    template <bool SSL, typename Client>
+    bool StreamWriter<SSL, Client>::IsZombie() {
         return this->timerZombie.GetDuration() >= SECONDS_TO_ZOMBIE;
     }
-}  // namespace Web
+}  // namespace Web::Streaming::Video

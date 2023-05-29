@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace Web {
+namespace Web::Streaming::Video::Ws {
     class InvalidCameraUriException : virtual public std::runtime_error {
        public:
         InvalidCameraUriException(const std::string& msg = "")
@@ -26,4 +26,4 @@ namespace Web {
          */
         virtual ~ObserverNotRunningException() throw() {}
     };
-}  // namespace Web
+}  // namespace Web::Streaming::Video::Ws

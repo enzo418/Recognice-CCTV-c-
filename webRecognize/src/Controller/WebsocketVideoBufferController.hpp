@@ -8,9 +8,9 @@
 #include <thread>
 
 #include "../SocketData.hpp"
-#include "../WebsocketService.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Serialization/JsonSerialization.hpp"
+#include "Streaming/WebsocketService.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/BlockingFIFO.hpp"
 #include "observer/Functionality.hpp"
@@ -22,11 +22,9 @@ namespace Web {
     template <bool SSL>
     class WebsocketVideoBufferController final
         : public Observer::Functionality,
-          public WebsocketService<SSL, VideoBufferSocketData>,
+          public Streaming::WebsocketService<SSL, VideoBufferSocketData>,
           public VideoBufferSubscriber {
-        using Client =
-            typename WebsocketService<SSL,
-                                      VideoBufferSocketData>::WebSocketClient*;
+        typedef uWS::WebSocket<SSL, true, VideoBufferSocketData>* Client;
 
        public:
         void update(std::string bufferId, int EventType, std::string data);
@@ -76,7 +74,8 @@ namespace Web {
 
                     this->SendToSomeClients(
                         payload.c_str(), payload.size(),
-                        [&buffID = event.bufferID](Client client) {
+                        [&buffID = event.bufferID](void* _client) {
+                            auto client = (Client)_client;
                             return client->getUserData()->bufferID == buffID;
                         });
                 }

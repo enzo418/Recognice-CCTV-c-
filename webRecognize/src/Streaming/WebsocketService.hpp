@@ -2,38 +2,34 @@
 
 #include <mutex>
 
+#include "IStreamingService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
 #include "uWebSockets/WebSocketProtocol.h"
 
-namespace Web {
+namespace Web::Streaming {
     template <bool SSL, typename SocketData>
-    class WebsocketService {
+    class WebsocketService
+        : public IStreamingService<SSL, uWS::WebSocket<SSL, true, SocketData>> {
        public:
-        typedef typename uWS::WebSocket<SSL, true, SocketData> WebSocketClient;
+        typedef uWS::WebSocket<SSL, true, SocketData> WebSocketClient;
 
        public:
         WebsocketService() = default;
+        virtual ~WebsocketService() = default;
 
-        virtual void AddClient(WebSocketClient* res);
+        virtual void AddClient(WebSocketClient* res) override;
 
-        virtual void RemoveClient(WebSocketClient* res);
+        virtual void RemoveClient(WebSocketClient* res) override;
 
-        int GetTotalClients();
+        int GetTotalClients() override;
 
        protected:
-        virtual void SendToClients(const char* data, int size);
+        virtual void SendToClients(const char* data, int size) override;
 
-        /**
-         * @brief
-         *
-         * @tparam F
-         * @param data
-         * @param size
-         * @param shouldSend std::function<bool(WebSocketClient*)>
-         */
-        template <typename F>
-        void SendToSomeClients(const char* data, int size, F shouldSend);
+        void SendToSomeClients(
+            const char* data, int size,
+            std::function<bool(WebSocketClient*)> shouldSend) override;
 
        private:
         std::vector<WebSocketClient*> clients;
@@ -75,10 +71,9 @@ namespace Web {
     }
 
     template <bool SSL, typename SocketData>
-    template <typename F>
-    void WebsocketService<SSL, SocketData>::SendToSomeClients(const char* data,
-                                                              int size,
-                                                              F shouldSend) {
+    void WebsocketService<SSL, SocketData>::SendToSomeClients(
+        const char* data, int size,
+        std::function<bool(WebSocketClient*)> shouldSend) {
         std::lock_guard<std::mutex> guard_c(this->mtxClients);
 
         if (size == 0) {
@@ -119,4 +114,4 @@ namespace Web {
 
         return clients.size();
     }
-}  // namespace Web
+}  // namespace Web::Streaming

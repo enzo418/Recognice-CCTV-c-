@@ -75,6 +75,10 @@
 # Pattern impl
 !src/Pattern
 
+#Streaming
+!src/Streaming
+!src/Streaming/**/*
+
 !CMakeLists.txt
 
 package-lock.json

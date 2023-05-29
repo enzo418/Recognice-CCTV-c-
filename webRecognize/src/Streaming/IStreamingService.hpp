@@ -1,0 +1,35 @@
+#pragma once
+
+#include <mutex>
+
+#include "observer/Log/log.hpp"
+#include "uWebSockets/App.h"
+
+namespace Web::Streaming {
+    /**
+     * @brief This is the interface for the streaming services.
+     *
+     * @tparam SSL if SSL is enabled
+     * @tparam Client Client type, for example uWS::HttpResponse<SSL>
+     */
+    template <bool SSL, typename Client>
+    class IStreamingService {
+       public:
+        IStreamingService() = default;
+
+        virtual void AddClient(Client* res) = 0;
+
+        virtual void RemoveClient(Client* res) = 0;
+
+        virtual int GetTotalClients() = 0;
+
+        virtual void SendToClients(const char* data, int size) = 0;
+
+        virtual void SendToSomeClients(
+            const char* data, int size,
+            std::function<bool(Client*)> shouldSend) = 0;
+
+       public:
+        virtual ~IStreamingService() = default;
+    };
+}  // namespace Web::Streaming
