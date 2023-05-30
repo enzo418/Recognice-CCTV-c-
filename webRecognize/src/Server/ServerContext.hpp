@@ -4,7 +4,8 @@
 #include <string_view>
 
 #include "RecognizeContext.hpp"
-#include "Streaming/Video/ws/LiveViewsManager.hpp"
+#include "Streaming/http/LiveViewsManager.hpp"
+#include "Streaming/ws/LiveViewsManager.hpp"
 
 namespace Web {
 
@@ -15,7 +16,9 @@ namespace Web {
 
         RecognizeContext recognizeContext;
 
-        std::unique_ptr<Streaming::Video::Ws::LiveViewsManager<SSL>>
-            liveViewsManager;
+        // std::unique_ptr<Streaming::Ws::LiveViewsManager<SSL>>
+        // liveViewsManager;
+        // std::unique_ptr<Streaming::Http::LiveViewsManager<SSL>>
+        //     liveViewsManager;
     };
 }  // namespace Web

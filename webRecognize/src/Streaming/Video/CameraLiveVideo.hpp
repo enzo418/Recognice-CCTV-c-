@@ -12,17 +12,14 @@
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Timer.hpp"
+#include "observer/Utils/SpecialEnums.hpp"
 
-namespace Web::Streaming::Video::Ws {
-    template <bool SSL>
-    class CameraLiveVideo final
-        : public StreamWriter<SSL, uWS::WebSocket<SSL, true, PerSocketData>> {
-       public:
-        typedef uWS::WebSocket<SSL, true, PerSocketData> WebSocketClient;
-
+namespace Web::Streaming::Video {
+    template <bool SSL, typename Client>
+    class CameraLiveVideo final : public StreamWriter<SSL, Client> {
        public:
         CameraLiveVideo(const std::string& pCameraUri, int quality,
-                        IStreamingService<SSL, WebSocketClient>* service);
+                        IStreamingService<SSL, Client>* service);
         virtual ~CameraLiveVideo() {}
 
        public:
@@ -52,21 +49,21 @@ namespace Web::Streaming::Video::Ws {
         typedef LiveViewStatus Status;
     };
 
-    template <bool SSL>
-    CameraLiveVideo<SSL>::CameraLiveVideo(
+    template <bool SSL, typename Client>
+    CameraLiveVideo<SSL, Client>::CameraLiveVideo(
         const std::string& pCameraUri, int pQuality,
-        IStreamingService<SSL, WebSocketClient>* service)
-        : StreamWriter<SSL, WebSocketClient>(100, pQuality, service),
+        IStreamingService<SSL, Client>* service)
+        : StreamWriter<SSL, Client>(100, pQuality, service),
           cameraUri(pCameraUri) {
         this->OpenCamera();
 
         if (Observer::has_flag(this->status, Status::OPEN)) {
-            StreamWriter<SSL, WebSocketClient>::SetFPS(source.GetFPS());
+            StreamWriter<SSL, Client>::SetFPS(source.GetFPS());
         }
     }
 
-    template <bool SSL>
-    void CameraLiveVideo<SSL>::GetNextFrame() {
+    template <bool SSL, typename Client>
+    void CameraLiveVideo<SSL, Client>::GetNextFrame() {
         if (source.IsFrameAvailable()) {
             /**
              * There is no need to lock the frame mutex since it's the only
@@ -78,18 +75,23 @@ namespace Web::Streaming::Video::Ws {
         }
     }
 
-    template <bool SSL>
-    std::string_view CameraLiveVideo<SSL>::GetURI() {
+    template <bool SSL, typename Client>
+    std::string_view CameraLiveVideo<SSL, Client>::GetURI() {
         return this->cameraUri;
     }
 
-    template <bool SSL>
-    void CameraLiveVideo<SSL>::PostStop() {
+    template <bool SSL, typename Client>
+    void CameraLiveVideo<SSL, Client>::PostStop() {
+        StreamWriter<SSL, Client>::PostStop();
         source.Close();
+        Observer::clear_flag(this->status, Status::OPEN);
+        this->status |= Status::CLOSED;
     }
 
-    template <bool SSL>
-    void CameraLiveVideo<SSL>::PreStart() {
+    template <bool SSL, typename Client>
+    void CameraLiveVideo<SSL, Client>::PreStart() {
+        StreamWriter<SSL, Client>::PreStart();
+
         if (!Observer::has_flag(this->status, Status::OPEN) ||
             Observer::has_flag(this->status, Status::STOPPED)) {
             OBSERVER_TRACE("Opening camera source: {}", cameraUri);
@@ -101,8 +103,8 @@ namespace Web::Streaming::Video::Ws {
         this->source.Start();
     }
 
-    template <bool SSL>
-    void CameraLiveVideo<SSL>::OpenCamera() {
+    template <bool SSL, typename Client>
+    void CameraLiveVideo<SSL, Client>::OpenCamera() {
         if (source.TryOpen(cameraUri)) {
             Observer::clear_flag(this->status, Status::CLOSED);
             Observer::clear_flag(this->status, Status::ERROR);
@@ -113,4 +115,4 @@ namespace Web::Streaming::Video::Ws {
         }
     }
 
-}  // namespace Web::Streaming::Video::Ws
+}  // namespace Web::Streaming::Video

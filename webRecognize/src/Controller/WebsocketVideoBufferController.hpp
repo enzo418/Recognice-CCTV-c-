@@ -10,7 +10,7 @@
 #include "../SocketData.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Serialization/JsonSerialization.hpp"
-#include "Streaming/WebsocketService.hpp"
+#include "Streaming/ws/WebsocketService.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/BlockingFIFO.hpp"
 #include "observer/Functionality.hpp"
@@ -22,7 +22,7 @@ namespace Web {
     template <bool SSL>
     class WebsocketVideoBufferController final
         : public Observer::Functionality,
-          public Streaming::WebsocketService<SSL, VideoBufferSocketData>,
+          public Streaming::Ws::WebsocketService<SSL, VideoBufferSocketData>,
           public VideoBufferSubscriber {
         typedef uWS::WebSocket<SSL, true, VideoBufferSocketData>* Client;
 

@@ -2,12 +2,12 @@
 
 #include <mutex>
 
-#include "IStreamingService.hpp"
+#include "Streaming/IStreamingService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
 #include "uWebSockets/WebSocketProtocol.h"
 
-namespace Web::Streaming {
+namespace Web::Streaming::Ws {
     template <bool SSL, typename SocketData>
     class WebsocketService
         : public IStreamingService<SSL, uWS::WebSocket<SSL, true, SocketData>> {
@@ -114,4 +114,4 @@ namespace Web::Streaming {
 
         return clients.size();
     }
-}  // namespace Web::Streaming
+}  // namespace Web::Streaming::Ws

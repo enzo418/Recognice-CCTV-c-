@@ -5,6 +5,7 @@
 #include "Constans.hpp"
 #include "Controller/CameraController.hpp"
 #include "Controller/LiveViewController.hpp"
+#include "Controller/StreamingController.hpp"
 #include "CronJobScheduler.hpp"
 #include "DAL/File/ServerConfigurationPersistanceFile.hpp"
 #include "DAL/INotificationRepository.hpp"
@@ -13,7 +14,7 @@
 #include "DTO/DTONotificationDebugVideo.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Server/ServerConfiguration.hpp"
-#include "Streaming/Video/ws/LiveViewExceptions.hpp"
+#include "Streaming/Video/LiveViewExceptions.hpp"
 #include "Utils/Filesystem.hpp"
 #include "VideoBufferTasksManager.hpp"
 #include "nldb/LOG/managers/log_constants.hpp"
@@ -31,8 +32,6 @@
 #include "Serialization/JsonAvailableConfigurationDTO.hpp"
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/ServerConfigurationProvider.hpp"
-#include "Streaming/Video/ws/CameraLiveVideo.hpp"
-#include "Streaming/Video/ws/ObserverLiveVideo.hpp"
 #include "Utils/StringUtils.hpp"
 #include "Utils/VideoBuffer.hpp"
 #include "nldb/backends/sqlite3/DB/DB.hpp"
@@ -136,9 +135,10 @@ int main() {
         // class that manages all of this, like App or Server. But for now it
         // will stay like this until more features are added and become stable.
 
-        .liveViewsManager =
-            std::make_unique<Web::Streaming::Video::Ws::LiveViewsManager<SSL>>(
-                OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)};
+        // .liveViewsManager =
+        //     std::make_unique<Web::Streaming::Video::Ws::LiveViewsManager<SSL>>(
+        //         OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)
+    };
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
 
@@ -186,6 +186,10 @@ int main() {
     Web::Controller::CameraController<SSL> cameraController(
         &app, &configurationDAOCache, &serverCtx);
 
+    /* ---------------------- STREAMING --------------------- */
+    Web::Controller::StreamingController<SSL> streamingController(
+        &app, &configurationDAOCache, &serverCtx.recognizeContext);
+
     /* ----------------- START FUNCTIONALITY ---------------- */
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
 
@@ -196,8 +200,8 @@ int main() {
     threads.push_back(&bufferWebSocket);
 
     /* ---------------------- LIVE VIEW --------------------- */
-    Web::Controller::LiveViewController<SSL> liveViewController(&app,
-                                                                &serverCtx);
+    // Web::Controller::LiveViewController<SSL> liveViewController(&app,
+    //                                                             &serverCtx);
 
     /* ------------------- CREATE OBSERVER ------------------ */
     // this might throw

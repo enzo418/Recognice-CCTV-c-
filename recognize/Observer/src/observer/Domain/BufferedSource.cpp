@@ -23,6 +23,10 @@ namespace Observer {
         if (source.isOpened()) {
             source.Close();
         }
+
+        while (!queue.size()) {
+            queue.pop();
+        }
     }
 
     double BufferedSource::GetFPS() { return source.GetFPS(); }

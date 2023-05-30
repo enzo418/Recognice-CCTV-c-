@@ -130,16 +130,24 @@ namespace Web::Streaming::Video {
                     "seconds",
                     SECONDS_TO_ZOMBIE);
 
-                this->Stop();
+                this->mtxFrame.unlock();
+                this->running = false;
+                this->PostStop();
+                return;
             }
 
             if (!this->encoded && this->imageReady && !this->frame.IsEmpty()) {
                 this->frame.EncodeImage(".jpg", this->quality, buffer);
                 this->encoded = true;
-            }
-            this->mtxFrame.unlock();
+                this->imageReady = false;
 
-            this->service->SendToClients((char*)buffer.data(), buffer.size());
+                this->mtxFrame.unlock();
+
+                this->service->SendToClients((char*)buffer.data(),
+                                             buffer.size());
+            } else {
+                this->mtxFrame.unlock();
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds((int)waitMs));
         }
@@ -159,10 +167,15 @@ namespace Web::Streaming::Video {
     }
 
     template <bool SSL, typename Client>
-    void StreamWriter<SSL, Client>::PostStop() {}
+    void StreamWriter<SSL, Client>::PostStop() {
+        Observer::clear_flag(this->status, LiveViewStatus::RUNNING);
+        this->status |= LiveViewStatus::STOPPED;
+    }
 
     template <bool SSL, typename Client>
-    void StreamWriter<SSL, Client>::PreStart() {}
+    void StreamWriter<SSL, Client>::PreStart() {
+        Observer::clear_flag(this->status, LiveViewStatus::STOPPED);
+    }
 
     template <bool SSL, typename Client>
     LiveViewStatus StreamWriter<SSL, Client>::GetStatus() {

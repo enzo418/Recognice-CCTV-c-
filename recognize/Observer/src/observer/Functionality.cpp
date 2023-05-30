@@ -24,12 +24,21 @@ namespace Observer {
             return;
         }
 
+        if (thread.joinable()) {  // clean state
+            thread.join();
+        }
+
         // running = true;
         running.store(true, std::memory_order_release);
         thread = std::thread(&Functionality::InternalStart, this);
     }
 
     void Functionality::Stop() {
+        OBSERVER_ASSERT(std::this_thread::get_id() != thread.get_id(),
+                        "Deadlock detected.");
+
+        if (!running) return;
+
         running = false;
 
         if (thread.joinable()) {

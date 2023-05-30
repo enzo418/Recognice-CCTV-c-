@@ -5,19 +5,22 @@
 #include <string>
 #include <string_view>
 
-#include "CameraLiveVideo.hpp"
-#include "ObserverLiveVideo.hpp"
 #include "Server/RecognizeContext.hpp"
 #include "SocketData.hpp"
-#include "Streaming/WebsocketService.hpp"
+#include "Streaming/Video/CameraLiveVideo.hpp"
+#include "Streaming/Video/ObserverLiveVideo.hpp"
+#include "Streaming/http/HttpStreamingService.hpp"
+#include "Streaming/ws/WebsocketService.hpp"
 
-namespace Web::Streaming::Video::Ws {
+namespace Web::Streaming::Http {
+    using namespace Web::Streaming::Video;
+
     template <bool SSL>
-    class LiveViewsManager {
+    class LiveViewsManager final {
        private:
-        typedef typename CameraLiveVideo<SSL>::WebSocketClient Client;
+        typedef typename uWS::HttpResponse<SSL> Client;
         typedef StreamWriter<SSL, Client> SourceVideo;
-        typedef WebsocketService<SSL, PerSocketData> Service;
+        typedef HttpStreamingService<SSL> Service;
 
        public:
         constexpr static const char* observerUri = "observer";
@@ -30,31 +33,24 @@ namespace Web::Streaming::Video::Ws {
         ~LiveViewsManager();
 
        public:
-        void AddClient(Client* client);
-        void RemoveClient(Client* client);
-
-       public:
         /**
-         * @brief Check if a feed id exists, if exists also check wether it's
-         * initialized or not.
+         * @brief Streams a source video to a client.
          *
-         * @param feedID
-         * @return true
-         * @return false
+         * @param uri url, uri, file path or reachable stream.
+         * @param client http client
+         * @return true if success
          */
-        bool Exists(const std::string& feedID);
+        bool Stream(const std::string& uri, Client* client);
 
         /**
-         * @brief Get the live feed id for a camera uri, or observer if uri ==
-         * `observerUri`
+         * @brief Streams the observer output to a client.
          *
-         * @param uri
-         * @throw ObserverNotRunningException in case recognizer is not running
-         * @throw InvalidCameraUriException if camera uri is not valid
-         * @return std::string_view feed id to request a ws connection
+         * @param client
+         * @return true if success
          */
-        std::string_view GetFeedId(const std::string& uri);
+        bool StreamObserver(Client* client);
 
+       private:
         /**
          * @brief Create a camera view. Returns true if success.
          *
@@ -74,19 +70,7 @@ namespace Web::Streaming::Video::Ws {
          */
         bool CreateObserverView(const std::string& uri);
 
-        SourceVideo* GetLiveView(const std::string& feed_id);
-
         LiveViewStatus GetStatus(const std::string& feed_id);
-
-       private:
-        /**
-         * @brief Creates a new feed if there is no one for `uri`. Else return
-         * the feedid
-         *
-         * @param uri
-         * @return std::string_view feed id
-         */
-        std::string_view CreateOrReturnFeed(const std::string& uri);
 
        private:
         std::map<std::string, std::string> mapUriToFeed;
@@ -124,11 +108,18 @@ namespace Web::Streaming::Video::Ws {
     }
 
     template <bool SSL>
-    void LiveViewsManager<SSL>::AddClient(Client* client) {
+    bool LiveViewsManager<SSL>::Stream(const std::string& uri, Client* client) {
         LockGuard guard(mtxServices);
         LockGuard guard2(mtxCamerasLiveView);
 
-        std::string feedId(client->getUserData()->pathSubscribed);
+        if (mapUriToFeed.find(uri) == mapUriToFeed.end()) {
+            if (!CreateCameraView(uri)) {
+                return false;
+            }
+        }
+
+        std::string feedId = mapUriToFeed[uri];
+
         auto service = services[feedId];
         service->AddClient(client);
         auto feed = camerasLiveView[feedId];
@@ -140,45 +131,40 @@ namespace Web::Streaming::Video::Ws {
             OBSERVER_TRACE("Starting a live feed: {}", feedId);
             feed->Start();
         }
+
+        return true;
     }
 
     template <bool SSL>
-    void LiveViewsManager<SSL>::RemoveClient(Client* client) {
+    bool LiveViewsManager<SSL>::StreamObserver(Client* client) {
         LockGuard guard(mtxServices);
         LockGuard guard2(mtxCamerasLiveView);
 
-        std::string feedId(client->getUserData()->pathSubscribed);
-        if (Exists(feedId)) {
-            auto service = services[feedId];
-            service->RemoveClient(client);
+        if (!recognizeCtx->observer) {
+            return false;
+        }
 
-            if (service->GetTotalClients() == 0) {
-                OBSERVER_TRACE("Stopping live view since there are no clients");
-                auto feed = camerasLiveView[feedId];
-                feed->Stop();
+        if (mapUriToFeed.find(observerUri) == mapUriToFeed.end()) {
+            if (!CreateObserverView(observerUri)) {
+                return false;
             }
         }
-    }
 
-    template <bool SSL>
-    std::string_view LiveViewsManager<SSL>::GetFeedId(const std::string& uri) {
-        if (!mapUriToFeed.contains(uri)) {
-            return {"", 0};
+        std::string feedId = mapUriToFeed[observerUri];
+
+        auto service = services[feedId];
+        service->AddClient(client);
+        auto feed = camerasLiveView[feedId];
+
+        // check if it's running because it ONLY will change its status once the
+        // thread is spawned.
+        if (Observer::has_flag(feed->GetStatus(), LiveViewStatus::STOPPED) &&
+            !feed->IsRunning()) {
+            OBSERVER_TRACE("Starting a live feed: {}", feedId);
+            feed->Start();
         }
 
-        return std::string_view(mapUriToFeed[uri]);
-    }
-
-    template <bool SSL>
-    typename LiveViewsManager<SSL>::SourceVideo*
-    LiveViewsManager<SSL>::GetLiveView(const std::string& feedId) {
-        return camerasLiveView[feedId];
-    }
-
-    template <bool SSL>
-    bool LiveViewsManager<SSL>::Exists(const std::string& feedID) {
-        // map has that key and unique pointer is not empty
-        return camerasLiveView.contains(feedID);
+        return true;
     }
 
     template <bool SSL>
@@ -190,8 +176,8 @@ namespace Web::Streaming::Video::Ws {
         std::string feedId = std::to_string(camerasLiveView.size());
 
         auto service = new Service();
-        auto camera =
-            new CameraLiveVideo<SSL>(uri, this->compressionQuality, service);
+        auto camera = new CameraLiveVideo<SSL, Client>(
+            uri, this->compressionQuality, service);
 
         bool cameraDidOpen =
             !Observer::has_flag(camera->GetStatus(), LiveViewStatus::ERROR);
@@ -218,11 +204,13 @@ namespace Web::Streaming::Video::Ws {
         auto service = new Service();
 
         services[observerFeedId] = service;
-        camerasLiveView[observerFeedId] = new ObserverLiveVideo<SSL>(
-            observerFPS, this->compressionQuality, service);
+        camerasLiveView[observerFeedId] =
+            new Video::Ws::ObserverLiveVideo<SSL, Client>(
+                observerFPS, this->compressionQuality, service);
 
         recognizeCtx->observer->SubscribeToFrames(
-            (ObserverLiveVideo<SSL>*)camerasLiveView[observerFeedId]);
+            (Video::Ws::ObserverLiveVideo<SSL, Client>*)
+                camerasLiveView[observerFeedId]);
 
         mapUriToFeed[uri] = observerFeedId;
 
@@ -234,4 +222,4 @@ namespace Web::Streaming::Video::Ws {
         const std::string& feed_id) {
         return camerasLiveView[feed_id]->GetStatus();
     }
-}  // namespace Web::Streaming::Video::Ws
+}  // namespace Web::Streaming::Http

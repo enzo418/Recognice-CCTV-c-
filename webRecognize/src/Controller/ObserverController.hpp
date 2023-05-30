@@ -54,9 +54,9 @@ namespace Web::Controller {
         app->get("/api/observer/status",
                  [this](auto* res, auto* req) { this->Status(res, req); });
 
-        app->get("/api/observer/stream", [this](auto* res, auto* req) {
-            this->RequestStream(res, req);
-        });
+        // app->get("/api/observer/stream", [this](auto* res, auto* req) {
+        //     this->RequestStream(res, req);
+        // });
     }
 
     template <bool SSL>
@@ -140,23 +140,22 @@ namespace Web::Controller {
                      .dump());
     }
 
-    template <bool SSL>
-    void ObserverController<SSL>::RequestStream(auto* res, auto* req) {
-        auto uri =
-            Web::Streaming::Video::Ws::LiveViewsManager<SSL>::observerUri;
+    // template <bool SSL>
+    // void ObserverController<SSL>::RequestStream(auto* res, auto* req) {
+    //     auto uri = "observer";
 
-        if (serverCtx->recognizeContext.running &&
-            serverCtx->liveViewsManager->CreateObserverView(uri)) {
-            std::string feed_id(serverCtx->liveViewsManager->GetFeedId(uri));
+    //     if (serverCtx->recognizeContext.running &&
+    //         serverCtx->liveViewsManager->CreateObserverView(uri)) {
+    //         std::string feed_id(serverCtx->liveViewsManager->GetFeedId(uri));
 
-            nlohmann::json response = {{"ws_feed_id", feed_id}};
+    //         nlohmann::json response = {{"ws_feed_id", feed_id}};
 
-            res->endJson(response.dump());
-        } else {
-            nlohmann::json error = {{"title", "Observer is not running."}};
+    //         res->endJson(response.dump());
+    //     } else {
+    //         nlohmann::json error = {{"title", "Observer is not running."}};
 
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->endProblemJson(error.dump());
-        }
-    }
+    //         res->writeStatus(HTTP_400_BAD_REQUEST)
+    //             ->endProblemJson(error.dump());
+    //     }
+    // }
 }  // namespace Web::Controller
