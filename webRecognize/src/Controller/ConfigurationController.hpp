@@ -17,6 +17,7 @@ namespace Web::Controller {
         void DeleteCameraConfiguration(auto* res, auto* req);
         void GetConfigurationField(auto* res, auto* req);
         void UpdateConfigurationField(auto* res, auto* req);
+        void ExportConfiguration(auto* res, auto* req);
 
        private:
         Web::DAL::IConfigurationDAO* configurationDAO;
@@ -60,6 +61,11 @@ namespace Web::Controller {
         // update a configuration field
         app->post("/api/configuration/:id", [this](auto* res, auto* req) {
             this->UpdateConfigurationField(res, req);
+        });
+
+        // export a configuration
+        app->get("/api/configuration/:id/export", [this](auto* res, auto* req) {
+            this->ExportConfiguration(res, req);
         });
     }
 
@@ -465,5 +471,23 @@ namespace Web::Controller {
                 res->end("field updated");
             }
         });
+    }
+
+    template <bool SSL>
+    void ConfigurationController<SSL>::ExportConfiguration(auto* res,
+                                                           auto* req) {
+        auto id = std::string(req->getParameter(0));
+
+        try {
+            nldb::json config = configurationDAO->GetConfiguration(id);
+
+            res->writeHeader("Content-Type", "application/json")
+                ->end(config.dump());
+        } catch (const std::exception& e) {
+            nlohmann::json response = {{"title", "configuration not found"}};
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+        }
     }
 }  // namespace Web::Controller
