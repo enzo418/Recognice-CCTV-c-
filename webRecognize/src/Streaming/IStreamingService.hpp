@@ -8,6 +8,8 @@
 namespace Web::Streaming {
     /**
      * @brief This is the interface for the streaming services.
+     * Implementations of this interface know how to communicate with the
+     * client.
      *
      * @tparam SSL if SSL is enabled
      * @tparam Client Client type, for example uWS::HttpResponse<SSL>

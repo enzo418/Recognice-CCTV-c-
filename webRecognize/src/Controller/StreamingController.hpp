@@ -14,6 +14,12 @@ namespace Web::Controller {
                             Web::DAL::IConfigurationDAO* configurationDAO,
                             RecognizeContext* context);
 
+        /**
+         * @brief Called when observer was stopped.
+         *
+         */
+        void OnObserverStopped();
+
        private:
         void StreamCamera(auto* res, auto* req);
         void StreamSource(auto* res, auto* req);
@@ -41,6 +47,11 @@ namespace Web::Controller {
         app->get("/api/stream/observer", [this](auto* res, auto* req) {
             this->StreamObserver(res, req);
         });
+    }
+
+    template <bool SSL>
+    void StreamingController<SSL>::OnObserverStopped() {
+        streamingServices.OnObserverStopped();
     }
 
     template <bool SSL>
@@ -84,5 +95,4 @@ namespace Web::Controller {
             return;
         }
     }
-
 }  // namespace Web::Controller

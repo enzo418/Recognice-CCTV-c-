@@ -239,13 +239,18 @@ int main() {
         observerCtx.running = true;
     };
 
-    const auto stopRecognize = [&observerCtx = serverCtx.recognizeContext]() {
+    const auto stopRecognize = [&streamingController,
+                                &observerCtx = serverCtx.recognizeContext]() {
         if (observerCtx.observer && observerCtx.running) {
             observerCtx.observer->Stop();
         }
 
         observerCtx.running = false;
         observerCtx.observer = nullptr;
+
+        streamingController.OnObserverStopped();
+
+        OBSERVER_INFO("Observer stopped");
     };
 
     Web::Controller::ObserverController<SSL> observerController(

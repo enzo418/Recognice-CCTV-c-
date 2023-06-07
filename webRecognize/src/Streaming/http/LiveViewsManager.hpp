@@ -50,6 +50,12 @@ namespace Web::Streaming::Http {
          */
         bool StreamObserver(Client* client);
 
+        /**
+         * @brief Called when observer was stopped.
+         * This will reset some internal data.
+         */
+        void OnObserverStopped();
+
        private:
         /**
          * @brief Create a camera view. Returns true if success.
@@ -201,12 +207,24 @@ namespace Web::Streaming::Http {
             return false;
         }
 
-        auto service = new Service();
+        Service* service;
 
-        services[observerFeedId] = service;
-        camerasLiveView[observerFeedId] =
-            new Video::Ws::ObserverLiveVideo<SSL, Client>(
-                observerFPS, this->compressionQuality, service);
+        // NOTE: Once observer was stopped, it will be removed from uri map but
+        // the services, both client specific implementation and the observer
+        // frame subscriber, will remain there.
+
+        if (services.find(observerFeedId) == services.end()) {
+            service = new Service();
+            services[observerFeedId] = service;
+        } else {
+            service = services[observerFeedId];
+        }
+
+        if (camerasLiveView.find(observerFeedId) == camerasLiveView.end()) {
+            camerasLiveView[observerFeedId] =
+                new Video::Ws::ObserverLiveVideo<SSL, Client>(
+                    observerFPS, this->compressionQuality, service);
+        }
 
         recognizeCtx->observer->SubscribeToFrames(
             (Video::Ws::ObserverLiveVideo<SSL, Client>*)
@@ -221,5 +239,12 @@ namespace Web::Streaming::Http {
     LiveViewStatus LiveViewsManager<SSL>::GetStatus(
         const std::string& feed_id) {
         return camerasLiveView[feed_id]->GetStatus();
+    }
+
+    template <bool SSL>
+    void LiveViewsManager<SSL>::OnObserverStopped() {
+        mapUriToFeed.erase(observerUri);
+
+        OBSERVER_INFO("Observer live view was stopped and cleaned up.");
     }
 }  // namespace Web::Streaming::Http
