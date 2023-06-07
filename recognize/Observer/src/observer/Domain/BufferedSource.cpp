@@ -24,7 +24,7 @@ namespace Observer {
             source.Close();
         }
 
-        while (!queue.size()) {
+        while (queue.size()) {
             queue.pop();
         }
     }
