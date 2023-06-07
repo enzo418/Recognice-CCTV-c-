@@ -41,11 +41,6 @@ namespace Web::Controller {
         app->get("/api/stream/observer", [this](auto* res, auto* req) {
             this->StreamObserver(res, req);
         });
-
-        // app->get("/api/stream/config/detection", [this](auto* res, auto* req)
-        // {
-        //     this->StreamDetectionConfiguration(res, req);
-        // });
     }
 
     template <bool SSL>
