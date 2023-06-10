@@ -11,7 +11,6 @@
 #include <thread>
 #include <vector>
 
-#include "ActiveCamera.hpp"
 #include "CameraObserver.hpp"
 #include "CamerasFramesBlender.hpp"
 #include "Configuration/CameraConfiguration.hpp"
@@ -32,7 +31,10 @@ namespace Observer {
         /* ---------------------------- CAMERAS --------------------------- */
         bool StopCamera(const std::string& name);
         void StopAllCameras();
-        bool SnoozeCamera(const std::string& name, int seconds);
+
+        bool TemporarilyChangeCameraType(
+            const std::string& name, int seconds,
+            ECameraType type = ECameraType::DISABLED);
 
         bool StartCamera(const std::string& name);
         void StartAllCameras(bool useNotifications);
@@ -61,8 +63,8 @@ namespace Observer {
                                           Priority priority);
 
         /**
-         * @brief Subscribe to be notified when all cameras, processors, etc. are
-         * started.
+         * @brief Subscribe to be notified when all cameras, processors, etc.
+         * are started.
          *
          * @param F callback
          */
@@ -75,8 +77,7 @@ namespace Observer {
        private:
         std::function<void()> onStartFinished;
 
-        
-        private: // INTERNAL TASKS
+       private:  // INTERNAL TASKS
         void TaskRunner();
         void TaskCheckCameraSnooze();
 

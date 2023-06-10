@@ -3,19 +3,17 @@
 #include <stdexcept>
 
 namespace Observer {
-
-    FrameProcessor::FrameProcessor(const ProcessingConfiguration& cfg,
-                                   double rotation)
-        : lastFrame(cfg.resize, 3) {
+    void FrameProcessor::Setup(Size pCameraFeedSize,
+                               const ProcessingConfiguration& cfg,
+                               double rotation) {
+        this->lastFrame = Frame(cfg.resize, 3);
         this->roi = cfg.roi;
         this->noiseThreshold = cfg.noiseThreshold;
-        this->rotation = rotation;
         this->firstCall = true;
         this->resizeSize = cfg.resize;
         this->masks = cfg.masks;
-    }
+        this->rotation = rotation;
 
-    void FrameProcessor::Setup(Size pCameraFeedSize) {
         this->cameraFeedSize = pCameraFeedSize;
 
         // if no resize was given use the camera resolution

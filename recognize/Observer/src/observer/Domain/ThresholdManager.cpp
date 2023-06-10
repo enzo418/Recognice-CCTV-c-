@@ -1,16 +1,12 @@
 #include "ThresholdManager.hpp"
 
+#include "observer/Log/log.hpp"
+
 namespace Observer {
-    ThresholdManager::ThresholdManager(double pMinimumValue,
-                                       double pUpdateFrequency,
-                                       double pIncreaseFactor) {
+    ThresholdManager::ThresholdManager() {
         this->thresholdAccumulator = 0;
         this->thresholdSamples = 0;
         this->threshold = std::numeric_limits<double>::max();
-
-        this->minimumValue = pMinimumValue;
-        this->updateFrequency = pUpdateFrequency;
-        this->increaseFactor = pIncreaseFactor;
     }
 
     ThresholdManager& ThresholdManager::Add(double pThreshold) & {
@@ -37,5 +33,16 @@ namespace Observer {
     }
 
     double ThresholdManager::GetAverage() { return this->threshold; }
+
+    void ThresholdManager::Setup(double pMinimumValue, double pUpdateFrequency,
+                                 double pIncreaseFactor) {
+        this->thresholdAccumulator = 0;
+        this->thresholdSamples = 0;
+        this->threshold = std::numeric_limits<double>::max();
+
+        this->minimumValue = pMinimumValue;
+        this->updateFrequency = pUpdateFrequency;
+        this->increaseFactor = pIncreaseFactor;
+    }
 
 }  // namespace Observer

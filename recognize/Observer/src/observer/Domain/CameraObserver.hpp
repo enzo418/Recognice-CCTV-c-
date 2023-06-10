@@ -33,8 +33,7 @@
 
 namespace Observer {
     /**
-     * @brief Observes a camera and publish events
-     * when movement is detected
+     * @brief Consumes frames from a video source and notifies subscribers.
      */
     class CameraObserver : public Functionality {
        public:
@@ -43,14 +42,17 @@ namespace Observer {
          **/
         explicit CameraObserver(CameraConfiguration* configuration);
 
+        /* ----------------------- Events ----------------------- */
         void SubscribeToFramesUpdate(IFrameSubscriber* subscriber);
 
-        virtual void SubscribeToCameraEvents(
-            ICameraEventSubscriber* subscriber) = 0;
+        void SubscribeToCameraEvents(ICameraEventSubscriber* subscriber);
 
-        virtual void SubscribeToThresholdUpdate(
-            IThresholdEventSubscriber* subscriber) = 0;
+        void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
+        /* ----------------------- Setters ---------------------- */
+        void SetType(ECameraType type);
+
+        /* ----------------------- Getters ---------------------- */
         /**
          * @brief Get the calculated FPS. This values is the minimum between the
          * the configurations fps and the source (camera) fps.
@@ -64,13 +66,21 @@ namespace Observer {
         std::string GetName();
 
        protected:
-        virtual void ProcessFrame(Frame& frame) = 0;
+        void ProcessFrame(Frame& frame);
 
-        virtual void SetupDependencies() = 0;
+        void SetupDependencies();
 
+        void ChangeDetected();
+
+        void NewVideoBuffer();
+
+       protected:
         void InternalStart() override final;
 
        protected:
+        // camera type - can change during runtime.
+        ECameraType type;
+
         // camera configuration
         CameraConfiguration* cfg;
 
@@ -84,5 +94,42 @@ namespace Observer {
 
         // final calculated fps
         int fps {0};
+
+       private:  // EVENTS
+        /* Proxy allows us to give our subscribers not only the threshold,
+         * but also the camera that updated the threshold.
+         */
+        class ThresholdEventPublisher : public ISubscriber<double> {
+           public:
+            explicit ThresholdEventPublisher(CameraConfiguration* pCfg)
+                : cfg(pCfg) {}
+
+            void subscribe(IThresholdEventSubscriber* subscriber) {
+                this->thresholdPublisher.subscribe(subscriber);
+            }
+
+            void update(double thresh) override {
+                this->thresholdPublisher.notifySubscribers(this->cfg, thresh);
+            }
+
+           private:
+            CameraConfiguration* cfg;
+            Publisher<CameraConfiguration*, double> thresholdPublisher;
+        };
+
+        // current change threshold
+        double changeThreshold;
+
+        FrameProcessor frameProcessor;
+
+        std::unique_ptr<VideoBuffer> videoBufferForValidation;
+
+        Publisher<CameraConfiguration*, std::shared_ptr<CameraEvent>>
+            cameraEventsPublisher;
+
+        ThresholdManager thresholdManager;
+
+        // threshold publisher
+        ThresholdEventPublisher thresholdPublisher;
     };
 }  // namespace Observer

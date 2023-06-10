@@ -1,4 +1,5 @@
 #include "ObserverCentral.hpp"
+
 #include <algorithm>
 
 #include "Configuration/CameraConfiguration.hpp"
@@ -83,28 +84,28 @@ namespace Observer {
     }
 
     bool ObserverCentral::StopCamera(const std::string& name) {
-        for(auto&& camera : this->cameras) {
+        for (auto&& camera : this->cameras) {
             if (camera.camera->GetName() == name) {
-                if (camera.camera->IsRunning()){
+                if (camera.camera->IsRunning()) {
                     this->internalStopCamera(camera);
                 }
-                
+
                 return true;
             }
         }
-        
+
         OBSERVER_WARN("Couldn't stop '{}', not found.", name);
-        
+
         return false;
     }
 
     bool ObserverCentral::StartCamera(const std::string& name) {
-        for(auto&& camera : this->cameras) {
+        for (auto&& camera : this->cameras) {
             if (camera.camera->GetName() == name) {
-                if (!camera.camera->IsRunning()){
+                if (!camera.camera->IsRunning()) {
                     this->internalStartCamera(camera);
                 }
-                
+
                 return true;
             }
         }
@@ -114,22 +115,24 @@ namespace Observer {
         return false;
     }
 
-    bool ObserverCentral::SnoozeCamera(const std::string& name, int seconds) {
-        for(auto&& camera : this->cameras) {
+    bool ObserverCentral::TemporarilyChangeCameraType(const std::string& name,
+                                                      int seconds,
+                                                      ECameraType type) {
+        for (auto&& camera : this->cameras) {
             if (camera.camera->GetName() == name) {
-                if (camera.camera->IsRunning()){
+                if (camera.camera->IsRunning()) {
                     camera.snooze.timer.Start();
                     camera.snooze.seconds = seconds;
-                    this->internalStopCamera(camera);
+                    // this->internalStopCamera(camera);
+                    camera.camera->SetType(type);
                 }
-                
+
                 return true;
             }
         }
 
-
         OBSERVER_WARN("Couldn't snooze '{}', not found.", name);
-        
+
         return false;
     }
 
@@ -269,8 +272,7 @@ namespace Observer {
 
     void ObserverCentral::TaskCheckCameraSnooze() {
         for (auto&& camera : this->cameras) {
-            if (camera.snooze.timer.GetDuration() >
-                camera.snooze.seconds) {
+            if (camera.snooze.timer.GetDuration() > camera.snooze.seconds) {
                 this->internalStartCamera(camera);
             }
         }
