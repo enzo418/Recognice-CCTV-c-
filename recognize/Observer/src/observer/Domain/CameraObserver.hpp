@@ -50,6 +50,13 @@ namespace Observer {
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
         /* ----------------------- Setters ---------------------- */
+
+        /**
+         * @brief Change the camera type .
+         *
+         * @param type the new camera type, note that it DOES NOT stop or start
+         * the camera. Do so by calling Start/Stop.
+         */
         void SetType(ECameraType type);
 
         /* ----------------------- Getters ---------------------- */
@@ -65,6 +72,8 @@ namespace Observer {
 
         std::string GetName();
 
+        ECameraType GetType();
+
        protected:
         void ProcessFrame(Frame& frame);
 
@@ -79,7 +88,7 @@ namespace Observer {
 
        protected:
         // camera type - can change during runtime.
-        ECameraType type;
+        std::atomic<ECameraType> type;
 
         // camera configuration
         CameraConfiguration* cfg;

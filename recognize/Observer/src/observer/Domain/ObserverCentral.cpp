@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "Configuration/CameraConfiguration.hpp"
+#include "observer/Domain/CameraObserver.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
 
 namespace Observer {
@@ -73,6 +74,34 @@ namespace Observer {
         }
     }
 
+    void ObserverCentral::ProcessConfiguration() {
+        // 1. Check if media folder exists
+        if (!std::filesystem::exists(this->config.mediaFolderPath)) {
+            std::filesystem::create_directories(this->config.mediaFolderPath);
+        }
+
+        // 2. remove disabled cameras
+        auto& camsConfig = this->config.cameras;
+        int size = camsConfig.size();
+        for (int i = 0; i < size; i++) {
+            if (camsConfig[i].type == ECameraType::DISABLED) {
+                camsConfig.erase(camsConfig.begin() + i);
+                i--;
+                size--;
+            }
+        }
+
+        // 3. fix missing preview order
+        std::sort(camsConfig.begin(), camsConfig.end(),
+                  CompareCameraConfigurationsByPreviewOrder);
+        size = camsConfig.size();
+        for (int expected = 0; expected < size; expected++) {
+            if (camsConfig[expected].positionOnOutput != expected) {
+                camsConfig[expected].positionOnOutput = expected;
+            }
+        }
+    }
+
     /* ---------------------------------------------------------------- */
     /*                             CAMERAS                              */
     /* ---------------------------------------------------------------- */
@@ -123,7 +152,18 @@ namespace Observer {
                 if (camera.camera->IsRunning()) {
                     camera.snooze.timer.Start();
                     camera.snooze.seconds = seconds;
-                    // this->internalStopCamera(camera);
+
+                    // save the original type if it wasn't saved yet
+                    if (camera.snooze.originalType == -1) {
+                        camera.snooze.originalType = camera.camera->GetType();
+                    }
+
+                    // stop camera and event validator
+                    if (type == ECameraType::DISABLED) {
+                        this->internalStopCamera(camera);
+                    }
+
+                    // let the camera know and handle the new type
                     camera.camera->SetType(type);
                 }
 
@@ -187,45 +227,13 @@ namespace Observer {
         CameraConfiguration& cfg) {
         ObserverCentral::Camera ct;
 
-        if (cfg.type == ECameraType::VIEW) {
-            ct.camera = std::make_shared<PassiveCamera>(&cfg);
-        } else {
-            ct.camera = std::make_shared<ActiveCamera>(&cfg);
-        }
+        ct.camera = std::make_shared<CameraObserver>(&cfg);
 
         // event validator
         ct.eventValidator =
             std::make_shared<EventValidator>(&cfg, &this->groupIDProvider);
 
         return ct;
-    }
-
-    void ObserverCentral::ProcessConfiguration() {
-        // 1. Check if media folder exists
-        if (!std::filesystem::exists(this->config.mediaFolderPath)) {
-            std::filesystem::create_directories(this->config.mediaFolderPath);
-        }
-
-        // 2. remove disabled cameras
-        auto& camsConfig = this->config.cameras;
-        int size = camsConfig.size();
-        for (int i = 0; i < size; i++) {
-            if (camsConfig[i].type == ECameraType::DISABLED) {
-                camsConfig.erase(camsConfig.begin() + i);
-                i--;
-                size--;
-            }
-        }
-
-        // 3. fix missing preview order
-        std::sort(camsConfig.begin(), camsConfig.end(),
-                  CompareCameraConfigurationsByPreviewOrder);
-        size = camsConfig.size();
-        for (int expected = 0; expected < size; expected++) {
-            if (camsConfig[expected].positionOnOutput != expected) {
-                camsConfig[expected].positionOnOutput = expected;
-            }
-        }
     }
 
     /* ---------------------------------------------------------------- */
@@ -273,7 +281,19 @@ namespace Observer {
     void ObserverCentral::TaskCheckCameraSnooze() {
         for (auto&& camera : this->cameras) {
             if (camera.snooze.timer.GetDuration() > camera.snooze.seconds) {
-                this->internalStartCamera(camera);
+                // restart type
+                camera.camera->SetType(
+                    static_cast<ECameraType>(camera.snooze.originalType));
+
+                // start camera and event validator if needed
+                if (camera.camera->GetType() == ECameraType::DISABLED) {
+                    this->internalStartCamera(camera);
+                }
+
+                // reset snooze
+                camera.snooze.timer.Restart();
+                camera.snooze.seconds = 0;
+                camera.snooze.originalType = -1;
             }
         }
     }

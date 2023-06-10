@@ -44,7 +44,9 @@ namespace Observer {
 
         Frame frame;
         while (this->running && source.IsOk()) {
-            const bool processFrames = this->type != ECameraType::VIEW;
+            const bool processFrames =
+                this->type.load(std::memory_order_acquire) ==
+                ECameraType::NOTIFICATOR;
 
             if (source.IsFrameAvailable()) {
                 frame = source.GetFrame();
@@ -83,18 +85,23 @@ namespace Observer {
         this->framePublisher.subscribe(subscriber);
     }
 
-    void CameraObserver::SetType(ECameraType type) {
-        this->type = type;
+    void CameraObserver::SetType(ECameraType t) {
+        this->type.store(t, std::memory_order_release);
 
-        this->SetupDependencies();
+        if (t != ECameraType::DISABLED) {
+            this->SetupDependencies();
+        }
     }
 
     int CameraObserver::GetFPS() { return this->fps; }
 
     std::string CameraObserver::GetName() { return this->cfg->name; }
 
+    ECameraType CameraObserver::GetType() { return this->type; }
+
     void CameraObserver::SetupDependencies() {
-        if (this->type == ECameraType::NOTIFICATOR) {
+        if (this->type.load(std::memory_order_acquire) ==
+            ECameraType::NOTIFICATOR) {
             if (this->videoBufferForValidation &&
                 this->videoBufferForValidation->GetState() !=
                     BufferState::BUFFER_IDLE) {

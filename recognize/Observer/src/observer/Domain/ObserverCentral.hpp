@@ -19,7 +19,6 @@
 #include "FrameDisplay.hpp"
 #include "Notification/Notification.hpp"
 #include "NotificationsController.hpp"
-#include "PasiveCamera.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
 
@@ -32,6 +31,15 @@ namespace Observer {
         bool StopCamera(const std::string& name);
         void StopAllCameras();
 
+        /**
+         * @brief Temporarily change the camera type, then after `seconds` it
+         * will be changed back to the original type.
+         *
+         * @param name camera name
+         * @param seconds how long to change the camera type
+         * @param type new camera type
+         * @return true if the camera was found and the type was changed
+         */
         bool TemporarilyChangeCameraType(
             const std::string& name, int seconds,
             ECameraType type = ECameraType::DISABLED);
@@ -89,6 +97,8 @@ namespace Observer {
             struct {
                 Timer<std::chrono::seconds> timer;
                 int seconds;
+
+                int originalType = -1;
             } snooze;
         };
 
