@@ -83,4 +83,6 @@ namespace Observer {
     }
 
     int CameraObserver::GetFPS() { return this->fps; }
+
+    std::string CameraObserver::GetName() { return this->cfg->name; }
 }  // namespace Observer

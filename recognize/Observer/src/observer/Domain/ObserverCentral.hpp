@@ -4,6 +4,7 @@
 #include "observer/Log/log.hpp"
 
 // use SPD logger implementation
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <opencv2/opencv.hpp>
@@ -28,15 +29,19 @@ namespace Observer {
        public:
         explicit ObserverCentral(Configuration pConfig, int initialGroupID);
 
-        void StopCamera(std::string id);
+        /* ---------------------------- CAMERAS --------------------------- */
+        bool StopCamera(const std::string& name);
         void StopAllCameras();
+        bool SnoozeCamera(const std::string& name, int seconds);
 
-        void StartCamera(std::string id);
+        bool StartCamera(const std::string& name);
         void StartAllCameras(bool useNotifications);
 
+        /* ---------------------------- PREVIEW --------------------------- */
         void StartPreview();
         void StopPreview();
 
+        /* ---------------------------- EVENTS ---------------------------- */
         void SubscribeToThresholdUpdate(IThresholdEventSubscriber* subscriber);
 
         void SubscribeToFrames(ISubscriber<Frame>* sub);
@@ -55,6 +60,12 @@ namespace Observer {
         void SubscribeToValidCameraEvents(IEventValidatorSubscriber* subscriber,
                                           Priority priority);
 
+        /**
+         * @brief Subscribe to be notified when all cameras, processors, etc. are
+         * started.
+         *
+         * @param F callback
+         */
         void OnStartFinished(std::function<void()>&& F);
 
        protected:
@@ -64,10 +75,20 @@ namespace Observer {
        private:
         std::function<void()> onStartFinished;
 
+        
+        private: // INTERNAL TASKS
+        void TaskRunner();
+        void TaskCheckCameraSnooze();
+
        private:
         struct Camera {
             std::shared_ptr<CameraObserver> camera;
             std::shared_ptr<EventValidator> eventValidator;
+
+            struct {
+                Timer<std::chrono::seconds> timer;
+                int seconds;
+            } snooze;
         };
 
         Configuration config;

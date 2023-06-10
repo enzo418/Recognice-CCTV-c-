@@ -61,6 +61,8 @@ namespace Observer {
          */
         int GetFPS();
 
+        std::string GetName();
+
        protected:
         virtual void ProcessFrame(Frame& frame) = 0;
 

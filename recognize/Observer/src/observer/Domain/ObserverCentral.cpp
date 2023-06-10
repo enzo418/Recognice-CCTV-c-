@@ -1,4 +1,5 @@
 #include "ObserverCentral.hpp"
+#include <algorithm>
 
 #include "Configuration/CameraConfiguration.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
@@ -59,6 +60,8 @@ namespace Observer {
         }
 
         this->onStartFinished();
+
+        this->TaskRunner();
     }
 
     void ObserverCentral::PostStop() {
@@ -69,20 +72,65 @@ namespace Observer {
         }
     }
 
+    /* ---------------------------------------------------------------- */
+    /*                             CAMERAS                              */
+    /* ---------------------------------------------------------------- */
+
     void ObserverCentral::StopAllCameras() {
         for (auto&& camera : this->cameras) {
             this->internalStopCamera(camera);
         }
     }
 
-    void ObserverCentral::StopCamera(std::string) {
-        // TODO:
+    bool ObserverCentral::StopCamera(const std::string& name) {
+        for(auto&& camera : this->cameras) {
+            if (camera.camera->GetName() == name) {
+                if (camera.camera->IsRunning()){
+                    this->internalStopCamera(camera);
+                }
+                
+                return true;
+            }
+        }
+        
+        OBSERVER_WARN("Couldn't stop '{}', not found.", name);
+        
+        return false;
     }
 
-    void ObserverCentral::StartCamera(std::string) {
-        // TODO:
-        // get camera config based on id
-        // call this->internalStartCamera(camcfg);
+    bool ObserverCentral::StartCamera(const std::string& name) {
+        for(auto&& camera : this->cameras) {
+            if (camera.camera->GetName() == name) {
+                if (!camera.camera->IsRunning()){
+                    this->internalStartCamera(camera);
+                }
+                
+                return true;
+            }
+        }
+
+        OBSERVER_WARN("Couldn't start '{}', not found.", name);
+
+        return false;
+    }
+
+    bool ObserverCentral::SnoozeCamera(const std::string& name, int seconds) {
+        for(auto&& camera : this->cameras) {
+            if (camera.camera->GetName() == name) {
+                if (camera.camera->IsRunning()){
+                    camera.snooze.timer.Start();
+                    camera.snooze.seconds = seconds;
+                    this->internalStopCamera(camera);
+                }
+                
+                return true;
+            }
+        }
+
+
+        OBSERVER_WARN("Couldn't snooze '{}', not found.", name);
+        
+        return false;
     }
 
     void ObserverCentral::StartAllCameras(bool useNotifications) {
@@ -114,13 +162,6 @@ namespace Observer {
     }
 
     void ObserverCentral::StopPreview() { this->frameDisplay.Stop(); }
-
-    void ObserverCentral::SubscribeToThresholdUpdate(
-        IThresholdEventSubscriber* subscriber) {
-        for (auto&& camera : this->cameras) {
-            camera.camera->SubscribeToThresholdUpdate(subscriber);
-        }
-    }
 
     void ObserverCentral::internalStopCamera(ObserverCentral::Camera& camera) {
         camera.camera->Stop();
@@ -184,6 +225,10 @@ namespace Observer {
         }
     }
 
+    /* ---------------------------------------------------------------- */
+    /*                              EVENTS                              */
+    /* ---------------------------------------------------------------- */
+
     void ObserverCentral::SubscribeToFrames(ISubscriber<Frame>* sub) {
         this->framesBlender.SubscribeToFramesUpdate(sub);
     }
@@ -200,8 +245,35 @@ namespace Observer {
         }
     }
 
+    void ObserverCentral::SubscribeToThresholdUpdate(
+        IThresholdEventSubscriber* subscriber) {
+        for (auto&& camera : this->cameras) {
+            camera.camera->SubscribeToThresholdUpdate(subscriber);
+        }
+    }
+
     void ObserverCentral::OnStartFinished(std::function<void()>&& F) {
         this->onStartFinished = std::move(F);
+    }
+
+    /* ---------------------------------------------------------------- */
+    /*                               TASKS                              */
+    /* ---------------------------------------------------------------- */
+
+    void ObserverCentral::TaskRunner() {
+        while (this->IsRunning()) {
+            this->TaskCheckCameraSnooze();
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        }
+    }
+
+    void ObserverCentral::TaskCheckCameraSnooze() {
+        for (auto&& camera : this->cameras) {
+            if (camera.snooze.timer.GetDuration() >
+                camera.snooze.seconds) {
+                this->internalStartCamera(camera);
+            }
+        }
     }
 
 }  // namespace Observer
