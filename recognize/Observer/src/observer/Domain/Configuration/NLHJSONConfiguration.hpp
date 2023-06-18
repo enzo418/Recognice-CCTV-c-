@@ -44,11 +44,9 @@ namespace Observer {
                                  {{ALLOW, "Allow"}, {DENY, "Deny"}});
 
     /* --------------------- ECameraType -------------------- */
-    NLOHMANN_JSON_SERIALIZE_ENUM(ECameraType,
-                                 {{DISABLED, "Disabled"},
-                                  {NOTIFICATOR, "Notificator"},
-                                  {OBJECT_DETECTOR, "Object Detector"},
-                                  {VIEW, "View"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(ECameraType, {{DISABLED, "Disabled"},
+                                               {NOTIFICATOR, "Notificator"},
+                                               {VIEW, "View"}});
 
     /* ------------------- RestrictedArea ------------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RestrictedArea, points, type);

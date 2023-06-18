@@ -4,6 +4,7 @@
 
 #include "Configuration/CameraConfiguration.hpp"
 #include "observer/Domain/CameraObserver.hpp"
+#include "observer/Log/log.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
 
 namespace Observer {
@@ -133,6 +134,17 @@ namespace Observer {
             if (camera.camera->GetName() == name) {
                 if (!camera.camera->IsRunning()) {
                     this->internalStartCamera(camera);
+
+                    // reset to original type
+                    if (camera.dynamicType.isActive()) {
+                        OBSERVER_ASSERT(camera.dynamicType.originalType != -1,
+                                        "Original type not set");
+
+                        camera.camera->SetType(static_cast<ECameraType>(
+                            camera.dynamicType.originalType));
+
+                        camera.dynamicType.reset();
+                    }
                 }
 
                 return true;
@@ -149,29 +161,75 @@ namespace Observer {
                                                       ECameraType type) {
         for (auto&& camera : this->cameras) {
             if (camera.camera->GetName() == name) {
-                if (camera.camera->IsRunning()) {
-                    camera.snooze.timer.Start();
-                    camera.snooze.seconds = seconds;
+                camera.dynamicType.timer.Start();
+                camera.dynamicType.seconds = seconds;
+                camera.dynamicType.isIndefinitely = false;
 
-                    // save the original type if it wasn't saved yet
-                    if (camera.snooze.originalType == -1) {
-                        camera.snooze.originalType = camera.camera->GetType();
-                    }
+                // save the original type if it wasn't saved yet
+                if (camera.dynamicType.originalType == -1) {
+                    camera.dynamicType.originalType = camera.camera->GetType();
+                }
 
-                    // stop camera and event validator
-                    if (type == ECameraType::DISABLED) {
-                        this->internalStopCamera(camera);
-                    }
+                // stop camera and event validator
+                if (type == ECameraType::DISABLED) {
+                    this->internalStopCamera(camera);
+                }
 
-                    // let the camera know and handle the new type
-                    camera.camera->SetType(type);
+                // let the camera know and handle the new type
+                camera.camera->SetType(type);
+
+                // start camera and event validator if needed
+                if (!camera.camera->IsRunning() &&
+                    type != ECameraType::DISABLED) {
+                    this->internalStartCamera(camera);
                 }
 
                 return true;
             }
         }
 
-        OBSERVER_WARN("Couldn't snooze '{}', not found.", name);
+        OBSERVER_WARN("Couldn't change type of '{}', not found.", name);
+
+        return false;
+    }
+
+    bool ObserverCentral::IndefinitelyChangeCameraType(const std::string& name,
+                                                       ECameraType type) {
+        for (auto&& camera : this->cameras) {
+            if (camera.camera->GetName() == name) {
+                const int originalType = camera.dynamicType.originalType;
+
+                camera.dynamicType.reset();
+
+                if (originalType == -1) {
+                    // save the original type if it wasn't saved yet
+                    camera.dynamicType.originalType = camera.camera->GetType();
+                } else {
+                    // else, keep the original type
+                    camera.dynamicType.originalType = originalType;
+                }
+
+                camera.dynamicType.isIndefinitely = true;
+
+                // stop camera and event validator, if needed
+                if (type == ECameraType::DISABLED) {
+                    this->internalStopCamera(camera);
+                }
+
+                // let the camera know and handle the new type
+                camera.camera->SetType(type);
+
+                // start camera and event validator, if needed
+                if (!camera.camera->IsRunning() &&
+                    type != ECameraType::DISABLED) {
+                    this->internalStartCamera(camera);
+                }
+
+                return true;
+            }
+        }
+
+        OBSERVER_WARN("Couldn't change type of '{}', not found.", name);
 
         return false;
     }
@@ -188,10 +246,10 @@ namespace Observer {
                 camera.camera->SubscribeToCameraEvents(
                     camera.eventValidator.get());
 
-                // subscribe notification controller to validated events
-                // use low priority so hopefully is the last one. That's
-                // important because it takes ownership of all the frames from
-                // event.
+                // subscribe notification controller to validated
+                // events use low priority so hopefully is the last
+                // one. That's important because it takes ownership
+                // of all the frames from event.
                 camera.eventValidator->SubscribeToValidEvent(
                     &this->notificationController, Priority::LOW);
             }
@@ -236,9 +294,49 @@ namespace Observer {
         return ct;
     }
 
-    /* ---------------------------------------------------------------- */
-    /*                              EVENTS                              */
-    /* ---------------------------------------------------------------- */
+    CameraStatus ObserverCentral::GetCameraStatus(Camera& camera) {
+        return CameraStatus {
+            .name = camera.camera->GetName(),
+            .currentType = camera.camera->GetType(),
+            .dynamicType = {
+                .active = camera.dynamicType.isActive(),
+                .isIndefinitely = camera.dynamicType.isIndefinitely,
+                .secondsLeft =
+                    (int)::ceil(camera.dynamicType.seconds -
+                                camera.dynamicType.timer.GetDuration()),
+                .originalType = camera.dynamicType.isActive()
+                                    ? static_cast<ECameraType>(
+                                          camera.dynamicType.originalType)
+                                    : camera.camera->GetType()}};
+    }
+
+    CameraStatus ObserverCentral::GetCameraStatus(const std::string& name) {
+        for (auto&& camera : this->cameras) {
+            if (camera.camera->GetName() == name) {
+                return GetCameraStatus(camera);
+            }
+        }
+
+        OBSERVER_WARN("Couldn't get status of '{}', not found.", name);
+
+        return CameraStatus {};
+    }
+
+    std::vector<CameraStatus> ObserverCentral::GetCamerasStatus() {
+        std::vector<CameraStatus> camerasStatus;
+
+        for (auto&& camera : this->cameras) {
+            camerasStatus.push_back(GetCameraStatus(camera));
+        }
+
+        return camerasStatus;
+    }
+
+    /* ----------------------------------------------------------------
+     */
+    /*                              EVENTS */
+    /* ----------------------------------------------------------------
+     */
 
     void ObserverCentral::SubscribeToFrames(ISubscriber<Frame>* sub) {
         this->framesBlender.SubscribeToFramesUpdate(sub);
@@ -267,12 +365,14 @@ namespace Observer {
         this->onStartFinished = std::move(F);
     }
 
-    /* ---------------------------------------------------------------- */
-    /*                               TASKS                              */
-    /* ---------------------------------------------------------------- */
+    /* ----------------------------------------------------------------
+     */
+    /*                               TASKS */
+    /* ----------------------------------------------------------------
+     */
 
     void ObserverCentral::TaskRunner() {
-        while (this->IsRunning()) {
+        while (running) {
             this->TaskCheckCameraSnooze();
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
         }
@@ -280,20 +380,23 @@ namespace Observer {
 
     void ObserverCentral::TaskCheckCameraSnooze() {
         for (auto&& camera : this->cameras) {
-            if (camera.snooze.timer.GetDuration() > camera.snooze.seconds) {
+            if (camera.dynamicType.isActive() &&
+                !camera.dynamicType.isIndefinitely &&
+                camera.dynamicType.timer.GetDuration() >
+                    camera.dynamicType.seconds) {
+                ECameraType currentType = camera.camera->GetType();
+
                 // restart type
                 camera.camera->SetType(
-                    static_cast<ECameraType>(camera.snooze.originalType));
+                    static_cast<ECameraType>(camera.dynamicType.originalType));
 
                 // start camera and event validator if needed
-                if (camera.camera->GetType() == ECameraType::DISABLED) {
+                if (currentType == ECameraType::DISABLED) {
                     this->internalStartCamera(camera);
                 }
 
                 // reset snooze
-                camera.snooze.timer.Restart();
-                camera.snooze.seconds = 0;
-                camera.snooze.originalType = -1;
+                camera.dynamicType.reset();
             }
         }
     }

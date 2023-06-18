@@ -6,6 +6,8 @@ namespace Observer {
     CameraObserver::CameraObserver(CameraConfiguration* pCfg)
         : cfg(pCfg), thresholdPublisher(cfg) {
         this->running = false;
+
+        this->type = cfg->type;
     }
 
     void CameraObserver::InternalStart() {
@@ -102,9 +104,10 @@ namespace Observer {
     void CameraObserver::SetupDependencies() {
         if (this->type.load(std::memory_order_acquire) ==
             ECameraType::NOTIFICATOR) {
-            if (this->videoBufferForValidation &&
-                this->videoBufferForValidation->GetState() !=
-                    BufferState::BUFFER_IDLE) {
+            if (!this->videoBufferForValidation ||
+                (this->videoBufferForValidation &&
+                 this->videoBufferForValidation->GetState() !=
+                     BufferState::BUFFER_IDLE)) {
                 // dismiss the current buffer
                 this->NewVideoBuffer();
             }
@@ -112,6 +115,11 @@ namespace Observer {
             this->frameProcessor.Setup(this->source.GetInputResolution(),
                                        this->cfg->processingConfiguration,
                                        this->cfg->rotation);
+
+            this->thresholdManager.Setup(
+                this->cfg->minimumChangeThreshold,
+                this->cfg->secondsBetweenThresholdUpdate,
+                this->cfg->increaseThresholdFactor);
         }
     }
 

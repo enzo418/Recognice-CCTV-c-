@@ -4,9 +4,36 @@
 
 #include "DAL/IConfigurationDAO.hpp"
 #include "Server/ServerContext.hpp"
+#include "Utils/StringUtils.hpp"
 #include "observer/Implementation.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
+
+#define READ_JSON_BODY(res, req, func)                            \
+    res->onAborted([]() {});                                      \
+    std::string buffer;                                           \
+    auto ct = std::string(req->getHeader("content-type"));        \
+    res->onData([this, res, req, ct, buffer = std::move(buffer)]( \
+                    std::string_view data, bool last) mutable {   \
+        buffer.append(data.data(), data.length());                \
+        if (last) {                                               \
+            if (ct != "application/json") {                       \
+                res->writeStatus(HTTP_400_BAD_REQUEST)            \
+                    ->end("Expected a json body");                \
+                return;                                           \
+            }                                                     \
+            nlohmann::json parsed;                                \
+            try {                                                 \
+                parsed = nlohmann::json::parse(buffer);           \
+            } catch (const std::exception& e) {                   \
+                res->writeStatus(HTTP_400_BAD_REQUEST)            \
+                    ->end("Body is not a valid json");            \
+                return;                                           \
+            }                                                     \
+                                                                  \
+            func(res, req, parsed);                               \
+        }                                                         \
+    });
 
 namespace Web::Controller {
     template <bool SSL>
@@ -20,6 +47,43 @@ namespace Web::Controller {
         void GetInfo(auto* res, auto* req);
         void GetFrame(auto* res, auto* req);
 
+        /* --------------- Dynamic camera actions --------------- */
+        // TODO: move to proper api documentation
+        /**
+         * @brief Change the camera type to view or notificator.
+         *
+         * NOTE: It will not write into the stored camera configuration.
+         * NOTE: To disable it call snooze.
+         * @param res
+         * @param req
+         * @param body  - json with the following members:
+         *                  - type: string (disabled | view | notificator)
+         *                      - disabled: the camera will be disabled
+         *                      - view: the camera will be used only for live
+         *                        view
+         *                      - notificator: the camera will be used only for
+         *                        view + notifications
+         *                  - seconds: int (positive)
+         *                      the camera will be changed to the specified type
+         *                      for the specified amount of seconds. After that,
+         *                      the camera will be changed back to it's original
+         *                      type.
+         */
+        void TemporarilyChangeCameraType(auto* res, auto* req,
+                                         const nlohmann::json& body);
+
+        /**
+         * @brief Change the camera type to disabled, view or notificator.
+         *
+         * NOTE: It will not write into the stored camera configuration.
+         * @param res
+         * @param req
+         * @param body
+         */
+        void IndefinitelyChangeCameraType(auto* res, auto* req,
+                                          const nlohmann::json& body);
+
+        /* ----------------------- Stream ----------------------- */
         /**
          * @brief Request a live view of the camera. If successfully
          * generated the live view it returns a json with the ws_feed_path,
@@ -51,9 +115,15 @@ namespace Web::Controller {
         app->get("/api/camera/:id/frame",
                  [this](auto* res, auto* req) { this->GetFrame(res, req); });
 
-        // app->get(
-        //     "/api/camera/:id/request_stream",
-        //     [this](auto* res, auto* req) { this->RequestStream(res, req); });
+        app->post("/api/camera/:name/type/temporarily",
+                  [this](auto* res, auto* req) {
+                      READ_JSON_BODY(res, req, TemporarilyChangeCameraType);
+                  });
+
+        app->post("/api/camera/:name/type/indefinitely",
+                  [this](auto* res, auto* req) {
+                      READ_JSON_BODY(res, req, IndefinitelyChangeCameraType);
+                  });
     }
 
     template <bool SSL>
@@ -173,61 +243,92 @@ namespace Web::Controller {
             ->end(std::string_view((char*)buffer.data(), buffer.size()));
     }
 
-    // template <bool SSL>
-    // void CameraController<SSL>::RequestStream(auto* res, auto* req) {
-    //     std::string uri;
-    //     std::string camera_id(req->getParameter(0));
+    template <bool SSL>
+    void CameraController<SSL>::TemporarilyChangeCameraType(
+        auto* res, auto* req, const nlohmann::json& body) {
+        std::string camera_name(
+            Web::StringUtils::decodeURL(req->getParameter(0)));
 
-    //     try {
-    //         uri = configurationDAO->GetCamera(camera_id)["url"];
-    //     } catch (const std::exception& e) {
-    //         res->writeStatus(HTTP_404_NOT_FOUND)
-    //             ->writeHeader("Cache-Control", "max-age=5")
-    //             ->endProblemJson(
-    //                 (nlohmann::json {{"title", "Camera not found"}}).dump());
-    //         return;
-    //     }
+        if (camera_name.empty()) {
+            res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+            return;
+        }
 
-    //     (void)std::async(std::launch::async, [&]() {
-    //         if (serverCtx->liveViewsManager->CreateCameraView(uri)) {
-    //             std::string feed_id;
-    //             bool success {false};
+        if (body.is_null() || !body.contains("type") ||
+            !body["type"].is_string() || !body.contains("seconds") ||
+            !body["seconds"].is_number() || body["seconds"] < 0) {
+            res->writeStatus(HTTP_400_BAD_REQUEST)
+                ->end(
+                    "Expected json members: type (view | notificator), seconds "
+                    "(positive integer)");
+            return;
+        }
 
-    //             try {
-    //                 feed_id = serverCtx->liveViewsManager->GetFeedId(uri);
-    //                 success = true;
-    //             } catch (
-    //                 const Web::Streaming::Video::InvalidCameraUriException&
-    //                 e) { res->writeStatus(HTTP_404_NOT_FOUND)
-    //                     ->writeHeader("Cache-Control", "max-age=10")
-    //                     ->endProblemJson(
-    //                         (nlohmann::json {{"title", "Invalid camera
-    //                         uri"}})
-    //                             .dump());
-    //             } catch (...) {
-    //                 res->writeStatus(HTTP_400_BAD_REQUEST)->end();
-    //             }
+        std::string type = body["type"];
 
-    //             if (success) {
-    //                 nlohmann::json response = {{"ws_feed_id", feed_id}};
+        StringUtils::toLowercase(type);
 
-    //                 res->endJson(response.dump());
+        Observer::ECameraType cameraType =
+            type == "view"       ? Observer::ECameraType::VIEW
+            : type == "disabled" ? Observer::ECameraType::DISABLED
+                                 : Observer::ECameraType::NOTIFICATOR;
 
-    //                 OBSERVER_TRACE(
-    //                     "Opened camera connection in live view '{0}' as '{1}'
-    //                     ", uri, feed_id);
-    //             }
-    //         } else {
-    //             nlohmann::json error = {
-    //                 {"title", "Couldn't open a connection with the
-    //                 camera."}};
+        int seconds = body["seconds"];
 
-    //             res->writeStatus(HTTP_400_BAD_REQUEST)
-    //                 ->endProblemJson(error.dump());
-    //             OBSERVER_ERROR("Couldn't open live camera view, uri: '{0}'",
-    //                            uri);
-    //         }
-    //     });
-    // }
+        if (serverCtx->recognizeContext.observer->TemporarilyChangeCameraType(
+                camera_name, seconds, cameraType)) {
+            res->end(nlohmann::json(
+                         serverCtx->recognizeContext.observer->GetCameraStatus(
+                             camera_name))
+                         .dump());
+        } else {
+            nlohmann::json response = {{"title", "Camera not found"}};
 
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+        }
+    }
+
+    template <bool SSL>
+    void CameraController<SSL>::IndefinitelyChangeCameraType(
+        auto* res, auto* req, const nlohmann::json& body) {
+        std::string camera_name(
+            Web::StringUtils::decodeURL(req->getParameter(0)));
+
+        if (camera_name.empty()) {
+            res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+            return;
+        }
+
+        if (body.is_null() || !body.contains("type") ||
+            !body["type"].is_string()) {
+            res->writeStatus(HTTP_400_BAD_REQUEST)
+                ->end("Expected json members: type (view | notificator)");
+            return;
+        }
+
+        std::string type = body["type"];
+
+        StringUtils::toLowercase(type);
+
+        Observer::ECameraType cameraType =
+            type == "view"       ? Observer::ECameraType::VIEW
+            : type == "disabled" ? Observer::ECameraType::DISABLED
+                                 : Observer::ECameraType::NOTIFICATOR;
+
+        if (serverCtx->recognizeContext.observer->IndefinitelyChangeCameraType(
+                camera_name, cameraType)) {
+            res->end(nlohmann::json(
+                         serverCtx->recognizeContext.observer->GetCameraStatus(
+                             camera_name))
+                         .dump());
+        } else {
+            nlohmann::json response = {{"title", "Camera not found"}};
+
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+        }
+    }
 }  // namespace Web::Controller

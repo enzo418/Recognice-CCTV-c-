@@ -119,7 +119,7 @@ class ConfigurationTest : public ::testing::Test {
             .fps = 10,
             .positionOnOutput = 1,
             .rotation = 99,
-            .type = ECameraType::OBJECT_DETECTOR,
+            .type = ECameraType::NOTIFICATOR,
             .minimumChangeThreshold = 12,
             .increaseThresholdFactor = 5.002,
             .secondsBetweenThresholdUpdate = 7,

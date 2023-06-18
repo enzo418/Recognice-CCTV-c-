@@ -208,7 +208,8 @@ int main() {
     const auto startRecognize = [&observerCtx = serverCtx.recognizeContext,
                                  &notificationController,
                                  &notificationRepository,
-                                 &threads](Observer::Configuration& cfg) {
+                                 &threads](Observer::Configuration& cfg,
+                                           std::function<void()> onStarted) {
         // modify it so all the configurations use the same folder
         cfg.mediaFolderPath =
             Web::ServerConfigurationProvider::Get().mediaFolder;
@@ -224,7 +225,7 @@ int main() {
 
         // call it after it started or we will be subscribing to nothing
         observerCtx.observer->OnStartFinished(
-            [&notificationController, &observerCtx]() {
+            [onStarted, &notificationController, &observerCtx]() {
                 if (Web::ServerConfigurationProvider::Get()
                         .SaveNotificationDebugVideo) {
                     observerCtx.observer->SubscribeToValidCameraEvents(
@@ -232,6 +233,8 @@ int main() {
                              IEventValidatorSubscriber*)&notificationController,
                         Observer::Priority::HIGH);
                 }
+
+                onStarted();
             });
 
         observerCtx.observer->Start();

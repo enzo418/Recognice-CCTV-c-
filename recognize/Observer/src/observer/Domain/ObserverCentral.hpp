@@ -23,6 +23,20 @@
 #include "observer/Pattern/ObserverBasics.hpp"
 
 namespace Observer {
+    struct CameraStatus {
+        struct DynamicType {
+            bool active {false};
+            bool isIndefinitely {false};
+            int secondsLeft {0};
+            ECameraType originalType;
+        };
+
+        std::string name;
+        ECameraType currentType;
+
+        DynamicType dynamicType;
+    };
+
     class ObserverCentral : public Functionality {
        public:
         explicit ObserverCentral(Configuration pConfig, int initialGroupID);
@@ -44,8 +58,21 @@ namespace Observer {
             const std::string& name, int seconds,
             ECameraType type = ECameraType::DISABLED);
 
+        /**
+         * @brief Change the camera type indefinitely.
+         *
+         * @param name camera name
+         * @param type new camera type
+         * @return true if the camera was found and the type was changed
+         */
+        bool IndefinitelyChangeCameraType(const std::string& name,
+                                          ECameraType type);
+
         bool StartCamera(const std::string& name);
         void StartAllCameras(bool useNotifications);
+
+        CameraStatus GetCameraStatus(const std::string& name);
+        std::vector<CameraStatus> GetCamerasStatus();
 
         /* ---------------------------- PREVIEW --------------------------- */
         void StartPreview();
@@ -95,11 +122,27 @@ namespace Observer {
             std::shared_ptr<EventValidator> eventValidator;
 
             struct {
-                Timer<std::chrono::seconds> timer;
-                int seconds;
+                // the camera type will be indefinitely changed to this type
+                bool isIndefinitely {false};
 
-                int originalType = -1;
-            } snooze;
+                // timer for the temporal type, set if isIndefinitely == false
+                Timer<std::chrono::seconds> timer;
+
+                // temp type remaining seconds, set if isIndefinitely == false
+                unsigned int seconds {0};
+
+                // camera type before the dynamic type was set
+                int originalType {-1};
+
+                bool isActive() const { return seconds > 0 || isIndefinitely; }
+
+                void reset() {
+                    timer.Stop();
+                    seconds = 0;
+                    originalType = -1;
+                    isIndefinitely = false;
+                }
+            } dynamicType;
         };
 
         Configuration config;
@@ -124,6 +167,9 @@ namespace Observer {
         void internalStartCamera(Camera& cfg);
 
         void ProcessConfiguration();
+
+       private:
+        CameraStatus GetCameraStatus(Camera& camera);
     };
 
 }  // namespace Observer

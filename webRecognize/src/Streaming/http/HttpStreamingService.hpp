@@ -83,7 +83,7 @@ namespace Web::Streaming::Http {
 
         // ref
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#multipartform-data
-        OBSERVER_TRACE("Sending intermediate header");
+        // OBSERVER_TRACE("Sending intermediate header");
 
         if (!client->writeRaw(std::string_view("Content-Type: image/jpeg\r\n"
                                                "Content-Length: " +
@@ -92,10 +92,10 @@ namespace Web::Streaming::Http {
                                                "\r\n")))
             return false;
 
-        OBSERVER_TRACE("Sending image of size {}", size);
+        // OBSERVER_TRACE("Sending image of size {}", size);
         if (!client->writeRaw(std::string_view(data, size))) return false;
 
-        OBSERVER_TRACE("Sending boundary");
+        // OBSERVER_TRACE("Sending boundary");
         if (!client->writeRaw(std::string_view("\r\n"
                                                "--Ba4oevQMz99w0418dcnT\r\n")))
             return false;

@@ -22,8 +22,7 @@ namespace Observer {
     enum ECameraType {
         DISABLED = 1,
         NOTIFICATOR = 2,
-        OBJECT_DETECTOR = 4,  // TODO: REMOVE
-        VIEW                  // only show images
+        VIEW  // only show images
     };
 
     enum EObjectDetectionMethod {

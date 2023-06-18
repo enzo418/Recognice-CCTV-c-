@@ -15,11 +15,13 @@ namespace Web::Controller {
     template <bool SSL>
     class ObserverController {
        public:
-        ObserverController(uWS::App* app, Web::ServerContext<SSL>* serverCtx,
-                           Web::DAL::IConfigurationDAO* configurationDAO,
-                           std::function<void(Observer::Configuration& cfg)>&&
-                               startRecognizeFunction,
-                           std::function<void()>&& stopRecognizeFunction);
+        ObserverController(
+            uWS::App* app, Web::ServerContext<SSL>* serverCtx,
+            Web::DAL::IConfigurationDAO* configurationDAO,
+            std::function<void(Observer::Configuration& cfg,
+                               std::function<void()> onStarted)>&&
+                startRecognizeFunction,
+            std::function<void()>&& stopRecognizeFunction);
 
         void Start(auto* res, auto* req);
         void Stop(auto* res, auto* req);
@@ -30,7 +32,8 @@ namespace Web::Controller {
         Web::ServerContext<SSL>* serverCtx;
         Web::DAL::IConfigurationDAO* configurationDAO;
 
-        std::function<void(Observer::Configuration& cfg)> startRecognize;
+        std::function<void(Observer::Configuration& cfg, std::function<void()>)>
+            startRecognize;
         std::function<void()> stopRecognize;
     };
 
@@ -38,8 +41,8 @@ namespace Web::Controller {
     ObserverController<SSL>::ObserverController(
         uWS::App* app, Web::ServerContext<SSL>* pServerCtx,
         Web::DAL::IConfigurationDAO* pConfigurationDAO,
-        std::function<void(Observer::Configuration& cfg)>&&
-            pStartRecognizeFunction,
+        std::function<void(Observer::Configuration& cfg,
+                           std::function<void()>)>&& pStartRecognizeFunction,
         std::function<void()>&& pStopRecognizeFunction)
         : serverCtx(pServerCtx),
           configurationDAO(pConfigurationDAO),
@@ -98,7 +101,22 @@ namespace Web::Controller {
         }
 
         try {
-            startRecognize(cfg);
+            res->onAborted([]() {});
+
+            startRecognize(cfg, [this, res]() {
+                std::cout << "Started observer" << std::endl;
+
+                res->end(
+                    nlohmann::json(
+                        Web::ObserverStatusDTO {
+                            .running = true,
+                            .config_id =
+                                serverCtx->recognizeContext.running_config_id,
+                            .cameras = serverCtx->recognizeContext.observer
+                                           ->GetCamerasStatus(),
+                        })
+                        .dump());
+            });
         } catch (const std::exception& e) {
             OBSERVER_WARN("Error starting observer: {}", e.what());
 
@@ -108,13 +126,6 @@ namespace Web::Controller {
                 ->endProblemJson(response.dump());
             return;
         }
-
-        res->end(
-            nlohmann::json(
-                Web::ObserverStatusDTO {
-                    .running = true,
-                    .config_id = serverCtx->recognizeContext.running_config_id})
-                .dump());
     }
 
     template <bool SSL>
@@ -123,10 +134,12 @@ namespace Web::Controller {
             stopRecognize();
         }
 
-        res->end(
-            nlohmann::json(Web::ObserverStatusDTO {.running = false,
-                                                   .config_id = std::nullopt})
-                .dump());
+        res->end(nlohmann::json(Web::ObserverStatusDTO {
+                                    .running = false,
+                                    .config_id = std::nullopt,
+                                    .cameras = {},
+                                })
+                     .dump());
     }
 
     template <bool SSL>
@@ -135,27 +148,14 @@ namespace Web::Controller {
         std::optional<std::string> cfg_id;
         if (running) cfg_id = serverCtx->recognizeContext.running_config_id;
 
-        res->end(nlohmann::json(Web::ObserverStatusDTO {.running = running,
-                                                        .config_id = cfg_id})
-                     .dump());
+        std::vector<Observer::CameraStatus> cameras =
+            (running ? serverCtx->recognizeContext.observer->GetCamerasStatus()
+                     : std::vector<Observer::CameraStatus> {});
+
+        res->writeHeader("Cache-Control", "max-age=5")
+            ->end(nlohmann::json(Web::ObserverStatusDTO {.running = running,
+                                                         .config_id = cfg_id,
+                                                         .cameras = cameras})
+                      .dump());
     }
-
-    // template <bool SSL>
-    // void ObserverController<SSL>::RequestStream(auto* res, auto* req) {
-    //     auto uri = "observer";
-
-    //     if (serverCtx->recognizeContext.running &&
-    //         serverCtx->liveViewsManager->CreateObserverView(uri)) {
-    //         std::string feed_id(serverCtx->liveViewsManager->GetFeedId(uri));
-
-    //         nlohmann::json response = {{"ws_feed_id", feed_id}};
-
-    //         res->endJson(response.dump());
-    //     } else {
-    //         nlohmann::json error = {{"title", "Observer is not running."}};
-
-    //         res->writeStatus(HTTP_400_BAD_REQUEST)
-    //             ->endProblemJson(error.dump());
-    //     }
-    // }
 }  // namespace Web::Controller

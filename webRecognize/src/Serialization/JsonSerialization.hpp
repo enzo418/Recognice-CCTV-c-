@@ -8,6 +8,7 @@
 #include "Server/ServerConfiguration.hpp"
 #include "nlohmann/json.hpp"
 #include "observer/Domain/Configuration/NLHJSONConfiguration.hpp"
+#include "observer/Domain/ObserverCentral.hpp"
 
 namespace nlohmann {
     /* -------------------- STD::OPTIONAL ------------------- */
@@ -57,8 +58,15 @@ namespace nlohmann {
                                        datetime, camera, configurationID);
 
     /* ------------------- OBSERVER STATUS ------------------ */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Observer::CameraStatus::DynamicType,
+                                       secondsLeft, originalType, active,
+                                       isIndefinitely);
+
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Observer::CameraStatus, currentType,
+                                       name, dynamicType);
+
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::ObserverStatusDTO, running,
-                                       config_id);
+                                       config_id, cameras);
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Web::DTOBlob, first_appearance,
                                        last_appearance, rects, internal_id);
