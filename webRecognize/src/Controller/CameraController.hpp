@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <future>
 
 #include "DAL/IConfigurationDAO.hpp"
@@ -99,6 +100,13 @@ namespace Web::Controller {
         // url -> image
         std::unordered_map<std::string, std::vector<unsigned char>>
             cachedCameraImage;
+
+        struct CachedCameraInfo {
+            Observer::Size size;
+            double fps;
+            std::chrono::system_clock::time_point cachedAt;
+        };
+        std::unordered_map<std::string, CachedCameraInfo> cachedCameraInfo;
     };
 
     template <bool SSL>
@@ -168,6 +176,20 @@ namespace Web::Controller {
             return;
         }
 
+        if (cachedCameraInfo.contains(uri)) {
+            auto& info = cachedCameraInfo[uri];
+
+            // if the info is cached and it's not older than 1 minute
+            if (std::chrono::system_clock::now() - info.cachedAt <
+                std::chrono::minutes(1)) {
+                nlohmann::json response = {{"fps", info.fps},
+                                           {"size", info.size}};
+
+                res->endJson(response.dump());
+                return;
+            }
+        }
+
         Observer::VideoSource cap;
         cap.Open(uri);
 
@@ -180,8 +202,11 @@ namespace Web::Controller {
             res->endJson(response.dump());
 
             cap.Close();
+
+            cachedCameraInfo[uri] = {size, fps,
+                                     std::chrono::system_clock::now()};
         } else {
-            nlohmann::json response = {{"title", "Camera not avilable"}};
+            nlohmann::json response = {{"title", "Camera not available"}};
 
             res->writeStatus(HTTP_404_NOT_FOUND)
                 ->writeHeader("Cache-Control", "max-age=5")
