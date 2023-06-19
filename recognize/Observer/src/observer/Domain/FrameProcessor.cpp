@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "observer/Log/log.hpp"
+
 namespace Observer {
     void FrameProcessor::Setup(Size pCameraFeedSize,
                                const ProcessingConfiguration& cfg,
@@ -16,8 +18,37 @@ namespace Observer {
 
         this->cameraFeedSize = pCameraFeedSize;
 
+        if (pCameraFeedSize.empty()) {
+            OBSERVER_WARN(
+                "The camera feed size is empty, the frame processor will "
+                "assume that the camera feed size is the same as the resize "
+                "size.");
+
+            this->cameraFeedSize = this->resizeSize;
+        }
+
         // if no resize was given use the camera resolution
-        if (this->resizeSize.empty()) this->resizeSize = this->cameraFeedSize;
+        if (this->resizeSize.empty()) {
+            if (!this->cameraFeedSize.empty()) {
+                this->resizeSize = this->cameraFeedSize;
+
+            } else {
+                OBSERVER_WARN(
+                    "The resize size is empty, the frame processor will "
+                    "assume that the resize size is 640x360.");
+
+                // NOTE: Why set it to some value? Because this function caller
+                // can come from the API or from the CameraObserver::Start.
+                // If called from the API the camera feed might be not started,
+                // and will be called again from the CameraObserver::Start. From
+                // there, it's supposed to have a camera feed size, but if the
+                // source size is 0x0, for some reason, we will have a problem
+                // while calling openCV resize. Anyway masks doesn't matter if
+                // the source is 0x0.
+
+                this->resizeSize = Size(640, 360);
+            }
+        }
 
         /* -------------- BUILD MASK FROM PARAMETER ------------- */
         // use the input resolution because they were calculated with a raw
