@@ -11,6 +11,11 @@ endif()
 option(IFC_USE_EXTERNAL_GRPC "Use preinstalled grpc" ON)
 option(IFC_LINK_GRPC "Link gRPC" ON)
 
+if (NOT DEFINED IFC_USE_INSECURE_GRPC)
+  # insecure -> won't link against SSL, Crypto
+  option(IFC_USE_INSECURE_GRPC "Use insecure gRPC" OFF)
+endif()
+
 # -------------------- Dependencies -------------------- #
 include(${CMAKE_CURRENT_LIST_DIR}/Dependency.cmake)
 

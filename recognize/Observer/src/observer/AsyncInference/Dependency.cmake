@@ -60,13 +60,20 @@ if (IFC_LINK_GRPC)
         set(IFC_PROTOC_GEN_PROGRAM $<TARGET_FILE:protobuf::protoc>)
         endif()
 
-        set(IFC_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-        set(IFC_GRPC_REFLECTION gRPC::grpc++_reflection)
-        set(IFC_GRPC_GRPCPP gRPC::grpc++)
-
-        ifc_add_lib(${IFC_PROTOBUF_LIBPROTOBUF})
-        ifc_add_lib(${IFC_GRPC_REFLECTION})
-        ifc_add_lib(${IFC_GRPC_GRPCPP})
+        ifc_add_lib(protobuf::libprotobuf)
+        
+        
+        if (${IFC_USE_INSECURE_GRPC})
+            message(STATUS "Using insecure gRPC")
+            ifc_add_lib(gRPC::grpc++_unsecure)
+            # grpc++_reflection links to grpc++ (ssl and crypto)
+            # grpc should work anyway
+            # ifc_add_lib(gRPC::grpc++_reflection)
+        else()
+            message(STATUS "Using secure gRPC")
+            ifc_add_lib(gRPC::grpc++)
+            ifc_add_lib(gRPC::grpc++_reflection)
+        endif()
 
         ifc_add_include(${gRPC_INSTALL_INCLUDEDIR})
     else()
@@ -91,12 +98,19 @@ if (IFC_LINK_GRPC)
         endif()
 
         set(IFC_PROTOBUF_LIBPROTOBUF libprotobuf)
-        set(IFC_GRPC_REFLECTION grpc++_reflection)
-        set(IFC_GRPC_GRPCPP grpc++)
-
         ifc_add_lib(${IFC_PROTOBUF_LIBPROTOBUF})
-        ifc_add_lib(${IFC_GRPC_REFLECTION})
-        ifc_add_lib(${IFC_GRPC_GRPCPP})
+        
+        if (${IFC_USE_INSECURE_GRPC})
+            message(STATUS "Using insecure gRPC")
+            ifc_add_lib(gRPC::grpc++_unsecure)
+            # grpc++_reflection links to grpc++ (ssl and crypto)
+            # grpc should work anyway
+            # ifc_add_lib(gRPC::grpc++_reflection)
+        else()
+            message(STATUS "Using secure gRPC")
+            ifc_add_lib(gRPC::grpc++)
+            ifc_add_lib(gRPC::grpc++_reflection)
+        endif()
 
         # includes comes from add_subdirectory
     endif()

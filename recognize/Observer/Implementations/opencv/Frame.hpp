@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <opencv2/opencv.hpp>
 
 #include "observer/IFrame.hpp"
@@ -116,8 +117,6 @@ namespace Observer {
         /**
          * @brief Converts an image from one color space to another
          *
-         * @param source source image
-         * @param dst destination image
          * @param conversionType space conversion (ColorSpaceConversion)
          */
         void ToColorSpace(
@@ -186,6 +185,8 @@ namespace Observer {
          * @param mask
          */
         void Mask(Frame& mask) override;
+
+        uint8_t* GetData() override;
 
        private:
         IType m_frame;

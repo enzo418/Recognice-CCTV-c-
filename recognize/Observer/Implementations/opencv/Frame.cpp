@@ -1,5 +1,6 @@
 #include "Frame.hpp"
 
+#include <cstdint>
 #include <stdexcept>
 
 namespace Observer {
@@ -128,8 +129,6 @@ namespace Observer {
     /**
      * @brief Converts an image from one color space to another
      *
-     * @param source source image
-     * @param dst destination image
      * @param conversionType space conversion (ColorSpaceConversion)
      */
     void Frame::ToColorSpace(int conversionType) {
@@ -145,6 +144,12 @@ namespace Observer {
                 break;
             case COLOR_RGB2HLS:
                 conversionType = cv::COLOR_RGB2HLS;
+                break;
+            case COLOR_RGB2BGR:
+                conversionType = cv::COLOR_RGB2BGR;
+                break;
+            case COLOR_BGR2RGB:
+                conversionType = cv::COLOR_BGR2RGB;
                 break;
         }
 
@@ -245,4 +250,6 @@ namespace Observer {
         // this->m_frame);
         this->m_frame.setTo(cv::Scalar(0, 0, 0), mask.GetInternalFrame());
     }
+
+    uint8_t* Frame::GetData() { return m_frame.data; }
 }  // namespace Observer

@@ -81,24 +81,31 @@ namespace Web::Streaming::Http {
                                              int size) {
         if (size == 0) return true;
 
+        // Check if the client's send buffer is full
+        // while (client->getBufferedAmount() > 0) {
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // }
+        if (client->getBackPressure() > 16 * 1024) {
+            OBSERVER_WARN("Client buffer is full");
+            return false;
+        }
+
         // ref
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#multipartform-data
         // OBSERVER_TRACE("Sending intermediate header");
 
-        if (!client->writeRaw(std::string_view("Content-Type: image/jpeg\r\n"
-                                               "Content-Length: " +
-                                               std::to_string(size) +
-                                               "\r\n"
-                                               "\r\n")))
-            return false;
+        // Construct the data packet with headers and boundary
+        std::string packet =
+            "Content-Type: image/jpeg\r\n"
+            "Content-Length: " +
+            std::to_string(size) + "\r\n\r\n" + std::string(data, size) +
+            "\r\n--Ba4oevQMz99w0418dcnT\r\n";
 
-        // OBSERVER_TRACE("Sending image of size {}", size);
-        if (!client->writeRaw(std::string_view(data, size))) return false;
-
-        // OBSERVER_TRACE("Sending boundary");
-        if (!client->writeRaw(std::string_view("\r\n"
-                                               "--Ba4oevQMz99w0418dcnT\r\n")))
+        // Write the entire packet to the client
+        if (!client->writeRaw(packet)) {
+            OBSERVER_WARN("Couldn't send data to client");
             return false;
+        }
 
         return true;
     }

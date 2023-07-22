@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>Demo</title>
+</head>
+<body>
+    <button id="btn" onclick="start()">Start</button>
+    &nbsp;&nbsp;&nbsp;
+    <button id="btn" onclick="stop()">Stop</button>
+    
+    <video id="video" autoplay width="100%"></video>
+
+    <script>
+        let pc = null;
+
+        function start() {
+            if (!pc || pc.connectionState === "closed") {
+                pc = new RTCPeerConnection();
+
+                pc.onicegatheringstatechange = (ev) => {
+                    if (pc.iceGatheringState === 'complete') {
+                        const answer = pc.localDescription;
+                        fetch("http://localhost:3001/api/stream/answer", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                clientId: pc.__id,
+                                answer
+                            })
+                        })
+                            .then((res) => {
+                                if (!res.ok) {
+                                    throw new Error("Error posting answer");
+                                }
+                            })
+                    }
+                }
+            }
+
+            const uri = encodeURIComponent("1");
+            fetch("http://localhost:3001/api/stream/source?uri="+uri)
+                .then((res) => res.json())
+                .then(({clientId, offer}) => {
+                    setRemote(clientId, offer);
+                })
+
+            function setRemote(pId, pOffer) {
+                console.log("setRemote: ", {pId, pOffer});
+
+                pc.__id = pId;
+
+                const offer = JSON.parse(pOffer);
+
+                pc.setRemoteDescription(offer);
+                
+                pc.createAnswer().then((answer) =>
+                    pc.setLocalDescription(answer)
+                );
+
+                pc.ontrack = (ev) => {
+                    console.log("ontrack");
+                    if (ev.streams && ev.streams[0]) {
+                        const videoElement = document.getElementById('video');
+                        videoElement.srcObject = ev.streams[0];
+                        videoElement.play();
+                    }
+                };
+            }
+        }
+
+        function stop() {
+            if (!pc) return;
+
+            fetch(`http://localhost:3001/api/stream/hangup`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    clientId: pc.__id
+                })
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error("Error posting answer");
+                    }
+                    pc.close();
+                });
+        }
+    </script>
+</body>
+</html>

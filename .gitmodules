@@ -16,3 +16,6 @@
 [submodule "recognize/Observer/vendor/palanteer"]
 	path = recognize/Observer/vendor/palanteer
 	url = https://github.com/dfeneyrou/palanteer
+[submodule "webRecognize/vendor/webrtc-build-helpers"]
+	path = webRecognize/vendor/webrtc-build-helpers
+	url = https://github.com/enzo418/webrtc-build-helpers

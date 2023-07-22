@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -16,7 +17,11 @@ namespace Observer {
 
         // RGB - HLS
         COLOR_HLS2RGB = 2,
-        COLOR_RGB2HLS = 3
+        COLOR_RGB2HLS = 3,
+
+        // RGB - BGR
+        COLOR_RGB2BGR = 4,
+        COLOR_BGR2RGB = 5,
     };
 
     // function for each threhold type:
@@ -167,5 +172,7 @@ namespace Observer {
         virtual void BitwiseNot() = 0;
 
         virtual void Mask(Frame& mask) = 0;
+
+        virtual uint8_t* GetData() = 0;
     };
 }  // namespace Observer
