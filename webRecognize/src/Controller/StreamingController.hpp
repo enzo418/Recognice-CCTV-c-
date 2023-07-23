@@ -24,6 +24,15 @@ namespace Web::Controller {
 
        private:
         /**
+         * @brief Stream a camera.
+         * Receives a query parameter "id" with the camera id.
+         *
+         * @param res
+         * @param req
+         */
+        void StreamCamera(auto* res, auto* req);
+
+        /**
          * @brief Stream a source.
          * Receives a query parameter "uri" with the source uri.
          * Sends a SDP offer in json format, usable by RTCPeerConnection API.
@@ -73,6 +82,10 @@ namespace Web::Controller {
         uWS::App* app, Web::DAL::IConfigurationDAO* pConfigurationDAO,
         RecognizeContext* context)
         : streamingServices(context), configurationDAO(pConfigurationDAO) {
+        app->get("/api/stream/camera/:id", [this](auto* res, auto* req) {
+            this->StreamCamera(res, req);
+        });
+
         app->get("/api/stream/source", [this](auto* res, auto* req) {
             this->StreamSource(res, req);
         });
@@ -96,6 +109,26 @@ namespace Web::Controller {
     template <bool SSL>
     void StreamingController<SSL>::OnObserverStopped() {
         streamingServices.OnObserverStopped();
+    }
+
+    template <bool SSL>
+    void StreamingController<SSL>::StreamCamera(auto* res, auto* req) {
+        auto id = std::string(req->getParameter(0));
+
+        try {
+            nldb::json camera = configurationDAO->GetCamera(id);
+
+            if (!streamingServices.Stream(camera["url"], res)) {
+                res->writeStatus(HTTP_404_NOT_FOUND)
+                    ->writeHeader("Content-Type", "application/json")
+                    ->end("{\"error\": \"source not found\"}");
+                return;
+            }
+        } catch (const std::exception& e) {
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson("{\"title\": \"camera not found\"}");
+        }
     }
 
     template <bool SSL>
