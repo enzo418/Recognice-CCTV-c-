@@ -4,6 +4,8 @@ namespace Web::Streaming::WebRTC {
     bool GenericSource::Start() {
         broadrtc::BroadcastSource::Start();
 
+        OBSERVER_TRACE("GenericSource::Start -> '{}'", uri);
+
         OBSERVER_ASSERT(!m_running, "GenericSource already running");
 
         m_running = true;
@@ -14,6 +16,8 @@ namespace Web::Streaming::WebRTC {
 
     bool GenericSource::Stop() {
         broadrtc::BroadcastSource::Stop();
+
+        OBSERVER_TRACE("GenericSource::Stop -> '{}'", uri);
 
         OBSERVER_ASSERT(m_running, "GenericSource not running");
 
