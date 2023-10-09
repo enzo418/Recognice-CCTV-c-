@@ -1,12 +1,16 @@
 #include "CamerasFramesBlender.hpp"
 
+#include "observer/CircularFIFO.hpp"
+
 namespace Observer {
 
     CamerasFramesBlender::CamerasFramesBlender(OutputPreviewConfiguration* pCfg)
         : cfg(pCfg) {
         this->running = false;
         this->maxFrames = -1;
-        this->sleepForMs = 50;
+        this->sleepForMs = pCfg->maxOutputFps > 0
+                               ? 1000 / pCfg->maxOutputFps
+                               : /*defaults to 20 max fps*/ 1000 / 20;
     }
 
     void CamerasFramesBlender::InternalStart() {
@@ -18,32 +22,23 @@ namespace Observer {
                         "SetNumberCameras should be called with a number > 0");
 
         std::vector<Frame> framesToShow(maxFrames);
-        std::vector<bool> cameraFirstFrameReaded(maxFrames);
+        std::vector<bool> cameraFirstFrameRead(maxFrames);
 
         const auto maxHStack = this->maxFrames == 1 ? 1 : 2;
 
         static Frame referenceFrameForBlankImage(Size(640, 360), 3);
 
         while (this->running) {
-            this->mtxFrames.lock();
-
-            int totalNumberFrames = 0;
             for (int i = 0; i < this->maxFrames; i++) {
-                totalNumberFrames += frames[i].size();
-
-                /// TODO: .empty is an opencv function...
-                if (!frames[i].empty()) {
-                    cameraFirstFrameReaded[i] = true;
-                    framesToShow[i] = this->frames[i].front();
+                if (!frames[i]->empty()) {
+                    cameraFirstFrameRead[i] = true;
+                    framesToShow[i] = this->frames[i]->pop();
                     referenceFrameForBlankImage = framesToShow[i];
-                    this->frames[i].pop();
-                } else if (!cameraFirstFrameReaded[i]) {
+                } else if (!cameraFirstFrameRead[i]) {
                     framesToShow[i] =
                         referenceFrameForBlankImage.GetBlackImage();
                 }
             }
-
-            this->mtxFrames.unlock();
 
             this->NormalizeNumberOfChannels(framesToShow);
 
@@ -58,22 +53,23 @@ namespace Observer {
 
             framePublisher.notifySubscribers(std::move(frame));
 
-            this->CalculateSleepTime(totalNumberFrames);
-
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepForMs));
         }
     }
 
     void CamerasFramesBlender::update(int cameraPos, Frame frame) {
         if (frameSubscriberCount > 0) {
-            this->mtxFrames.lock();
-            this->frames[cameraPos].push(frame);
-            this->mtxFrames.unlock();
+            this->frames[cameraPos]->add(frame);
         }
     }
 
     void CamerasFramesBlender::SetNumberCameras(int total) {
         this->frames.resize(total);
+
+        for (int i = 0; i < total; i++) {
+            this->frames[i] = std::make_unique<CircularFIFO<std::mutex>>(5);
+        }
+
         this->maxFrames = total;
     }
 
@@ -81,35 +77,6 @@ namespace Observer {
         ISubscriber<Frame>* sub) {
         framePublisher.subscribe(sub);
         frameSubscriberCount++;
-    }
-
-    void CamerasFramesBlender::CalculateSleepTime(int totalFrames) {
-        /**
-         * if we have 4 cameras and totalFrames is 4, all the
-         * cameras have at least 1 frame, so we are ok with the sleep timing
-         * sleep maintains the same.
-         *
-         * if we have 4 cameras and totalFrames is 0, not even one cameras has a
-         * frame available, we are much ahead of time. rest is < 0, sleep time
-         * is increased.
-         *
-         * if we have 4 cameras and totalFrames is 8, we are behind. 8 - 4 = 4
-         * rest > 0, sleep is decreased.
-         */
-
-        // increase/decrease by 5 ms
-        constexpr int maxStep = 50;
-
-        // max sleep time = 1 second
-        constexpr int maxSleepTime = 1 * 1000;
-
-        int rest =
-            std::min(std::max(totalFrames - maxFrames, -maxStep), maxStep);
-
-        sleepForMs -= rest;
-
-        // can't be < 0 & > max
-        sleepForMs = std::min(std::max(sleepForMs, 0), maxSleepTime);
     }
 
     void CamerasFramesBlender::NormalizeNumberOfChannels(

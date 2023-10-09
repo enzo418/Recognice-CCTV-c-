@@ -20,6 +20,7 @@ set(SRC_
         src/observer/SimpleBlockingQueue.hpp
         src/observer/Semaphore.hpp
         
+        src/observer/CircularFIFO.hpp
         src/observer/CircularFrameBuffer.hpp src/observer/CircularFrameBuffer.cpp
         src/observer/Functionality.hpp src/observer/Functionality.cpp
         src/observer/IFunctionality.hpp

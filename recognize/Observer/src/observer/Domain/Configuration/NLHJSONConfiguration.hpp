@@ -105,7 +105,7 @@ namespace Observer {
 
     /* ------------- OutputPreviewConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OutputPreviewConfiguration, showOutput,
-                                       resolution, scaleFactor);
+                                       resolution, scaleFactor, maxOutputFps);
 
     /* ------------------ ENotificationType ----------------- */
     inline void to_json(json& j, const ENotificationType& p) {

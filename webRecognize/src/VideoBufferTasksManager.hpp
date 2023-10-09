@@ -6,8 +6,8 @@
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
 #include "Pattern/VideoBufferSubscriberPublisher.hpp"
 #include "Utils/VideoBuffer.hpp"
-#include "observer/BlockingFIFO.hpp"
 #include "observer/Functionality.hpp"
+#include "observer/LockedFIFO.hpp"
 #include "observer/Semaphore.hpp"
 #include "observer/Size.hpp"
 
@@ -45,8 +45,9 @@ namespace Web {
        private:
         Semaphore tasksSemaphore;
 
-        Observer::BlockingFIFO<GenerateVideoBufferTask> tasksGenerateVideo;
-        Observer::BlockingFIFO<DoDetectionVideoBufferTask> tasksDetection;
+        Observer::BlockingFIFO<GenerateVideoBufferTask>::type
+            tasksGenerateVideo;
+        Observer::BlockingFIFO<DoDetectionVideoBufferTask>::type tasksDetection;
 
         DAL::IConfigurationDAO* configurationsDAO;
         DAL::VideoBufferRepositoryNLDB* videoBufferRepository;

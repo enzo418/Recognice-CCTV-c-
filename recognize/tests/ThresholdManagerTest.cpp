@@ -11,7 +11,8 @@ using namespace Observer;
 
 TEST(ThresholdManagerTest, Minimum) {
     const int min = 10;
-    ThresholdManager mg(min, 1, 1);
+    ThresholdManager mg;
+    mg.Setup(min, 1, 1);
 
     double average = 0;
 
@@ -36,7 +37,8 @@ TEST(ThresholdManagerTest, Minimum) {
 TEST(ThresholdManagerTest, Update) {
     const int min = 0;
     const int average = 40;
-    ThresholdManager mg(min, 1, 1);
+    ThresholdManager mg;
+    mg.Setup(min, 1, 1);
 
     // 1. add some values with average = 40
     for (int i = 0; i < 20; i++) {
@@ -68,7 +70,8 @@ TEST(ThresholdManagerTest, IncreaseFactor) {
     // when we add a new value, it will counter the minimum value and
     // leaves us with 20 - 10 = 10 as the average in the manager
     const int final_value = average - min;
-    ThresholdManager mg(min, 1, 2);
+    ThresholdManager mg;
+    mg.Setup(min, 1, 2);
 
     // add values < 10
     for (int i = 0; i < 20; i++) {

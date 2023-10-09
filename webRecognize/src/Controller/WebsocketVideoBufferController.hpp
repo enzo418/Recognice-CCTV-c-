@@ -12,8 +12,8 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Streaming/ws/WebsocketService.hpp"
 #include "nlohmann/json.hpp"
-#include "observer/BlockingFIFO.hpp"
 #include "observer/Functionality.hpp"
+#include "observer/LockedFIFO.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
 
@@ -43,7 +43,7 @@ namespace Web {
 
        private:
         Semaphore smpQueue;
-        Observer::BlockingFIFO<Event> events;
+        Observer::BlockingFIFO<Event>::type events;
     };
 
     std::string inline EventTypeToString(int type) {

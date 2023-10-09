@@ -7,8 +7,8 @@
 
 #include "DAL/INotificationRepository.hpp"
 #include "DAL/NoLiteDB/VideoBufferRepositoryNLDB.hpp"
-#include "observer/BlockingFIFO.hpp"
 #include "observer/Functionality.hpp"
+#include "observer/LockedFIFO.hpp"
 #include "observer/Timer.hpp"
 namespace Web {
     namespace {

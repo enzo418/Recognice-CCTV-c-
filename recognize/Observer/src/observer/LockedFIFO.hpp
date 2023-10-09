@@ -5,16 +5,21 @@
 #include <mutex>
 #include <queue>
 
+#include "observer/Lock.hpp"
+
 namespace Observer {
     /**
      * @brief Thread safe fifo queue using mutex
      *
      * @tparam T Queue items type
      */
-    template <typename T>
-    class BlockingFIFO {
+    template <typename T, typename Lock>
+        requires BasicLockable<Lock>
+    class LockedFIFO {
        public:
-        BlockingFIFO() {}
+        LockedFIFO() {}
+
+        LockedFIFO(int size) : queue(size) {}
 
         /**
          * @brief Adds a element to the back of queue
@@ -68,7 +73,12 @@ namespace Observer {
         }
 
        protected:
-        std::mutex mutex;
+        Lock mutex;
         std::deque<T> queue;
+    };
+
+    template <typename T>
+    struct BlockingFIFO {
+        typedef LockedFIFO<T, std::mutex> type;
     };
 }  // namespace Observer

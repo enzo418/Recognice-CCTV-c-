@@ -20,4 +20,5 @@ set(TESTS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/MainTests.cpp
                 #   ${CMAKE_CURRENT_LIST_DIR}/VideoBufferTest.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/ThresholdManagerTest.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/RectTest.cpp
-                  ${CMAKE_CURRENT_LIST_DIR}/MathTest.cpp)
+                  ${CMAKE_CURRENT_LIST_DIR}/MathTest.cpp
+                  ${CMAKE_CURRENT_LIST_DIR}/CircularFIFOTest.cpp)

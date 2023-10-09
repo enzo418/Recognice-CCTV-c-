@@ -8,6 +8,7 @@
 
 #include "Configuration/Configuration.hpp"
 #include "Configuration/OutputPreviewConfiguration.hpp"
+#include "observer/CircularFIFO.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
@@ -40,8 +41,6 @@ namespace Observer {
         void SubscribeToFramesUpdate(ISubscriber<Frame>* sub);
 
        protected:
-        void CalculateSleepTime(int totalNow);
-
         void InternalStart() override;
 
         /**
@@ -52,8 +51,12 @@ namespace Observer {
         void NormalizeNumberOfChannels(std::vector<Frame>&);
 
        private:
-        std::vector<std::queue<Frame>> frames;
-        std::mutex mtxFrames;
+        /** frames from each camera
+         * @remarks StaticCircularFrameBuffer has it's copy constructor deleted
+         * (because of the lock) so we can't use
+         * std::vector<StaticCircularFrameBuffer>
+         */
+        std::vector<std::unique_ptr<CircularFIFO<std::mutex>>> frames;
 
         OutputPreviewConfiguration* cfg;
 

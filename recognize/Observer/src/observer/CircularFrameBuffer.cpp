@@ -18,7 +18,7 @@ namespace Observer {
         const bool isFull = next >= this->frames.capacity();
         this->framesPosition = isFull ? 0 : next;
 
-        if (elementCount <= bufferSize) {
+        if (elementCount < bufferSize) {
             elementCount++;
         }
 

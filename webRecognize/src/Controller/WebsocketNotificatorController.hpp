@@ -12,9 +12,9 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Streaming/ws/WebsocketService.hpp"
 #include "nlohmann/json.hpp"
-#include "observer/BlockingFIFO.hpp"
 #include "observer/Domain/Notification/LocalNotifications.hpp"
 #include "observer/Functionality.hpp"
+#include "observer/LockedFIFO.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
 
@@ -31,7 +31,7 @@ namespace Web {
 
        private:
         Semaphore smpQueue;
-        Observer::BlockingFIFO<Web::API::DTONotification> notifications;
+        Observer::BlockingFIFO<Web::API::DTONotification>::type notifications;
     };
 
     template <bool SSL>
