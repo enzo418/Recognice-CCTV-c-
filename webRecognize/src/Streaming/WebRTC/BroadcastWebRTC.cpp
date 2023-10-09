@@ -1,5 +1,7 @@
 #include "BroadcastWebRTC.hpp"
 
+#include "observer/Log/log.hpp"
+
 namespace Web::Streaming::WebRTC {
     void MultiBroadcastWebRTC::OnChannelNotFound(const std::string& sourceId) {
         std::unique_ptr<broadrtc::BroadcastSource> source;
@@ -7,6 +9,14 @@ namespace Web::Streaming::WebRTC {
         if (sourceId == OBSERVER_SRC_TAG) {
             OBSERVER_ASSERT(recognizeCtx != nullptr,
                             "RecognizeContext is null");
+
+            if (recognizeCtx->observer == nullptr) {
+                throw std::runtime_error("observer not yet initialized");
+            }
+
+            if (!recognizeCtx->running) {
+                OBSERVER_TRACE("Not running but will subscribe anyway");
+            }
 
             // create source and subscribe to frames
             ObserverSource* observerSource = new ObserverSource();
