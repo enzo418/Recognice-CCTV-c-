@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "Streaming/PeerStreamingCapabilities.hpp"
+
 namespace Web {
 
     struct ServerConfiguration {
@@ -29,5 +31,16 @@ namespace Web {
         // there are no video buffer filter because the user can delete them
         // through the web interface
         // MediaFilter videoBufferFilter;
+
+        Streaming::PeerStreamingCapabilities serverStreamingCapabilities = {
+            .supportsJpgCacheBusting = true,
+            .supportsMJPEGStream = true,
+            .supportsH264Stream = true,
+#if WEB_WITH_WEBRTC
+            .supportsWebRTC = true,
+#else
+            .supportsWebRTC = true,
+#endif
+        };
     };
 }  // namespace Web

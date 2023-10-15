@@ -43,7 +43,7 @@ namespace Web {
 
        private:
         Semaphore smpQueue;
-        Observer::BlockingFIFO<Event>::type events;
+        typename Observer::BlockingFIFO<Event>::type events;
     };
 
     std::string inline EventTypeToString(int type) {

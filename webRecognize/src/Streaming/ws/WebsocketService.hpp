@@ -2,7 +2,7 @@
 
 #include <mutex>
 
-#include "Streaming/IStreamingService.hpp"
+#include "Streaming/IBroadcastService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
 #include "uWebSockets/WebSocketProtocol.h"
@@ -10,7 +10,7 @@
 namespace Web::Streaming::Ws {
     template <bool SSL, typename SocketData>
     class WebsocketService
-        : public IStreamingService<SSL, uWS::WebSocket<SSL, true, SocketData>> {
+        : public IBroadcastService<SSL, uWS::WebSocket<SSL, true, SocketData>> {
        public:
         typedef uWS::WebSocket<SSL, true, SocketData> WebSocketClient;
 

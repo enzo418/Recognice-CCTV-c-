@@ -2,9 +2,10 @@
 
 #include "ControllerUtils.hpp"
 #include "DAL/IConfigurationDAO.hpp"
+#include "Serialization/JsonSerialization.hpp"
 #include "Server/ServerContext.hpp"
-#include "Streaming/WebRTC/WebRTCStreaming.hpp"
-#include "Streaming/http/LiveViewsManager.hpp"
+#include "Streaming/PeerStreamingCapabilities.hpp"
+#include "Streaming/StreamingServiceSelector.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
 
@@ -30,7 +31,7 @@ namespace Web::Controller {
          * @param res
          * @param req
          */
-        void StreamCamera(auto* res, auto* req);
+        void StreamCamera(auto* res, auto* req, const nlohmann::json& body);
 
         /**
          * @brief Stream a source.
@@ -40,7 +41,7 @@ namespace Web::Controller {
          * @param res
          * @param req
          */
-        void StreamSource(auto* res, auto* req);
+        void StreamSource(auto* res, auto* req, const nlohmann::json& body);
 
         /**
          * @brief Stream the observer output.
@@ -49,31 +50,12 @@ namespace Web::Controller {
          * @param res
          * @param req
          */
-        void StreamObserver(auto* res, auto* req);
-
-        /**
-         * @brief Set the peer answer.
-         * Receives a json object with:
-         * - clientId: the id of the client, used to send the answer.
-         * - answer: the json SDP answer
-         *
-         * @param res
-         * @param req
-         */
-        void SetPeerAnswer(auto* res, auto* req, const nlohmann::json& body);
-
-        /**
-         * @brief End the connection with the peer.
-         * Receives a json object with:
-         * - clientId: the id of the client, used to send the answer.
-         *
-         * @param res
-         * @param req
-         */
-        void PeerHangup(auto* res, auto* req, const nlohmann::json& body);
+        void StreamObserver(
+            auto* res, auto* req,
+            const Streaming::PeerStreamingCapabilities& peerCapabilities);
 
        private:
-        Streaming::WebRTC::WebRTCStreamingService<SSL> streamingServices;
+        Streaming::StreamingServiceSelector<SSL> streamingServices;
         Web::DAL::IConfigurationDAO* configurationDAO;
     };
 
@@ -81,28 +63,18 @@ namespace Web::Controller {
     StreamingController<SSL>::StreamingController(
         uWS::App* app, Web::DAL::IConfigurationDAO* pConfigurationDAO,
         RecognizeContext* context)
-        : streamingServices(context), configurationDAO(pConfigurationDAO) {
-        app->get("/api/stream/camera/:id", [this](auto* res, auto* req) {
-            this->StreamCamera(res, req);
+        : streamingServices(app, context), configurationDAO(pConfigurationDAO) {
+        app->post("/api/stream/camera/:id", [this](auto* res, auto* req) {
+            READ_JSON_BODY(res, req, StreamCamera);
         });
 
-        app->get("/api/stream/source", [this](auto* res, auto* req) {
-            this->StreamSource(res, req);
+        app->post("/api/stream/source", [this](auto* res, auto* req) {
+            READ_JSON_BODY(res, req, StreamSource);
         });
 
-        app->get("/api/stream/observer", [this](auto* res, auto* req) {
-            this->StreamObserver(res, req);
-        });
-
-        // It should be POST /api/stream/:client_id/answer but uWebSockets has a
-        // hard time parsing the numeric parameters...
-        app->post("/api/stream/answer", [this](auto* res, auto* req) {
-            READ_JSON_BODY(res, req, SetPeerAnswer);
-        });
-
-        // I would like to use DELETE method, /api/stream/:client_id
-        app->post("/api/stream/hangup", [this](auto* res, auto* req) {
-            READ_JSON_BODY(res, req, PeerHangup);
+        app->post("/api/stream/observer", [this](auto* res, auto* req) {
+            READ_JSON_BODY_TYPED(res, req, StreamObserver,
+                                 Streaming::PeerStreamingCapabilities);
         });
     }
 
@@ -112,19 +84,29 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    void StreamingController<SSL>::StreamCamera(auto* res, auto* req) {
+    void StreamingController<SSL>::StreamCamera(auto* res, auto* req,
+                                                const nlohmann::json& body) {
         auto id = std::string(req->getParameter(0));
 
         try {
             nldb::json camera = configurationDAO->GetCamera(id);
 
-            if (!streamingServices.Stream(camera["url"], res)) {
+            Streaming::PeerStreamingCapabilities peerCapabilities = body;
+
+            std::unordered_map<std::string, std::string> result;
+
+            if (!streamingServices.PrepareStream(camera["url"],
+                                                 peerCapabilities, result)) {
                 res->writeStatus(HTTP_404_NOT_FOUND)
                     ->writeHeader("Content-Type", "application/json")
                     ->end("{\"error\": \"source not found\"}");
                 return;
             }
+
+            res->endJson(nlohmann::json(result).dump());
         } catch (const std::exception& e) {
+            OBSERVER_ERROR("Error while streaming camera: {}", e.what());
+
             res->writeStatus(HTTP_404_NOT_FOUND)
                 ->writeHeader("Cache-Control", "max-age=5")
                 ->endProblemJson("{\"title\": \"camera not found\"}");
@@ -132,91 +114,54 @@ namespace Web::Controller {
     }
 
     template <bool SSL>
-    void StreamingController<SSL>::StreamSource(auto* res, auto* req) {
+    void StreamingController<SSL>::StreamSource(auto* res, auto* req,
+                                                const nlohmann::json& body) {
         std::string uri(req->getQuery("uri"));
-        if (!streamingServices.Stream(uri, res)) {
+
+        Streaming::PeerStreamingCapabilities peerCapabilities = body;
+
+        std::unordered_map<std::string, std::string> result;
+        try {
+            if (!streamingServices.PrepareStream(uri, peerCapabilities,
+                                                 result)) {
+                res->writeStatus(HTTP_404_NOT_FOUND)
+                    ->writeHeader("Content-Type", "application/json")
+                    ->end("{\"error\": \"source not found\"}");
+                return;
+            }
+
+            res->endJson(nlohmann::json(result).dump());
+        } catch (const std::exception& e) {
+            OBSERVER_ERROR("Error while streaming source: {}", e.what());
+
             res->writeStatus(HTTP_404_NOT_FOUND)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"source not found\"}");
-            return;
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson("{\"title\": \"source not found\"}");
         }
     }
 
     template <bool SSL>
-    void StreamingController<SSL>::StreamObserver(auto* res, auto* req) {
-        if (!streamingServices.StreamObserver(res)) {
+    void StreamingController<SSL>::StreamObserver(
+        auto* res, auto* req,
+        const Streaming::PeerStreamingCapabilities& peerCapabilities) {
+        std::unordered_map<std::string, std::string> result;
+
+        try {
+            if (!streamingServices.PrepareStreamObserver(peerCapabilities,
+                                                         result)) {
+                res->writeStatus(HTTP_404_NOT_FOUND)
+                    ->writeHeader("Content-Type", "application/json")
+                    ->end("{\"error\": \"observer not found\"}");
+                return;
+            }
+
+            res->endJson(nlohmann::json(result).dump());
+        } catch (const std::exception& e) {
+            OBSERVER_ERROR("Error while streaming observer: {}", e.what());
+
             res->writeStatus(HTTP_404_NOT_FOUND)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"observer not found\"}");
-            return;
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson("{\"title\": \"observer not found\"}");
         }
-    }
-
-    template <bool SSL>
-    void StreamingController<SSL>::SetPeerAnswer(auto* res, auto* req,
-                                                 const nlohmann::json& body) {
-        if (!body.contains("clientId") || !body.contains("answer")) {
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"clientId and answer are required\"}");
-            return;
-        }
-
-        std::string clientId;
-
-        if (body["clientId"].is_string()) {
-            clientId = body["clientId"];
-        } else if (body["clientId"].is_number()) {
-            clientId = std::to_string(body["clientId"].get<int>());
-        } else {
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"clientId must be a string or a number\"}");
-            return;
-        }
-
-        std::string answer;
-
-        if (body["answer"].is_string()) {
-            answer = body["answer"];
-        } else {
-            answer = body["answer"].dump();
-        }
-
-        streamingServices.SetPeerAnswer(clientId, answer);
-
-        res->writeStatus(HTTP_200_OK)
-            ->writeHeader("Content-Type", "application/json")
-            ->end("{\"success\": true}");
-    }
-
-    template <bool SSL>
-    void StreamingController<SSL>::PeerHangup(auto* res, auto* req,
-                                              const nlohmann::json& body) {
-        if (!body.contains("clientId")) {
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"clientId is required\"}");
-            return;
-        }
-
-        std::string clientId;
-
-        if (body["clientId"].is_string()) {
-            clientId = body["clientId"];
-        } else if (body["clientId"].is_number()) {
-            clientId = std::to_string(body["clientId"].get<int>());
-        } else {
-            res->writeStatus(HTTP_400_BAD_REQUEST)
-                ->writeHeader("Content-Type", "application/json")
-                ->end("{\"error\": \"clientId must be a string or a number\"}");
-            return;
-        }
-
-        streamingServices.PeerHangup(clientId);
-
-        res->writeStatus(HTTP_200_OK)
-            ->writeHeader("Content-Type", "application/json")
-            ->end("{\"success\": true}");
     }
 }  // namespace Web::Controller

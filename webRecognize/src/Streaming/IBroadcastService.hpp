@@ -7,7 +7,7 @@
 
 namespace Web::Streaming {
     /**
-     * @brief This is the interface for the streaming services.
+     * @brief This is the interface for the broadcast services.
      * Implementations of this interface know how to communicate with the
      * client.
      *
@@ -15,9 +15,9 @@ namespace Web::Streaming {
      * @tparam Client Client type, for example uWS::HttpResponse<SSL>
      */
     template <bool SSL, typename Client>
-    class IStreamingService {
+    class IBroadcastService {
        public:
-        IStreamingService() = default;
+        IBroadcastService() = default;
 
         virtual void AddClient(Client* res) = 0;
 
@@ -32,6 +32,6 @@ namespace Web::Streaming {
             std::function<bool(Client*)> shouldSend) = 0;
 
        public:
-        virtual ~IStreamingService() = default;
+        virtual ~IBroadcastService() = default;
     };
 }  // namespace Web::Streaming

@@ -26,7 +26,7 @@ namespace Web::Streaming::Ws {
         constexpr static const char* observerFeedId = "feed_observer";
 
        public:
-        LiveViewsManager(int observerFPS, RecognizeContext* recognizeCtx,
+        LiveViewsManager(RecognizeContext* recognizeCtx,
                          int compressionQuality = 90);
 
         ~LiveViewsManager();
@@ -107,11 +107,9 @@ namespace Web::Streaming::Ws {
     };
 
     template <bool SSL>
-    LiveViewsManager<SSL>::LiveViewsManager(int pObserverFPS,
-                                            RecognizeContext* pRecognizeCtx,
+    LiveViewsManager<SSL>::LiveViewsManager(RecognizeContext* pRecognizeCtx,
                                             int pCompressionQuality)
-        : observerFPS(pObserverFPS),
-          recognizeCtx(pRecognizeCtx),
+        : recognizeCtx(pRecognizeCtx),
           compressionQuality(pCompressionQuality) {}
 
     template <bool SSL>
@@ -222,7 +220,7 @@ namespace Web::Streaming::Ws {
         services[observerFeedId] = service;
         camerasLiveView[observerFeedId] =
             new Video::Ws::ObserverLiveVideo<SSL, Client>(
-                observerFPS, this->compressionQuality, service);
+                std::nullopt, this->compressionQuality, service);
 
         recognizeCtx->observer->SubscribeToFrames(
             (Video::Ws::ObserverLiveVideo<SSL, Client>*)

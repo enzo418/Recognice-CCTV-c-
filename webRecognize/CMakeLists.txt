@@ -3,6 +3,9 @@ project(WebRecognize VERSION 1.0.0)
 
 # ----------------------- OPTIONS ---------------------- #
 option(WITH_CUDA "Use cuda DNN" OFF)
+
+option(WITH_WEBRTC "Use WebRTC" OFF)
+
 option(SKIP_INSTALL_FRONTEND_PACKAGES "Skip the installation of all the frontend packages before build" OFF)
 option(BUILD_FRONTEND "Should compile the frontend code" ON)
 
@@ -26,9 +29,9 @@ set (CMAKE_CXX_STANDARD 20)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lX11")
 
-file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
+include(${CMAKE_CURRENT_LIST_DIR}/src/CMakeLists.txt)
 
-add_executable(webRecognize ${SOURCES})
+add_executable(webRecognize ${WEB_SOURCES})
 
 add_dependencies(webRecognize ${DEPENDENCY_LIST})
 
@@ -44,6 +47,15 @@ target_compile_definitions(webRecognize PUBLIC
 )
 
 target_compile_definitions(webRecognize PUBLIC ${OBSERVER_DEPENDENCY_COMPILATION_OPTIONS})
+
+# boolean definitions
+foreach(_VAR IN ITEMS
+	WITH_WEBRTC
+)
+    if(${_VAR})
+        target_compile_definitions(webRecognize PUBLIC "WEB_${_VAR}")
+    endif()
+endforeach()
 
 # Link libraries
 # -----

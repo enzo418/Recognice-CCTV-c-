@@ -32,6 +32,9 @@ namespace Web {
         static void Update(const nlohmann::json& fields);
 
        private:
+        static void AlignConfigurationToBuild();
+
+       private:
         static std::mutex mutex;
         static ServerConfiguration configuration;
 

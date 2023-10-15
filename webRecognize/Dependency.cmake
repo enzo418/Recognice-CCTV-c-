@@ -105,21 +105,23 @@ if (NOT ${__BUILD_NOLITE_SHARED})
 endif()
 
 # ------------------------ WEBRTC ------------------------ #
-ExternalProject_Add(
-    web-rtc-build
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/webrtc-build-helpers
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
-        -DCMAKE_INSTALL_INCLUDEDIR=${DEPENDENCY_INCLUDE_DIR}
-        -DCMAKE_INSTALL_LIBDIR=${DEPENDENCY_LIB_DIR}
-        -DWEBRTC_BUILD_TYPE="Release"
-        -DWEBRTC_INCLUDE_DEFAULT_AUDIO=OFF
-        -DWEBRTC_BUILD_SSL=OFF
-    TEST_COMMAND ""
-)
+if (${WITH_WEBRTC})
+    ExternalProject_Add(
+        web-rtc-build
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/webrtc-build-helpers
+        CMAKE_ARGS
+            -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
+            -DCMAKE_INSTALL_INCLUDEDIR=${DEPENDENCY_INCLUDE_DIR}
+            -DCMAKE_INSTALL_LIBDIR=${DEPENDENCY_LIB_DIR}
+            -DWEBRTC_BUILD_TYPE=Release
+            -DWEBRTC_INCLUDE_DEFAULT_AUDIO=OFF
+            -DWEBRTC_BUILD_SSL=OFF
+        TEST_COMMAND ""
+    )
 
-add_dep(web-rtc-build)
-add_lib(webrtc)
-add_lib(webrtc_extra)
+    add_dep(web-rtc-build)
+    add_lib(webrtc)
+    add_lib(webrtc_extra)
 
-add_include(${DEPENDENCY_INSTALL_DIR}/include/webrtc) # webrtc source uses api/, modules/, ...
+    add_include(${DEPENDENCY_INSTALL_DIR}/include/webrtc) # webrtc source uses api/, modules/, ...
+endif()

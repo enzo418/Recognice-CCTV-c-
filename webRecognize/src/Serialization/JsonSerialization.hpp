@@ -89,4 +89,9 @@ namespace nlohmann {
                                        notificationDebugVideoFilter,
                                        notificationCleanupFilter);
 
+    /* ------------------ PEER CAPABILITIES ----------------- */
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+        Web::Streaming::PeerStreamingCapabilities, supportsJpgCacheBusting,
+        supportsMJPEGStream, supportsH264Stream, supportsWebRTC);
+
 }  // namespace nlohmann

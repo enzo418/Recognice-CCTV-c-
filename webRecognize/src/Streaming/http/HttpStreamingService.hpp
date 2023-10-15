@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Streaming/IStreamingService.hpp"
+#include "Streaming/IBroadcastService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/HttpResponse.h"
 
 namespace Web::Streaming::Http {
     template <bool SSL>
     class HttpStreamingService final
-        : public IStreamingService<SSL, uWS::HttpResponse<SSL>> {
+        : public IBroadcastService<SSL, uWS::HttpResponse<SSL>> {
        private:
         typedef uWS::HttpResponse<SSL> Client;
 

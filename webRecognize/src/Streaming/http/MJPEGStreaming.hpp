@@ -1,22 +1,27 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 
 #include "Server/RecognizeContext.hpp"
 #include "SocketData.hpp"
+#include "Streaming/IStreamingSetupService.hpp"
 #include "Streaming/Video/CameraLiveVideo.hpp"
 #include "Streaming/Video/ObserverLiveVideo.hpp"
 #include "Streaming/http/HttpStreamingService.hpp"
 #include "Streaming/ws/WebsocketService.hpp"
+#include "nlohmann/json.hpp"
+#include "server_utils.hpp"
+#include "uWebSockets/App.h"
 
 namespace Web::Streaming::Http {
     using namespace Web::Streaming::Video;
 
     template <bool SSL>
-    class LiveViewsManager final {
+    class MJPEGStreaming final : public IStreamingSetupService {
        private:
         typedef typename uWS::HttpResponse<SSL> Client;
         typedef StreamWriter<SSL, Client> SourceVideo;
@@ -27,34 +32,22 @@ namespace Web::Streaming::Http {
         constexpr static const char* observerFeedId = "feed_observer";
 
        public:
-        LiveViewsManager(int observerFPS, RecognizeContext* recognizeCtx,
-                         int compressionQuality = 90);
+        MJPEGStreaming(uWS::App* app, RecognizeContext* recognizeCtx,
+                       int compressionQuality = 90);
 
-        ~LiveViewsManager();
+        ~MJPEGStreaming();
 
        public:
-        /**
-         * @brief Streams a source video to a client.
-         *
-         * @param uri url, uri, file path or reachable stream.
-         * @param client http client
-         * @return true if success
-         */
-        bool Stream(const std::string& uri, Client* client);
+        bool PrepareStream(
+            const std::string& uri,
+            std::unordered_map<std::string, std::string>& result) override;
 
-        /**
-         * @brief Streams the observer output to a client.
-         *
-         * @param client
-         * @return true if success
-         */
-        bool StreamObserver(Client* client);
+        bool PrepareStreamObserver(
+            std::unordered_map<std::string, std::string>& result) override;
 
-        /**
-         * @brief Called when observer was stopped.
-         * This will reset some internal data.
-         */
-        void OnObserverStopped();
+        void OnObserverStopped() override;
+
+        bool StartMJPEGStreamToClient(std::string& streamId, Client* client);
 
        private:
         /**
@@ -78,6 +71,17 @@ namespace Web::Streaming::Http {
 
         LiveViewStatus GetStatus(const std::string& feed_id);
 
+        /**
+         * @brief MJPEG Stream endpoint. This is the start of the stream once
+         * the negotiation is done.
+         * endpoint parameter:
+         * - stream_id: the id of the stream to watch.
+         *
+         * @param res
+         * @param req
+         */
+        void MJPEGStream(auto* res, auto* req);
+
        private:
         std::map<std::string, std::string> mapUriToFeed;
         std::map<std::string, Service*> services;
@@ -91,19 +95,19 @@ namespace Web::Streaming::Http {
        private:
         RecognizeContext* recognizeCtx;
         int compressionQuality;
-        int observerFPS;
     };
 
     template <bool SSL>
-    LiveViewsManager<SSL>::LiveViewsManager(int pObserverFPS,
-                                            RecognizeContext* pRecognizeCtx,
-                                            int pCompressionQuality)
-        : observerFPS(pObserverFPS),
-          recognizeCtx(pRecognizeCtx),
-          compressionQuality(pCompressionQuality) {}
+    MJPEGStreaming<SSL>::MJPEGStreaming(uWS::App* app,
+                                        RecognizeContext* pRecognizeCtx,
+                                        int pCompressionQuality)
+        : recognizeCtx(pRecognizeCtx), compressionQuality(pCompressionQuality) {
+        app->get("/live/mjpeg/stream/:stream_id*",
+                 [this](auto* res, auto* req) { MJPEGStream(res, req); });
+    }
 
     template <bool SSL>
-    LiveViewsManager<SSL>::~LiveViewsManager() {
+    MJPEGStreaming<SSL>::~MJPEGStreaming() {
         for (auto& [k, v] : camerasLiveView) {
             delete v;
         }
@@ -114,7 +118,9 @@ namespace Web::Streaming::Http {
     }
 
     template <bool SSL>
-    bool LiveViewsManager<SSL>::Stream(const std::string& uri, Client* client) {
+    bool MJPEGStreaming<SSL>::PrepareStream(
+        const std::string& uri,
+        std::unordered_map<std::string, std::string>& result) {
         LockGuard guard(mtxServices);
         LockGuard guard2(mtxCamerasLiveView);
 
@@ -127,7 +133,6 @@ namespace Web::Streaming::Http {
         std::string feedId = mapUriToFeed[uri];
 
         auto service = services[feedId];
-        service->AddClient(client);
         auto feed = camerasLiveView[feedId];
 
         // check if it's running because it ONLY will change its status once the
@@ -138,11 +143,14 @@ namespace Web::Streaming::Http {
             feed->Start();
         }
 
+        result["stream_url"] = "/live/mjpeg/stream/" + feedId;
+
         return true;
     }
 
     template <bool SSL>
-    bool LiveViewsManager<SSL>::StreamObserver(Client* client) {
+    bool MJPEGStreaming<SSL>::PrepareStreamObserver(
+        std::unordered_map<std::string, std::string>& result) {
         LockGuard guard(mtxServices);
         LockGuard guard2(mtxCamerasLiveView);
 
@@ -159,7 +167,6 @@ namespace Web::Streaming::Http {
         std::string feedId = mapUriToFeed[observerUri];
 
         auto service = services[feedId];
-        service->AddClient(client);
         auto feed = camerasLiveView[feedId];
 
         // check if it's running because it ONLY will change its status once the
@@ -168,13 +175,22 @@ namespace Web::Streaming::Http {
             !feed->IsRunning()) {
             OBSERVER_TRACE("Starting a live feed: {}", feedId);
             feed->Start();
+        } else if (Observer::has_flag(feed->GetStatus(),
+                                      LiveViewStatus::CLOSED) &&
+                   feed->IsRunning()) {
+            OBSERVER_TRACE("Restarting a zombie live feed: {}", feedId);
+            feed->Stop();
+
+            feed->Start();
         }
+
+        result["stream_url"] = "/live/mjpeg/stream/" + feedId;
 
         return true;
     }
 
     template <bool SSL>
-    bool LiveViewsManager<SSL>::CreateCameraView(const std::string& uri) {
+    bool MJPEGStreaming<SSL>::CreateCameraView(const std::string& uri) {
         if (mapUriToFeed.find(uri) != mapUriToFeed.end()) {
             return true;
         }
@@ -202,7 +218,7 @@ namespace Web::Streaming::Http {
     }
 
     template <bool SSL>
-    bool LiveViewsManager<SSL>::CreateObserverView(const std::string& uri) {
+    bool MJPEGStreaming<SSL>::CreateObserverView(const std::string& uri) {
         if (!recognizeCtx->observer) {
             return false;
         }
@@ -223,7 +239,7 @@ namespace Web::Streaming::Http {
         if (camerasLiveView.find(observerFeedId) == camerasLiveView.end()) {
             camerasLiveView[observerFeedId] =
                 new Video::Ws::ObserverLiveVideo<SSL, Client>(
-                    observerFPS, this->compressionQuality, service);
+                    std::nullopt, this->compressionQuality, service);
         }
 
         recognizeCtx->observer->SubscribeToFrames(
@@ -236,15 +252,58 @@ namespace Web::Streaming::Http {
     }
 
     template <bool SSL>
-    LiveViewStatus LiveViewsManager<SSL>::GetStatus(
-        const std::string& feed_id) {
+    LiveViewStatus MJPEGStreaming<SSL>::GetStatus(const std::string& feed_id) {
         return camerasLiveView[feed_id]->GetStatus();
     }
 
     template <bool SSL>
-    void LiveViewsManager<SSL>::OnObserverStopped() {
+    void MJPEGStreaming<SSL>::OnObserverStopped() {
         mapUriToFeed.erase(observerUri);
 
         OBSERVER_INFO("Observer live view was stopped and cleaned up.");
+    }
+
+    template <bool SSL>
+    bool MJPEGStreaming<SSL>::StartMJPEGStreamToClient(std::string& feedId,
+                                                       Client* client) {
+        LockGuard guard(mtxServices);
+        LockGuard guard2(mtxCamerasLiveView);
+
+        if (services.find(feedId) == services.end()) {
+            return false;
+        }
+
+        auto service = services[feedId];
+        service->AddClient(client);
+        auto feed = camerasLiveView[feedId];
+
+        // check if it's running because it ONLY will change its status once the
+        // thread is spawned.
+        if (Observer::has_flag(feed->GetStatus(), LiveViewStatus::STOPPED) &&
+            !feed->IsRunning()) {
+            OBSERVER_TRACE("Starting a live feed: {}", feedId);
+            feed->Start();
+        } else if (Observer::has_flag(feed->GetStatus(),
+                                      LiveViewStatus::CLOSED) &&
+                   feed->IsRunning()) {
+            OBSERVER_TRACE("Restarting a zombie live feed: {}", feedId);
+            feed->Stop();
+
+            feed->Start();
+        }
+
+        return true;
+    }
+
+    template <bool SSL>
+    void MJPEGStreaming<SSL>::MJPEGStream(auto* res, auto* req) {
+        std::string streamId(req->getParameter(0));
+
+        if (!StartMJPEGStreamToClient(streamId, res)) {
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Content-Type", "application/json")
+                ->end("{\"error\": \"stream not found\"}");
+            return;
+        }
     }
 }  // namespace Web::Streaming::Http

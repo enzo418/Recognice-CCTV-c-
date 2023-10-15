@@ -9,8 +9,8 @@ namespace Web::Streaming::Video::Ws {
     class ObserverLiveVideo final : public StreamWriter<SSL, Client>,
                                     public ISubscriber<Observer::Frame> {
        public:
-        ObserverLiveVideo(int fps, int quality,
-                          IStreamingService<SSL, Client>* service);
+        ObserverLiveVideo(std::optional<int> maxFps, int quality,
+                          IBroadcastService<SSL, Client>* service);
 
         virtual ~ObserverLiveVideo() {};
 
@@ -22,8 +22,9 @@ namespace Web::Streaming::Video::Ws {
 
     template <bool SSL, typename Client>
     ObserverLiveVideo<SSL, Client>::ObserverLiveVideo(
-        int pFps, int pQuality, IStreamingService<SSL, Client>* service)
-        : StreamWriter<SSL, Client>(pFps, pQuality, service) {}
+        std::optional<int> maxFps, int pQuality,
+        IBroadcastService<SSL, Client>* service)
+        : StreamWriter<SSL, Client>(maxFps, pQuality, service) {}
 
     template <bool SSL, typename Client>
     void ObserverLiveVideo<SSL, Client>::update(Observer::Frame pFrame) {

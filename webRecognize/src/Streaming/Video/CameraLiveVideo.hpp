@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <optional>
 #include <string_view>
 
 #include "LiveViewExceptions.hpp"
@@ -19,7 +20,7 @@ namespace Web::Streaming::Video {
     class CameraLiveVideo final : public StreamWriter<SSL, Client> {
        public:
         CameraLiveVideo(const std::string& pCameraUri, int quality,
-                        IStreamingService<SSL, Client>* service);
+                        IBroadcastService<SSL, Client>* service);
         virtual ~CameraLiveVideo() {}
 
        public:
@@ -52,8 +53,8 @@ namespace Web::Streaming::Video {
     template <bool SSL, typename Client>
     CameraLiveVideo<SSL, Client>::CameraLiveVideo(
         const std::string& pCameraUri, int pQuality,
-        IStreamingService<SSL, Client>* service)
-        : StreamWriter<SSL, Client>(100, pQuality, service),
+        IBroadcastService<SSL, Client>* service)
+        : StreamWriter<SSL, Client>(std::nullopt, pQuality, service),
           cameraUri(pCameraUri) {
         this->OpenCamera();
 

@@ -4,12 +4,13 @@
 #include <mutex>
 #include <thread>
 
-#include "Streaming/IStreamingService.hpp"
+#include "Streaming/IBroadcastService.hpp"
 #include "Streaming/Video/LiveViewStatus.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/Implementation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Pattern/Camera/IFrameSubscriber.hpp"
+#include "observer/Semaphore.hpp"
 #include "observer/Timer.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
 
@@ -29,8 +30,17 @@ namespace Web::Streaming::Video {
     template <bool SSL, typename Client>
     class StreamWriter : public Observer::Functionality {
        public:
-        StreamWriter(int fps, int quality,
-                     IStreamingService<SSL, Client>* service);
+        /**
+         * @brief Construct a new Stream Writer object
+         *
+         * @param quality jpg compression quality
+         * @param service service to send the frames to
+         * @param maxFps If set, it will limit the fps to this value (in the
+         * case the source is faster than this value). If not set, it will send
+         * the frames whenever they are received.
+         */
+        StreamWriter(std::optional<int> maxFps, int quality,
+                     IBroadcastService<SSL, Client>* service);
 
         LiveViewStatus GetStatus();
 
@@ -72,15 +82,12 @@ namespace Web::Streaming::Video {
         void SetQuality(int quality);
 
        protected:
+        Semaphore smpFrame;
         Observer::Frame frame;
         std::mutex mtxFrame;
         LiveViewStatus status;
         Observer::Timer<std::chrono::seconds> timerZombie;
-        IStreamingService<SSL, Client>* service;
-
-       private:
-        bool encoded {false};
-        bool imageReady {false};
+        IBroadcastService<SSL, Client>* service;
 
        private:
         double waitMs;
@@ -90,19 +97,24 @@ namespace Web::Streaming::Video {
 
     template <bool SSL, typename Client>
     StreamWriter<SSL, Client>::StreamWriter(
-        int pFps, int pQuality, IStreamingService<SSL, Client>* pService)
-        : waitMs(1000.0 / (double)pFps),
-          quality(pQuality),
+        std::optional<int> maxFps, int pQuality,
+        IBroadcastService<SSL, Client>* pService)
+        : quality(pQuality),
           frame(Observer::Size(640, 360), 3),
           service(pService) {
+        if (maxFps.has_value()) {
+            this->SetFPS(maxFps.value());
+        } else {
+            this->waitMs = 0;
+        }
+
         Observer::set_flag(status, LiveViewStatus::CLOSED);
         Observer::set_flag(status, LiveViewStatus::STOPPED);
     }
 
     template <bool SSL, typename Client>
     void StreamWriter<SSL, Client>::NewValidFrameReceived() {
-        this->imageReady = true;
-        this->encoded = false;
+        this->smpFrame.release();
     }
 
     template <bool SSL, typename Client>
@@ -119,10 +131,9 @@ namespace Web::Streaming::Video {
         while (this->running) {
             this->GetNextFrame();
 
-            this->mtxFrame.lock();
-
-            if (this->service->GetTotalClients() > 0)
+            if (this->service->GetTotalClients() > 0) {
                 this->timerZombie.Restart();
+            }
 
             if (this->IsZombie()) {
                 OBSERVER_TRACE(
@@ -130,26 +141,27 @@ namespace Web::Streaming::Video {
                     "seconds",
                     SECONDS_TO_ZOMBIE);
 
-                this->mtxFrame.unlock();
-                this->running = false;
                 this->PostStop();
                 return;
             }
 
-            if (!this->encoded && this->imageReady && !this->frame.IsEmpty()) {
-                this->frame.EncodeImage(".jpg", this->quality, buffer);
-                this->encoded = true;
-                this->imageReady = false;
+            if (smpFrame.acquire_timeout<500>()) {
+                this->mtxFrame.lock();
 
-                this->mtxFrame.unlock();
+                if (!this->frame.IsEmpty()) {
+                    this->frame.EncodeImage(".jpg", this->quality, buffer);
 
-                this->service->SendToClients((char*)buffer.data(),
-                                             buffer.size());
-            } else {
-                this->mtxFrame.unlock();
+                    this->mtxFrame.unlock();
+
+                    this->service->SendToClients((char*)buffer.data(),
+                                                 buffer.size());
+                } else {
+                    this->mtxFrame.unlock();
+                }
+
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds((int)waitMs));
             }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds((int)waitMs));
         }
 
         Observer::clear_flag(status, LiveViewStatus::RUNNING);
@@ -158,11 +170,14 @@ namespace Web::Streaming::Video {
 
     template <bool SSL, typename Client>
     void StreamWriter<SSL, Client>::SetFPS(double fps) {
+        OBSERVER_ASSERT(fps > 0, "fps must be greater than 0");
         this->waitMs = 1000.0 / fps;
     }
 
     template <bool SSL, typename Client>
     void StreamWriter<SSL, Client>::SetQuality(int pQuality) {
+        OBSERVER_ASSERT(pQuality >= 0 && pQuality <= 100,
+                        "quality must be between 0 and 100");
         this->quality = pQuality;
     }
 
