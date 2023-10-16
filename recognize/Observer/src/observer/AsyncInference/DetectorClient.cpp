@@ -160,15 +160,15 @@ namespace AsyncInference {
                 return;
             }
 
-            if (sendStrategy != nullptr &&
-                !sendStrategy->ShouldSend(images->at(currentImage),
-                                          currentImage)) {
+            auto& image = images->at(currentImage);
+
+            if ((sendStrategy != nullptr &&
+                 !sendStrategy->ShouldSend(image, currentImage)) ||
+                image.IsEmpty()) {
                 currentImage++;
                 NextWrite();
                 return;
             }
-
-            auto& image = images->at(currentImage);
 
             if (!image.EncodeImage(".jpg", 95, buffer)) {
                 std::cout << "DetectorClient failed to encode image."

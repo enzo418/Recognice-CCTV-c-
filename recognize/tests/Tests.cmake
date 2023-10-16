@@ -21,4 +21,9 @@ set(TESTS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/MainTests.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/ThresholdManagerTest.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/RectTest.cpp
                   ${CMAKE_CURRENT_LIST_DIR}/MathTest.cpp
-                  ${CMAKE_CURRENT_LIST_DIR}/CircularFIFOTest.cpp)
+                  ${CMAKE_CURRENT_LIST_DIR}/CircularFIFOTest.cpp
+                  ${CMAKE_CURRENT_LIST_DIR}/AsyncInferenceTest/AsyncInferenceTest.cpp)
+
+# ----------------- COPY TEST VIDEO ----------------- #
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/AsyncInferenceTest/face-demographics-walking-and-pause.mp4
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

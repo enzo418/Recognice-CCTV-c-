@@ -1,0 +1,16 @@
+*
+
+!.gitignore
+!protos
+!inference.proto
+
+!test
+!test/face-demographics-walking-and-pause.mp4
+
+!*.cpp
+!*.hpp
+!*.md
+!*.cmake
+
+!CMakeLists.txt
+!.clang-format
