@@ -29,6 +29,10 @@ set(SRC_
     base64.cpp
     CronJobScheduler.cpp
     VideoBufferTasksManager.cpp
+
+    Streaming/Video/CameraOnDemand.cpp
+    Streaming/Video/ObserverOnDemand.cpp
+    Streaming/Video/SourceOnDemand.cpp
 )
 
 if (${WITH_WEBRTC})

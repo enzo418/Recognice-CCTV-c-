@@ -4,6 +4,7 @@
 
 #include "Server/ServerConfigurationProvider.hpp"
 #include "Streaming/PeerStreamingCapabilities.hpp"
+#include "Streaming/http/JPEGCacheBustingStreaming.hpp"
 #include "Streaming/http/MJPEGStreaming.hpp"
 #include "observer/Log/log.hpp"
 #include "streaming_include.hpp"
@@ -11,6 +12,7 @@
 #include "uWebSockets/WebSocket.h"
 
 namespace Web::Streaming {
+    constexpr const char* StreamTypeJPEGCacheBusting = "jpeg_cache_busting";
     constexpr const char* StreamTypeWebRTC = "webrtc";
     constexpr const char* StreamTypeMJPEG = "mjpeg";
 
@@ -22,6 +24,11 @@ namespace Web::Streaming {
        public:
         StreamingServiceSelector(uWS::App* app,
                                  RecognizeContext* pRecognizeCtx) {
+            // JPEG Cache Busting Streaming is always available.
+            services[StreamTypeJPEGCacheBusting] =
+                std::make_unique<Http::JPEGCacheBustingStreaming<SSL>>(
+                    app, pRecognizeCtx);
+
             // MJPEG Streaming just streams over HTTP so it will always be
             // available to be used in this context.
             services[StreamTypeMJPEG] =
@@ -86,6 +93,9 @@ namespace Web::Streaming {
             if (serverCapabilities.supportsWebRTC &&
                 peerCapabilities.supportsWebRTC) {
                 return StreamTypeWebRTC;
+            } else if (serverCapabilities.supportsJpgCacheBusting &&
+                       peerCapabilities.supportsJpgCacheBusting) {
+                return StreamTypeJPEGCacheBusting;
             } else if (serverCapabilities.supportsMJPEGStream &&
                        peerCapabilities.supportsMJPEGStream) {
                 return StreamTypeMJPEG;

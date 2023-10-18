@@ -11,8 +11,13 @@ namespace Web::Streaming {
         /**
          * @brief Stream a source.
          * If success will populate the result with:
+         *
+         * WEBRTC
          * - clientId: the id of the client, used to send the answer.
          * - offer: the json SDP offer
+         *
+         * MJPEG Stream / JPEG Cache Busting
+         * - stream_url: the url to the stream
          *
          * @param uri
          * @param result preparation result
