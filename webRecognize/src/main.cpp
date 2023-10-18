@@ -335,6 +335,11 @@ int main() {
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
                [&serverCtx](auto* token) {
+                   OBSERVER_ASSERT(
+                       token,
+                       "Failed to start server: Unable to listen on port " +
+                           std::to_string(serverCtx.port));
+
                    if (token) {
                        OBSERVER_INFO(
                            "Serving folder {0} over HTTP at "
