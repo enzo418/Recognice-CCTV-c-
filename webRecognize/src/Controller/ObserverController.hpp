@@ -104,7 +104,7 @@ namespace Web::Controller {
             res->onAborted([]() {});
 
             startRecognize(cfg, [this, res]() {
-                std::cout << "Started observer" << std::endl;
+                OBSERVER_TRACE("Observer started");
 
                 res->end(
                     nlohmann::json(

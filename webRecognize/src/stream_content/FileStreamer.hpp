@@ -47,7 +47,7 @@ class FileStreamer {
         std::vector<Range> ranges;
 
         if (!parseRangeHeader(rangeHeader, fz, ranges)) {
-            std::cout << "invalid header range \"" << rangeHeader << "\"\n";
+            OBSERVER_WARN("Invalid header range: {}", rangeHeader);
             return false;
         }
 
@@ -69,7 +69,8 @@ class FileStreamer {
                 fileReader->reload();
                 if (!fileReader->good()) {
                     // Definitely file isn't longer here. Should send 404 code!
-                    std::cout << "File isn't good\n";
+                    OBSERVER_WARN(
+                        "Ranged file stream - file isn't good! file: {}", url);
                 }
                 return false;
             }
@@ -102,8 +103,9 @@ class FileStreamer {
             ->writeHeader("Access-Control-Allow-Origin", "*")
             ->endWithoutBody();
 
-        res->onAborted(
-            [url]() { std::cout << "[" << url << "] ABORTED!" << std::endl; });
+        res->onAborted([url]() {
+            OBSERVER_TRACE("Ranged file stream - aborted! file: {}", url);
+        });
 
         std::string ran;
         std::string buf;
@@ -120,9 +122,8 @@ class FileStreamer {
                 fileReader->read(buf.data(), of);
                 if (of <= 0) {
                     const static std::string unexpectedEof("Unexpected EOF");
-                    std::cout << "Error reading file: "
-                              << (of == 0 ? unexpectedEof : "getLastError")
-                              << std::endl;
+                    OBSERVER_WARN("Ranged file stream - error reading file: {}",
+                                  (of == 0 ? unexpectedEof : "getLastError"));
                     // We can't send an error document as we've sent the header.
                     return false;
                 }
@@ -171,8 +172,9 @@ class FileStreamer {
             ->writeHeader("Content-Type",
                           getContentType(fileReader->getFileName()));
 
-        res->onAborted(
-            [url]() { std::cout << "[" << url << "] ABORTED!" << std::endl; });
+        res->onAborted([url]() {
+            OBSERVER_TRACE("Chunked file stream - aborted! file: {}", url);
+        });
 
         // Check file health before reading it
         if (!fileReader->good()) {
@@ -184,7 +186,8 @@ class FileStreamer {
                 fileReader->reload();
                 if (!fileReader->good()) {
                     // Definitely file isn't longer here. Should send 404 code!
-                    std::cout << "File isn't good\n";
+                    OBSERVER_WARN(
+                        "Chunked file stream - file isn't good! file: {}", url);
                 }
                 return false;
             }
@@ -209,9 +212,8 @@ class FileStreamer {
             fileReader->read(buf.data(), of);
             if (of <= 0) {
                 const static std::string unexpectedEof("Unexpected EOF");
-                std::cout << "Error reading file: "
-                          << (of == 0 ? unexpectedEof : "getLastError")
-                          << std::endl;
+                OBSERVER_WARN("Chunked file stream - error reading file: {}",
+                              (of == 0 ? unexpectedEof : "getLastError"));
                 // We can't send an error document as we've sent the header.
                 return false;
             }
@@ -230,7 +232,8 @@ class FileStreamer {
         if (!res->writeOrZero(std::string_view(nullptr, 0))) {
             // res->close();
             // res->end();
-            std::cout << "Error sending 0 size chunk\n";
+            // std::cout << "Error sending 0 size chunk\n";
+            OBSERVER_WARN("Chunked file stream - error sending 0 size chunk");
             return false;
         }
 

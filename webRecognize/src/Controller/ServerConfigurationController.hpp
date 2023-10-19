@@ -3,6 +3,7 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/ServerConfigurationProvider.hpp"
 #include "Utils/JsonUtils.hpp"
+#include "observer/Log/log.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
 
@@ -38,8 +39,7 @@ namespace Web::Controller {
             value = Observer::ConfigurationParser::GetConfigurationFieldValue(
                 current, fieldPath);
         } catch (const std::exception& e) {
-            std::cout << "Couldn't get configuration field: " << e.what()
-                      << std::endl;
+            OBSERVER_ERROR("Couldn't get configuration field: {}", e.what());
             res->writeStatus(HTTP_400_BAD_REQUEST)->end();
             return;
         }

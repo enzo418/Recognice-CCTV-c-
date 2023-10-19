@@ -350,8 +350,6 @@ int main() {
 
         .get("/",
              [](auto* res, auto* req) {
-                 std::cout << "Index!" << std::endl;
-
                  std::string rangeHeader(req->getHeader("range"));
 
                  FileStreamer::GetInstance().streamFile(res, "/web/index.html",
@@ -370,8 +368,7 @@ int main() {
                      req->setYield(true);  // mark as not handled
                  } else if (FileStreamer::GetInstance().streamFile(
                                 res, url, rangeHeader)) {
-                     // std::cout << "Successfully sended file" <<
-                     // std::endl;
+                     // Successfully sended file
                  } else {
                      res->end();
                  }

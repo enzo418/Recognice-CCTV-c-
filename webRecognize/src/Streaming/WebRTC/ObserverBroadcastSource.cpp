@@ -26,8 +26,7 @@ namespace Web::Streaming::WebRTC {
     bool ObserverSource::IsRunning() { return running; }
 
     void ObserverSource::OnNoAudience() {
-        std::cout << "ObserverBroadcastSource source has no audience."
-                  << std::endl;
+        OBSERVER_TRACE("ObserverBroadcastSource source has no audience.");
         this->Stop();
     }
 

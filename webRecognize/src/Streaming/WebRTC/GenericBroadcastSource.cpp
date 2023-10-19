@@ -34,7 +34,7 @@ namespace Web::Streaming::WebRTC {
     bool GenericSource::IsRunning() { return m_running; }
 
     void GenericSource::OnNoAudience() {
-        std::cout << "GenericSource has no audience." << std::endl;
+        OBSERVER_TRACE("GenericSource has no audience.");
         this->Stop();
     }
 

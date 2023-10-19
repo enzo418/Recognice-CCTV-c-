@@ -1,15 +1,19 @@
 #include "StaticFilesHandler.hpp"
 
+#include "observer/Log/log.hpp"
+
 StaticFilesHandler::StaticFilesHandler() {}
 
 bool StaticFilesHandler::fileExists(std::string path) {
     return std::filesystem::exists(path);
 }
 
-// Adds a file handler to the list    
+// Adds a file handler to the list
 void StaticFilesHandler::addFileHandler(std::string path) {
     // we assume that the file exists
-    std::cout << "[" << path << "] => [" << path << "] File handler didn't exist. Adding it\n";
+    // std::cout << "[" << path << "] => [" << path << "] File handler didn't
+    // exist. Adding it\n";
+    OBSERVER_TRACE("Adding file handler for {}", path);
     filesReader[path] = new FileReader(path);
 }
 
