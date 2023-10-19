@@ -7,7 +7,6 @@
 #include <optional>
 #include <string_view>
 
-#include "../../Utils/ThreadSafeFlag.hpp"
 #include "LiveViewStatus.hpp"
 #include "observer/Domain/BufferedSource.hpp"
 #include "observer/Functionality.hpp"
@@ -60,7 +59,7 @@ namespace Web::Streaming::Video {
          *
          * @param newFrame
          */
-        void SetFrame(const Observer::Frame& newFrame);
+        void SetFrame(Observer::Frame newFrame);
 
         /**
          * @brief Encode the frame if it wasn't encoded yet.
@@ -68,6 +67,11 @@ namespace Web::Streaming::Video {
          * encoded only when it is needed, and maybe in another thread.
          */
         void EnsureEncoded();
+
+        /**
+         * @brief Called when the source should be opened.
+         */
+        virtual void EnsureOpen() = 0;
 
        protected:
         LiveViewStatus status;
@@ -77,9 +81,10 @@ namespace Web::Streaming::Video {
 
         Observer::Frame frame;
         std::mutex mtxFrame;
-        ThreadSafeFlag latestFrameWasEncoded;
 
-        ThreadSafeFlag firstFrameWasEncoded;
+        std::atomic_flag latestFrameWasEncoded;
+
+        std::atomic_flag firstFrameWasEncoded;
 
         std::vector<unsigned char> latestImageBuffer;
         std::mutex mtxLatestImageBuffer;

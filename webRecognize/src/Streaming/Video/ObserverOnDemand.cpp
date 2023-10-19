@@ -15,4 +15,11 @@ namespace Web::Streaming::Video {
     void ObserverOnDemand::update(Observer::Frame frame) {
         this->SetFrame(frame);
     }
+
+    void ObserverOnDemand::EnsureOpen() {
+        // it doesn't matter.
+        if (!Observer::has_flag(this->status, LiveViewStatus::OPEN)) {
+            this->status = LiveViewStatus::OPEN | LiveViewStatus::RUNNING;
+        }
+    }
 }  // namespace Web::Streaming::Video

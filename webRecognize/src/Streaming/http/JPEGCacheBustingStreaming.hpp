@@ -72,8 +72,8 @@ namespace Web::Streaming::Http {
 
     template <bool SSL>
     JPEGCacheBustingStreaming<SSL>::~JPEGCacheBustingStreaming() {
-        for (auto& [_, source] : sources) {
-            delete source;
+        for (auto source : sources) {
+            delete source.second;
         }
     }
 
@@ -121,7 +121,7 @@ namespace Web::Streaming::Http {
         std::lock_guard<std::mutex> lock1(mtxUriMap);
         std::lock_guard<std::mutex> lock2(mtxSources);
         std::string streamId = mapUriToFeed[uri];
-        SourceOnDemand* feed = sources[streamId];
+        CameraOnDemand* feed = (CameraOnDemand*)sources[streamId];
 
         feed->EnsureOpenAndReady();
 
@@ -135,7 +135,13 @@ namespace Web::Streaming::Http {
         OBSERVER_INFO("Stopping live view of observer");
 
         std::lock_guard<std::mutex> lock(mtxSources);
-        sources.erase(observerFeedId);
+        if (sources.find(observerFeedId) != sources.end()) {
+            ObserverOnDemand* feed =
+                (ObserverOnDemand*)sources.at(observerFeedId);
+            feed->Stop();
+            delete feed;
+            sources.erase(observerFeedId);
+        }
     }
 
     template <bool SSL>
@@ -156,7 +162,7 @@ namespace Web::Streaming::Http {
 
             recognizeCtx->observer->SubscribeToFrames((ObserverOnDemand*)feed);
         } else {
-            SourceOnDemand* feed = sources[observerFeedId];
+            feed = (ObserverOnDemand*)sources[observerFeedId];
         }
 
         feed->EnsureOpenAndReady();
@@ -183,6 +189,8 @@ namespace Web::Streaming::Http {
         }
 
         SourceOnDemand* feed = feed_it->second;
+
+        feed->EnsureOpenAndReady();
 
         const bool hadFrame = feed->RunSafelyOnFrameReady(
             [res](const CameraOnDemand::Buffer& buffer) {

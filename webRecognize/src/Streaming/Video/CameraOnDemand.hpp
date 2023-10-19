@@ -29,9 +29,13 @@ namespace Web::Streaming::Video {
        protected:
         void OpenCamera();
 
+        void EnsureOpen() override;
+
        private:
         std::string cameraUri;
         Observer::BufferedSource source;
+
+        std::atomic_flag opening;
     };
 
 }  // namespace Web::Streaming::Video

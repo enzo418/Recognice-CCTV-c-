@@ -13,6 +13,9 @@ namespace Web::Streaming::Video {
         void PostStop() override;
 
         void update(Observer::Frame frame) override;
+
+       protected:
+        void EnsureOpen() override;
     };
 
 }  // namespace Web::Streaming::Video
