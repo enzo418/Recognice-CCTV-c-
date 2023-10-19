@@ -134,10 +134,6 @@ int main() {
         // this should not be like this, allocating on heap. This should be on a
         // class that manages all of this, like App or Server. But for now it
         // will stay like this until more features are added and become stable.
-
-        // .liveViewsManager =
-        //     std::make_unique<Web::Streaming::Video::Ws::LiveViewsManager<SSL>>(
-        //         OBSERVER_LIVE_VIEW_MAX_FPS, &serverCtx.recognizeContext)
     };
 
     FileStreamer::Init<SSL>(serverCtx.rootFolder);
@@ -180,11 +176,16 @@ int main() {
         &app, &notificationRepository, &videoBufferRepository,
         &notificationCache, &configurationDAOCache, &serverCtx);
 
+    /* ------------------- OBSERVER STATUS ------------------ */
+    // TODO: Do not pass this to the controllers... it should be an event based
+    // system but for now it will stay like this.
+    Web::Streaming::Ws::WebsocketService<SSL, PerSocketData> statusWsService;
+
     /* ----------------- CAMERAS REPOSITORY ----------------- */
     Web::DAL::CameraRepositoryMemory cameraRepository;
 
     Web::Controller::CameraController<SSL> cameraController(
-        &app, &configurationDAOCache, &serverCtx);
+        &app, &configurationDAOCache, &serverCtx, &statusWsService);
 
     /* ---------------------- STREAMING --------------------- */
     Web::Controller::StreamingController<SSL> streamingController(
@@ -258,7 +259,7 @@ int main() {
 
     Web::Controller::ObserverController<SSL> observerController(
         &app, &serverCtx, &configurationDAOCache, std::move(startRecognize),
-        std::move(stopRecognize));
+        std::move(stopRecognize), &statusWsService);
 
     /* ---------------------- CRON JOBS --------------------- */
     Web::CronJobScheduler cronJobs;

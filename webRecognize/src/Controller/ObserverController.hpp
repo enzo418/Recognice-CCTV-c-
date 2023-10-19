@@ -7,6 +7,9 @@
 #include "Serialization/JsonSerialization.hpp"
 #include "Server/RecognizeContext.hpp"
 #include "Server/ServerContext.hpp"
+#include "SocketData.hpp"
+#include "Streaming/ws/WebsocketService.hpp"
+#include "Utils/ObserverStatus.hpp"
 #include "observer/Log/log.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
@@ -21,7 +24,9 @@ namespace Web::Controller {
             std::function<void(Observer::Configuration& cfg,
                                std::function<void()> onStarted)>&&
                 startRecognizeFunction,
-            std::function<void()>&& stopRecognizeFunction);
+            std::function<void()>&& stopRecognizeFunction,
+            Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>*
+                wsService);
 
         void Start(auto* res, auto* req);
         void Stop(auto* res, auto* req);
@@ -35,6 +40,9 @@ namespace Web::Controller {
         std::function<void(Observer::Configuration& cfg, std::function<void()>)>
             startRecognize;
         std::function<void()> stopRecognize;
+
+       private:
+        Streaming::Ws::WebsocketService<SSL, PerSocketData>* statusWsService;
     };
 
     template <bool SSL>
@@ -43,11 +51,13 @@ namespace Web::Controller {
         Web::DAL::IConfigurationDAO* pConfigurationDAO,
         std::function<void(Observer::Configuration& cfg,
                            std::function<void()>)>&& pStartRecognizeFunction,
-        std::function<void()>&& pStopRecognizeFunction)
+        std::function<void()>&& pStopRecognizeFunction,
+        Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>* wsService)
         : serverCtx(pServerCtx),
           configurationDAO(pConfigurationDAO),
           startRecognize(std::move(pStartRecognizeFunction)),
-          stopRecognize(std::move(pStopRecognizeFunction)) {
+          stopRecognize(std::move(pStopRecognizeFunction)),
+          statusWsService(wsService) {
         app->get("/api/observer/start/:config_id",
                  [this](auto* res, auto* req) { this->Start(res, req); });
 
@@ -57,9 +67,21 @@ namespace Web::Controller {
         app->get("/api/observer/status",
                  [this](auto* res, auto* req) { this->Status(res, req); });
 
-        // app->get("/api/observer/stream", [this](auto* res, auto* req) {
-        //     this->RequestStream(res, req);
-        // });
+        app->ws<PerSocketData>(
+            "/observer/status",
+            {.open =
+                 [this](auto* ws, const std::list<std::string_view>& paths) {
+                     this->statusWsService->AddClient(ws);
+
+                     auto statusString = Utils::GetStatusJsonString(
+                         this->serverCtx->recognizeContext);
+
+                     ws->send(statusString);
+                 },
+             .close =
+                 [this](auto* ws, int /*code*/, std::string_view /*message*/) {
+                     this->statusWsService->RemoveClient(ws);
+                 }});
     }
 
     template <bool SSL>
@@ -106,16 +128,13 @@ namespace Web::Controller {
             startRecognize(cfg, [this, res]() {
                 OBSERVER_TRACE("Observer started");
 
-                res->end(
-                    nlohmann::json(
-                        Web::ObserverStatusDTO {
-                            .running = true,
-                            .config_id =
-                                serverCtx->recognizeContext.running_config_id,
-                            .cameras = serverCtx->recognizeContext.observer
-                                           ->GetCamerasStatus(),
-                        })
-                        .dump());
+                auto statusString = Utils::GetStatusJsonString(
+                    this->serverCtx->recognizeContext);
+
+                res->end(statusString);
+
+                statusWsService->SendToClients(statusString.c_str(),
+                                               statusString.size());
             });
         } catch (const std::exception& e) {
             OBSERVER_WARN("Error starting observer: {}", e.what());
@@ -134,28 +153,19 @@ namespace Web::Controller {
             stopRecognize();
         }
 
-        res->end(nlohmann::json(Web::ObserverStatusDTO {
-                                    .running = false,
-                                    .config_id = std::nullopt,
-                                    .cameras = {},
-                                })
-                     .dump());
+        auto statusString =
+            Utils::GetStatusJsonString(this->serverCtx->recognizeContext);
+
+        res->end(statusString);
+
+        statusWsService->SendToClients(statusString.c_str(),
+                                       statusString.size());
     }
 
     template <bool SSL>
     void ObserverController<SSL>::Status(auto* res, auto* req) {
-        bool running = serverCtx->recognizeContext.running;
-        std::optional<std::string> cfg_id;
-        if (running) cfg_id = serverCtx->recognizeContext.running_config_id;
-
-        std::vector<Observer::CameraStatus> cameras =
-            (running ? serverCtx->recognizeContext.observer->GetCamerasStatus()
-                     : std::vector<Observer::CameraStatus> {});
-
         res->writeHeader("Cache-Control", "max-age=5")
-            ->end(nlohmann::json(Web::ObserverStatusDTO {.running = running,
-                                                         .config_id = cfg_id,
-                                                         .cameras = cameras})
-                      .dump());
+            ->end(
+                Utils::GetStatusJsonString(this->serverCtx->recognizeContext));
     }
 }  // namespace Web::Controller

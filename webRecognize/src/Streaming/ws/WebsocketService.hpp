@@ -24,7 +24,6 @@ namespace Web::Streaming::Ws {
 
         int GetTotalClients() override;
 
-       protected:
         virtual void SendToClients(const char* data, int size) override;
 
         void SendToSomeClients(

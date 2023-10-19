@@ -6,6 +6,9 @@
 #include "ControllerUtils.hpp"
 #include "DAL/IConfigurationDAO.hpp"
 #include "Server/ServerContext.hpp"
+#include "SocketData.hpp"
+#include "Streaming/ws/WebsocketService.hpp"
+#include "Utils/ObserverStatus.hpp"
 #include "Utils/StringUtils.hpp"
 #include "observer/Implementation.hpp"
 #include "server_utils.hpp"
@@ -15,9 +18,11 @@ namespace Web::Controller {
     template <bool SSL>
     class CameraController {
        public:
-        CameraController(uWS::App* app,
-                         Web::DAL::IConfigurationDAO* configurationDAO,
-                         Web::ServerContext<SSL>* serverCtx);
+        CameraController(
+            uWS::App* app, Web::DAL::IConfigurationDAO* configurationDAO,
+            Web::ServerContext<SSL>* serverCtx,
+            Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>*
+                wsService);
 
         void Get(auto* res, auto* req);
         void GetInfo(auto* res, auto* req);
@@ -82,13 +87,19 @@ namespace Web::Controller {
             std::chrono::system_clock::time_point cachedAt;
         };
         std::unordered_map<std::string, CachedCameraInfo> cachedCameraInfo;
+
+        Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>*
+            statusWsService;
     };
 
     template <bool SSL>
     CameraController<SSL>::CameraController(
         uWS::App* app, Web::DAL::IConfigurationDAO* pConfigurationDAO,
-        Web::ServerContext<SSL>* pServerCtx)
-        : configurationDAO(pConfigurationDAO), serverCtx(pServerCtx) {
+        Web::ServerContext<SSL>* pServerCtx,
+        Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>* wsService)
+        : configurationDAO(pConfigurationDAO),
+          serverCtx(pServerCtx),
+          statusWsService(wsService) {
         app->get("/api/camera/:id",
                  [this](auto* res, auto* req) { this->Get(res, req); });
 
@@ -281,6 +292,12 @@ namespace Web::Controller {
                          serverCtx->recognizeContext.observer->GetCameraStatus(
                              camera_name))
                          .dump());
+
+            auto statusString =
+                Utils::GetStatusJsonString(this->serverCtx->recognizeContext);
+
+            statusWsService->SendToClients(statusString.c_str(),
+                                           statusString.size());
         } else {
             nlohmann::json response = {{"title", "Camera not found"}};
 
@@ -323,6 +340,12 @@ namespace Web::Controller {
                          serverCtx->recognizeContext.observer->GetCameraStatus(
                              camera_name))
                          .dump());
+
+            auto statusString =
+                Utils::GetStatusJsonString(this->serverCtx->recognizeContext);
+
+            statusWsService->SendToClients(statusString.c_str(),
+                                           statusString.size());
         } else {
             nlohmann::json response = {{"title", "Camera not found"}};
 
