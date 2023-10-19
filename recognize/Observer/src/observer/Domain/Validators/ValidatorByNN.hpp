@@ -17,7 +17,7 @@ namespace Observer {
         // detection
         float confidenceThreshold {0.4};
         std::map<std::string, int> minObjectCount {
-            {"person", 2}};  // coco names
+            {"person", 1}};  // coco names
 
         // send strategy
         float maxFramesPerSecond {1};  // 1 = 1 fps
