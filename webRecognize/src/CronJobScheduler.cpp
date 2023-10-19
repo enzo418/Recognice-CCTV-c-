@@ -63,7 +63,16 @@ namespace Web {
 
             this->jobsMutex.unlock();
 
-            std::this_thread::sleep_for(std::chrono::seconds(sleepUntilNext));
+            // std::this_thread::sleep_for(std::chrono::seconds(sleepUntilNext));
+            // instead sleep in 1 second intervals
+            // TODO: use a condition variable to sleep until the next job
+
+            for (int i = 0; i < sleepUntilNext; i++) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if (!this->running) {
+                    break;
+                }
+            }
         }
     }
 

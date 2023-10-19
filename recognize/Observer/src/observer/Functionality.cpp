@@ -30,25 +30,43 @@ namespace Observer {
 
         // running = true;
         running.store(true, std::memory_order_release);
-        thread = std::thread(&Functionality::InternalStart, this);
+        thread = std::thread(&Functionality::StartWrapper, this);
     }
 
     void Functionality::Stop() {
-        OBSERVER_ASSERT(std::this_thread::get_id() != thread.get_id(),
-                        "Deadlock detected.");
-
         if (!running) return;
 
-        running = false;
+        running.store(false, std::memory_order_release);
 
-        if (thread.joinable()) {
-            thread.join();
+        if (std::this_thread::get_id() == thread.get_id()) {
+            OBSERVER_TRACE("Functionality tried to stop itself.");
+
+            stoppedItself.test_and_set();
+        } else {
+            stoppedItself.clear();
+
+            OBSERVER_TRACE("Waiting for functionality to stop.");
+            if (thread.joinable()) {
+                thread.join();
+            }
+
+            this->PostStop();
         }
 
-        this->PostStop();
+        OBSERVER_TRACE("Functionality stopped.");
     }
 
     void Functionality::PostStop() {}
 
     bool Functionality::IsRunning() { return running; }
+
+    void Functionality::StartWrapper() {
+        if (!running) return;
+
+        this->InternalStart();
+
+        if (stoppedItself.test()) {
+            this->PostStop();
+        }
+    }
 }  // namespace Observer

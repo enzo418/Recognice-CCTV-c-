@@ -34,6 +34,8 @@ namespace Observer {
         bool IsRunning();
 
        protected:
+        void StartWrapper();
+
         virtual bool CheckCanStart() { return true; }
 
         /**
@@ -55,6 +57,13 @@ namespace Observer {
 
        protected:
         std::atomic<bool> running;
+
+        /**
+         * @brief If the thread calls Stop from itself (IternalStart), it will
+         * delay the call to PostStop until the thread is joined if endedFlag is
+         * not set. If it is set, it will call PostStop right away.
+         */
+        std::atomic_flag stoppedItself {false};
 
        private:
         std::thread thread;
