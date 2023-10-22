@@ -58,20 +58,20 @@ inline void getRanges(const std::string& rangesHeader,
 
 bool parseRangeHeader(const std::string& rangesHeader, const long& filesize,
                       std::vector<Range>& ranges) {
-    bool sucess = true;
+    bool success = true;
 
     if (rangesHeader.substr(0, 6) == "bytes=") {
         try {
             getRanges(rangesHeader.substr(6, rangesHeader.length() - 1), ranges,
                       filesize);
-        } catch (std::runtime_error err) {
-            sucess = false;
+        } catch (std::runtime_error& err) {
+            success = false;
         }
     } else {
-        sucess = false;
+        success = false;
     }
 
-    return sucess;
+    return success;
 }
 
 std::string getRangeStringForResponse(Range r, const long& filesize) {

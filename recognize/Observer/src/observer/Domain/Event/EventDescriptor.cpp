@@ -40,7 +40,7 @@ namespace Observer {
         this->classifierFindings.push_back(std::move(finding));
     }
 
-    void EventDescriptor::SetCameraName(std::string pCameraName) {
+    void EventDescriptor::SetCameraName(const std::string& pCameraName) {
         this->cameraName = pCameraName;
     }
 

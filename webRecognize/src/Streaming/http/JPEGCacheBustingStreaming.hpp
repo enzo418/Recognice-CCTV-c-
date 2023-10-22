@@ -64,8 +64,8 @@ namespace Web::Streaming::Http {
 
     template <bool SSL>
     JPEGCacheBustingStreaming<SSL>::JPEGCacheBustingStreaming(
-        uWS::App* app, RecognizeContext* recognizeCtx, int compressionQuality)
-        : recognizeCtx(recognizeCtx), compressionQuality(compressionQuality) {
+        uWS::App* app, RecognizeContext* recognizeCtx1, int compressionQuality1)
+        : recognizeCtx(recognizeCtx1), compressionQuality(compressionQuality1) {
         app->get("/live/jpg/stream/:stream_id*",
                  [this](auto* res, auto* req) { OnImageRequest(res, req); });
     }
@@ -94,7 +94,7 @@ namespace Web::Streaming::Http {
             !Observer::has_flag(camera->GetStatus(), LiveViewStatus::ERROR);
 
         if (cameraDidOpen) {
-            std::lock_guard<std::mutex> lock(mtxSources);
+            std::lock_guard<std::mutex> lock2(mtxSources);
             sources[streamId] = camera;
             mapUriToFeed[uri] = std::move(streamId);
         } else {

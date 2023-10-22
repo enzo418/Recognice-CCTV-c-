@@ -6,7 +6,7 @@ namespace Observer {
 
     ImageNotification::ImageNotification(int pGroupID, EventDescriptor pEvent,
                                          Frame& frame,
-                                         std::string pOutputFolder)
+                                         const std::string& pOutputFolder)
         : Notification(
               pGroupID, std::move(pEvent),
               std::move(ImageNotification::CreatePath(pOutputFolder))) {

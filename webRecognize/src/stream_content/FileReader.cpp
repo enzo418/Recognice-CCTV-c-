@@ -1,14 +1,15 @@
 #include "FileReader.hpp"
 
 time_t FileReader::lastModificationEpoch() {
-    return std::chrono::system_clock::to_time_t(
-        std::chrono::file_clock::to_sys(
-            std::filesystem::last_write_time(fileName)
-        )
-    );
+    return std::chrono::system_clock::to_time_t(std::chrono::file_clock::to_sys(
+        std::filesystem::last_write_time(fileName)));
 }
 
-FileReader::FileReader(std::string fileName) : fileName(fileName) {
+FileReader::FileReader(const std::string& fileName)
+    : fileName(fileName),
+      lastModification(lastModificationEpoch()),
+      cacheOffset(0),
+      hasCache(false) {
     fin.open(fileName, std::ios::binary);
 
     // get fileSize
@@ -19,7 +20,7 @@ FileReader::FileReader(std::string fileName) : fileName(fileName) {
     // TODO: Since the file will be opened all the time check
     // if the last modification time is the same as the one
     // as when we opened it. Or the file will have
-    // an incorrect size and we could potentially be 
+    // an incorrect size and we could potentially be
     // trying to stream data that is not longer there.
 
     // TODO: Support cache
@@ -45,30 +46,22 @@ void FileReader::seek(std::streamoff start, std::ios_base::seekdir dir) {
 }
 
 // Wrap filesystem to support cache in a future
-void FileReader::read(char *outdata, std::streamsize size) {
+void FileReader::read(char* outdata, std::streamsize size) {
     // TODO: Check current cache from this position with this size...
     fin.read(outdata, size);
 }
 
 // Wrap filesystem to support cache in a future
-bool FileReader::good() {
-    return fin.good();
-}
+bool FileReader::good() { return fin.good(); }
 
 // Wrap filesystem to support cache in a future
-void FileReader::close() {
-    fin.close();
-}
+void FileReader::close() { fin.close(); }
 
 // Wrap filesystem to support cache in a future
-void FileReader::clear() {
-    fin.clear();
-}
+void FileReader::clear() { fin.clear(); }
 
 // Wrap filesystem to support cache in a future
-std::ios_base::seekdir FileReader::beg() {
-    return fin.beg;
-}
+std::ios_base::seekdir FileReader::beg() { return fin.beg; }
 
 void FileReader::reload() {
     fin.open(fileName, std::ios::binary);
@@ -86,11 +79,9 @@ long FileReader::getFileSize() {
     return fileSize;
 }
 
-std::string FileReader::getFileName() {
-    return fileName;
-}
+std::string FileReader::getFileName() { return fileName; }
 
-std::string FileReader::getLastModificationTime() {        
+std::string FileReader::getLastModificationTime() {
     struct tm time;
     gmtime_r(&lastModification, &time);
 

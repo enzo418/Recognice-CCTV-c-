@@ -60,7 +60,7 @@ template <typename T>
 void GetJsonKeyValue(std::ostringstream& ss, const char* key, T value) {
     ss << "\"" << key << "\": " << value;
 }
-/*
+
 template <typename S>
 std::string JsonString(std::ostringstream& ss, S kv) {
     GetJsonKeyValue(ss, kv.first, kv.second);

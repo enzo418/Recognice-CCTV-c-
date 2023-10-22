@@ -22,7 +22,7 @@ namespace Observer {
          * @param frame frame, as reference but copied on ctor.
          */
         ImageNotification(int groupID, EventDescriptor ev, Frame& frame,
-                          std::string pOutputFolder);
+                          const std::string& pOutputFolder);
 
         Frame& GetImage();
 

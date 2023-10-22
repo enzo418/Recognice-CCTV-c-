@@ -47,7 +47,7 @@ namespace Observer {
         BlobClassifications& GetClassifications();
 
         /* --------------------- Camera Name -------------------- */
-        void SetCameraName(std::string cameraName);
+        void SetCameraName(const std::string& cameraName);
         std::string GetCameraName();
 
         void AddClassifierFinding(ClassifierFindingEvent&& finding);

@@ -11,7 +11,7 @@ namespace Web::Domain {
 
        public:
         Camera() = default;
-        Camera(std::string name, std::string uri);
+        Camera(const std::string& name, const std::string& uri);
 
         auto operator<=>(const Camera&) const = default;
     };

@@ -1,29 +1,16 @@
 #pragma once
 
-#include <cstring>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <future>
 #include <chrono>
+#include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <future>
+#include <iostream>
+#include <sstream>
 
 struct FileReader {
-private:
-    /* The cache we have in memory for this file */
-    std::string cache;
-    int cacheOffset;
-    bool hasCache;
-
-    long fileSize;
-    std::string fileName;
-    std::ifstream fin;
-
-    std::time_t lastModification;
-    
-    time_t lastModificationEpoch();
-public:
-    FileReader(std::string fileName);
+   public:
+    FileReader(const std::string& fileName);
 
     void updateFileSize();
 
@@ -31,7 +18,7 @@ public:
     void seek(std::streamoff start, std::ios_base::seekdir dir);
 
     // Wrap filesystem to support cache in a future
-    void read(char *outdata, std::streamsize size);
+    void read(char* outdata, std::streamsize size);
 
     // Wrap filesystem to support cache in a future
     bool good();
@@ -53,4 +40,18 @@ public:
     std::string getFileName();
 
     std::string getLastModificationTime();
+
+   private:
+    /* The cache we have in memory for this file */
+    std::string cache;
+    int cacheOffset;
+    bool hasCache;
+
+    long fileSize;
+    std::string fileName;
+    std::ifstream fin;
+
+    std::time_t lastModification;
+
+    time_t lastModificationEpoch();
 };

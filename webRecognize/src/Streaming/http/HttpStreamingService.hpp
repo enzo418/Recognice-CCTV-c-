@@ -19,8 +19,9 @@ namespace Web::Streaming::Http {
         void SendToClients(const char* data, int size) override;
         void RemoveClient(Client* res) override;
         int GetTotalClients() override { return this->clients.size(); }
-        void SendToSomeClients(const char* data, int size,
-                               std::function<bool(Client*)> shouldSend);
+        void SendToSomeClients(
+            const char* data, int size,
+            std::function<bool(Client*)> shouldSend) override;
 
        private:
         bool SendData(Client* client, const char* data, int size);

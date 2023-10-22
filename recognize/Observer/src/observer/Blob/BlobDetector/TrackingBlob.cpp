@@ -98,8 +98,8 @@ namespace Observer {
                 Interpolate(oldBR.br(), this->boundingRect.br(), notSeenFor);
             for (size_t i = 0; i < interpolatedTL.size(); i++) {
                 const int fi = lastFrameDetected + i + 1;
-                auto rect = Rect(interpolatedTL[i], interpolatedBR[i]);
-                this->boundingRects[fi] = rect;
+                auto interpolated = Rect(interpolatedTL[i], interpolatedBR[i]);
+                this->boundingRects[fi] = interpolated;
             }
         }
 

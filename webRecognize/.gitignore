@@ -11,6 +11,8 @@
 !*.scss
 !*.json
 !*.html
+!.clang-tidy
+!suppressions.txt
 !favicon.svg
 !.prettierrc
 !.clang-format

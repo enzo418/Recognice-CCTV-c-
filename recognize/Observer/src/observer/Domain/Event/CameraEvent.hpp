@@ -50,7 +50,7 @@ namespace Observer {
         int frameIndexOfFirstChange {};
 
         // frame rate of the recorded video
-        double frameRate;
+        double frameRate {0};
 
         Size framesSize;
 
