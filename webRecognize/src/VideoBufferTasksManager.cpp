@@ -40,8 +40,17 @@ namespace Web {
 
     void VideoBufferTasksManager::ProcessTask(
         const GenerateVideoBufferTask& task) {
-        Web::Utils::BufferData bufferData = Web::Utils::ReadBufferFromCamera(
-            task.uri, task.delay, task.duration, task.resizeTo);
+        Web::Utils::BufferData bufferData;
+
+        try {
+            bufferData = Web::Utils::ReadBufferFromCamera(
+                task.uri, task.delay, task.duration, task.resizeTo);
+        } catch (...) {
+            this->videoBufferEventPublisher.notifySubscribers(
+                task.videoBufferTaskID, BufferEventType::CANCELED,
+                "Could not connect to camera");
+            return;
+        }
 
         std::filesystem::path folder =
             // root is the media folder

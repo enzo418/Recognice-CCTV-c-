@@ -40,7 +40,9 @@ namespace Web::Utils {
 
         double fps = cap.GetFPS();
 
-        OBSERVER_ASSERT(cap.isOpened(), "Could not open the camera");
+        if (!cap.isOpened()) {
+            throw std::runtime_error("Could not open the camera");
+        }
 
         // cap.set(cv::CAP_PROP_POS_MSEC, videostart * 1000);
 
