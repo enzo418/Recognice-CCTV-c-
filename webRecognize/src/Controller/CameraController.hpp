@@ -90,6 +90,10 @@ namespace Web::Controller {
 
         Web::Streaming::Ws::WebsocketService<SSL, PerSocketData>*
             statusWsService;
+
+        uWS::Loop* loop;
+
+        std::vector<std::future<void>> asyncTasks;
     };
 
     template <bool SSL>
@@ -118,6 +122,8 @@ namespace Web::Controller {
                   [this](auto* res, auto* req) {
                       READ_JSON_BODY(res, req, IndefinitelyChangeCameraType);
                   });
+
+        loop = uWS::Loop::get();
     }
 
     template <bool SSL>
@@ -176,28 +182,36 @@ namespace Web::Controller {
             }
         }
 
-        Observer::VideoSource cap;
-        cap.Open(uri);
+        // don't block the main thread
+        res->onAborted([]() {});
 
-        if (cap.isOpened()) {
-            double fps = cap.GetFPS();
-            Observer::Size size = cap.GetSize();
+        asyncTasks.push_back(std::async(std::launch::async, [this, res, uri]() {
+            Observer::VideoSource cap;
+            cap.Open(uri);
 
-            nlohmann::json response = {{"fps", fps}, {"size", size}};
+            if (cap.isOpened()) {
+                double fps = cap.GetFPS();
+                Observer::Size size = cap.GetSize();
 
-            res->endJson(response.dump());
+                nlohmann::json response = {{"fps", fps}, {"size", size}};
 
-            cap.Close();
+                cap.Close();
 
-            cachedCameraInfo[uri] = {size, fps,
-                                     std::chrono::system_clock::now()};
-        } else {
-            nlohmann::json response = {{"title", "Camera not available"}};
+                cachedCameraInfo[uri] = {size, fps,
+                                         std::chrono::system_clock::now()};
 
-            res->writeStatus(HTTP_404_NOT_FOUND)
-                ->writeHeader("Cache-Control", "max-age=5")
-                ->endProblemJson(response.dump());
-        }
+                loop->defer(
+                    [res, response]() { res->endJson(response.dump()); });
+            } else {
+                nlohmann::json response = {{"title", "Camera not available"}};
+
+                loop->defer([res, response]() {
+                    res->writeStatus(HTTP_404_NOT_FOUND)
+                        ->writeHeader("Cache-Control", "max-age=5")
+                        ->endProblemJson(response.dump());
+                });
+            }
+        }));
     }
 
     template <bool SSL>
@@ -224,34 +238,45 @@ namespace Web::Controller {
             return;
         }
 
-        if (!cachedCameraImage.contains(uri)) {
-            Observer::VideoSource cap;
-            Observer::Frame frame;
+        // don't block the main thread
+        res->onAborted([]() {});
 
-            cap.Open(uri);
-            cap.GetNextFrame(frame);
+        asyncTasks.push_back(std::async(std::launch::async, [this, res, uri]() {
+            if (!cachedCameraImage.contains(uri)) {
+                Observer::VideoSource cap;
+                Observer::Frame frame;
 
-            int tries = 100;
-            while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
+                cap.Open(uri);
+                cap.GetNextFrame(frame);
 
-            if (tries <= 0) {
-                nlohmann::json response = {
-                    {"title", "Camera didn't return any valid frames"}};
+                int tries = 100;
+                while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
 
-                res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
-                    ->endProblemJson(response.dump());
-                return;
+                if (tries <= 0) {
+                    nlohmann::json response = {
+                        {"title", "Camera didn't return any valid frames"}};
+
+                    loop->defer([res, response]() {
+                        res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                            ->endProblemJson(response.dump());
+                    });
+                    return;
+                }
+
+                std::vector<unsigned char> buffer;
+                frame.EncodeImage(".jpg", 90, buffer);
+
+                cachedCameraImage[uri] = std::move(buffer);
             }
 
-            std::vector<unsigned char> buffer;
-            frame.EncodeImage(".jpg", 90, buffer);
+            auto& buffer = cachedCameraImage[uri];
 
-            cachedCameraImage[uri] = std::move(buffer);
-        }
-
-        auto& buffer = cachedCameraImage[uri];
-        res->writeHeader("content-type", "image/jpeg")
-            ->end(std::string_view((char*)buffer.data(), buffer.size()));
+            loop->defer([res, buffer]() {
+                res->writeHeader("content-type", "image/jpeg")
+                    ->end(
+                        std::string_view((char*)buffer.data(), buffer.size()));
+            });
+        }));
     }
 
     template <bool SSL>
