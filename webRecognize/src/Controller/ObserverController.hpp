@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <future>
 
 #include "DAL/IConfigurationDAO.hpp"
 #include "DTO/ObserverStatusDTO.hpp"
@@ -13,6 +14,7 @@
 #include "observer/Log/log.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
+#include "uWebSockets/Loop.h"
 
 namespace Web::Controller {
     template <bool SSL>
@@ -40,6 +42,9 @@ namespace Web::Controller {
         std::function<void(Observer::Configuration& cfg, std::function<void()>)>
             startRecognize;
         std::function<void()> stopRecognize;
+
+        std::list<std::future<void>> asyncTasks;
+        uWS::Loop* loop;
 
        private:
         Streaming::Ws::WebsocketService<SSL, PerSocketData>* statusWsService;
@@ -82,6 +87,8 @@ namespace Web::Controller {
                  [this](auto* ws, int /*code*/, std::string_view /*message*/) {
                      this->statusWsService->RemoveClient(ws);
                  }});
+
+        loop = uWS::Loop::get();
     }
 
     template <bool SSL>
@@ -126,15 +133,17 @@ namespace Web::Controller {
             res->onAborted([]() {});
 
             startRecognize(cfg, [this, res]() {
-                OBSERVER_TRACE("Observer started");
+                loop->defer([this, res]() {
+                    OBSERVER_TRACE("Observer started");
 
-                auto statusString = Utils::GetStatusJsonString(
-                    this->serverCtx->recognizeContext);
+                    auto statusString = Utils::GetStatusJsonString(
+                        this->serverCtx->recognizeContext);
 
-                res->end(statusString);
+                    res->end(statusString);
 
-                statusWsService->SendToClients(statusString.c_str(),
-                                               statusString.size());
+                    statusWsService->SendToClients(statusString.c_str(),
+                                                   statusString.size());
+                });
             });
         } catch (const std::exception& e) {
             OBSERVER_WARN("Error starting observer: {}", e.what());
@@ -149,17 +158,23 @@ namespace Web::Controller {
 
     template <bool SSL>
     void ObserverController<SSL>::Stop(auto* res, auto* req) {
-        if (serverCtx->recognizeContext.running) {
-            stopRecognize();
-        }
+        res->onAborted([]() {});
 
-        auto statusString =
-            Utils::GetStatusJsonString(this->serverCtx->recognizeContext);
+        asyncTasks.push_back(std::async(std::launch::async, [this, res]() {
+            if (serverCtx->recognizeContext.running) {
+                stopRecognize();
+            }
 
-        res->end(statusString);
+            auto statusString =
+                Utils::GetStatusJsonString(this->serverCtx->recognizeContext);
 
-        statusWsService->SendToClients(statusString.c_str(),
-                                       statusString.size());
+            loop->defer([this, res, statusString]() {
+                res->end(statusString);
+
+                statusWsService->SendToClients(statusString.c_str(),
+                                               statusString.size());
+            });
+        }));
     }
 
     template <bool SSL>
