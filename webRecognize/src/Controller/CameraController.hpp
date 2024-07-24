@@ -311,6 +311,15 @@ namespace Web::Controller {
 
         int seconds = body["seconds"];
 
+        if (!serverCtx->recognizeContext.running) {
+            nlohmann::json response = {{"title", "Observer not running"}};
+
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+            return;
+        }
+
         if (serverCtx->recognizeContext.observer->TemporarilyChangeCameraType(
                 camera_name, seconds, cameraType)) {
             res->end(nlohmann::json(
@@ -358,6 +367,15 @@ namespace Web::Controller {
             type == "view"       ? Observer::ECameraType::VIEW
             : type == "disabled" ? Observer::ECameraType::DISABLED
                                  : Observer::ECameraType::NOTIFICATOR;
+
+        if (!serverCtx->recognizeContext.running) {
+            nlohmann::json response = {{"title", "Observer not running"}};
+
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+            return;
+        }
 
         if (serverCtx->recognizeContext.observer->IndefinitelyChangeCameraType(
                 camera_name, cameraType)) {
