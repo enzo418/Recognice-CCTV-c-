@@ -28,90 +28,22 @@ function(ifc_add_compilation_option option)
     set(IFC_DEPENDENCY_COMPILATION_OPTIONS ${IFC_DEPENDENCY_COMPILATION_OPTIONS} ${option} PARENT_SCOPE)
 endfunction(ifc_add_compilation_option)
 
-# ------------------------ GRPC ------------------------ #
-if (IFC_LINK_GRPC)
-    if (IFC_USE_EXTERNAL_GRPC)
-        set(protobuf_MODULE_COMPATIBLE TRUE)
+# ---------------------- uSockets ---------------------- #
+ExternalProject_Add(
+    usocket-ain-delp
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/uSockets
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS
+        -Dusocket_INSTALL=ON
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${IFC_DEPENDENCY_INSTALL_DIR}
+		-DCMAKE_INSTALL_INCLUDEDIR=${IFC_DEPENDENCY_INCLUDE_DIR}
+		-DCMAKE_INSTALL_LIBDIR=${IFC_DEPENDENCY_LIB_DIR}
+        -DBUILD_SHARED_LIBS=ON
+    TEST_COMMAND ""
+)
 
-        find_package(Protobuf CONFIG)
-        find_package(gRPC CONFIG)
-
-        get_target_property(gRPC_INSTALL_INCLUDEDIR gRPC::grpc INTERFACE_INCLUDE_DIRECTORIES)
-
-        if (NOT gRPC_INSTALL_INCLUDEDIR)
-            message(FATAL_ERROR "Unable to find gRPC includes for this version (${gRPC_VERSION})")
-        endif()
-        
-        message(STATUS "Using preinstalled gRPC: Protobuf version ${Protobuf_VERSION}, gRPC version ${gRPC_VERSION}, include=${gRPC_INSTALL_INCLUDEDIR}")
-
-        if(NOT gRPC_FOUND OR NOT Protobuf_FOUND)
-            message(FATAL_ERROR "gRPC not found. Please install gRPC or set IFC_USE_EXTERNAL_GRPC to OFF")
-        endif()
-
-        if(CMAKE_CROSSCOMPILING)
-            find_program(IFC_GRPC_CPP_PLUGIN grpc_cpp_plugin)
-        else()
-            set(IFC_GRPC_CPP_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
-        endif()
-
-        if(CMAKE_CROSSCOMPILING)
-        find_program(IFC_PROTOC_GEN_PROGRAM protoc)
-        else()
-        set(IFC_PROTOC_GEN_PROGRAM $<TARGET_FILE:protobuf::protoc>)
-        endif()
-
-        ifc_add_lib(protobuf::libprotobuf)
-        
-        
-        if (${IFC_USE_INSECURE_GRPC})
-            message(STATUS "Using insecure gRPC")
-            ifc_add_lib(gRPC::grpc++_unsecure)
-            # grpc++_reflection links to grpc++ (ssl and crypto)
-            # grpc should work anyway
-            # ifc_add_lib(gRPC::grpc++_reflection)
-        else()
-            message(STATUS "Using secure gRPC")
-            ifc_add_lib(gRPC::grpc++)
-            ifc_add_lib(gRPC::grpc++_reflection)
-        endif()
-
-        ifc_add_include(${gRPC_INSTALL_INCLUDEDIR})
-    else()
-        message(STATUS "Using remote gRPC")
-
-        FetchContent_Declare(
-            grpc
-            GIT_REPOSITORY https://github.com/grpc/grpc.git
-            GIT_TAG        v1.54.1
-        )
-        set(FETCHCONTENT_QUIET OFF)
-        FetchContent_MakeAvailable(gRPC)
-
-        # Since FetchContent uses add_subdirectory under the hood, we can use
-        # the grpc targets directly from this build.
-        set(IFC_PROTOC_GEN_PROGRAM $<TARGET_FILE:protoc>)
-        
-        if(CMAKE_CROSSCOMPILING)
-            find_program(IFC_GRPC_CPP_PLUGIN grpc_cpp_plugin)
-        else()
-            set(IFC_GRPC_CPP_PLUGIN $<TARGET_FILE:grpc_cpp_plugin>)
-        endif()
-
-        set(IFC_PROTOBUF_LIBPROTOBUF libprotobuf)
-        ifc_add_lib(${IFC_PROTOBUF_LIBPROTOBUF})
-        
-        if (${IFC_USE_INSECURE_GRPC})
-            message(STATUS "Using insecure gRPC")
-            ifc_add_lib(gRPC::grpc++_unsecure)
-            # grpc++_reflection links to grpc++ (ssl and crypto)
-            # grpc should work anyway
-            # ifc_add_lib(gRPC::grpc++_reflection)
-        else()
-            message(STATUS "Using secure gRPC")
-            ifc_add_lib(gRPC::grpc++)
-            ifc_add_lib(gRPC::grpc++_reflection)
-        endif()
-
-        # includes comes from add_subdirectory
-    endif()
-endif(IFC_LINK_GRPC)
+ifc_add_dep(usocket-ain-delp)
+ifc_add_include(${CMAKE_CURRENT_LIST_DIR}/uSockets/src)
+ifc_add_lib(usocketslib)

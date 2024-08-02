@@ -19,3 +19,6 @@
 [submodule "webRecognize/vendor/webrtc-build-helpers"]
 	path = webRecognize/vendor/webrtc-build-helpers
 	url = https://github.com/enzo418/webrtc-build-helpers
+[submodule "recognize/Observer/src/observer/AsyncInference/uSockets"]
+	path = recognize/Observer/src/observer/AsyncInference/uSockets
+	url = https://github.com/enzo418/uSockets

@@ -1,8 +1,20 @@
+#include <cstdio>
+
 #include "observer/AsyncInference/DetectorClient.hpp"
+#include "observer/AsyncInference/types.hpp"
 #include "observer/Implementation.hpp"
+#include "observer/Instrumentation/Instrumentation.hpp"
+#include "observer/Log/log.hpp"
 
 int main() {
-    AsyncInference::DetectorClient client("0.0.0.0:50051");
+    OBSERVER_INIT_INSTRUMENTATION();
+    OBSERVER_DECLARE_THREAD("Main");
+
+    // initialize logger
+    Observer::LogManager::Initialize();
+    OBSERVER_INFO("Hi");
+
+    AsyncInference::DetectorClient client("0.0.0.0:3042");
 
     // -----------------------------
     auto names = client.GetModelNames();
@@ -18,15 +30,14 @@ int main() {
 
     std::vector<Observer::Frame> images = {bus, bus, bus, bus};
 
+    std::cout << "\n----Flash----\n";
+
     std::vector<AsyncInference::ImageDetections> results = client.Detect(
-        images, [](const AsyncInference::ImageDetections& result) {
-            std::cout << "Result: " << result.image_index << std::endl;
+        images, [](const AsyncInference::SingleDetection& result) {
+            assert(result.confidence > 0);
 
-            assert(result.detections.size() > 0);
-
-            for (const auto& detection : result.detections) {
-                std::cout << "\tLabel: " << detection.label << std::endl;
-            }
+            printf("\tLabel: %-4s Confidence: %3.2f\n", result.label.c_str(),
+                   result.confidence);
         });
 
     std::cout << "\n----All----\n";
@@ -35,7 +46,8 @@ int main() {
         std::cout << "Result: " << result.image_index << std::endl;
 
         for (const auto& detection : result.detections) {
-            std::cout << "\tLabel: " << detection.label << std::endl;
+            printf("\tLabel: %-4s Confidence: %3.2f\n", detection.label.c_str(),
+                   detection.confidence);
         }
     }
 

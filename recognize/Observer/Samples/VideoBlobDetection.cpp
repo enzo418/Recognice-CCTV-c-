@@ -324,13 +324,8 @@ DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
 
             detections = detectionClient->Detect(
                 frames,
-                [](auto& result) {
-                    for (const auto& detection : result.detections) {
-                        std::cout << "\t[" << result.image_index
-                                  << "] Label: " << detection.label
-                                  << std::endl;
-                    }
-                    std::cout << std::endl;
+                [](const auto& detection) {
+                    std::cout << "\t Label: " << detection.label << std::endl;
                 },
                 &sendStrategy);
         }

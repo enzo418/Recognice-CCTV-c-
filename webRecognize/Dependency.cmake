@@ -52,26 +52,29 @@ web_add_lib(recognize)
 add_subdirectory(vendor/uWebSockets)
 
 # TODO: Include it as an external project
-# ExternalProject_Add(
-#     uWebSockets-dep
-#     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/uWebSockets
-#     UPDATE_COMMAND ""
-#     PATCH_COMMAND ""
-#     CMAKE_ARGS 
-#         -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
-#         -DBUILD_EXAMPLES=OFF
-#         -DBUILD_SHARED_LIBS=ON # Avoid potentiallinking errors with webrtc, 
-#                                # which includes boringssl lib
-#                                # TODO: Make boing SSL link optional
-#         -DWITH_OPENSSL=ON
-#         -DWITH_WOLFSSL=OFF
-# )
-# web_add_dep(uWebSockets-dep)
-
+ExternalProject_Add(
+    uWebSockets-dep
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/uWebSockets
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS 
+        -Dusocket_INSTALL=ON
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${DEPENDENCY_INSTALL_DIR}
+        -DCMAKE_INSTALL_INCLUDEDIR=${DEPENDENCY_INCLUDE_DIR}
+        -DCMAKE_INSTALL_LIBDIR=${DEPENDENCY_LIB_DIR}
+        -DBUILD_SHARED_LIBS=ON # Avoid potentiallinking errors with webrtc, 
+                               # which includes boringssl lib
+                               # TODO: Make boing SSL link optional
+        -DBUILD_EXAMPLES=OFF
+        # -DWITH_OPENSSL=OFF
+        # -DWITH_WOLFSSL=OFF
+)
+web_add_dep(uWebSockets-dep)
+web_add_lib(usocketslib)
 web_add_include(vendor/uWebSockets/src)
 web_add_include(vendor/uWebSockets/uSockets/src)
 
-web_add_lib(usocketslib)
 
 # it requires zlib
 find_package(ZLIB REQUIRED)

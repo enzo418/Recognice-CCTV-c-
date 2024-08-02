@@ -1,23 +1,26 @@
 #include "DetectorClient.hpp"
 
-#include <grpcpp/client_context.h>
-#include <grpcpp/support/async_stream.h>
-#include <grpcpp/support/channel_arguments.h>
-#include <grpcpp/support/status.h>
-
+#include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <mutex>
 #include <vector>
 
-#include "inference.grpc.pb.h"
-#include "inference.pb.h"
+#include "internal/eventing/epoll_kqueue.h"
+#include "libusockets.h"
 #include "observer/Implementation.hpp"
 #include "observer/Instrumentation/Instrumentation.hpp"
+#include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
 #include "types.hpp"
 
 namespace AsyncInference {
+    static struct us_loop_t* loop = nullptr;
+    static std::thread loopThread;
+    static const int SSL = 0;
+
     /* ------------------------------------------------------ */
     /*               SendEveryNthFrame Strategy               */
     /* ------------------------------------------------------ */
@@ -36,139 +39,345 @@ namespace AsyncInference {
     /* ------------------------------------------------------ */
     /*                      DetectCaller                      */
     /* ------------------------------------------------------ */
-    class DetectCaller
-        : public grpc::ClientBidiReactor<inference::Image,
-                                         inference::DetectionResponse> {
-       public:
-        DetectCaller(inference::InferenceService::Stub* stub,
-                     grpc::ClientContext* pContext,
-                     std::vector<Observer::Frame>* pImages,
-                     std::function<void(ImageDetections&)>&& pOnResult,
-                     DetectorClient::ISendStrategy* pSendStrategy)
-            : onResult(pOnResult),
-              images(pImages),
-              context(pContext),
-              sendStrategy(pSendStrategy) {
-            stub->async()->Detect(pContext, this);
-            NextWrite();           // post first write for later
-            StartRead(&response);  // post it for later
-            StartCall();           // invokes pending write, read
-        }
 
-        // GRPC methods
-       private:
-        inference::DetectionResponse response;
-        std::function<void(ImageDetections&)> onResult;
-        std::atomic_bool stopFlag {false};
-        std::vector<Observer::Frame>* images;
-        grpc::ClientContext* context;
-        size_t currentImage {0};
-        Semaphore doneSmp;
-        grpc::Status status;
-        std::vector<ImageDetections> results;
-        inference::Image request;
-        std::vector<uchar> buffer;
-        DetectorClient::ISendStrategy* sendStrategy;
+    void DetectorClient::OnOpen(struct us_socket_t* socket) {
+        this->socket = socket;
+        socketOpenSmp.release();
+    }
 
-       public:
-        grpc::Status Await() {
-            doneSmp.acquire();
-            return status;
-        }
+    void OnOpen(DetectorClient& client, struct us_socket_t* socket) {
+        client.OnOpen(socket);
+    }
 
-        std::vector<ImageDetections>&& GetResults() {
-            return std::move(results);
-        }
+    struct us_socket_t* on_socket_conn_error(struct us_socket_t* s, int) {
+        OBSERVER_ERROR("Connection error");
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+        ctx->client->Stop();
+        return s;
+    }
 
-        void Cancel() {
-            if (stopFlag) {
+    struct us_socket_t* on_socket_open(struct us_socket_t* s, int is_client,
+                                       char* ip, int ip_length) {
+        struct detector_socket* ds =
+            (struct detector_socket*)us_socket_ext(SSL, s);
+
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+
+        ds->backpressure = 0;
+        ds->length = 0;
+
+        ds->read_ctx.header_received = false;
+        ds->read_ctx.header_bytes_received = 0;
+        ds->read_ctx.num_boxes_received = 0;
+        ds->read_ctx.box_bytes_received = 0;
+
+        OnOpen(*ctx->client, s);
+
+        return s;
+    }
+
+    void AddResult(DetectorClient& client, const SingleDetection& detection,
+                   int image_index, int remaining_boxes) {
+        client.AddResult(detection, image_index, remaining_boxes);
+    }
+
+    void DetectorClient::AddResult(const SingleDetection& detection,
+                                   int image_index, int remaining_boxes) {
+        if (image_results.contains(image_index)) {
+            auto& container = image_results[image_index];
+            if (container.all_results_received) {
+                OBSERVER_WARN("Received detection for completed image: {}",
+                              image_index);
                 return;
             }
 
-            stopFlag = true;
-            context->TryCancel();
-        }
+            printf("Received detection for image %d: Class=%s Prob=%f\n",
+                   image_index, detection.label.c_str(), detection.confidence);
 
-       private:
-        void OnWriteDone(bool ok) override {
-            OBSERVER_SCOPE_END("Detector Write Image");
+            container.results.push_back(detection);
 
-            if (ok) {
-                NextWrite();
-            } else {
-                std::cout
-                    << "DetectorClient Write RPC finished (done or failed)."
-                    << std::endl;
+            if (remaining_boxes == 0) {
+                container.all_results_received = true;
             }
-        }
 
-        void OnReadDone(bool ok) override {
-            OBSERVER_SCOPE("Detector Read Response");
+            // flash the results to the caller thread
+            singleResultsMutex.lock();
+            assert(detection.label.size() > 0);
+            singleResults[currentSingleResultsContainer].push_back(detection);
+            assert(singleResults[currentSingleResultsContainer]
+                       .back()
+                       .label.size() > 0);
+            singleResultsMutex.unlock();
 
-            if (ok) {
-                ImageDetections image_detections;
-                image_detections.image_index = response.image_id();
-
-                image_detections.detections.reserve(response.detections_size());
-
-                for (int i = 0; i < response.detections_size(); i++) {
-                    const inference::Detection& detection =
-                        response.detections(i);
-                    SingleDetection result;
-
-                    const auto& box = detection.bounding_box();
-                    result.x = box.x();
-                    result.y = box.y();
-                    result.width = box.width();
-                    result.height = box.height();
-
-                    result.confidence = detection.confidence();
-                    result.label = detection.label();
-
-                    image_detections.detections.push_back(result);
+            // check if all results are received
+            for (auto& [index, result] : image_results) {
+                if (!result.all_results_received) {
+                    return;
                 }
+            }
 
-                onResult(image_detections);
-                results.push_back(image_detections);
+            detectionDoneFlag = true;
+        } else {
+            OBSERVER_WARN("Received detection for unknown image: {}",
+                          image_index);
+            return;
+        }
+    }
 
-                StartRead(&response);
+    struct us_socket_t* on_data(us_socket_t* s, char* data, int length) {
+        // printf("Received data: %d bytes\n", length);
+
+        /* Do not accept any data while in shutdown state */
+        if (us_socket_is_shut_down(SSL, (us_socket_t*)s)) {
+            return s;
+        }
+
+        detector_socket* ds = (detector_socket*)us_socket_ext(SSL, s);
+
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+
+        auto& header = ds->read_ctx.header;
+        bool& header_received = ds->read_ctx.header_received;
+
+        int bytes_left = length;
+        while (bytes_left > 0) {
+            if (!header_received) {
+                auto& bytes_received = ds->read_ctx.header_bytes_received;
+
+                size_t bytes_to_copy =
+                    std::min(sizeof(DetectionResultHeader) - bytes_received,
+                             (size_t)bytes_left);
+
+                memcpy((char*)&header + bytes_received, data, bytes_to_copy);
+
+                bytes_received += bytes_to_copy;
+                data += bytes_to_copy;
+                bytes_left -= bytes_to_copy;
+
+                if (bytes_received == sizeof(DetectionResultHeader)) {
+                    bytes_received = 0;
+
+                    // printf("Received header: Image=%d Boxes=%d\n",
+                    //        header.image_number, header.num_boxes);
+                    if (header.num_boxes == 0) {
+                        header_received = false;
+                    } else {
+                        header_received = true;
+                    }
+                }
             } else {
-                std::cout
-                    << "DetectorClient Read RPC finished (done or failed)."
-                    << std::endl;
+                auto& bytes_received = ds->read_ctx.box_bytes_received;
+                auto& box = ds->read_ctx.box;
+
+                size_t bytes_to_copy =
+                    std::min(sizeof(DetectionBoxData) - bytes_received,
+                             (size_t)bytes_left);
+
+                memcpy((char*)&box + bytes_received, data, bytes_to_copy);
+
+                bytes_received += bytes_to_copy;
+                data += bytes_to_copy;
+                bytes_left -= bytes_to_copy;
+
+                if (bytes_received == sizeof(DetectionBoxData)) {
+                    bytes_received = 0;
+
+                    ds->read_ctx.num_boxes_received++;
+
+                    // printf("\tReceived box: Class=%d Prob=%f\n",
+                    // box.class_id,
+                    //        box.prob);
+                    AddResult(
+                        *ctx->client,
+                        SingleDetection {
+                            .x = box.x,
+                            .y = box.y,
+                            .width = box.w,
+                            .height = box.h,
+                            .confidence = box.prob,
+                            .label = std::to_string((int)box.class_id),
+                        },
+                        header.image_number,
+                        header.num_boxes - ds->read_ctx.num_boxes_received);
+
+                    if (ds->read_ctx.num_boxes_received == header.num_boxes) {
+                        header_received = false;
+                        ds->read_ctx.num_boxes_received = 0;
+                    }
+                }
             }
         }
 
-        void OnDone(const grpc::Status& s) override {
-            std::cout << "DetectorClient OnDone. Cancelled? "
-                      << (s.error_code() == grpc::StatusCode::CANCELLED)
-                      << std::endl;
-            doneSmp.release();
-            status = s;
+        return s;
+    }
+
+    struct us_socket_t* on_socket_close(struct us_socket_t* s, int code,
+                                        void* reason) {
+        struct detector_socket* ds =
+            (struct detector_socket*)us_socket_ext(SSL, s);
+
+        OBSERVER_TRACE("Client disconnected");
+
+        free(ds->backpressure);
+
+        return s;
+    }
+
+    /* Socket half-closed handler */
+    struct us_socket_t* on_socket_end(struct us_socket_t* s) {
+        us_socket_shutdown(SSL, s);
+        return us_socket_close(SSL, s, 0, NULL);
+    }
+
+    struct us_socket_t* on_socket_timeout(struct us_socket_t* s) {
+        /* Close idle HTTP sockets */
+        return us_socket_close(SSL, s, 0, NULL);
+    }
+
+    struct us_socket_t* on_detect_socket_writable(struct us_socket_t* s) {
+        struct detector_socket* ds =
+            (struct detector_socket*)us_socket_ext(SSL, s);
+
+        int written = us_socket_write(SSL, s, ds->backpressure, ds->length, 0);
+        if (written != ds->length) {
+            char* new_buffer = (char*)malloc(ds->length - written);
+            memcpy(new_buffer, ds->backpressure, ds->length - written);
+            free(ds->backpressure);
+            ds->backpressure = new_buffer;
+            ds->length -= written;
+        } else {
+            free(ds->backpressure);
+            ds->length = 0;
         }
 
-        void NextWrite() {
+        return s;
+    }
+
+    void dummy(struct us_loop_t*) {}
+
+    void wakeup(struct us_loop_t*) {
+        loop_context* loopData = (loop_context*)us_loop_ext(loop);
+
+        /* Swap current deferQueue */
+        loopData->deferMutex.lock();
+        int oldDeferQueue = loopData->currentDeferQueue;
+        loopData->currentDeferQueue = (loopData->currentDeferQueue + 1) % 2;
+        loopData->deferMutex.unlock();
+
+        /* Drain the queue */
+        for (auto& x : loopData->deferQueues[oldDeferQueue]) {
+            x();
+        }
+        loopData->deferQueues[oldDeferQueue].clear();
+    }
+
+    void defer(std::function<void()>&& cb) {
+        loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)loop);
+
+        // if (std::thread::get_id() == ) // todo: add fast path for same
+        // thread id
+        loopData->deferMutex.lock();
+        loopData->deferQueues[loopData->currentDeferQueue].emplace_back(
+            std::move(cb));
+        loopData->deferMutex.unlock();
+
+        us_wakeup_loop((us_loop_t*)loop);
+    }
+
+    DetectorClient::DetectorClient(const std::string& server_address) {
+        /* ----------------- Initialize uSockets ---------------- */
+        bool loopCreated = false;
+        if (!loop) {
+            loopCreated = true;
+            loop =
+                us_create_loop(0, wakeup, dummy, dummy, sizeof(loop_context));
+
+            new (us_loop_ext((us_loop_t*)loop)) loop_context;
+        }
+
+        auto uctx = us_create_socket_context(
+            SSL, loop, sizeof(struct detector_context), {});
+
+        this->context = (detector_context*)us_socket_context_ext(SSL, uctx);
+        this->context->client = this;
+
+        // // Set up callbacks
+        us_socket_context_on_open(SSL, uctx, on_socket_open);
+        us_socket_context_on_data(SSL, uctx, on_data);
+        us_socket_context_on_close(SSL, uctx, on_socket_close);
+        us_socket_context_on_end(SSL, uctx, on_socket_end);
+        us_socket_context_on_timeout(SSL, uctx, on_socket_timeout);
+        us_socket_context_on_connect_error(SSL, uctx, on_socket_conn_error);
+
+        us_socket_context_on_writable(SSL, uctx, on_detect_socket_writable);
+
+        // split string ip:port
+        std::string host;
+        int port;
+
+        host = server_address.substr(0, server_address.find(':'));
+        port = std::stoi(server_address.substr(server_address.find(':') + 1));
+
+        this->socket =
+            us_socket_context_connect(SSL, uctx, host.data(), port, NULL, 0,
+                                      sizeof(struct detector_socket));
+
+        if (loopCreated) {
+            loopThread = std::thread(us_loop_run, loop);
+        }
+    }
+
+    DetectorClient::~DetectorClient() {
+        this->Stop();
+
+        us_loop_free(loop);
+
+        if (loopThread.joinable()) {
+            loopThread.join();
+        }
+
+        loop = nullptr;
+    }
+
+    std::vector<std::string> DetectorClient::GetModelNames() { return {}; }
+
+    void DetectorClient::WriteImages(std::vector<Observer::Frame>& images) {
+        static std::atomic_uint32_t group_number = 0;
+
+        group_number++;
+
+        OBSERVER_SCOPE("Detector send images");
+
+        image_results.clear();
+
+        for (size_t i = 0; i < images.size(); i++) {
+            auto& image = images[i];
+
             if (stopFlag) {
                 std::cout << "DetectorClient stopped." << std::endl;
                 return;
             }
 
-            if (currentImage >= images->size()) {
-                std::cout << "DetectorClient finished writing images."
-                          << std::endl;
-                this->StartWritesDone();
-                return;
-            }
-
-            auto& image = images->at(currentImage);
-
             if ((sendStrategy != nullptr &&
-                 !sendStrategy->ShouldSend(image, currentImage)) ||
+                 !sendStrategy->ShouldSend(image, i)) ||
                 image.IsEmpty()) {
-                currentImage++;
-                NextWrite();
-                return;
+                continue;
             }
+
+            buffer.clear();
+
+            // Create a packet header
+            PacketHeader header;
+            header.version = 1;
+            header.image_number = i;
+            header.group_number = group_number;
+            header.width = image.GetSize().width;
+            header.height = image.GetSize().height;
+            header.image_type = ImageType::ENCODED;
+            header.padding = 0;
 
             if (!image.EncodeImage(".jpg", 95, buffer)) {
                 std::cout << "DetectorClient failed to encode image."
@@ -176,78 +385,77 @@ namespace AsyncInference {
                 return;
             }
 
-            OBSERVER_SCOPE_BEGIN("Detector Write Image");
+            image_results[header.image_number] = {
+                .results = {},
+                .all_results_received = false,
+                .callback_called = false,
+            };
 
-            request.set_image_id(currentImage);
-            auto imSz = image.GetSize();
-            request.set_cols(imSz.width);
-            request.set_rows(imSz.height);
-            request.set_data(buffer.data(), buffer.size());
+            header.data_length = buffer.size();
 
-            this->StartWrite(&request);
+            char* bufcp = (char*)malloc(buffer.size());
+            if (bufcp == nullptr) {
+                OBSERVER_ERROR("Failed to allocate memory for image buffer");
+                return;
+            }
 
-            currentImage++;
+            memcpy(bufcp, buffer.data(), buffer.size());
+
+            defer([this, header, bufcp]() {
+                // Send the header
+                us_socket_write(SSL, socket, (char*)&header,
+                                sizeof(PacketHeader), 1);
+
+                // Send the image
+                us_socket_write(SSL, socket, bufcp, header.data_length, 0);
+
+                free(bufcp);
+            });
         }
-    };
-
-    DetectorClient::DetectorClient(const std::string& server_address) {
-        grpc::ChannelArguments args;
-        // args.SetCompressionAlgorithm(GRPC_COMPRESS_GZIP);
-        channel = grpc::CreateCustomChannel(
-            server_address, grpc::InsecureChannelCredentials(), args);
-
-        stub = inference::InferenceService::NewStub(channel);
-    }
-
-    std::vector<std::string> DetectorClient::GetModelNames() {
-        grpc::ClientContext context;
-
-        inference::ModelList response;
-
-        grpc::Status status =
-            stub->GetModelNames(&context, inference::Empty(), &response);
-
-        if (!status.ok()) {
-            std::cout << "GetModelNames rpc failed." << std::endl;
-            return {};
-        }
-
-        std::vector<std::string> modelNames;
-        modelNames.reserve(response.model_names_size());
-
-        for (int i = 0; i < response.model_names_size(); i++) {
-            modelNames.push_back(response.model_names(i));
-        }
-
-        return modelNames;
     }
 
     std::vector<ImageDetections> DetectorClient::Detect(
-        std::vector<Observer::Frame>& images,
-        std::function<void(ImageDetections&)>&& onResult,
-        ISendStrategy* sendStrategy) {
-        grpc::ClientContext context;
-        context.AddMetadata("model-type", "fast");
-
-        caller = std::make_unique<DetectCaller>(
-            stub.get(), &context, &images, std::move(onResult), sendStrategy);
-        grpc::Status status = caller->Await();
-        if (!status.ok()) {
-            std::cout << "detect rpc failed." << std::endl;
+        std::vector<Observer::Frame>& pImages,
+        std::function<void(const SingleDetection&)>&& pOnResult,
+        ISendStrategy* pSendStrategy) {
+        while (!socketOpenSmp.acquire_timeout<1000>() && !stopFlag) {
+            OBSERVER_TRACE("Waiting for socket to open");
         }
 
-        std::vector<ImageDetections> results = caller->GetResults();
+        this->onResult = std::move(pOnResult);
+        this->sendStrategy = pSendStrategy;
+        WriteImages(pImages);
 
-        caller.reset();
+        SingleDetection detection;
+        while (!stopFlag && !detectionDoneFlag) {
+            singleResultsMutex.lock();
+            int oldSingleResultsContainer = currentSingleResultsContainer;
+            currentSingleResultsContainer =
+                (currentSingleResultsContainer + 1) % 2;
+            singleResultsMutex.unlock();
 
-        return results;
-    }
+            for (auto& detection : singleResults[oldSingleResultsContainer]) {
+                this->onResult(detection);
+            }
+            singleResults[oldSingleResultsContainer].clear();
 
-    void DetectorClient::Stop() {
-        if (caller) {
-            caller->Cancel();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
+        std::vector<ImageDetections> all_results;
+        for (auto& [i, result] : image_results) {
+            ImageDetections image_result;
+            image_result.image_index = i;
+            image_result.detections = result.results;
+            all_results.push_back(image_result);
+        }
+
+        detectionDoneFlag = false;
+        stopFlag = false;
+
+        return all_results;
     }
 
-    DetectorClient::~DetectorClient() { this->Stop(); }
+    void DetectorClient::Stop() { stopFlag = true; }
+
 }  // namespace AsyncInference

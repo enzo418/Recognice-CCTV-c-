@@ -5,10 +5,10 @@
 
 namespace AsyncInference {
     struct SingleDetection {
-        int x;
-        int y;
-        int width;
-        int height;
+        float x;
+        float y;
+        float width;
+        float height;
         float confidence;
         std::string label;
     };

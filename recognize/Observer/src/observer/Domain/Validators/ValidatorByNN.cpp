@@ -37,37 +37,32 @@ namespace Observer {
         auto imagesDetections = client.Detect(
             request.GetFrames(),
             [this, &valid, &validationResult = result](
-                AsyncInference::ImageDetections& detections) {
-                for (auto& result : detections.detections) {
-                    if (!objectCount.contains(result.label)) {
-                        OBSERVER_WARN("Unknown object: {}", result.label);
-                        continue;
-                    }
+                const AsyncInference::SingleDetection& result) {
+                if (!objectCount.contains(result.label)) {
+                    OBSERVER_WARN("Unknown object: {}", result.label);
+                }
 
-                    if (!config.minObjectCount.contains(result.label)) {
-                        OBSERVER_TRACE("Skipping unwanted object: {} ({})",
-                                       result.label, result.confidence);
-                        continue;
-                    }
+                if (!config.minObjectCount.contains(result.label)) {
+                    OBSERVER_TRACE("Skipping unwanted object: {} ({})",
+                                   result.label, result.confidence);
+                }
 
-                    if (result.confidence > config.confidenceThreshold) {
-                        objectCount[result.label] += 1;
-                    } else {
-                        OBSERVER_INFO("Skipping low confidence object: {} ({})",
-                                      result.label, result.confidence);
-                    }
+                if (result.confidence > config.confidenceThreshold) {
+                    objectCount[result.label] += 1;
+                } else {
+                    OBSERVER_INFO("Skipping low confidence object: {} ({})",
+                                  result.label, result.confidence);
+                }
 
-                    if (objectCount[result.label] >
-                        config.minObjectCount[result.label]) {
-                        OBSERVER_INFO("Found enough ({}) {}s",
-                                      objectCount[result.label], result.label);
+                if (objectCount[result.label] >
+                    config.minObjectCount[result.label]) {
+                    OBSERVER_INFO("Found enough ({}) {}s",
+                                  objectCount[result.label], result.label);
 
-                        client.Stop();
-                        valid = true;
-                        validationResult.AddMessages(
-                            {"Stopping because of enough " + result.label});
-                        break;
-                    }
+                    client.Stop();
+                    valid = true;
+                    validationResult.AddMessages(
+                        {"Stopping because of enough " + result.label});
                 }
             },
             &sendStrategy);

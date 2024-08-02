@@ -62,8 +62,7 @@ TEST_F(DetectorClientTest, Detect) {
     const auto results = this->detectorClient->Detect(
         frames,
         [](auto& result) {
-            OBSERVER_INFO("Received result with {} detections",
-                          result.detections.size());
+            OBSERVER_INFO("Received result labeled {}", result.label);
         },
         &sendStrategy);
 
