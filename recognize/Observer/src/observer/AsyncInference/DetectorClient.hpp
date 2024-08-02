@@ -82,6 +82,13 @@ namespace AsyncInference {
         std::vector<std::function<void()>> deferQueues[2];
     };
 
+    enum class SocketStatus {
+        CONNECTED = 1,
+        DISCONNECTED = 2,
+        ERROR = 4,
+        CONNECTING = 8
+    };
+
     class DetectorClient {
        public:
         struct ISendStrategy {
@@ -121,15 +128,27 @@ namespace AsyncInference {
          */
         void Stop();
 
+        /**
+         * @brief Try to connect to the server.
+         * Should call this before `Detect`.
+         *
+         * @return true true if connected successfully
+         * @return false
+         */
+        bool Connect();
+        void Disconnect();
+
        private:
+        Semaphore socketConnectionSmp;
+
         void OnOpen(struct us_socket_t* socket);
         friend void OnOpen(DetectorClient& client, struct us_socket_t* socket);
-        Semaphore socketOpenSmp;
 
-        void OnClose(struct us_socket_t* socket);
-        friend void OnClose(DetectorClient& client, struct us_socket_t* socket);
+        void OnClose();
+        friend void OnClose(DetectorClient& client);
 
-        void Connect(us_socket_context_t* ctx);
+        void OnError();
+        friend void OnError(DetectorClient& client);
 
        private:
         void WriteImages(std::vector<Observer::Frame>& images);
@@ -150,8 +169,7 @@ namespace AsyncInference {
 
         struct us_socket_t* socket {nullptr};
         us_socket_context_t* us_context;
-        bool connected;
-        bool connection_error;
+        SocketStatus socket_status;
 
         struct ResultHolder {
             std::vector<SingleDetection> results;
@@ -179,4 +197,10 @@ namespace AsyncInference {
        private:
         int n;
     };
+
 }  // namespace AsyncInference
+
+template <>
+struct enable_bitmask_operators<AsyncInference::SocketStatus> {
+    static constexpr bool enable = true;
+};

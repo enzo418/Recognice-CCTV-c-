@@ -14,12 +14,36 @@
 #include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
+#include "observer/Utils/SpecialEnums.hpp"
 #include "types.hpp"
 
 namespace AsyncInference {
-    static struct us_loop_t* loop = nullptr;
-    static std::thread loopThread;
+    static struct us_loop_t* g_loop = nullptr;
+    static std::atomic_bool g_loop_running = false;
+    static std::thread g_loopThread;
     static const int SSL = 0;
+    static const char* classes[] = {
+        "person",        "bicycle",       "car",           "motorbike",
+        "aeroplane",     "bus",           "train",         "truck",
+        "boat",          "traffic light", "fire hydrant",  "stop sign",
+        "parking meter", "bench",         "bird",          "cat",
+        "dog",           "horse",         "sheep",         "cow",
+        "elephant",      "bear",          "zebra",         "giraffe",
+        "backpack",      "umbrella",      "handbag",       "tie",
+        "suitcase",      "frisbee",       "skis",          "snowboard",
+        "sports ball",   "kite",          "baseball bat",  "baseball glove",
+        "skateboard",    "surfboard",     "tennis racket", "bottle",
+        "wine glass",    "cup",           "fork",          "knife",
+        "spoon",         "bowl",          "banana",        "apple",
+        "sandwich",      "orange",        "broccoli",      "carrot",
+        "hot dog",       "pizza",         "donut",         "cake",
+        "chair",         "sofa",          "pottedplant",   "bed",
+        "diningtable",   "toilet",        "tvmonitor",     "laptop",
+        "mouse",         "remote",        "keyboard",      "cell phone",
+        "microwave",     "oven",          "toaster",       "sink",
+        "refrigerator",  "book",          "clock",         "vase",
+        "scissors",      "teddy bear",    "hair drier",    "toothbrush",
+    };
 
     /* ------------------------------------------------------ */
     /*               SendEveryNthFrame Strategy               */
@@ -148,6 +172,11 @@ namespace AsyncInference {
                     bytes_received = 0;
 
                     ds->read_ctx.num_boxes_received++;
+                    std::string class_label = "??";
+
+                    if (box.class_id < sizeof(classes) / sizeof(classes[0])) {
+                        class_label = classes[box.class_id];
+                    }
 
                     // printf("\tReceived box: Class=%d Prob=%f\n",
                     // box.class_id,
@@ -160,7 +189,7 @@ namespace AsyncInference {
                             .width = box.w,
                             .height = box.h,
                             .confidence = box.prob,
-                            .label = std::to_string((int)box.class_id),
+                            .label = class_label,
                         },
                         header.image_number,
                         header.num_boxes - ds->read_ctx.num_boxes_received);
@@ -176,21 +205,30 @@ namespace AsyncInference {
         return s;
     }
 
+    void DetectorClient::OnError() {
+        OBSERVER_ERROR("Connection error");
+        this->socket_status = SocketStatus::ERROR;
+        this->socketConnectionSmp.release();
+    }
+
     void DetectorClient::OnOpen(struct us_socket_t* socket) {
         this->socket = socket;
-        socketOpenSmp.release();
-        this->connected = true;
+        this->socket_status = SocketStatus::CONNECTED;
+        socketConnectionSmp.release();
     }
 
     void OnOpen(DetectorClient& client, struct us_socket_t* socket) {
         client.OnOpen(socket);
     }
 
+    void OnError(DetectorClient& client) { client.OnError(); }
+
     struct us_socket_t* on_socket_conn_error(struct us_socket_t* s, int) {
-        OBSERVER_ERROR("Connection error");
         detector_context* ctx = (detector_context*)us_socket_context_ext(
             SSL, us_socket_context(SSL, s));
-        ctx->client->Stop();
+
+        OnError(*ctx->client);
+
         return s;
     }
 
@@ -215,13 +253,11 @@ namespace AsyncInference {
         return s;
     }
 
-    void DetectorClient::OnClose(struct us_socket_t* s) {
-        this->connected = false;
+    void DetectorClient::OnClose() {
+        this->socket_status = SocketStatus::DISCONNECTED;
     }
 
-    void OnClose(DetectorClient& client, struct us_socket_t* s) {
-        client.OnClose(s);
-    }
+    void OnClose(DetectorClient& client) { client.OnClose(); }
 
     struct us_socket_t* on_socket_close(struct us_socket_t* s, int code,
                                         void* reason) {
@@ -231,7 +267,7 @@ namespace AsyncInference {
         detector_context* ctx = (detector_context*)us_socket_context_ext(
             SSL, us_socket_context(SSL, s));
 
-        OnClose(*ctx->client, s);
+        OnClose(*ctx->client);
 
         OBSERVER_TRACE("Client disconnected");
 
@@ -273,7 +309,7 @@ namespace AsyncInference {
     void dummy(struct us_loop_t*) {}
 
     void wakeup(struct us_loop_t*) {
-        loop_context* loopData = (loop_context*)us_loop_ext(loop);
+        loop_context* loopData = (loop_context*)us_loop_ext(g_loop);
 
         /* Swap current deferQueue */
         loopData->deferMutex.lock();
@@ -289,32 +325,30 @@ namespace AsyncInference {
     }
 
     void defer(std::function<void()>&& cb) {
-        loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)loop);
+        loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)g_loop);
 
         loopData->deferMutex.lock();
         loopData->deferQueues[loopData->currentDeferQueue].emplace_back(
             std::move(cb));
         loopData->deferMutex.unlock();
 
-        us_wakeup_loop((us_loop_t*)loop);
+        us_wakeup_loop((us_loop_t*)g_loop);
     }
 
     DetectorClient::DetectorClient(const std::string& server_address)
         : serverAddress(server_address) {
-        this->connected = false;
+        this->socket_status = SocketStatus::DISCONNECTED;
 
         /* ----------------- Initialize uSockets ---------------- */
-        bool loopCreated = false;
-        if (!loop) {
-            loopCreated = true;
-            loop =
+        if (!g_loop) {
+            g_loop =
                 us_create_loop(0, wakeup, dummy, dummy, sizeof(loop_context));
 
-            new (us_loop_ext((us_loop_t*)loop)) loop_context;
+            new (us_loop_ext((us_loop_t*)g_loop)) loop_context;
         }
 
         this->us_context = us_create_socket_context(
-            SSL, loop, sizeof(struct detector_context), {});
+            SSL, g_loop, sizeof(struct detector_context), {});
 
         auto context =
             (detector_context*)us_socket_context_ext(SSL, us_context);
@@ -331,48 +365,78 @@ namespace AsyncInference {
 
         us_socket_context_on_writable(SSL, us_context,
                                       on_detect_socket_writable);
-
-        this->Connect(us_context);
-
-        if (loopCreated) {
-            loopThread = std::thread(us_loop_run, loop);
-        }
     }
 
     DetectorClient::~DetectorClient() {
         this->Stop();
 
-        if (loopThread.joinable()) {
-            loopThread.join();
+        if (g_loopThread.joinable()) {
+            g_loopThread.join();
         }
 
+        OBSERVER_ASSERT(g_loop, "Loop not created");
+
         us_socket_context_free(SSL, us_socket_context(SSL, this->socket));
-        us_loop_free(loop);
-        loop_context* loop_ctx = (loop_context*)us_loop_ext((us_loop_t*)loop);
+        us_loop_free(g_loop);
+        loop_context* loop_ctx = (loop_context*)us_loop_ext((us_loop_t*)g_loop);
         loop_ctx->~loop_context();
 
-        loop = nullptr;
+        g_loop = nullptr;
     }
 
-    void DetectorClient::Connect(us_socket_context_t* ctx) {
-        if (socket != nullptr && this->connected) {
+    void DetectorClient::Disconnect() {
+        if (socket && !us_socket_is_closed(SSL, socket) &&
+            !us_socket_is_shut_down(SSL, socket)) {
+            us_socket_close_connecting(SSL, socket);
+        }
+
+        this->socket_status = SocketStatus::DISCONNECTED;
+
+        g_loop_running = false;
+
+        if (g_loopThread.joinable()) {
+            g_loopThread.join();
+        }
+    }
+
+    bool DetectorClient::Connect() {
+        if (socket != nullptr &&
+            Observer::has_flag(this->socket_status, SocketStatus::CONNECTED)) {
             char ip[20];
             int length {0};
             us_socket_remote_address(SSL, socket, ip, &length);
             on_socket_open(socket, 1, ip, length);
-            return;
+        } else if (!Observer::has_flag(this->socket_status,
+                                       SocketStatus::CONNECTING)) {
+            std::string host = serverAddress.substr(0, serverAddress.find(':'));
+            int port =
+                std::stoi(serverAddress.substr(serverAddress.find(':') + 1));
+
+            this->socket = us_socket_context_connect(
+                SSL, us_context, host.data(), port, NULL, 0,
+                sizeof(struct detector_socket));
+
+            this->socket_status = SocketStatus::CONNECTING;
+
+            if (!g_loop_running) {
+                g_loopThread = std::thread(us_loop_run, g_loop);
+                g_loop_running = true;
+            }
         }
 
-        std::string host = serverAddress.substr(0, serverAddress.find(':'));
-        int port = std::stoi(serverAddress.substr(serverAddress.find(':') + 1));
-
-        this->socket =
-            us_socket_context_connect(SSL, ctx, host.data(), port, NULL, 0,
-                                      sizeof(struct detector_socket));
-
-        while (!socketOpenSmp.acquire_timeout<1000>() && !stopFlag) {
+        while (!socketConnectionSmp.acquire_timeout<10>() && !stopFlag) {
             OBSERVER_TRACE("Waiting for socket to open");
         }
+
+        if (!Observer::has_flag(this->socket_status, SocketStatus::CONNECTED) ||
+            Observer::has_flag(this->socket_status, SocketStatus::ERROR)) {
+            if (g_loopThread.joinable()) g_loopThread.join();
+            g_loop_running = false;
+        }
+
+        return Observer::has_flag(this->socket_status,
+                                  SocketStatus::CONNECTED) &&
+               !Observer::has_flag(this->socket_status, SocketStatus::ERROR);
     }
 
     std::vector<std::string> DetectorClient::GetModelNames() { return {}; }
@@ -451,7 +515,12 @@ namespace AsyncInference {
         std::vector<Observer::Frame>& pImages,
         std::function<void(const SingleDetection&)>&& pOnResult,
         ISendStrategy* pSendStrategy) {
-        this->Connect(us_socket_context(SSL, this->socket));
+        OBSERVER_ASSERT(
+            Observer::has_flag(this->socket_status, SocketStatus::CONNECTED),
+            "Socket not connected");
+        OBSERVER_ASSERT(
+            !Observer::has_flag(this->socket_status, SocketStatus::ERROR),
+            "Socket in error state");
 
         this->onResult = std::move(pOnResult);
         this->sendStrategy = pSendStrategy;
@@ -490,10 +559,7 @@ namespace AsyncInference {
     void DetectorClient::Stop() {
         stopFlag = true;
 
-        if (!us_socket_is_closed(SSL, socket) &&
-            !us_socket_is_shut_down(SSL, socket)) {
-            us_socket_close_connecting(SSL, socket);
-        }
+        this->Disconnect();
     }
 
 }  // namespace AsyncInference

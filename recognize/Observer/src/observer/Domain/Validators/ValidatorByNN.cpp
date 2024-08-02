@@ -34,6 +34,20 @@ namespace Observer {
         AsyncInference::SendEveryNthFrame sendStrategy(
             ceil(request.GetFrameRate() * config.maxFramesPerSecond));
 
+        int t = 3;
+        while (t--) {
+            if (client.Connect()) {
+                break;
+            } else if (t == 1) {
+                OBSERVER_ERROR("Failed to connect");
+                return;
+            }
+
+            OBSERVER_WARN("Failed to connect. Retrying");
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+
         auto imagesDetections = client.Detect(
             request.GetFrames(),
             [this, &valid, &validationResult = result](
