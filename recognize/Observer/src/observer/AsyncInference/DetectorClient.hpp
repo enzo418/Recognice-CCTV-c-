@@ -126,6 +126,11 @@ namespace AsyncInference {
         friend void OnOpen(DetectorClient& client, struct us_socket_t* socket);
         Semaphore socketOpenSmp;
 
+        void OnClose(struct us_socket_t* socket);
+        friend void OnClose(DetectorClient& client, struct us_socket_t* socket);
+
+        void Connect(us_socket_context_t* ctx);
+
        private:
         void WriteImages(std::vector<Observer::Frame>& images);
         void AddResult(const SingleDetection& detection, int image_index,
@@ -139,11 +144,14 @@ namespace AsyncInference {
         std::vector<uchar> buffer;
 
        private:
+        std::string serverAddress;
         std::thread readerThread;
         std::atomic_bool stopFlag {false};
 
-        struct us_socket_t* socket;
-        detector_context* context;
+        struct us_socket_t* socket {nullptr};
+        us_socket_context_t* us_context;
+        bool connected;
+        bool connection_error;
 
         struct ResultHolder {
             std::vector<SingleDetection> results;

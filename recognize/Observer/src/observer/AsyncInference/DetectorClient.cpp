@@ -40,44 +40,6 @@ namespace AsyncInference {
     /*                      DetectCaller                      */
     /* ------------------------------------------------------ */
 
-    void DetectorClient::OnOpen(struct us_socket_t* socket) {
-        this->socket = socket;
-        socketOpenSmp.release();
-    }
-
-    void OnOpen(DetectorClient& client, struct us_socket_t* socket) {
-        client.OnOpen(socket);
-    }
-
-    struct us_socket_t* on_socket_conn_error(struct us_socket_t* s, int) {
-        OBSERVER_ERROR("Connection error");
-        detector_context* ctx = (detector_context*)us_socket_context_ext(
-            SSL, us_socket_context(SSL, s));
-        ctx->client->Stop();
-        return s;
-    }
-
-    struct us_socket_t* on_socket_open(struct us_socket_t* s, int is_client,
-                                       char* ip, int ip_length) {
-        struct detector_socket* ds =
-            (struct detector_socket*)us_socket_ext(SSL, s);
-
-        detector_context* ctx = (detector_context*)us_socket_context_ext(
-            SSL, us_socket_context(SSL, s));
-
-        ds->backpressure = 0;
-        ds->length = 0;
-
-        ds->read_ctx.header_received = false;
-        ds->read_ctx.header_bytes_received = 0;
-        ds->read_ctx.num_boxes_received = 0;
-        ds->read_ctx.box_bytes_received = 0;
-
-        OnOpen(*ctx->client, s);
-
-        return s;
-    }
-
     void AddResult(DetectorClient& client, const SingleDetection& detection,
                    int image_index, int remaining_boxes) {
         client.AddResult(detection, image_index, remaining_boxes);
@@ -214,10 +176,62 @@ namespace AsyncInference {
         return s;
     }
 
+    void DetectorClient::OnOpen(struct us_socket_t* socket) {
+        this->socket = socket;
+        socketOpenSmp.release();
+        this->connected = true;
+    }
+
+    void OnOpen(DetectorClient& client, struct us_socket_t* socket) {
+        client.OnOpen(socket);
+    }
+
+    struct us_socket_t* on_socket_conn_error(struct us_socket_t* s, int) {
+        OBSERVER_ERROR("Connection error");
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+        ctx->client->Stop();
+        return s;
+    }
+
+    struct us_socket_t* on_socket_open(struct us_socket_t* s, int is_client,
+                                       char* ip, int ip_length) {
+        struct detector_socket* ds =
+            (struct detector_socket*)us_socket_ext(SSL, s);
+
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+
+        ds->backpressure = 0;
+        ds->length = 0;
+
+        ds->read_ctx.header_received = false;
+        ds->read_ctx.header_bytes_received = 0;
+        ds->read_ctx.num_boxes_received = 0;
+        ds->read_ctx.box_bytes_received = 0;
+
+        OnOpen(*ctx->client, s);
+
+        return s;
+    }
+
+    void DetectorClient::OnClose(struct us_socket_t* s) {
+        this->connected = false;
+    }
+
+    void OnClose(DetectorClient& client, struct us_socket_t* s) {
+        client.OnClose(s);
+    }
+
     struct us_socket_t* on_socket_close(struct us_socket_t* s, int code,
                                         void* reason) {
         struct detector_socket* ds =
             (struct detector_socket*)us_socket_ext(SSL, s);
+
+        detector_context* ctx = (detector_context*)us_socket_context_ext(
+            SSL, us_socket_context(SSL, s));
+
+        OnClose(*ctx->client, s);
 
         OBSERVER_TRACE("Client disconnected");
 
@@ -277,8 +291,6 @@ namespace AsyncInference {
     void defer(std::function<void()>&& cb) {
         loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)loop);
 
-        // if (std::thread::get_id() == ) // todo: add fast path for same
-        // thread id
         loopData->deferMutex.lock();
         loopData->deferQueues[loopData->currentDeferQueue].emplace_back(
             std::move(cb));
@@ -287,7 +299,10 @@ namespace AsyncInference {
         us_wakeup_loop((us_loop_t*)loop);
     }
 
-    DetectorClient::DetectorClient(const std::string& server_address) {
+    DetectorClient::DetectorClient(const std::string& server_address)
+        : serverAddress(server_address) {
+        this->connected = false;
+
         /* ----------------- Initialize uSockets ---------------- */
         bool loopCreated = false;
         if (!loop) {
@@ -298,32 +313,26 @@ namespace AsyncInference {
             new (us_loop_ext((us_loop_t*)loop)) loop_context;
         }
 
-        auto uctx = us_create_socket_context(
+        this->us_context = us_create_socket_context(
             SSL, loop, sizeof(struct detector_context), {});
 
-        this->context = (detector_context*)us_socket_context_ext(SSL, uctx);
-        this->context->client = this;
+        auto context =
+            (detector_context*)us_socket_context_ext(SSL, us_context);
+        context->client = this;
 
         // // Set up callbacks
-        us_socket_context_on_open(SSL, uctx, on_socket_open);
-        us_socket_context_on_data(SSL, uctx, on_data);
-        us_socket_context_on_close(SSL, uctx, on_socket_close);
-        us_socket_context_on_end(SSL, uctx, on_socket_end);
-        us_socket_context_on_timeout(SSL, uctx, on_socket_timeout);
-        us_socket_context_on_connect_error(SSL, uctx, on_socket_conn_error);
+        us_socket_context_on_open(SSL, us_context, on_socket_open);
+        us_socket_context_on_data(SSL, us_context, on_data);
+        us_socket_context_on_close(SSL, us_context, on_socket_close);
+        us_socket_context_on_end(SSL, us_context, on_socket_end);
+        us_socket_context_on_timeout(SSL, us_context, on_socket_timeout);
+        us_socket_context_on_connect_error(SSL, us_context,
+                                           on_socket_conn_error);
 
-        us_socket_context_on_writable(SSL, uctx, on_detect_socket_writable);
+        us_socket_context_on_writable(SSL, us_context,
+                                      on_detect_socket_writable);
 
-        // split string ip:port
-        std::string host;
-        int port;
-
-        host = server_address.substr(0, server_address.find(':'));
-        port = std::stoi(server_address.substr(server_address.find(':') + 1));
-
-        this->socket =
-            us_socket_context_connect(SSL, uctx, host.data(), port, NULL, 0,
-                                      sizeof(struct detector_socket));
+        this->Connect(us_context);
 
         if (loopCreated) {
             loopThread = std::thread(us_loop_run, loop);
@@ -333,13 +342,37 @@ namespace AsyncInference {
     DetectorClient::~DetectorClient() {
         this->Stop();
 
-        us_loop_free(loop);
-
         if (loopThread.joinable()) {
             loopThread.join();
         }
 
+        us_socket_context_free(SSL, us_socket_context(SSL, this->socket));
+        us_loop_free(loop);
+        loop_context* loop_ctx = (loop_context*)us_loop_ext((us_loop_t*)loop);
+        loop_ctx->~loop_context();
+
         loop = nullptr;
+    }
+
+    void DetectorClient::Connect(us_socket_context_t* ctx) {
+        if (socket != nullptr && this->connected) {
+            char ip[20];
+            int length {0};
+            us_socket_remote_address(SSL, socket, ip, &length);
+            on_socket_open(socket, 1, ip, length);
+            return;
+        }
+
+        std::string host = serverAddress.substr(0, serverAddress.find(':'));
+        int port = std::stoi(serverAddress.substr(serverAddress.find(':') + 1));
+
+        this->socket =
+            us_socket_context_connect(SSL, ctx, host.data(), port, NULL, 0,
+                                      sizeof(struct detector_socket));
+
+        while (!socketOpenSmp.acquire_timeout<1000>() && !stopFlag) {
+            OBSERVER_TRACE("Waiting for socket to open");
+        }
     }
 
     std::vector<std::string> DetectorClient::GetModelNames() { return {}; }
@@ -418,9 +451,7 @@ namespace AsyncInference {
         std::vector<Observer::Frame>& pImages,
         std::function<void(const SingleDetection&)>&& pOnResult,
         ISendStrategy* pSendStrategy) {
-        while (!socketOpenSmp.acquire_timeout<1000>() && !stopFlag) {
-            OBSERVER_TRACE("Waiting for socket to open");
-        }
+        this->Connect(us_socket_context(SSL, this->socket));
 
         this->onResult = std::move(pOnResult);
         this->sendStrategy = pSendStrategy;
@@ -456,6 +487,13 @@ namespace AsyncInference {
         return all_results;
     }
 
-    void DetectorClient::Stop() { stopFlag = true; }
+    void DetectorClient::Stop() {
+        stopFlag = true;
+
+        if (!us_socket_is_closed(SSL, socket) &&
+            !us_socket_is_shut_down(SSL, socket)) {
+            us_socket_close_connecting(SSL, socket);
+        }
+    }
 
 }  // namespace AsyncInference
