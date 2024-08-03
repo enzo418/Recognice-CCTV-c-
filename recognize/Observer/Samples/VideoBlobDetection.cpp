@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 
+#include "mdns.hpp"
 #include "observer/AsyncInference/DetectorClient.hpp"
 #include "observer/Blob/Contours/ContoursTypes.hpp"
 #include "observer/Domain/Classification/BlobClassification.hpp"
@@ -162,8 +163,25 @@ int main(int argc, char** argv) {
     AsyncInference::DetectorClient* detectionClient = nullptr;
 
     if (parser.has("classify") && parser.get<bool>("classify")) {
-        detectionClient = new AsyncInference::DetectorClient(
-            camera.objectDetectionValidatorConfig.serverAddress);
+        std::string serviceAddress =
+            camera.objectDetectionValidatorConfig.serverAddress;
+
+        mdns::MDNSClient mdnsClient("_darknet._tcp.local.");
+
+        auto result = mdnsClient.findService(1, true, false);
+
+        result.wait();
+        if (result.valid()) {
+            auto service = result.get();
+            if (service.has_value() && service->ipv4_addr.has_value() &&
+                service->port.has_value()) {
+                OBSERVER_TRACE("Found mDNS service.");
+                serviceAddress = service->ipv4_addr.value() + ":" +
+                                 std::to_string(service->port.value());
+            }
+        }
+
+        detectionClient = new AsyncInference::DetectorClient(serviceAddress);
     }
 
     std::vector<Frame> buffer;
@@ -187,6 +205,10 @@ int main(int argc, char** argv) {
                    result.blob_detection_time_us / 1000, result.blobs.size());
 
     DisplayResults(result, buffer);
+
+    if (detectionClient) {
+        delete detectionClient;
+    }
 
     OBSERVER_STOP_INSTRUMENTATION();
 }
@@ -305,6 +327,11 @@ DetectionResults DetectBlobs(Observer::CameraConfiguration& camera,
     auto contours = contoursDetector.FindContoursFromDiffFrames(diffFrames);
 
     auto took_contours = timer.GetDurationAndRestart();
+
+    {
+        OBSERVER_SCOPE("Connect to inference server");
+        detectionClient->Connect();
+    }
 
     {
         OBSERVER_SCOPE("Find blobs");

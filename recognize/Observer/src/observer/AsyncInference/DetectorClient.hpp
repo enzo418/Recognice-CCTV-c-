@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <string_view>
 #include <thread>
 
@@ -89,6 +90,7 @@ namespace AsyncInference {
         CONNECTING = 8
     };
 
+    // TODO: Divide this on Loop and Socket. This calls has become way too big
     class DetectorClient {
        public:
         struct ISendStrategy {
@@ -100,6 +102,14 @@ namespace AsyncInference {
         ~DetectorClient();
 
        public:
+        /**
+         * @brief Sets the server address.
+         * Call this before a new `Connect` call.
+         *
+         * @param server_address
+         */
+        void SetServerAddress(const std::string& server_address);
+
         std::vector<std::string> GetModelNames();
 
         /**
@@ -152,11 +162,12 @@ namespace AsyncInference {
 
        private:
         void WriteImages(std::vector<Observer::Frame>& images);
-        void AddResult(const SingleDetection& detection, int image_index,
-                       int remaining_boxes);
-        friend void AddResult(DetectorClient& client,
-                              const SingleDetection& detection, int image_index,
-                              int remaining_boxes);
+        void UpdateImageDetections(
+            int image_index, int remaining_boxes,
+            const std::optional<SingleDetection>& detection);
+        friend void UpdateImageDetections(
+            DetectorClient& client, int image_index, int remaining_boxes,
+            const std::optional<SingleDetection>& detection);
 
         std::function<void(const SingleDetection&)> onResult;
         ISendStrategy* sendStrategy;
@@ -174,7 +185,7 @@ namespace AsyncInference {
         struct ResultHolder {
             std::vector<SingleDetection> results;
             bool all_results_received {false};
-            bool callback_called {false};
+            uint32_t group_number {0};
         };
 
         // only the event loop thread will access this until detectionDoneFlag
@@ -186,6 +197,11 @@ namespace AsyncInference {
         std::vector<SingleDetection> singleResults[2];
 
         std::atomic_bool detectionDoneFlag {false};
+
+       private:
+        struct us_loop_t* loop = nullptr;
+        std::atomic_bool loop_running = false;
+        std::thread loopThread;
     };
 
     // Send every nth frame strategy

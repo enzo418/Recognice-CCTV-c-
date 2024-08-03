@@ -1,6 +1,7 @@
 #include "DetectorClient.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <cstdio>
@@ -14,13 +15,11 @@
 #include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Semaphore.hpp"
+#include "observer/Timer.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
 #include "types.hpp"
 
 namespace AsyncInference {
-    static struct us_loop_t* g_loop = nullptr;
-    static std::atomic_bool g_loop_running = false;
-    static std::thread g_loopThread;
     static const int SSL = 0;
     static const char* classes[] = {
         "person",        "bicycle",       "car",           "motorbike",
@@ -64,13 +63,15 @@ namespace AsyncInference {
     /*                      DetectCaller                      */
     /* ------------------------------------------------------ */
 
-    void AddResult(DetectorClient& client, const SingleDetection& detection,
-                   int image_index, int remaining_boxes) {
-        client.AddResult(detection, image_index, remaining_boxes);
+    void UpdateImageDetections(
+        DetectorClient& client, int image_index, int remaining_boxes,
+        const std::optional<SingleDetection>& detection) {
+        client.UpdateImageDetections(image_index, remaining_boxes, detection);
     }
 
-    void DetectorClient::AddResult(const SingleDetection& detection,
-                                   int image_index, int remaining_boxes) {
+    void DetectorClient::UpdateImageDetections(
+        int image_index, int remaining_boxes,
+        const std::optional<SingleDetection>& detection) {
         if (image_results.contains(image_index)) {
             auto& container = image_results[image_index];
             if (container.all_results_received) {
@@ -79,27 +80,33 @@ namespace AsyncInference {
                 return;
             }
 
-            printf("Received detection for image %d: Class=%s Prob=%f\n",
-                   image_index, detection.label.c_str(), detection.confidence);
-
-            container.results.push_back(detection);
+            // printf("Received detection for image %d: Class=%s Prob=%f\n",
+            //        image_index, detection.label.c_str(),
+            //        detection.confidence);
 
             if (remaining_boxes == 0) {
                 container.all_results_received = true;
             }
+            if (detection.has_value()) {
+                container.results.push_back(detection.value());
 
-            // flash the results to the caller thread
-            singleResultsMutex.lock();
-            assert(detection.label.size() > 0);
-            singleResults[currentSingleResultsContainer].push_back(detection);
-            assert(singleResults[currentSingleResultsContainer]
-                       .back()
-                       .label.size() > 0);
-            singleResultsMutex.unlock();
+                // flash the results to the caller thread
+                singleResultsMutex.lock();
+                assert(detection.value().label.size() > 0);
+                singleResults[currentSingleResultsContainer].push_back(
+                    detection.value());
+                assert(singleResults[currentSingleResultsContainer]
+                           .back()
+                           .label.size() > 0);
+                singleResultsMutex.unlock();
+            }
 
             // check if all results are received
             for (auto& [index, result] : image_results) {
                 if (!result.all_results_received) {
+                    printf(
+                        "Group %d Image %d has boxes remaining, received %lu\n",
+                        result.group_number, index, result.results.size());
                     return;
                 }
             }
@@ -110,6 +117,40 @@ namespace AsyncInference {
                           image_index);
             return;
         }
+    }
+
+    int us_socket_write_or_backpressure(int SSL, us_socket_t* s, char* data,
+                                        int length, int msg_more) {
+        detector_socket* ds = (detector_socket*)us_socket_ext(SSL, s);
+
+        int written = 0;
+
+        // if we have backpressure, we need to write that first before the new
+        // data
+        if (ds->length == 0) {
+            written = us_socket_write(SSL, s, data, length, msg_more);
+        }
+
+        if (written != length) {
+            char* new_buffer = (char*)malloc(ds->length + length - written);
+
+            if (!new_buffer) {
+                // what's the point anymore
+                OBSERVER_CRITICAL("Failed to allocate memory for backpressure");
+                return written;
+            }
+
+            if (ds->length > 0 && ds->backpressure) {
+                memcpy(new_buffer, ds->backpressure, ds->length);
+                free(ds->backpressure);
+            }
+
+            memcpy(new_buffer + ds->length, data + written, length - written);
+            ds->backpressure = new_buffer;
+            ds->length += length - written;
+        }
+
+        return written;
     }
 
     struct us_socket_t* on_data(us_socket_t* s, char* data, int length) {
@@ -146,10 +187,14 @@ namespace AsyncInference {
                 if (bytes_received == sizeof(DetectionResultHeader)) {
                     bytes_received = 0;
 
-                    // printf("Received header: Image=%d Boxes=%d\n",
-                    //        header.image_number, header.num_boxes);
+                    printf("Received header: Group=%d Image=%d Boxes=%d\n",
+                           header.group_number, header.image_number,
+                           header.num_boxes);
                     if (header.num_boxes == 0) {
                         header_received = false;
+
+                        UpdateImageDetections(*ctx->client, header.image_number,
+                                              0, std::nullopt);
                     } else {
                         header_received = true;
                     }
@@ -181,8 +226,9 @@ namespace AsyncInference {
                     // printf("\tReceived box: Class=%d Prob=%f\n",
                     // box.class_id,
                     //        box.prob);
-                    AddResult(
-                        *ctx->client,
+                    UpdateImageDetections(
+                        *ctx->client, header.image_number,
+                        header.num_boxes - ds->read_ctx.num_boxes_received,
                         SingleDetection {
                             .x = box.x,
                             .y = box.y,
@@ -190,9 +236,7 @@ namespace AsyncInference {
                             .height = box.h,
                             .confidence = box.prob,
                             .label = class_label,
-                        },
-                        header.image_number,
-                        header.num_boxes - ds->read_ctx.num_boxes_received);
+                        });
 
                     if (ds->read_ctx.num_boxes_received == header.num_boxes) {
                         header_received = false;
@@ -308,8 +352,8 @@ namespace AsyncInference {
 
     void dummy(struct us_loop_t*) {}
 
-    void wakeup(struct us_loop_t*) {
-        loop_context* loopData = (loop_context*)us_loop_ext(g_loop);
+    void wakeup(struct us_loop_t* loop) {
+        loop_context* loopData = (loop_context*)us_loop_ext(loop);
 
         /* Swap current deferQueue */
         loopData->deferMutex.lock();
@@ -324,15 +368,15 @@ namespace AsyncInference {
         loopData->deferQueues[oldDeferQueue].clear();
     }
 
-    void defer(std::function<void()>&& cb) {
-        loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)g_loop);
+    void defer(struct us_loop_t* loop, std::function<void()>&& cb) {
+        loop_context* loopData = (loop_context*)us_loop_ext((us_loop_t*)loop);
 
         loopData->deferMutex.lock();
         loopData->deferQueues[loopData->currentDeferQueue].emplace_back(
             std::move(cb));
         loopData->deferMutex.unlock();
 
-        us_wakeup_loop((us_loop_t*)g_loop);
+        us_wakeup_loop((us_loop_t*)loop);
     }
 
     DetectorClient::DetectorClient(const std::string& server_address)
@@ -340,15 +384,13 @@ namespace AsyncInference {
         this->socket_status = SocketStatus::DISCONNECTED;
 
         /* ----------------- Initialize uSockets ---------------- */
-        if (!g_loop) {
-            g_loop =
-                us_create_loop(0, wakeup, dummy, dummy, sizeof(loop_context));
+        this->loop =
+            us_create_loop(0, wakeup, dummy, dummy, sizeof(loop_context));
 
-            new (us_loop_ext((us_loop_t*)g_loop)) loop_context;
-        }
+        new (us_loop_ext((us_loop_t*)loop)) loop_context;
 
         this->us_context = us_create_socket_context(
-            SSL, g_loop, sizeof(struct detector_context), {});
+            SSL, loop, sizeof(struct detector_context), {});
 
         auto context =
             (detector_context*)us_socket_context_ext(SSL, us_context);
@@ -370,18 +412,15 @@ namespace AsyncInference {
     DetectorClient::~DetectorClient() {
         this->Stop();
 
-        if (g_loopThread.joinable()) {
-            g_loopThread.join();
+        if (loopThread.joinable()) {
+            loopThread.join();
         }
 
-        OBSERVER_ASSERT(g_loop, "Loop not created");
+        us_socket_context_free(SSL, this->us_context);
 
-        us_socket_context_free(SSL, us_socket_context(SSL, this->socket));
-        us_loop_free(g_loop);
-        loop_context* loop_ctx = (loop_context*)us_loop_ext((us_loop_t*)g_loop);
+        us_loop_free(loop);
+        loop_context* loop_ctx = (loop_context*)us_loop_ext((us_loop_t*)loop);
         loop_ctx->~loop_context();
-
-        g_loop = nullptr;
     }
 
     void DetectorClient::Disconnect() {
@@ -392,10 +431,10 @@ namespace AsyncInference {
 
         this->socket_status = SocketStatus::DISCONNECTED;
 
-        g_loop_running = false;
+        loop_running = false;
 
-        if (g_loopThread.joinable()) {
-            g_loopThread.join();
+        if (loopThread.joinable()) {
+            loopThread.join();
         }
     }
 
@@ -408,6 +447,11 @@ namespace AsyncInference {
             on_socket_open(socket, 1, ip, length);
         } else if (!Observer::has_flag(this->socket_status,
                                        SocketStatus::CONNECTING)) {
+            if (serverAddress.find(':') == std::string::npos) {
+                OBSERVER_ERROR("Invalid server address: {}", serverAddress);
+                return false;
+            }
+
             std::string host = serverAddress.substr(0, serverAddress.find(':'));
             int port =
                 std::stoi(serverAddress.substr(serverAddress.find(':') + 1));
@@ -418,20 +462,25 @@ namespace AsyncInference {
 
             this->socket_status = SocketStatus::CONNECTING;
 
-            if (!g_loop_running) {
-                g_loopThread = std::thread(us_loop_run, g_loop);
-                g_loop_running = true;
+            if (!loop_running) {
+                loopThread = std::thread(us_loop_run, loop);
+                loop_running = true;
             }
         }
 
+        Observer::Timer<std::chrono::seconds> timer(true);
         while (!socketConnectionSmp.acquire_timeout<10>() && !stopFlag) {
             OBSERVER_TRACE("Waiting for socket to open");
+            if (timer.GetDuration() > 5) {
+                OBSERVER_ERROR("Timeout while waiting for socket to open");
+                return false;
+            }
         }
 
         if (!Observer::has_flag(this->socket_status, SocketStatus::CONNECTED) ||
             Observer::has_flag(this->socket_status, SocketStatus::ERROR)) {
-            if (g_loopThread.joinable()) g_loopThread.join();
-            g_loop_running = false;
+            if (loopThread.joinable()) loopThread.join();
+            loop_running = false;
         }
 
         return Observer::has_flag(this->socket_status,
@@ -442,19 +491,19 @@ namespace AsyncInference {
     std::vector<std::string> DetectorClient::GetModelNames() { return {}; }
 
     void DetectorClient::WriteImages(std::vector<Observer::Frame>& images) {
-        static std::atomic_uint32_t group_number = 0;
-
-        group_number++;
+        static std::atomic_uint32_t s_group_number = 0;
+        uint32_t group_number = s_group_number++;
 
         OBSERVER_SCOPE("Detector send images");
 
         image_results.clear();
 
+        int sending = 0;
+
         for (size_t i = 0; i < images.size(); i++) {
             auto& image = images[i];
 
             if (stopFlag) {
-                std::cout << "DetectorClient stopped." << std::endl;
                 return;
             }
 
@@ -477,15 +526,14 @@ namespace AsyncInference {
             header.padding = 0;
 
             if (!image.EncodeImage(".jpg", 95, buffer)) {
-                std::cout << "DetectorClient failed to encode image."
-                          << std::endl;
+                OBSERVER_ERROR("Failed to encode image {}", i);
                 return;
             }
 
             image_results[header.image_number] = {
                 .results = {},
                 .all_results_received = false,
-                .callback_called = false,
+                .group_number = group_number,
             };
 
             header.data_length = buffer.size();
@@ -498,17 +546,36 @@ namespace AsyncInference {
 
             memcpy(bufcp, buffer.data(), buffer.size());
 
-            defer([this, header, bufcp]() {
+            defer(this->loop, [this, header, bufcp]() {
                 // Send the header
-                us_socket_write(SSL, socket, (char*)&header,
-                                sizeof(PacketHeader), 1);
+                int written_h = us_socket_write_or_backpressure(
+                    SSL, socket, (char*)&header, sizeof(PacketHeader), 1);
+
+                if (written_h != sizeof(PacketHeader)) {
+                    OBSERVER_ERROR(
+                        "Using backpressure buffer for image header {} group "
+                        "{}",
+                        header.image_number, header.group_number);
+                }
 
                 // Send the image
-                us_socket_write(SSL, socket, bufcp, header.data_length, 0);
+                int written_data = us_socket_write_or_backpressure(
+                    SSL, socket, bufcp, header.data_length, 0);
+                if (written_data != (int)header.data_length) {
+                    OBSERVER_ERROR(
+                        "Using backpressure buffer image data for image {} "
+                        "group {}",
+                        header.image_number, header.group_number);
+                }
 
                 free(bufcp);
             });
+
+            sending++;
         }
+
+        OBSERVER_TRACE("Detector will send {} images in group {}", sending,
+                       group_number);
     }
 
     std::vector<ImageDetections> DetectorClient::Detect(
@@ -539,6 +606,14 @@ namespace AsyncInference {
             }
             singleResults[oldSingleResultsContainer].clear();
 
+            // check if connection status changed
+            if (socketConnectionSmp.acquire_timeout<10>() &&
+                !Observer::has_flag(this->socket_status,
+                                    SocketStatus::CONNECTED)) {
+                OBSERVER_TRACE("Ending detection: connection was lost.");
+                break;
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
@@ -554,6 +629,10 @@ namespace AsyncInference {
         stopFlag = false;
 
         return all_results;
+    }
+
+    void DetectorClient::SetServerAddress(const std::string& address) {
+        this->serverAddress = address;
     }
 
     void DetectorClient::Stop() {

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "ValidatorHandler.hpp"
+#include "mdns.hpp"
 #include "observer/AsyncInference/DetectorClient.hpp"
 
 namespace Observer {
@@ -36,10 +37,14 @@ namespace Observer {
         void ReadCocoNames();
         void ClearObjectCounter();
 
+        std::string GetNewServerAddress();
+
        private:
         ValidatorConfig config;
         AsyncInference::DetectorClient client;
         std::unordered_map<std::string, int> objectCount;
+
+        mdns::MDNSClient mdnsClient;
     };
 
 }  // namespace Observer
