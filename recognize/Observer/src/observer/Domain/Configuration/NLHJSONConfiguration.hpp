@@ -83,7 +83,7 @@ namespace Observer {
                                        BrightnessAboveThreshold, Resize);
 
     /* ------------- BlobDetectionConfiguration ------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration,
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration, enabled,
                                        blobDetectorParams, blobFilters,
                                        contoursFilters, thresholdParams);
 

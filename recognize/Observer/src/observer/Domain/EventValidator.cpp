@@ -4,26 +4,58 @@
 
 #include "observer/AsyncInference/types.hpp"
 #include "observer/Domain/Validators/ValidatorByNN.hpp"
+#include "observer/Log/log.hpp"
+#include "observer/Pattern/Validation/IValidatorHandler.hpp"
 
 namespace Observer {
+
+    class NullValidator final : public ValidatorHandler {
+       public:
+        void isValid(CameraEvent&, Result& result) { result.SetValid(true); }
+    };
 
     EventValidator::EventValidator(CameraConfiguration* pCameraCfg,
                                    SynchronizedIDProvider* pIdProvider) {
         this->cameraCfg = pCameraCfg;
         this->groupIdProvider = pIdProvider;
 
-        /* ----------------- Validator by blobs ----------------- */
-        ValidatorByBlobs* validatorByBlobs =
-            new ValidatorByBlobs(this->cameraCfg->blobDetection);
+        NullValidator* nullValidator = new NullValidator();
+        this->handlers.push_back(nullValidator);
 
-        handlers.push_back(validatorByBlobs);
+        Observer::IValidatorHandler* prev = nullValidator;
+
+        /* ----------------- Validator by blobs ----------------- */
+        if (this->cameraCfg->blobDetection.enabled) {
+            ValidatorByBlobs* validatorByBlobs =
+                new ValidatorByBlobs(this->cameraCfg->blobDetection);
+
+            handlers.push_back(validatorByBlobs);
+
+            if (prev != nullptr) {
+                prev->SetNext(validatorByBlobs);
+            }
+
+            prev = validatorByBlobs;
+        }
 
         /* ----------------- Validator by NN ----------------- */
         if (this->cameraCfg->objectDetectionValidatorConfig.enabled) {
             auto validatorByNN = new ValidatorByNN(
                 this->cameraCfg->objectDetectionValidatorConfig);
-            validatorByBlobs->SetNext(validatorByNN);
+
             handlers.push_back(validatorByNN);
+
+            if (prev != nullptr) {
+                prev->SetNext(validatorByNN);
+            }
+
+            prev = validatorByNN;
+        }
+
+        if (!this->cameraCfg->blobDetection.enabled &&
+            !this->cameraCfg->objectDetectionValidatorConfig.enabled) {
+            OBSERVER_WARN("No validator was enabled for camera '{}'",
+                          this->cameraCfg->name);
         }
 
         /* ------------------- set first handler ---------------- */

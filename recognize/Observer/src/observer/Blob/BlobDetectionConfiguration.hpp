@@ -7,6 +7,8 @@
 
 namespace Observer {
     struct BlobDetectionConfiguration {
+        bool enabled {true};
+
         BlobDetectorParams blobDetectorParams;
         BlobFilters blobFilters;
         ContoursFilter contoursFilters;
