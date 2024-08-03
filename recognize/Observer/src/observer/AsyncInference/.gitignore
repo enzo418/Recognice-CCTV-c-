@@ -16,3 +16,4 @@
 !.clang-format
 
 !uSockets
+!mdns-cpp

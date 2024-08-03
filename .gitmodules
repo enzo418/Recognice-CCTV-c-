@@ -22,3 +22,6 @@
 [submodule "recognize/Observer/src/observer/AsyncInference/uSockets"]
 	path = recognize/Observer/src/observer/AsyncInference/uSockets
 	url = https://github.com/enzo418/uSockets
+[submodule "recognize/Observer/src/observer/AsyncInference/mdns-cpp"]
+	path = recognize/Observer/src/observer/AsyncInference/mdns-cpp
+	url = https://github.com/enzo418/mdns-cpp

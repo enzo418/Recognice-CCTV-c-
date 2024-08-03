@@ -47,3 +47,22 @@ ExternalProject_Add(
 ifc_add_dep(usocket-ain-delp)
 ifc_add_include(${CMAKE_CURRENT_LIST_DIR}/uSockets/src)
 ifc_add_lib(usocketslib)
+
+# ------------------------- MDNS ------------------------- #
+ExternalProject_Add(
+    dep-mdns
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/mdns-cpp
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS
+		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${IFC_DEPENDENCY_INSTALL_DIR}
+		-DCMAKE_INSTALL_INCLUDEDIR=${IFC_DEPENDENCY_INCLUDE_DIR}
+		-DCMAKE_INSTALL_LIBDIR=${IFC_DEPENDENCY_LIB_DIR}
+		-DMDNS_BUILD_EXAMPLE=OFF
+		-DMDNS_DISABLE_LOGGING=ON
+    TEST_COMMAND ""
+)
+
+ifc_add_dep(dep-mdns)
+ifc_add_lib(mdns)

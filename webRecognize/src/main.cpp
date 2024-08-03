@@ -75,6 +75,7 @@
 #include "CL/ConfigurationDAOCache.hpp"
 #include "CL/NotificationCL.hpp"
 #include "Utils/JsonUtils.hpp"
+#include "mdns.hpp"
 
 const bool SSL = false;
 namespace fs = std::filesystem;
@@ -332,6 +333,20 @@ int main() {
         });
 
     cronJobs.Start();
+
+    /* ------------------ Announce in MDNS ------------------ */
+    auto hostname = mdns::get_host_name();
+    mdns::MDNSService mdnsService(hostname, "_http._tcp.local.", serverCtx.port,
+                                  {});
+    auto resMDNSweb = mdnsService.start();
+    if (resMDNSweb.wait_for(std::chrono::milliseconds(500)) ==
+        std::future_status::ready) {
+        OBSERVER_ERROR("Service webserver failed to start: code={0}, error={1}",
+                       resMDNSweb.get(), strerror(errno));
+    } else {
+        OBSERVER_INFO("mDNS service instance {}._http._tcp.local. started",
+                      hostname);
+    }
 
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,
