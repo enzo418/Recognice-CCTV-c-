@@ -3,6 +3,7 @@
 
 // nolitedb
 #include "Constans.hpp"
+#include "Controller/AIServerController.hpp"
 #include "Controller/CameraController.hpp"
 #include "Controller/LiveViewController.hpp"
 #include "Controller/StreamingController.hpp"
@@ -191,6 +192,9 @@ int main() {
     /* ---------------------- STREAMING --------------------- */
     Web::Controller::StreamingController<SSL> streamingController(
         &app, &configurationDAOCache, &serverCtx.recognizeContext);
+
+    /* -------------------- AI Server API ------------------- */
+    Web::Controller::AIServerController<SSL> aiServerController(&app);
 
     /* ----------------- START FUNCTIONALITY ---------------- */
     videoBufferTasksManager.SubscribeToTaskResult(&bufferWebSocket);
