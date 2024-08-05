@@ -2,6 +2,8 @@
 
 #include <spdlog/common.h>
 
+#include "spdlog/sinks/rotating_file_sink.h"
+
 namespace Observer {
     std::shared_ptr<spdlog::logger> LogManager::logger;
 
@@ -15,8 +17,10 @@ namespace Observer {
         console_sink->set_pattern("%^[%l] %T %D [thread %t] %v%$");
 
         // file sink for errors
-        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-            "logs/observer_log.txt", true);
+        auto max_size = 1024 * 1024 * 5;
+        auto max_files = 3;
+        auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+            "logs/observer_log.txt", max_size, max_files);
 
         file_sink->set_level(spdlog::level::trace);
 

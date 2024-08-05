@@ -104,9 +104,10 @@ namespace AsyncInference {
             // check if all results are received
             for (auto& [index, result] : image_results) {
                 if (!result.all_results_received) {
-                    printf(
-                        "Group %d Image %d has boxes remaining, received %lu\n",
-                        result.group_number, index, result.results.size());
+                    // printf(
+                    //     "Group %d Image %d has boxes remaining, received
+                    //     %lu\n", result.group_number, index,
+                    //     result.results.size());
                     return;
                 }
             }
@@ -187,9 +188,9 @@ namespace AsyncInference {
                 if (bytes_received == sizeof(DetectionResultHeader)) {
                     bytes_received = 0;
 
-                    printf("Received header: Group=%d Image=%d Boxes=%d\n",
-                           header.group_number, header.image_number,
-                           header.num_boxes);
+                    // printf("Received header: Group=%d Image=%d Boxes=%d\n",
+                    //        header.group_number, header.image_number,
+                    //        header.num_boxes);
                     if (header.num_boxes == 0) {
                         header_received = false;
 
@@ -276,8 +277,7 @@ namespace AsyncInference {
         return s;
     }
 
-    struct us_socket_t* on_socket_open(struct us_socket_t* s, int is_client,
-                                       char* ip, int ip_length) {
+    struct us_socket_t* on_socket_open(struct us_socket_t* s, int, char*, int) {
         struct detector_socket* ds =
             (struct detector_socket*)us_socket_ext(SSL, s);
 
@@ -303,8 +303,7 @@ namespace AsyncInference {
 
     void OnClose(DetectorClient& client) { client.OnClose(); }
 
-    struct us_socket_t* on_socket_close(struct us_socket_t* s, int code,
-                                        void* reason) {
+    struct us_socket_t* on_socket_close(struct us_socket_t* s, int, void*) {
         struct detector_socket* ds =
             (struct detector_socket*)us_socket_ext(SSL, s);
 
@@ -338,7 +337,8 @@ namespace AsyncInference {
         int written = us_socket_write(SSL, s, ds->backpressure, ds->length, 0);
         if (written != ds->length) {
             char* new_buffer = (char*)malloc(ds->length - written);
-            memcpy(new_buffer, ds->backpressure + written, ds->length - written);
+            memcpy(new_buffer, ds->backpressure + written,
+                   ds->length - written);
             free(ds->backpressure);
             ds->backpressure = new_buffer;
             ds->length -= written;
@@ -468,9 +468,11 @@ namespace AsyncInference {
             }
         }
 
-        Observer::Timer<std::chrono::seconds> timer(true);
-        while (!socketConnectionSmp.acquire_timeout<10>() && !stopFlag) {
+        if (!socketConnectionSmp.acquire_timeout<10>())
             OBSERVER_TRACE("Waiting for socket to open");
+
+        Observer::Timer<std::chrono::seconds> timer(true);
+        while (!socketConnectionSmp.acquire_timeout<50>() && !stopFlag) {
             if (timer.GetDuration() > 5) {
                 OBSERVER_ERROR("Timeout while waiting for socket to open");
                 return false;
@@ -548,25 +550,12 @@ namespace AsyncInference {
 
             defer(this->loop, [this, header, bufcp]() {
                 // Send the header
-                int written_h = us_socket_write_or_backpressure(
-                    SSL, socket, (char*)&header, sizeof(PacketHeader), 1);
-
-                if (written_h != sizeof(PacketHeader)) {
-                    OBSERVER_ERROR(
-                        "Using backpressure buffer for image header {} group "
-                        "{}",
-                        header.image_number, header.group_number);
-                }
+                us_socket_write_or_backpressure(SSL, socket, (char*)&header,
+                                                sizeof(PacketHeader), 1);
 
                 // Send the image
-                int written_data = us_socket_write_or_backpressure(
-                    SSL, socket, bufcp, header.data_length, 0);
-                if (written_data != (int)header.data_length) {
-                    OBSERVER_ERROR(
-                        "Using backpressure buffer image data for image {} "
-                        "group {}",
-                        header.image_number, header.group_number);
-                }
+                us_socket_write_or_backpressure(SSL, socket, bufcp,
+                                                header.data_length, 0);
 
                 free(bufcp);
             });
