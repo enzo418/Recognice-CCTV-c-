@@ -338,7 +338,7 @@ namespace AsyncInference {
         int written = us_socket_write(SSL, s, ds->backpressure, ds->length, 0);
         if (written != ds->length) {
             char* new_buffer = (char*)malloc(ds->length - written);
-            memcpy(new_buffer, ds->backpressure, ds->length - written);
+            memcpy(new_buffer, ds->backpressure + written, ds->length - written);
             free(ds->backpressure);
             ds->backpressure = new_buffer;
             ds->length -= written;
