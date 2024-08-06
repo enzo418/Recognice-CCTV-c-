@@ -14,6 +14,7 @@
 #endif
 
 #ifndef OBSERVER_RELEASE
+#define OBSERVER_LOG_FLUSH() Observer::LogManager::GetLogger()->flush();
 #define OBSERVER_TRACE(...) \
     Observer::LogManager::GetLogger()->trace(__VA_ARGS__)
 #define OBSERVER_INFO(...) Observer::LogManager::GetLogger()->info(__VA_ARGS__)
@@ -31,6 +32,7 @@
     }
 #else
 #define
+#define OBSERVER_LOG_FLUSH() (void)0
 #define OBSERVER_TRACE(...) (void)0
 #define OBSERVER_INFO(...) (void)0
 #define OBSERVER_WARN(...) Observer::LogManager::GetLogger()->warn(__VA_ARGS__)

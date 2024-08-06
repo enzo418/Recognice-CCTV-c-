@@ -44,6 +44,7 @@
 #include "observer/Domain/ObserverCentral.hpp"
 #include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
+#include "observer/Log/log_stacktrace.hpp"
 #include "observer/Pattern/ObserverBasics.hpp"
 #include "observer/Size.hpp"
 #include "server_types.hpp"
@@ -56,6 +57,7 @@
 #include "uWebSockets/Multipart.h"
 
 // Selects a Region of interes from a camera fram
+#include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -85,6 +87,13 @@ typedef cv::Mat TFrame;
 
 constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
+void handler(int sig) {
+    ObserverLogStackTrace();
+    OBSERVER_LOG_FLUSH();
+    ObserverCallOldSignalHandlers(sig);
+    std::quick_exit(1);
+}
+
 int main() {
     /**
      * Basic guidelines/recommendation
@@ -107,6 +116,8 @@ int main() {
     nldb::LogManager::SetLevel(nldb::log_level::warn);
 
     OBSERVER_INIT_INSTRUMENTATION();
+
+    ObserverRegisterSignalHandlers(handler);
 
     // recognizer instance
     std::shared_ptr<rc::ObserverCentral> recognizer;

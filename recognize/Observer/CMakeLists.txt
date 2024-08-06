@@ -101,6 +101,7 @@ set(SRC_
         src/observer/Log/managers/LogManagerSPD.hpp src/observer/Log/managers/LogManagerSPD.cpp
         src/observer/Log/managers/log_constants.hpp
         src/observer/Log/log.hpp
+        src/observer/Log/log_stacktrace.hpp src/observer/Log/log_stacktrace.cpp
 
         # blobs
         src/observer/Blob/BlobDetector/Blob.cpp

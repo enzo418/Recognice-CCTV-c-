@@ -10,9 +10,10 @@
 #if OBSERVER_PALANTEER_CONNECTED
 #define OBSERVER_INIT_INSTRUMENTATION plInitAndStart("Observer")
 #else
-#define OBSERVER_INIT_INSTRUMENTATION()                \
-    plInitAndStart("Observer", PL_MODE_STORE_IN_FILE), \
-        plSetFilename("observer.pltraw")
+#define OBSERVER_INIT_INSTRUMENTATION() \
+    plSetFilename("observer.pltraw"),   \
+        plInitAndStart("Observer", PL_MODE_STORE_IN_FILE)
+
 #define OBSERVER_STOP_INSTRUMENTATION() plStopAndUninit();
 #endif
 
