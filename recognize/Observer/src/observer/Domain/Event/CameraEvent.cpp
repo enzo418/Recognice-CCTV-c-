@@ -31,4 +31,11 @@ namespace Observer {
         this->framesSize = pFrameSize;
     }
 
+    void CameraEvent::SetOriginalFrameSize(Size pFrameSize) {
+        this->originalFrameSize = pFrameSize;
+    }
+
+    Size CameraEvent::GetOriginalFrameSize() const {
+        return this->originalFrameSize;
+    }
 }  // namespace Observer

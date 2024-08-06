@@ -64,6 +64,11 @@ namespace Observer {
         std::move(frames.begin(), frames.end(), imagesOut.begin());
     }
 
+    void ImageIO::ReadDecode(const std::vector<uint8_t>& data,
+                             Frame& imageOut) {
+        imageOut.GetInternalFrame() = cv::imdecode(data, cv::IMREAD_COLOR);
+    }
+
     ImageIO& ImageIO::Get() {
         static ImageIO io;
         return io;

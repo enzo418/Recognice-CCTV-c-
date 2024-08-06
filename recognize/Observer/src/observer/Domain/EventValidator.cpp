@@ -41,7 +41,7 @@ namespace Observer {
         /* ----------------- Validator by NN ----------------- */
         if (this->cameraCfg->objectDetectionValidatorConfig.enabled) {
             auto validatorByNN = new ValidatorByNN(
-                this->cameraCfg->objectDetectionValidatorConfig);
+                this->cameraCfg->objectDetectionValidatorConfig, pCameraCfg);
 
             handlers.push_back(validatorByNN);
 

@@ -468,14 +468,15 @@ namespace AsyncInference {
             }
         }
 
-        if (!socketConnectionSmp.acquire_timeout<10>())
+        if (!socketConnectionSmp.acquire_timeout<10>()) {
             OBSERVER_TRACE("Waiting for socket to open");
 
-        Observer::Timer<std::chrono::seconds> timer(true);
-        while (!socketConnectionSmp.acquire_timeout<50>() && !stopFlag) {
-            if (timer.GetDuration() > 5) {
-                OBSERVER_ERROR("Timeout while waiting for socket to open");
-                return false;
+            Observer::Timer<std::chrono::seconds> timer(true);
+            while (!socketConnectionSmp.acquire_timeout<50>() && !stopFlag) {
+                if (timer.GetDuration() > 5) {
+                    OBSERVER_ERROR("Timeout while waiting for socket to open");
+                    return false;
+                }
             }
         }
 

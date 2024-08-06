@@ -51,9 +51,30 @@ namespace Observer {
      * @param angle angle, on degrees
      */
     void Frame::RotateImage(double angle) {
-        cv::Point2f pc(m_frame.cols / 2., m_frame.rows / 2.);
+        // Calculate the new bounding box size
+        double radians = angle * CV_PI / 180.0;
+        double cos_angle = std::abs(std::cos(radians));
+        double sin_angle = std::abs(std::sin(radians));
+        int new_width = static_cast<int>(m_frame.rows * sin_angle +
+                                         m_frame.cols * cos_angle);
+        int new_height = static_cast<int>(m_frame.rows * cos_angle +
+                                          m_frame.cols * sin_angle);
+
+        // Calculate the rotation matrix
+        cv::Point2f pc(m_frame.cols / 2.0, m_frame.rows / 2.0);
         cv::Mat r = cv::getRotationMatrix2D(pc, angle, 1.0);
-        cv::warpAffine(m_frame, m_frame, r, m_frame.size(), cv::INTER_NEAREST);
+
+        // Adjust the rotation matrix to take into account the translation
+        r.at<double>(0, 2) += (new_width / 2.0) - pc.x;
+        r.at<double>(1, 2) += (new_height / 2.0) - pc.y;
+
+        // Perform the rotation with the new bounding box size
+        cv::Mat rotated_frame;
+        cv::warpAffine(m_frame, rotated_frame, r,
+                       cv::Size(new_width, new_height), cv::INTER_NEAREST);
+
+        // Update the frame with the rotated image
+        m_frame = rotated_frame;
     }
 
     /**

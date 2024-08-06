@@ -26,9 +26,12 @@ namespace Observer {
         double GetFrameRate() const;
         Size GetFramesSize() const;
         int GetGroupID() const;
+        Size GetOriginalFrameSize() const;
 
         void SetFrameRate(double pFrameRate);
         void SetFrameSize(Size pFrameSize);
+
+        void SetOriginalFrameSize(Size pFrameSize);
 
         /**
          * @brief Sets the group id.
@@ -53,6 +56,8 @@ namespace Observer {
         double frameRate {0};
 
         Size framesSize;
+
+        Size originalFrameSize;
 
         // unique value in the program execution
         int groupID {-1};

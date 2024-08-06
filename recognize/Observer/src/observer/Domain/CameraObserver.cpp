@@ -53,6 +53,10 @@ namespace Observer {
             if (source.IsFrameAvailable()) {
                 frame = source.GetFrame();
                 if (!frame.IsEmpty()) {
+                    if (this->cfg->rotation != 0) {
+                        frame.RotateImage(this->cfg->rotation);
+                    }
+
                     this->framePublisher.notifySubscribers(
                         this->cfg->positionOnOutput, frame.Clone());
 
@@ -141,6 +145,7 @@ namespace Observer {
 
             event->SetFrameRate(this->GetFPS());
             event->SetFrameSize(frame.GetSize());
+            event->SetOriginalFrameSize(this->source.GetInputResolution());
 
             OBSERVER_TRACE(
                 "Change detected on camera '{}', notifying subscribers",

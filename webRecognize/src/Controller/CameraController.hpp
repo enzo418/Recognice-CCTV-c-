@@ -10,6 +10,7 @@
 #include "Streaming/ws/WebsocketService.hpp"
 #include "Utils/ObserverStatus.hpp"
 #include "Utils/StringUtils.hpp"
+#include "observer/Domain/Configuration/CameraConfiguration.hpp"
 #include "observer/Implementation.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
@@ -27,6 +28,7 @@ namespace Web::Controller {
         void Get(auto* res, auto* req);
         void GetInfo(auto* res, auto* req);
         void GetFrame(auto* res, auto* req);
+        void GetFrameMasked(auto* res, auto* req);
 
         /* --------------- Dynamic camera actions --------------- */
         // TODO: move to proper api documentation
@@ -81,6 +83,10 @@ namespace Web::Controller {
         std::unordered_map<std::string, std::vector<unsigned char>>
             cachedCameraImage;
 
+        std::unordered_map<std::string,
+                           std::pair<uint64_t, std::vector<unsigned char>>>
+            cachedMaskedCameraImage;
+
         struct CachedCameraInfo {
             Observer::Size size;
             double fps;
@@ -112,6 +118,10 @@ namespace Web::Controller {
 
         app->get("/api/camera/:id/frame",
                  [this](auto* res, auto* req) { this->GetFrame(res, req); });
+
+        app->get("/api/camera/:id/frame/masked", [this](auto* res, auto* req) {
+            this->GetFrameMasked(res, req);
+        });
 
         app->post("/api/camera/:name/type/temporarily",
                   [this](auto* res, auto* req) {
@@ -156,8 +166,9 @@ namespace Web::Controller {
             return;
         }
 
+        nldb::json camera;
         try {
-            auto camera = configurationDAO->GetCamera(camera_id);
+            camera = configurationDAO->GetCamera(camera_id);
             uri = camera["url"];
         } catch (const std::exception& e) {
             nlohmann::json response = {{"title", "Camera not found"}};
@@ -185,33 +196,59 @@ namespace Web::Controller {
         // don't block the main thread
         res->onAborted([]() {});
 
-        asyncTasks.push_back(std::async(std::launch::async, [this, res, uri]() {
-            Observer::VideoSource cap;
-            cap.Open(uri);
+        Observer::CameraConfiguration cameraConfig = camera;
+        asyncTasks.push_back(std::async(
+            std::launch::async,
+            [this, res, uri, rotation = cameraConfig.rotation]() {
+                Observer::VideoSource cap;
+                cap.Open(uri);
 
-            if (cap.isOpened()) {
-                double fps = cap.GetFPS();
-                Observer::Size size = cap.GetSize();
+                if (cap.isOpened()) {
+                    double fps = cap.GetFPS();
 
-                nlohmann::json response = {{"fps", fps}, {"size", size}};
+                    Observer::Frame frame;
+                    cap.GetNextFrame(frame);
 
-                cap.Close();
+                    int tries = 100;
+                    while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
 
-                cachedCameraInfo[uri] = {size, fps,
-                                         std::chrono::system_clock::now()};
+                    if (tries <= 0) {
+                        nlohmann::json response = {
+                            {"title", "Camera didn't return any valid frames"}};
 
-                loop->defer(
-                    [res, response]() { res->endJson(response.dump()); });
-            } else {
-                nlohmann::json response = {{"title", "Camera not available"}};
+                        loop->defer([res, response]() {
+                            res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                                ->endProblemJson(response.dump());
+                        });
+                        return;
+                    }
 
-                loop->defer([res, response]() {
-                    res->writeStatus(HTTP_404_NOT_FOUND)
-                        ->writeHeader("Cache-Control", "max-age=5")
-                        ->endProblemJson(response.dump());
-                });
-            }
-        }));
+                    if (rotation != 0) {
+                        frame.RotateImage(rotation);
+                    }
+
+                    auto size = frame.GetSize();
+
+                    nlohmann::json response = {{"fps", fps}, {"size", size}};
+
+                    cap.Close();
+
+                    cachedCameraInfo[uri] = {size, fps,
+                                             std::chrono::system_clock::now()};
+
+                    loop->defer(
+                        [res, response]() { res->endJson(response.dump()); });
+                } else {
+                    nlohmann::json response = {
+                        {"title", "Camera not available"}};
+
+                    loop->defer([res, response]() {
+                        res->writeStatus(HTTP_404_NOT_FOUND)
+                            ->writeHeader("Cache-Control", "max-age=5")
+                            ->endProblemJson(response.dump());
+                    });
+                }
+            }));
     }
 
     template <bool SSL>
@@ -226,8 +263,10 @@ namespace Web::Controller {
             return;
         }
 
+        nldb::json camera;
+
         try {
-            auto camera = configurationDAO->GetCamera(camera_id);
+            camera = configurationDAO->GetCamera(camera_id);
             uri = camera["url"];
         } catch (const std::exception& e) {
             nlohmann::json response = {{"title", "Camera not found"}};
@@ -241,42 +280,164 @@ namespace Web::Controller {
         // don't block the main thread
         res->onAborted([]() {});
 
-        asyncTasks.push_back(std::async(std::launch::async, [this, res, uri]() {
-            if (!cachedCameraImage.contains(uri)) {
-                Observer::VideoSource cap;
-                Observer::Frame frame;
+        Observer::CameraConfiguration cameraConfig = camera;
 
-                cap.Open(uri);
-                cap.GetNextFrame(frame);
+        asyncTasks.push_back(std::async(
+            std::launch::async,
+            [this, res, uri, rotation = cameraConfig.rotation]() {
+                if (!cachedCameraImage.contains(uri)) {
+                    Observer::VideoSource cap;
+                    Observer::Frame frame;
 
-                int tries = 100;
-                while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
+                    cap.Open(uri);
+                    cap.GetNextFrame(frame);
 
-                if (tries <= 0) {
-                    nlohmann::json response = {
-                        {"title", "Camera didn't return any valid frames"}};
+                    int tries = 100;
+                    while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
 
-                    loop->defer([res, response]() {
-                        res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
-                            ->endProblemJson(response.dump());
+                    if (tries <= 0) {
+                        nlohmann::json response = {
+                            {"title", "Camera didn't return any valid frames"}};
+
+                        loop->defer([res, response]() {
+                            res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                                ->endProblemJson(response.dump());
+                        });
+                        return;
+                    }
+
+                    if (rotation != 0) {
+                        frame.RotateImage(rotation);
+                    }
+
+                    std::vector<unsigned char> buffer;
+                    frame.EncodeImage(".jpg", 90, buffer);
+
+                    cachedCameraImage[uri] = std::move(buffer);
+                }
+
+                auto& buffer = cachedCameraImage[uri];
+
+                loop->defer([res, buffer]() {
+                    res->writeHeader("content-type", "image/jpeg")
+                        ->end(std::string_view((char*)buffer.data(),
+                                               buffer.size()));
+                });
+            }));
+    }
+
+    template <bool SSL>
+    void CameraController<SSL>::GetFrameMasked(auto* res, auto* req) {
+        std::string uri;
+
+        // then try to get it from the database with:
+        std::string camera_id(req->getParameter(0));
+
+        if (camera_id.empty()) {
+            res->writeStatus(HTTP_400_BAD_REQUEST)->end();
+            return;
+        }
+
+        nldb::json camera;
+
+        try {
+            camera = configurationDAO->GetCamera(camera_id);
+            uri = camera["url"];
+        } catch (const std::exception& e) {
+            nlohmann::json response = {{"title", "Camera not found"}};
+
+            res->writeStatus(HTTP_404_NOT_FOUND)
+                ->writeHeader("Cache-Control", "max-age=5")
+                ->endProblemJson(response.dump());
+            return;
+        }
+
+        // don't block the main thread
+        res->onAborted([]() {});
+
+        Observer::CameraConfiguration cameraConfig = camera;
+
+        asyncTasks.push_back(std::async(
+            std::launch::async,
+            [this, res, uri, rotation = cameraConfig.rotation,
+             masks = cameraConfig.processingConfiguration.masks]() {
+                auto sum = [](auto sum, std::vector<Observer::Point> v) {
+                    if (v.size() == 1)
+                        return sum + v.begin()->x;
+                    else
+                        return sum +
+                               (int)v.begin()->DistanceTo(*(v.rbegin() + 1));
+                };
+                uint64_t naiveMasksId =
+                    std::accumulate(masks.begin(), masks.end(), 0, sum);
+
+                if (cachedMaskedCameraImage.contains(uri) &&
+                    cachedMaskedCameraImage[uri].first == naiveMasksId) {
+                    auto& buffer = cachedMaskedCameraImage[uri].second;
+
+                    loop->defer([res, buffer]() {
+                        res->writeHeader("content-type", "image/jpeg")
+                            ->end(std::string_view((char*)buffer.data(),
+                                                   buffer.size()));
                     });
+
                     return;
                 }
+
+                Observer::Frame frame;
+                if (!cachedCameraImage.contains(uri)) {
+                    Observer::VideoSource cap;
+
+                    cap.Open(uri);
+                    cap.GetNextFrame(frame);
+
+                    int tries = 100;
+                    while (frame.IsEmpty() && --tries) cap.GetNextFrame(frame);
+
+                    if (tries <= 0) {
+                        nlohmann::json response = {
+                            {"title", "Camera didn't return any valid frames"}};
+
+                        loop->defer([res, response]() {
+                            res->writeStatus(HTTP_500_INTERNAL_SERVER_ERROR)
+                                ->endProblemJson(response.dump());
+                        });
+                        return;
+                    }
+
+                    if (rotation != 0) {
+                        frame.RotateImage(rotation);
+                    }
+
+                    std::vector<unsigned char> buffer;
+                    frame.EncodeImage(".jpg", 90, buffer);
+
+                    cachedCameraImage[uri] = std::move(buffer);
+                } else {
+                    Observer::ImageIO::Get().ReadDecode(cachedCameraImage[uri],
+                                                        frame);
+                }
+
+                Observer::Frame mask = Observer::Frame(frame.GetSize(), 1);
+
+                for (auto& maskPoints : masks) {
+                    Observer::ImageDraw::Get().FillConvexPoly(
+                        mask, maskPoints, Observer::ScalarVector::White());
+                }
+
+                frame.Mask(mask);
 
                 std::vector<unsigned char> buffer;
                 frame.EncodeImage(".jpg", 90, buffer);
 
-                cachedCameraImage[uri] = std::move(buffer);
-            }
+                cachedMaskedCameraImage[uri] = {naiveMasksId, buffer};
 
-            auto& buffer = cachedCameraImage[uri];
-
-            loop->defer([res, buffer]() {
-                res->writeHeader("content-type", "image/jpeg")
-                    ->end(
-                        std::string_view((char*)buffer.data(), buffer.size()));
-            });
-        }));
+                loop->defer([res, buffer]() {
+                    res->writeHeader("content-type", "image/jpeg")
+                        ->end(std::string_view((char*)buffer.data(),
+                                               buffer.size()));
+                });
+            }));
     }
 
     template <bool SSL>

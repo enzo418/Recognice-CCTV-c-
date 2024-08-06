@@ -56,5 +56,8 @@ namespace Observer {
 
         virtual void ReadImages(const std::string& path,
                                 std::vector<Frame>& imagesOut) = 0;
+
+        virtual void ReadDecode(const std::vector<uint8_t>& data,
+                                Frame& imageOut) = 0;
     };
 }  // namespace Observer

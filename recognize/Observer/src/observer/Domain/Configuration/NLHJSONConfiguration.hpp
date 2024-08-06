@@ -31,14 +31,6 @@ namespace Observer {
     /* ------------------------ POINT ----------------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Point, x, y);
 
-    /* --------------- EObjectDetectionMethod --------------- */
-    NLOHMANN_JSON_SERIALIZE_ENUM(EObjectDetectionMethod,
-                                 {
-                                     {NONE, "None"},
-                                     {HOG_DESCRIPTOR, "Hog Descriptor"},
-                                     {YOLODNN_V4, "Yolo DNN V4"},
-                                 });
-
     /* ------------------ ERestrictionType ------------------ */
     NLOHMANN_JSON_SERIALIZE_ENUM(ERestrictionType,
                                  {{ALLOW, "Allow"}, {DENY, "Deny"}});
@@ -94,7 +86,8 @@ namespace Observer {
     /* --------------- ObjectDetectionValidatorConfig -------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ValidatorConfig, enabled, serverAddress,
                                        confidenceThreshold, minObjectCount,
-                                       maxFramesPerSecond);
+                                       maxFramesPerSecond, applyRotation,
+                                       applyMasks);
 
     /* ----------------- CameraConfiguration ---------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(

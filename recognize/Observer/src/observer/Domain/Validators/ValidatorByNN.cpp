@@ -6,13 +6,17 @@
 
 #include "fstream"
 #include "observer/AsyncInference/DetectorClient.hpp"
+#include "observer/Domain/Configuration/CameraConfiguration.hpp"
+#include "observer/IImageDraw.hpp"
 #include "observer/Instrumentation/Instrumentation.hpp"
 #include "observer/Log/log.hpp"
 #include "observer/Utils/SpecialFunctions.hpp"
 
 namespace Observer {
-    ValidatorByNN::ValidatorByNN(const ValidatorConfig& pConfig)
+    ValidatorByNN::ValidatorByNN(const ValidatorConfig& pConfig,
+                                 CameraConfiguration* pCameraCfg)
         : config(pConfig),
+          cameraCfg(pCameraCfg),
           client(config.serverAddress),
           mdnsClient("_darknet._tcp.local.") {
         if (pConfig.maxFramesPerSecond <= 0) {
@@ -49,10 +53,24 @@ namespace Observer {
 
         {
             OBSERVER_SCOPE("Connect to inference server");
+
+            // always try with config.serverAddress first
+            if (!config.serverAddress.empty())
+                client.SetServerAddress(config.serverAddress);
+
             int t = 3;
             while (t--) {
                 if (client.Connect()) {
                     break;
+                } else if (t == 2) {
+                    OBSERVER_INFO(
+                        "Failed to connect to inference server. Trying to "
+                        "found a new one with mDNS");
+
+                    std::string address = GetNewServerAddress();
+                    if (!address.empty()) {
+                        client.SetServerAddress(address);
+                    }
                 } else if (t == 1) {
                     OBSERVER_ERROR("Failed to connect");
                     result.SetValid(false);
@@ -68,9 +86,33 @@ namespace Observer {
             }
         }
 
+        {
+            OBSERVER_SCOPE("Setup mask");
+            this->SetupMask(request.GetOriginalFrameSize());
+        }
+
+        std::vector<Frame>* framesToSend = &request.GetFrames();
+
+        if (config.applyMasks) {
+            framesToSend = new std::vector<Frame>(request.GetFrames());
+
+            {
+                OBSERVER_SCOPE("Prepare frames");
+                for (auto& frame : *framesToSend) {
+                    frame.Mask(mask);
+                }
+
+                // Show the frame
+                ImageDisplay::Get().ShowImage(
+                    std::string("frame" +
+                                std::to_string(cameraCfg->positionOnOutput)),
+                    (*framesToSend)[0]);
+            }
+        }
+
         auto result_async = std::async(std::launch::async, [&]() {
             return client.Detect(
-                request.GetFrames(),
+                *framesToSend,
                 [this, &valid, &validationResult = result](
                     const AsyncInference::SingleDetection& result) {
                     if (!objectCount.contains(result.label)) {
@@ -111,8 +153,11 @@ namespace Observer {
             result.SetValid(false);
             result.AddMessages({"Timeout while waiting for the result"});
             client.Stop();
+            delete framesToSend;
             return;
         }
+
+        delete framesToSend;
 
         if (valid) {
             result.SetValid(true);
@@ -164,5 +209,38 @@ namespace Observer {
         }
 
         return "";
+    }
+
+    void ValidatorByNN::SetupMask(Size originalFrameSize) {
+        if (config.applyMasks && mask.IsEmpty()) {
+            this->mask = Frame(originalFrameSize, 1);
+
+            /**
+             * Note that in the web page we request a frame using the API.
+             * The API returns a the frame ROTATED but not RESIZED. That's the
+             * reason I do rotate but no resize over the original frame, the
+             * mask is calculated with the buffer input size (original).
+             * Should this change? perhaps but it's likely blob detection should
+             * change a little of it's logic.
+             * TODO: Review code or delete this comment.
+             */
+
+            if (cameraCfg->rotation)
+                this->mask.RotateImage(cameraCfg->rotation);
+
+            for (auto& maskPoints : cameraCfg->processingConfiguration.masks) {
+                ImageDraw::Get().FillConvexPoly(this->mask, maskPoints,
+                                                ScalarVector::White());
+            }
+
+            if (!cameraCfg->resizeTo.empty())
+                this->mask.Resize(cameraCfg->resizeTo);
+
+            // Show mask
+            ImageDisplay::Get().ShowImage(
+                std::string("mask" +
+                            std::to_string(cameraCfg->positionOnOutput)),
+                this->mask);
+        }
     }
 }  // namespace Observer

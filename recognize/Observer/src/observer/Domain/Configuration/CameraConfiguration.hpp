@@ -25,12 +25,6 @@ namespace Observer {
         VIEW  // only show images
     };
 
-    enum EObjectDetectionMethod {
-        NONE = 1,
-        HOG_DESCRIPTOR = 2,
-        YOLODNN_V4 = 4
-    };
-
     typedef std::vector<Observer::Point> Mask;
 
     struct ProcessingConfiguration {

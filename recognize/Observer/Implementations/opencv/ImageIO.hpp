@@ -36,6 +36,9 @@ namespace Observer {
         void ReadImages(const std::string& path,
                         std::vector<Frame>& imagesOut) override;
 
+        void ReadDecode(const std::vector<uint8_t>& data,
+                        Frame& imageOut) override;
+
         /**
          * @brief Get the instance
          *

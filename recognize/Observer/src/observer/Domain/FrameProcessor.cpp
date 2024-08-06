@@ -89,10 +89,7 @@ namespace Observer {
 
         frame.Mask(this->mask);
 
-        // rotation is an expensive operation, try to avoid it
-        if (this->rotation != 0) {
-            frame.RotateImage(rotation);
-        }
+        // frame was rotated after its capture
 
         // crop the frame
         if (!this->roi.empty()) {
