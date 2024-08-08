@@ -5,10 +5,19 @@
 
 #include <memory>
 
-CurlWrapper::CurlWrapper() { this->curl_ = curl_easy_init(); }
+CurlWrapper::CurlWrapper() {
+    // In main() we call curl_global_init(CURL_GLOBAL_ALL);
+
+    this->curl_ = curl_easy_init();
+    if (!this->curl_) {
+        OBSERVER_ERROR("Couldn't initialize curl.");
+    }
+}
+
 CurlWrapper::~CurlWrapper() {
     if (this->curl_ != nullptr) {
         curl_easy_cleanup(this->curl_);
+        this->curl_ = nullptr;
     }
 
     if (post_ != nullptr) {
@@ -52,11 +61,17 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
     // --- Set url
     build_url_with_qparams();
 
-    curl_easy_setopt(this->curl_, CURLOPT_URL, url_.c_str());
+    if (curl_easy_setopt(this->curl_, CURLOPT_URL, url_.c_str())) {
+        OBSERVER_ERROR("Couldn't set the url.");
+        return curl_wrapper_response(0, "", false);
+    }
 
     if (!this->ipv6_) {
         // reduce dns time
-        curl_easy_setopt(this->curl_, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        if (curl_easy_setopt(this->curl_, CURLOPT_IPRESOLVE,
+                             CURL_IPRESOLVE_V4)) {
+            OBSERVER_ERROR("Couldn't set the ip resolve.");
+        }
     }
 
     // -- Set headers
@@ -66,37 +81,58 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
                 headers_list_, (param.first + ": " + param.second).c_str());
         }
 
-        curl_easy_setopt(this->curl_, CURLOPT_HTTPHEADER, headers_list_);
+        if (curl_easy_setopt(this->curl_, CURLOPT_HTTPHEADER, headers_list_)) {
+            OBSERVER_ERROR("Couldn't set the headers.");
+        }
     }
 
     // delay method so we can ad the post as a valid pointer,
     // and not as nullptr
     if (this->method_ == CURLOPT_HTTPPOST) {
-        curl_easy_setopt(this->curl_, CURLOPT_HTTPPOST, post_);
+        if (curl_easy_setopt(this->curl_, CURLOPT_HTTPPOST, post_)) {
+            OBSERVER_ERROR("Couldn't set the HTTP POST.");
+        }
 
         if (!this->body_.empty()) {
             // this->body_ = this->encode_url(this->body_);
             wt.readptr = this->body_.c_str();
             wt.sizeleft = this->body_.size();
             /* Now specify we want to POST data */
-            curl_easy_setopt(this->curl_, CURLOPT_POST, 1L);
+            if (curl_easy_setopt(this->curl_, CURLOPT_POST, 1L)) {
+                OBSERVER_ERROR("Couldn't set the POST option.");
+            }
 
             /* we want to use our own read function */
-            curl_easy_setopt(this->curl_, CURLOPT_READFUNCTION, read_callback);
+            if (curl_easy_setopt(this->curl_, CURLOPT_READFUNCTION,
+                                 read_callback)) {
+                OBSERVER_ERROR("Couldn't set the read callback.");
+            }
 
             /* pointer to pass to our read function */
-            curl_easy_setopt(this->curl_, CURLOPT_READDATA, &wt);
+            if (curl_easy_setopt(this->curl_, CURLOPT_READDATA, &wt)) {
+                OBSERVER_ERROR("Couldn't set the read data.");
+            }
 
-            curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDSIZE,
-                             (long)wt.sizeleft);
+            if (curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDSIZE,
+                                 (long)wt.sizeleft)) {
+                OBSERVER_ERROR("Couldn't set the POST field size.");
+            }
 
-            curl_easy_setopt(this->curl_, CURLOPT_VERBOSE, 1L);
+            if (curl_easy_setopt(this->curl_, CURLOPT_VERBOSE, 1L)) {
+                OBSERVER_ERROR("Couldn't set the verbose option.");
+            }
 
             // curl_easy_setopt(this->curl_, CURLOPT_POSTFIELDS,
             //                  this->body_.c_str());
         }
+    } else if (this->method_ == CURLOPT_HTTPGET) {
+        if (curl_easy_setopt(this->curl_, CURLOPT_HTTPGET, 1L)) {
+            OBSERVER_ERROR("Couldn't set the HTTP GET.");
+        }
     } else {
-        curl_easy_setopt(this->curl_, this->method_, 1l);
+        if (curl_easy_setopt(this->curl_, this->method_, 1L)) {
+            OBSERVER_ERROR("Couldn't set the method.");
+        }
     }
 
     // Response information.
@@ -105,22 +141,30 @@ curl_wrapper_response CurlWrapper::perform(bool customWrite) {
 
     if (!customWrite) {
         // Hook up data handling function.
-        curl_easy_setopt(this->curl_, CURLOPT_WRITEFUNCTION, write_callback);
+        if (curl_easy_setopt(this->curl_, CURLOPT_WRITEFUNCTION,
+                             write_callback)) {
+            OBSERVER_ERROR("Couldn't set the write callback.");
+        }
 
         // Hook up data container (will be passed as the last parameter to the
         // callback handling function).  Can be any pointer type, since it will
         // internally be passed as a void pointer.
-        curl_easy_setopt(this->curl_, CURLOPT_WRITEDATA, &httpData);
+        if (curl_easy_setopt(this->curl_, CURLOPT_WRITEDATA, &httpData)) {
+            OBSERVER_ERROR("Couldn't set the write data.");
+        }
     }
 
     // perform
     auto curl_code = curl_easy_perform(this->curl_);
-    curl_easy_getinfo(this->curl_, CURLINFO_RESPONSE_CODE, &httpCode);
 
-    if (curl_code != CURLE_OK) {
+    if (curl_easy_getinfo(this->curl_, CURLINFO_RESPONSE_CODE, &httpCode)) {
         if (curl_code == CURLE_READ_ERROR) {
             OBSERVER_WARN("Trying to send a image that doesn't exists.");
         }
+    }
+
+    if (curl_code != CURLE_OK) {
+        OBSERVER_ERROR("Curl error: {}", curl_easy_strerror(curl_code));
     }
 
     return curl_wrapper_response(httpCode, httpData, curl_code == CURLE_OK);
@@ -139,7 +183,14 @@ curl_httppost* CurlWrapper::getPost() { return this->post_; }
 
 void CurlWrapper::build_url_with_qparams() {
     if (!this->qparams_.empty()) {
-        this->url_ += "?";
+        if (this->url_.back() == '/') {
+            this->url_.pop_back();
+        }
+
+        if (this->url_.back() != '?') {
+            this->url_ += "?";
+        }
+
         for (auto const& param : this->qparams_) {
             this->url_ +=
                 param.first + "=" + this->encode_url(param.second) + "&";

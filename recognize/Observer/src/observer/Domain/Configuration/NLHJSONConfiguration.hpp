@@ -12,6 +12,7 @@
 #include "observer/Domain/Configuration/ConfigurationParser.hpp"
 #include "observer/Domain/Configuration/NotificationsServiceConfiguration.hpp"
 #include "observer/Domain/Configuration/OutputPreviewConfiguration.hpp"
+#include "observer/Domain/Notification/RemoteWebNotifications.hpp"
 #include "observer/RecoJson.hpp"
 #include "observer/Utils/SpecialEnums.hpp"
 #include "observer/Utils/SpecialStrings.hpp"
@@ -75,7 +76,7 @@ namespace Observer {
                                        BrightnessAboveThreshold, Resize);
 
     /* ------------- BlobDetectionConfiguration ------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration, enabled,
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration,
                                        blobDetectorParams, blobFilters,
                                        contoursFilters, thresholdParams);
 
@@ -98,7 +99,7 @@ namespace Observer {
 
     /* ------------- OutputPreviewConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OutputPreviewConfiguration, showOutput,
-                                       resolution, scaleFactor, maxOutputFps);
+                                       resolution, scaleFactor);
 
     /* ------------------ ENotificationType ----------------- */
     inline void to_json(json& j, const ENotificationType& p) {
@@ -217,12 +218,10 @@ namespace Observer {
     inline void to_json(json& j, const LocalWebNotificationsConfiguration& p) {
         to_json(j,
                 reinterpret_cast<const NotificationsServiceConfiguration&>(p));
-        j["webServerUrl"] = p.webServerUrl;
     }
 
     inline void from_json(const json& j,
                           LocalWebNotificationsConfiguration& p) {
-        j.at("webServerUrl").get_to(p.webServerUrl);
         from_json(j, dynamic_cast<NotificationsServiceConfiguration&>(p));
     }
 
@@ -241,15 +240,26 @@ namespace Observer {
         from_json(j, reinterpret_cast<NotificationsServiceConfiguration&>(p));
     }
 
+    /* --------------- RemoteWebNotifications --------------- */
+    inline void to_json(json& j, const RemoteWebNotificationsConfiguration& p) {
+        to_json(j,
+                reinterpret_cast<const NotificationsServiceConfiguration&>(p));
+        j["endpointUrl"] = p.endpointUrl;
+    }
+
+    inline void from_json(const json& j,
+                          RemoteWebNotificationsConfiguration& p) {
+        j.at("endpointUrl").get_to(p.endpointUrl);
+        from_json(j, dynamic_cast<NotificationsServiceConfiguration&>(p));
+    }
+
     /* ---------- Configuration::ResizeNotification --------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Configuration::ResizeNotification, image,
                                        video);
 
     /* -------------------- CONFIGURATION ------------------- */
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Configuration, name, mediaFolderPath,
-                                       notificationTextTemplate,
-                                       resizeNotifications,
-                                       telegramConfiguration,
-                                       localWebConfiguration,
-                                       outputConfiguration, cameras);
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+        Configuration, name, mediaFolderPath, notificationTextTemplate,
+        resizeNotifications, telegramConfiguration, localWebConfiguration,
+        remoteWebNotificationConfiguration, outputConfiguration, cameras);
 }  // namespace Observer

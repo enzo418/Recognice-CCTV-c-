@@ -1,10 +1,12 @@
 #pragma once
 
 #include <filesystem>
+#include <future>
 #include <list>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "../CL/NotificationCL.hpp"
 #include "../DAL/INotificationRepository.hpp"
@@ -25,9 +27,23 @@
 #include "observer/Log/log.hpp"
 #include "server_utils.hpp"
 #include "uWebSockets/App.h"
+#include "uWebSockets/MoveOnlyFunction.h"
+
+#ifdef __linux__
+#include <sys/sysinfo.h>
+#include <unistd.h>
+#endif
 
 namespace Web::Controller {
     extern const std::unordered_map<std::string, const std::string> endpoints;
+
+    inline size_t get_free_memory() {
+#ifdef __linux__
+        return get_phys_pages() * sysconf(_SC_PAGESIZE);
+#elif _WIN32
+        return std::numeric_limits<size_t>::max();
+#endif
+    }
 
     template <bool SSL>
     class NotificationController final
@@ -75,6 +91,8 @@ namespace Web::Controller {
         Web::DAL::IConfigurationDAO* configurationDAO;
         Web::WebsocketNotificator<SSL> notificatorWS;
         Web::ServerContext<SSL>* serverCtx;
+
+        std::vector<std::future<void>> pendingTasks;
     };
 
     template <bool SSL>
@@ -448,33 +466,74 @@ namespace Web::Controller {
             return;
         }
 
-        // convert to native
-        const auto folder = std::filesystem::path(
-                                ServerConfigurationProvider::Get().mediaFolder +
-                                Constants::NOTIF_DEBUG_VIDEO_FOLDER)
-                                .string();
+        /* --- deep copy the frames if there is enough memory --- */
+        auto& og_frames = rawCameraEvent->GetFrames();
+        size_t total = 0;
+        for (auto& frame : og_frames) {
+            auto t = frame.GetInternalFrame();
+            total += t.step[0] * t.rows;
+        }
+        // OBSERVER_TRACE("Trying allocating buffer size: {0} MB",
+        //                total / 1024 / 1024);
 
-        if (!std::filesystem::exists(folder)) {
-            std::filesystem::create_directories(folder);
+        std::vector<Observer::Frame>* frames = &rawCameraEvent->GetFrames();
+        bool allocated = false;
+
+        if (total < get_free_memory()) {
+            std::vector<Observer::Frame>* cpFrames =
+                new std::vector<Observer::Frame>();
+            cpFrames->resize(og_frames.size());
+            for (int i = 0; i < og_frames.size(); i++) {
+                og_frames[i].CopyTo((*cpFrames)[i]);
+            }
+
+            allocated = true;
+            frames = cpFrames;
         }
 
-        std::string storedBufferPath =
-            folder + std::to_string(rawCameraEvent->GetGroupID()) +
-            "_temp_buffer.tiff";
+        auto writeFrames = [&]() {
+            const auto folder =
+                std::filesystem::path(
+                    ServerConfigurationProvider::Get().mediaFolder +
+                    Constants::NOTIF_DEBUG_VIDEO_FOLDER)
+                    .string();
 
-        auto& frames = rawCameraEvent->GetFrames();
-        const double duration = frames.size() / rawCameraEvent->GetFrameRate();
-        Web::Utils::SaveBuffer(frames, storedBufferPath);
+            if (!std::filesystem::exists(folder)) {
+                std::filesystem::create_directories(folder);
+            }
 
-        notificationRepository->AddNotificationDebugVideo(
-            Web::DTONotificationDebugVideo {
-                .filePath = storedBufferPath,
-                .groupID = rawCameraEvent->GetGroupID(),
-                .videoBufferID = "",
-                .fps = static_cast<int>(rawCameraEvent->GetFrameRate()),
-                .duration = duration,
-                .date_unix = time(0),
-                .camera_id = cameraID});
+            std::string storedBufferPath =
+                folder + std::to_string(rawCameraEvent->GetGroupID()) +
+                "_temp_buffer.tiff";
+
+            const double duration =
+                frames->size() / rawCameraEvent->GetFrameRate();
+            Web::Utils::SaveBuffer(*frames, storedBufferPath);
+
+            notificationRepository->AddNotificationDebugVideo(
+                Web::DTONotificationDebugVideo {
+                    .filePath = storedBufferPath,
+                    .groupID = rawCameraEvent->GetGroupID(),
+                    .videoBufferID = "",
+                    .fps = static_cast<int>(rawCameraEvent->GetFrameRate()),
+                    .duration = duration,
+                    .date_unix = time(0),
+                    .camera_id = cameraID});
+        };
+
+        if (!allocated) {
+            writeFrames();
+        } else {
+            // convert to native
+            pendingTasks.push_back(std::async(
+                std::launch::async,
+                [allocated, frames, cFunc = std::move(writeFrames)]() {
+                    cFunc();
+                    if (allocated) {
+                        delete frames;
+                    }
+                }));
+        }
     }
 
 }  // namespace Web::Controller

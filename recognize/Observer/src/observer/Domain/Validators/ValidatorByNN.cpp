@@ -153,11 +153,16 @@ namespace Observer {
             result.SetValid(false);
             result.AddMessages({"Timeout while waiting for the result"});
             client.Stop();
-            delete framesToSend;
+            if (config.applyMasks) {
+                delete framesToSend;
+            }
+
             return;
         }
 
-        delete framesToSend;
+        if (config.applyMasks) {
+            delete framesToSend;
+        }
 
         if (valid) {
             result.SetValid(true);

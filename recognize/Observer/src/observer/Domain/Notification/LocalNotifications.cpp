@@ -16,9 +16,7 @@ namespace Observer {
 
     LocalNotifications::LocalNotifications(
         const LocalWebNotificationsConfiguration& cfg)
-        : MessagingService(cfg) {
-        this->restServerUrl = cfg.webServerUrl;
-    }
+        : MessagingService(cfg) {}
 
     void LocalNotifications::InternalSendText(
         const DTONotification& notification) {

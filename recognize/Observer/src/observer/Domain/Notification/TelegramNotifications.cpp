@@ -1,5 +1,7 @@
 #include "TelegramNotifications.hpp"
 
+#include "observer/Utils/CurlWrapper.hpp"
+
 namespace Observer {
     void log_htpp_response(curl_wrapper_response request);
 
@@ -12,6 +14,10 @@ namespace Observer {
     void TelegramNotifications::InternalSendText(
         const DTONotification& notification) {
         const std::string url = this->apiEndPoint + "/sendMessage";
+
+        if (notification.content.empty()) {
+            OBSERVER_WARN("Empty content in notification");
+        }
 
         auto res = CurlWrapper()
                        .url(url)

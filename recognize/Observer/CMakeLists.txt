@@ -73,6 +73,7 @@ set(SRC_
         src/observer/Domain/Notification/VideoNotification.hpp src/observer/Domain/Notification/VideoNotification.cpp
         src/observer/Domain/Notification/MessagingService.cpp src/observer/Domain/Notification/MessagingService.hpp
         src/observer/Domain/Notification/LocalNotifications.cpp src/observer/Domain/Notification/LocalNotifications.hpp
+        src/observer/Domain/Notification/RemoteWebNotifications.cpp src/observer/Domain/Notification/RemoteWebNotifications.hpp
 
         # special functions
         src/observer/Utils/SpecialStrings.cpp src/observer/Utils/SpecialStrings.hpp

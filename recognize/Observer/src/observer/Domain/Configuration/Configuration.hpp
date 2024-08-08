@@ -26,6 +26,8 @@ namespace Observer {
         TelegramNotificationsConfiguration telegramConfiguration;
 
         LocalWebNotificationsConfiguration localWebConfiguration;
+        
+        RemoteWebNotificationsConfiguration remoteWebNotificationConfiguration;
 
         OutputPreviewConfiguration outputConfiguration;
 

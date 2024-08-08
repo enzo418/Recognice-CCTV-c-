@@ -4,11 +4,14 @@ namespace Observer {
 
     namespace fs = std::filesystem;
 
-    VideoNotification::VideoNotification(int pGroupID, EventDescriptor pEvent,
-                                         std::vector<Frame>&& pFrames,
-                                         std::string pOutputFolder)
+    VideoNotification::VideoNotification(
+        int pGroupID, EventDescriptor pEvent, std::vector<Frame>&& pFrames,
+        std::string pOutputFolder,
+        std::shared_ptr<std::vector<object_detected_t>>&
+            simplifiedObjectsDetected)
         : Notification(pGroupID, std::move(pEvent),
-                       VideoNotification::CreatePath(pOutputFolder)),
+                       VideoNotification::CreatePath(pOutputFolder),
+                       simplifiedObjectsDetected),
           frames(std::move(pFrames)),
           codec(-418) {}
 

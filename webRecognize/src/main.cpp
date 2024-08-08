@@ -1,4 +1,5 @@
 
+#include <curl/curl.h>
 #include <spdlog/fmt/bundled/format.h>
 
 // nolitedb
@@ -123,6 +124,12 @@ int main() {
     std::shared_ptr<rc::ObserverCentral> recognizer;
 
     std::vector<IFunctionality*> threads;
+
+    /* ------------------- Initialize curl ------------------ */
+    auto res = curl_global_init(CURL_GLOBAL_ALL);
+    if (res) {
+        OBSERVER_ERROR("Couldn't initialize curl global: {}", res);
+    }
 
     /* ---------------- MAIN UWEBSOCKETS APP ---------------- */
     auto app = uWS::App();
@@ -263,6 +270,8 @@ int main() {
                                 &observerCtx = serverCtx.recognizeContext]() {
         if (observerCtx.observer && observerCtx.running) {
             observerCtx.observer->Stop();
+        } else {
+            return;
         }
 
         observerCtx.running = false;
@@ -442,4 +451,6 @@ int main() {
     configurationsDB.close();
 
     OBSERVER_STOP_INSTRUMENTATION();
+
+    curl_global_cleanup();
 }

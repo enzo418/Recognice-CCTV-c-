@@ -1,6 +1,10 @@
 #include "NotificationsController.hpp"
 
+#include <unordered_map>
+
 #include "observer/Domain/Classification/BlobClassification.hpp"
+#include "observer/Domain/Event/EventDescriptor.hpp"
+#include "observer/Domain/Notification/DTONotification.hpp"
 
 namespace Observer {
 
@@ -22,6 +26,14 @@ namespace Observer {
             this->AddService(ptrTelegram, &this->config->telegramConfiguration);
         }
 
+        if (cfg->remoteWebNotificationConfiguration.enabled) {
+            auto ptrRemote = new RemoteWebNotifications(
+                &cfg->remoteWebNotificationConfiguration);
+
+            this->AddService(ptrRemote,
+                             &this->config->remoteWebNotificationConfiguration);
+        }
+
         this->running = false;
     }
 
@@ -33,6 +45,23 @@ namespace Observer {
         this->services.clear();
     }
 
+    std::vector<object_detected_t> GetDetectedObjectsFromNotification(
+        EventDescriptor& event) {
+        std::unordered_map<std::string, int> objectsDetected;
+        for (const auto& image_detection : event.GetDetections()) {
+            for (const auto& detection : image_detection.detections) {
+                objectsDetected[detection.label]++;
+            }
+        }
+
+        std::vector<object_detected_t> pObjectsDetected;
+        for (const auto& [label, count] : objectsDetected) {
+            pObjectsDetected.push_back({label, count});
+        }
+
+        return pObjectsDetected;
+    }
+
     void NotificationsController::Send(TextNotification notification) {
         // 1. For each service call Send(TextNotification)
         for (auto&& service : this->services) {
@@ -41,7 +70,8 @@ namespace Observer {
                 service->SendText(DTONotification(
                     notification.GetGroupID(), notification.GetContent(),
                     ENotificationType::TEXT,
-                    notification.GetEvent().GetCameraName()));
+                    notification.GetEvent().GetCameraName(),
+                    notification.GetSimplifiedObjectsDetected()));
             }
         }
     }
@@ -68,7 +98,8 @@ namespace Observer {
                 service->SendImage(DTONotification(
                     notification.GetGroupID(), notification.GetContent(),
                     ENotificationType::IMAGE,
-                    notification.GetEvent().GetCameraName()));
+                    notification.GetEvent().GetCameraName(),
+                    notification.GetSimplifiedObjectsDetected()));
             }
         }
 
@@ -90,7 +121,8 @@ namespace Observer {
                 service->SendImage(DTONotification(
                     notification.GetGroupID(), notification.GetContent(),
                     ENotificationType::IMAGE,
-                    notification.GetEvent().GetCameraName()));
+                    notification.GetEvent().GetCameraName(),
+                    notification.GetSimplifiedObjectsDetected()));
             }
         }
     }
@@ -100,7 +132,8 @@ namespace Observer {
 
         if (frames.empty()) {
             OBSERVER_CRITICAL(
-                "Empty frames while sending a video notification. Video error "
+                "Empty frames while sending a video notification. Video "
+                "error "
                 "data: GID={0}, CAM_NAME={1}, N_BLOBS={2}",
                 notification.GetGroupID(),
                 notification.GetEvent().GetCameraName(),
@@ -123,7 +156,8 @@ namespace Observer {
                 service->SendVideo(DTONotification(
                     notification.GetGroupID(), notification.GetContent(),
                     ENotificationType::VIDEO,
-                    notification.GetEvent().GetCameraName()));
+                    notification.GetEvent().GetCameraName(),
+                    notification.GetSimplifiedObjectsDetected()));
             }
         }
 
@@ -148,7 +182,8 @@ namespace Observer {
                 service->SendVideo(DTONotification(
                     notification.GetGroupID(), notification.GetContent(),
                     ENotificationType::VIDEO,
-                    notification.GetEvent().GetCameraName()));
+                    notification.GetEvent().GetCameraName(),
+                    notification.GetSimplifiedObjectsDetected()));
             }
         }
     }
@@ -178,8 +213,8 @@ namespace Observer {
         while (this->running) {
             // 1. semaphore acquire - There is at least 1 notification
             if (smpQueue.acquire_timeout<250>()) {
-                /// TODO: Improve quality with a unordered_map with the queues,
-                /// like drawable
+                /// TODO: Improve quality with a unordered_map with the
+                /// queues, like drawable
                 if (this->textQueue.size() > 0) {
                     this->Send(this->textQueue.pop());
                 } else if (this->imageQueue.size() > 0) {
@@ -249,6 +284,9 @@ namespace Observer {
             std::filesystem::create_directories(videosFolder);
         }
 
+        auto detections = std::make_shared<std::vector<object_detected_t>>(
+            GetDetectedObjectsFromNotification(event));
+
         // 1. Create a text notification
         // 1. a. Get camera name
         std::string cameraName = event.GetCameraName();
@@ -257,20 +295,36 @@ namespace Observer {
         std::string text = SpecialFunctions::FormatNotificationTextString(
             this->config->notificationTextTemplate, cameraName);
 
-        // 1. c. Create the notification
-        TextNotification textNotification(groupID, event, text);
+        if (detections->size() > 0) {
+            if (!text.empty()) text += " - ";
+            text += "Detected objects: ";
+            for (size_t i = 0; i < detections->size(); i++) {
+                text += detections->at(i).class_name + " (" +
+                        std::to_string(detections->at(i).count) + ")";
+                if (i < detections->size() - 1) {
+                    text += ", ";
+                }
+            }
+        } else {
+            if (!text.empty()) text += " - ";
+            text += "No objects detected";
+        }
 
-        // 2. Create an image notification using the first frame where the event
-        // happen
+        // 1. c. Create the notification
+        TextNotification textNotification(groupID, event, text, detections);
+
+        // 2. Create an image notification using the first frame where the
+        // event happen
 
         int indexFirst = event.GetFirstFrameWhereFindingWasFound();
         ImageNotification imageNotification(
             groupID, event, rawCameraEvent->GetFrameAt(indexFirst),
-            imagesFolder);
+            imagesFolder, detections);
 
         // 3. Create a video notification using the frames
-        VideoNotification videoNotification(
-            groupID, event, rawCameraEvent->PopFrames(), videosFolder);
+        VideoNotification videoNotification(groupID, event,
+                                            rawCameraEvent->PopFrames(),
+                                            videosFolder, detections);
 
         videoNotification.SetFrameRate(rawCameraEvent->GetFrameRate());
         videoNotification.SetFrameSize(rawCameraEvent->GetFramesSize());
@@ -280,20 +334,20 @@ namespace Observer {
         this->AddNotification(imageNotification);
         this->AddNotification(videoNotification);
 
-        Size size = rawCameraEvent->GetFramesSize();
-        double maxDiagonalDist =
-            sqrt(size.width * size.width + size.height * size.height) * 0.01;
-        OBSERVER_TRACE("Blobs data: Max={0}", maxDiagonalDist);
-        /// TODO: Remove - Debug
+        // Size size = rawCameraEvent->GetFramesSize();
+        // double maxDiagonalDist =
+        //     sqrt(size.width * size.width + size.height * size.height) * 0.01;
+        // OBSERVER_TRACE("Blobs data: Max={0}", maxDiagonalDist);
+        // /// TODO: Remove - Debug
 
-        for (auto& blob : event.GetBlobs()) {
-            OBSERVER_TRACE(
-                "\t- ID: {0}\n\t\tAppearances: {1}\n\t\tAverage Vel: "
-                "{2}\n\t\tDistance Traveled: {3} units",
-                blob.GetId(), blob.GetAppearances().size(),
-                blob.GetAverageMagnitude() / maxDiagonalDist,
-                blob.GetDistanceTraveled() / maxDiagonalDist);
-        }
+        // for (auto& blob : event.GetBlobs()) {
+        //     OBSERVER_TRACE(
+        //         "\t- ID: {0}\n\t\tAppearances: {1}\n\t\tAverage Vel: "
+        //         "{2}\n\t\tDistance Traveled: {3} units",
+        //         blob.GetId(), blob.GetAppearances().size(),
+        //         blob.GetAverageMagnitude() / maxDiagonalDist,
+        //         blob.GetDistanceTraveled() / maxDiagonalDist);
+        // }
     }
 
     void NotificationsController::SubscribeToNewNotifications(

@@ -29,8 +29,6 @@ namespace Observer {
         void InternalSendVideo(const DTONotification& notification) override;
 
        private:
-        std::string restServerUrl;
-
         Publisher<DTONotification> notificationsPublisher;
     };
 };  // namespace Observer

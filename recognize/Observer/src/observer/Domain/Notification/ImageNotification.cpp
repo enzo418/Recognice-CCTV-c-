@@ -4,12 +4,14 @@ namespace Observer {
 
     namespace fs = std::filesystem;
 
-    ImageNotification::ImageNotification(int pGroupID, EventDescriptor pEvent,
-                                         Frame& frame,
-                                         const std::string& pOutputFolder)
-        : Notification(
-              pGroupID, std::move(pEvent),
-              std::move(ImageNotification::CreatePath(pOutputFolder))) {
+    ImageNotification::ImageNotification(
+        int pGroupID, EventDescriptor pEvent, Frame& frame,
+        const std::string& pOutputFolder,
+        std::shared_ptr<std::vector<object_detected_t>>&
+            simplifiedObjectsDetected)
+        : Notification(pGroupID, std::move(pEvent),
+                       std::move(ImageNotification::CreatePath(pOutputFolder)),
+                       simplifiedObjectsDetected) {
         frame.CopyTo(image);
     }
 

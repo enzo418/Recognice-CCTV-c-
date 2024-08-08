@@ -37,12 +37,27 @@ namespace Observer {
         bool operator==(const TelegramNotificationsConfiguration&) const =
             default;
     };
-
+    
     struct LocalWebNotificationsConfiguration
         : public NotificationsServiceConfiguration {
-        std::string webServerUrl;
-
         bool operator==(const LocalWebNotificationsConfiguration&) const =
+            default;
+    };
+
+    struct RemoteWebNotificationsConfiguration
+        : public NotificationsServiceConfiguration {
+        // An endpoint that will receive the notification call.
+        // Data will be passed as query parameters:
+        // * id=<notification id>
+        // * content_type=<image|video|text>
+        //   content_uri=<string url pointing to the resource>
+        // * camera_name=<camera name>
+        //   person=<number of person detected>
+        //
+        // * means the parameter will always be present 
+        std::string endpointUrl;
+
+        bool operator==(const RemoteWebNotificationsConfiguration&) const =
             default;
     };
 

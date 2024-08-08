@@ -35,8 +35,10 @@ namespace Observer {
     }
 
     void ObserverCentral::InternalStart() {
-        bool useNotifications = this->config.localWebConfiguration.enabled ||
-                                this->config.telegramConfiguration.enabled;
+        bool useNotifications =
+            this->config.localWebConfiguration.enabled ||
+            this->config.remoteWebNotificationConfiguration.enabled ||
+            this->config.telegramConfiguration.enabled;
 
         if (!this->cameras.empty()) {
             this->StopAllCameras();
@@ -99,13 +101,6 @@ namespace Observer {
         for (int expected = 0; expected < size; expected++) {
             if (camsConfig[expected].positionOnOutput != expected) {
                 camsConfig[expected].positionOnOutput = expected;
-            }
-        }
-
-        // 4. fix videoValidatorBufferSize
-        for (auto& camera : camsConfig) {
-            if (camera.videoValidatorBufferSize <= 0) {
-                camera.videoValidatorBufferSize = 5;
             }
         }
     }
@@ -339,9 +334,11 @@ namespace Observer {
         return camerasStatus;
     }
 
-    /* ------------------------------------------------------ */
-    /*                         EVENTS                         */
-    /* ------------------------------------------------------ */
+    /* ----------------------------------------------------------------
+     */
+    /*                              EVENTS */
+    /* ----------------------------------------------------------------
+     */
 
     void ObserverCentral::SubscribeToFrames(ISubscriber<Frame>* sub) {
         this->framesBlender.SubscribeToFramesUpdate(sub);

@@ -12,6 +12,7 @@
 #include "Notification/DTONotification.hpp"
 #include "Notification/IMessagingService.hpp"
 #include "Notification/LocalNotifications.hpp"
+#include "Notification/RemoteWebNotifications.hpp"
 #include "Notification/TelegramNotifications.hpp"
 #include "observer/Functionality.hpp"
 #include "observer/IFrame.hpp"
