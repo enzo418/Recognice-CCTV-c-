@@ -101,12 +101,6 @@ namespace Observer {
                 for (auto& frame : *framesToSend) {
                     frame.Mask(mask);
                 }
-
-                // Show the frame
-                ImageDisplay::Get().ShowImage(
-                    std::string("frame" +
-                                std::to_string(cameraCfg->positionOnOutput)),
-                    (*framesToSend)[0]);
             }
         }
 
@@ -240,12 +234,6 @@ namespace Observer {
 
             if (!cameraCfg->resizeTo.empty())
                 this->mask.Resize(cameraCfg->resizeTo);
-
-            // Show mask
-            ImageDisplay::Get().ShowImage(
-                std::string("mask" +
-                            std::to_string(cameraCfg->positionOnOutput)),
-                this->mask);
         }
     }
 }  // namespace Observer
