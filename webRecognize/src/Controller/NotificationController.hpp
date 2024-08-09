@@ -491,7 +491,8 @@ namespace Web::Controller {
             frames = cpFrames;
         }
 
-        auto writeFrames = [&]() {
+        auto writeFrames = [&, cameraID, groupId = rawCameraEvent->GetGroupID(),
+                            frameRate = rawCameraEvent->GetFrameRate()]() {
             const auto folder =
                 std::filesystem::path(
                     ServerConfigurationProvider::Get().mediaFolder +
@@ -503,19 +504,17 @@ namespace Web::Controller {
             }
 
             std::string storedBufferPath =
-                folder + std::to_string(rawCameraEvent->GetGroupID()) +
-                "_temp_buffer.tiff";
+                folder + std::to_string(groupId) + "_temp_buffer.tiff";
 
-            const double duration =
-                frames->size() / rawCameraEvent->GetFrameRate();
+            const double duration = frames->size() / frameRate;
             Web::Utils::SaveBuffer(*frames, storedBufferPath);
 
-            notificationRepository->AddNotificationDebugVideo(
+            notificationRepository->AddNotificationDebugVideo(  // <-- line 513
                 Web::DTONotificationDebugVideo {
                     .filePath = storedBufferPath,
-                    .groupID = rawCameraEvent->GetGroupID(),
+                    .groupID = groupId,
                     .videoBufferID = "",
-                    .fps = static_cast<int>(rawCameraEvent->GetFrameRate()),
+                    .fps = static_cast<int>(frameRate),
                     .duration = duration,
                     .date_unix = time(0),
                     .camera_id = cameraID});
