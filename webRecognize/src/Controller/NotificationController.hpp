@@ -155,11 +155,26 @@ namespace Web::Controller {
                 buffer.append(data.data(), data.length());
 
                 if (last) {
-                    // We read all the data
-                    Observer::DTONotification notification =
-                        nlohmann::json::parse(buffer);
+                    Observer::DTONotification notification;
+                    auto objs = std::make_shared<
+                        std::vector<Observer::object_detected_t>>();
+                    try {
+                        // We read all the data
+                        notification = nlohmann::json::parse(buffer);
+                        notification.objectsDetected = objs;
+                    } catch (...) {
+                        notification = Observer::DTONotification(
+                            1, "test", Observer::ENotificationType::TEXT,
+                            "test", objs);
+                    }
 
-                    this->update(notification);
+                    Web::API::DTONotification apiNotification =
+                        NotificationToDTO(Domain::Notification(notification));
+
+                    // notify all websocket subscribers about it
+                    notificatorWS.update(apiNotification);
+
+                    // this->update(notification);
 
                     OBSERVER_TRACE("Added notification via api post endpoint");
 
@@ -492,7 +507,8 @@ namespace Web::Controller {
         }
 
         auto writeFrames = [&, cameraID, groupId = rawCameraEvent->GetGroupID(),
-                            frameRate = rawCameraEvent->GetFrameRate()]() {
+                            frameRate = rawCameraEvent->GetFrameRate()](
+                               std::vector<Observer::Frame>* images) {
             const auto folder =
                 std::filesystem::path(
                     ServerConfigurationProvider::Get().mediaFolder +
@@ -506,8 +522,8 @@ namespace Web::Controller {
             std::string storedBufferPath =
                 folder + std::to_string(groupId) + "_temp_buffer.tiff";
 
-            const double duration = frames->size() / frameRate;
-            Web::Utils::SaveBuffer(*frames, storedBufferPath);
+            const double duration = images->size() / frameRate;
+            Web::Utils::SaveBuffer(*images, storedBufferPath);
 
             notificationRepository->AddNotificationDebugVideo(  // <-- line 513
                 Web::DTONotificationDebugVideo {
@@ -521,13 +537,13 @@ namespace Web::Controller {
         };
 
         if (!allocated) {
-            writeFrames();
+            writeFrames(frames);
         } else {
             // convert to native
             pendingTasks.push_back(std::async(
                 std::launch::async,
                 [allocated, frames, cFunc = std::move(writeFrames)]() {
-                    cFunc();
+                    cFunc(frames);
                     if (allocated) {
                         delete frames;
                     }

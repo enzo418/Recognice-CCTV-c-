@@ -5,6 +5,8 @@
 #include "Streaming/IBroadcastService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/App.h"
+#include "uWebSockets/Loop.h"
+#include "uWebSockets/WebSocket.h"
 #include "uWebSockets/WebSocketProtocol.h"
 
 namespace Web::Streaming::Ws {
@@ -57,15 +59,26 @@ namespace Web::Streaming::Ws {
             return;
         }
 
+        auto buffer = std::shared_ptr<char[]>(new char[size],
+                                              std::default_delete<char[]>());
+        std::copy(data, data + size, buffer.get());
+
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
-            // ¿should execute this on a separate thread?
-            if (clients[i]->send(std::string_view(data, size),
-                                 uWS::OpCode::BINARY,
-                                 true) != uWS::WsSendStatus::SUCCESS) {
-                // frame was not sent, maybe next will
-                OBSERVER_WARN("Websocket video back-pressure!");
-            }
+            /**
+             * NOTE: I should be smart and follow the guideline, use
+             * getBufferedAmount and drain
+             */
+            uWS::Loop::get()->defer([buffer, size, client = clients[i]]() {
+                auto code = client->send(std::string_view(buffer.get(), size),
+                                         uWS::OpCode::BINARY, true);
+                if (code != uWS::WsSendStatus::SUCCESS) {
+                    if (code == uWS::WsSendStatus::BACKPRESSURE) {
+                        OBSERVER_ERROR("Websocket backpressure. Buffered {}",
+                                       client->getBufferedAmount());
+                    }
+                }
+            });
         }
     }
 
@@ -82,16 +95,29 @@ namespace Web::Streaming::Ws {
             return;
         }
 
+        auto buffer = std::shared_ptr<char[]>(new char[size],
+                                              std::default_delete<char[]>());
+        std::copy(data, data + size, buffer.get());
+
         int clientsCount = this->clients.size();
         for (int i = 0; i < clientsCount; i++) {
-            // ¿should execute this on a separate thread?
-            if (shouldSend(clients[i]) &&
-                clients[i]->send(std::string_view(data, size),
-                                 uWS::OpCode::BINARY,
-                                 true) != uWS::WsSendStatus::SUCCESS) {
-                // frame was not sent, maybe next will
-                OBSERVER_WARN("Websocket video back-pressure!");
-            }
+            /**
+             * NOTE: I should be smart and follow the guideline, use
+             * getBufferedAmount and drain
+             */
+            uWS::Loop::get()->defer([shouldSend, buffer, size,
+                                     client = clients[i]]() {
+                if (!shouldSend(client)) return;
+
+                auto code = client->send(std::string_view(buffer.get(), size),
+                                         uWS::OpCode::BINARY, true);
+                if (code != uWS::WsSendStatus::SUCCESS) {
+                    if (code == uWS::WsSendStatus::BACKPRESSURE) {
+                        OBSERVER_ERROR("Websocket backpressure. Buffered {}",
+                                       client->getBufferedAmount());
+                    }
+                }
+            });
         }
     }
 

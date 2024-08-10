@@ -95,6 +95,7 @@ namespace Web {
     template <bool SSL>
     void WebsocketVideoBufferController<SSL>::SendInitialBuffer(
         Client client, const std::string& buffer) {
+        // ok to not defer, it's called on open
         const std::string message =
             EventTypeToString(BufferEventType::UPDATED) + ":" + buffer;
         client->send(std::string_view(message.c_str(), message.size()),

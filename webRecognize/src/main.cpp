@@ -88,6 +88,8 @@ typedef cv::Mat TFrame;
 
 constexpr int OBSERVER_LIVE_VIEW_MAX_FPS = 20;
 
+std::thread::id g_mainThreadID;
+
 void handler(int sig) {
     ObserverLogStackTrace();
     OBSERVER_LOG_FLUSH();
@@ -371,6 +373,8 @@ int main() {
         OBSERVER_INFO("mDNS service instance {}._http._tcp.local. started",
                       hostname);
     }
+
+    g_mainThreadID = std::this_thread::get_id();
 
     /* ----------------- LISTEN TO REQUESTS ----------------- */
     app.listen(serverCtx.port,

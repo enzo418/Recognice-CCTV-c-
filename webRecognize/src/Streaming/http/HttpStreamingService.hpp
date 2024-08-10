@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Server/ServerContext.hpp"
 #include "Streaming/IBroadcastService.hpp"
 #include "observer/Log/log.hpp"
 #include "uWebSockets/HttpResponse.h"
@@ -81,6 +82,9 @@ namespace Web::Streaming::Http {
     bool HttpStreamingService<SSL>::SendData(Client* client, const char* data,
                                              int size) {
         if (size == 0) return true;
+
+        OBSERVER_ASSERT(g_mainThreadID == std::this_thread::get_id(),
+                        "should run on loop thread");
 
         // Check if the client's send buffer is full
         // while (client->getBufferedAmount() > 0) {
