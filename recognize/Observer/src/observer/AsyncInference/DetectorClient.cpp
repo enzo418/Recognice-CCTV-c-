@@ -299,6 +299,7 @@ namespace AsyncInference {
 
     void DetectorClient::OnClose() {
         this->socket_status = SocketStatus::DISCONNECTED;
+        socketConnectionSmp.release();
     }
 
     void OnClose(DetectorClient& client) { client.OnClose(); }
@@ -488,6 +489,10 @@ namespace AsyncInference {
                 SSL, us_context, host.data(), port, NULL, 0,
                 sizeof(struct detector_socket));
 
+            OBSERVER_ASSERT(this->socket, "No socket");
+
+            us_socket_timeout(SSL, (us_socket_t*)this->socket, 4);
+
             this->socket_status = SocketStatus::CONNECTING;
 
             if (!loop_running) {
@@ -503,6 +508,13 @@ namespace AsyncInference {
             while (!socketConnectionSmp.acquire_timeout<50>() && !stopFlag) {
                 if (timer.GetDuration() > 5) {
                     OBSERVER_ERROR("Timeout while waiting for socket to open");
+
+                    if (Observer::has_flag(this->socket_status,
+                                           SocketStatus::CONNECTING)) {
+                        us_socket_close_connecting(SSL, socket);
+                        this->socket_status = SocketStatus::DISCONNECTED;
+                    }
+
                     return false;
                 }
             }
@@ -512,6 +524,8 @@ namespace AsyncInference {
             Observer::has_flag(this->socket_status, SocketStatus::ERROR)) {
             if (loopThread.joinable()) loopThread.join();
             loop_running = false;
+        } else {
+            us_socket_timeout(SSL, (us_socket_t*)this->socket, 0);
         }
 
         return Observer::has_flag(this->socket_status,
