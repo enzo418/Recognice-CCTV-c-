@@ -78,7 +78,8 @@ namespace Observer {
     /* ------------- BlobDetectionConfiguration ------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BlobDetectionConfiguration,
                                        blobDetectorParams, blobFilters,
-                                       contoursFilters, thresholdParams);
+                                       contoursFilters, thresholdParams,
+                                       enabled);
 
     /* --------------- ProcessingConfiguration -------------- */
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessingConfiguration, resize, masks,
