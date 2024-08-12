@@ -424,17 +424,40 @@ namespace AsyncInference {
     }
 
     void DetectorClient::Disconnect() {
-        if (socket && !us_socket_is_closed(SSL, socket) &&
-            !us_socket_is_shut_down(SSL, socket)) {
-            us_socket_close_connecting(SSL, socket);
-        }
-
-        this->socket_status = SocketStatus::DISCONNECTED;
-
-        loop_running = false;
-
         if (loopThread.joinable()) {
-            loopThread.join();
+            // socket is alive
+
+            if (socket &&
+                !Observer::has_flag(this->socket_status,
+                                    SocketStatus::DISCONNECTED) &&
+                !Observer::has_flag(this->socket_status, SocketStatus::ERROR)) {
+                if (!us_socket_is_closed(SSL, socket) &&
+                    !us_socket_is_shut_down(SSL, socket)) {
+                    if (Observer::has_flag(this->socket_status,
+                                           SocketStatus::CONNECTED))
+                        us_socket_shutdown(SSL, socket);
+                    else if (Observer::has_flag(this->socket_status,
+                                                SocketStatus::CONNECTING))
+                        us_socket_close_connecting(SSL, socket);
+
+                    this->socket_status = SocketStatus::DISCONNECTED;
+                }
+            }
+
+            loop_running = false;
+
+            if (loopThread.joinable()) {
+                loopThread.join();
+            }
+        } else {
+            if (!Observer::has_flag(this->socket_status,
+                                    SocketStatus::DISCONNECTED)) {
+                OBSERVER_WARN(
+                    "Loop finished and freed the socket before it was closed. "
+                    "Socket status {}",
+                    (int)this->socket_status);
+            }
+            this->socket_status = SocketStatus::DISCONNECTED;
         }
     }
 
