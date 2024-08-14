@@ -316,6 +316,9 @@ namespace AsyncInference {
         OBSERVER_TRACE("Client disconnected");
 
         free(ds->backpressure);
+        
+        ds->backpressure = 0;
+        ds->length = 0;
 
         return s;
     }
